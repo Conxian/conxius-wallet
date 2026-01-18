@@ -84,7 +84,7 @@ export const deriveSovereignRoots = async (mnemonic: string) => {
   const rskNode = root.derivePath("m/44'/60'/0'/0/0");
   const rskPub = rskNode.publicKey; 
   // Simple deterministic slice for mock address (length 42)
-  const rskAddress = `0x${rskPub.slice(1, 21).toString('hex')}`;
+  const rskAddress = `0x${Buffer.from(rskPub.slice(1, 21)).toString('hex')}`;
 
   return {
     btc: btcAddress || '',
@@ -110,7 +110,7 @@ export const signBip322Message = async (message: string, mnemonic: string) => {
     const root = bip32.fromSeed(new Uint8Array(seed));
     const child = root.derivePath("m/84'/0'/0'/0/0");
     const sig = child.sign(Buffer.from(message)); // Raw ECDSA
-    return `BIP322-SIG-${sig.toString('hex')}`;
+    return `BIP322-SIG-${Buffer.from(sig).toString('hex')}`;
 };
 
 /**
@@ -136,21 +136,21 @@ export const requestEnclaveSignature = async (request: SignRequest, mnemonic?: s
 
   if (request.layer === 'Mainnet') {
       const child = root.derivePath("m/84'/0'/0'/0/0");
-      pubkey = child.publicKey.toString('hex');
+      pubkey = Buffer.from(child.publicKey).toString('hex');
       
       // Real transaction signing logic would go here
       // For this step, we return a signed hash of the payload
       // In a real flow, 'payload' would be a PSBT
       const payloadHash = bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload)));
-      signature = child.sign(payloadHash).toString('hex');
+      signature = Buffer.from(child.sign(payloadHash)).toString('hex');
       
       // Mock Broadcast Hex (In real app, we'd return the fully signed tx hex)
       broadcastHex = "020000..."; 
   } else if (request.layer === 'Stacks') {
       const child = root.derivePath("m/44'/5757'/0'/0/0");
-      pubkey = child.publicKey.toString('hex');
+      pubkey = Buffer.from(child.publicKey).toString('hex');
       // Stacks signing logic
-      signature = child.sign(Buffer.from("stacks-sig")).toString('hex');
+      signature = Buffer.from(child.sign(Buffer.from("stacks-sig"))).toString('hex');
   }
 
   return {
