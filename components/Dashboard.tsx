@@ -95,7 +95,7 @@ const Dashboard: React.FC = () => {
                <span className="text-[9px] font-mono text-zinc-600 font-bold uppercase tracking-widest">BIP-84 • SIP-010 • PSBT Ready</span>
             </div>
          </div>
-         <button onClick={syncAllLayers} className="p-2 text-zinc-600 hover:text-orange-500 transition-all border border-zinc-900 rounded-lg bg-zinc-900/50">
+         <button onClick={syncAllLayers} aria-label="Refresh Layers" className="p-2 text-zinc-600 hover:text-orange-500 transition-all border border-zinc-900 rounded-lg bg-zinc-900/50">
             <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
          </button>
       </div>
@@ -164,11 +164,133 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* SEND MODAL */}
+      {showSend && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[3rem] p-10 space-y-8 relative shadow-2xl">
+              <button onClick={() => setShowSend(false)} aria-label="Close" className="absolute top-8 right-8 text-zinc-700 hover:text-zinc-300"><X size={24} /></button>
+              
+              <div className="text-center space-y-2">
+                 <div className="w-16 h-16 bg-orange-600/10 rounded-2xl flex items-center justify-center mx-auto text-orange-500 mb-4"><Send size={32} /></div>
+                 <h3 className="text-2xl font-black italic uppercase tracking-tighter">{t('action.transmit')}</h3>
+                 <p className="text-xs text-zinc-500">Sovereign Transaction Construction</p>
+              </div>
+
+              {sendStep === 'form' && (
+                  <div className="space-y-6">
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-zinc-600 ml-4">Recipient Address</label>
+                          <input 
+                            type="text" 
+                            value={sendAddress}
+                            onChange={(e) => setSendAddress(e.target.value)}
+                            placeholder="bc1q..." 
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm font-mono text-white focus:outline-none focus:border-orange-500 transition-colors"
+                          />
+                      </div>
+                      <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-zinc-600 ml-4">Amount (SATS)</label>
+                          <input 
+                            type="number" 
+                            value={sendAmount}
+                            onChange={(e) => setSendAmount(e.target.value)}
+                            placeholder="0" 
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm font-mono text-white focus:outline-none focus:border-orange-500 transition-colors"
+                          />
+                      </div>
+                      <button 
+                        onClick={() => setSendStep('sign')}
+                        disabled={!sendAddress || !sendAmount}
+                        className="w-full bg-white text-black font-black py-4 rounded-2xl uppercase tracking-widest hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                      >
+                        Construct PSBT
+                      </button>
+                  </div>
+              )}
+
+              {sendStep === 'sign' && (
+                  <div className="space-y-6 text-center">
+                      <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800 text-left space-y-2">
+                          <div className="flex justify-between text-xs">
+                              <span className="text-zinc-500">To</span>
+                              <span className="font-mono text-zinc-200 truncate w-32">{sendAddress}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                              <span className="text-zinc-500">Amount</span>
+                              <span className="font-mono text-orange-500 font-bold">{parseInt(sendAmount).toLocaleString()} sats</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                              <span className="text-zinc-500">Network Fee</span>
+                              <span className="font-mono text-zinc-400">~142 sats</span>
+                          </div>
+                      </div>
+                      <button 
+                        onClick={async () => {
+                            setIsSigning(true);
+                            try {
+                                const result = await requestEnclaveSignature({
+                                    type: 'transaction',
+                                    layer: 'Mainnet',
+                                    payload: { to: sendAddress, amount: parseInt(sendAmount) },
+                                    description: `Send ${sendAmount} sats to ${sendAddress}`
+                                }, walletConfig?.mnemonic); // Pass mnemonic if available in context/config
+                                
+                                setSignedHex(result.broadcastReadyHex || '');
+                                setSendStep('broadcast');
+                            } catch (e) {
+                                appContext.notify('error', 'Signing Failed');
+                            } finally {
+                                setIsSigning(false);
+                            }
+                        }}
+                        disabled={isSigning}
+                        className="w-full bg-orange-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest hover:bg-orange-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {isSigning ? <Loader2 className="animate-spin" /> : <ShieldCheck size={18} />}
+                        {isSigning ? 'Signing in Enclave...' : 'Sign Transaction'}
+                      </button>
+                  </div>
+              )}
+
+              {sendStep === 'broadcast' && (
+                  <div className="space-y-6 text-center">
+                      <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto text-green-500 mb-2">
+                          <CheckCircle2 size={32} />
+                      </div>
+                      <h4 className="font-bold text-zinc-200">Signed & Ready</h4>
+                      <p className="text-xs text-zinc-500 font-mono break-all px-4">{signedHex.substring(0, 32)}...</p>
+                      
+                      <button 
+                        onClick={async () => {
+                            setIsBroadcasting(true);
+                            try {
+                                const txid = await broadcastBtcTx(signedHex);
+                                setBroadcastResult(txid);
+                                appContext.notify('success', 'Transaction Broadcasted!');
+                                setTimeout(() => { setShowSend(false); setSendStep('form'); }, 2000);
+                            } catch (e) {
+                                appContext.notify('error', 'Broadcast Failed');
+                            } finally {
+                                setIsBroadcasting(false);
+                            }
+                        }}
+                        disabled={isBroadcasting}
+                        className="w-full bg-green-600 text-white font-black py-4 rounded-2xl uppercase tracking-widest hover:bg-green-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                         {isBroadcasting ? <Loader2 className="animate-spin" /> : <Network size={18} />}
+                         {isBroadcasting ? 'Propagating...' : 'Broadcast to Mempool'}
+                      </button>
+                  </div>
+              )}
+           </div>
+        </div>
+      )}
+
       {/* RECEIVE MODAL */}
       {showReceive && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
            <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[3rem] p-10 space-y-8 relative shadow-2xl">
-              <button onClick={() => setShowReceive(false)} className="absolute top-8 right-8 text-zinc-700 hover:text-zinc-300"><X size={24} /></button>
+              <button onClick={() => setShowReceive(false)} aria-label="Close" className="absolute top-8 right-8 text-zinc-700 hover:text-zinc-300"><X size={24} /></button>
               
               <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800 mb-4">
                 {(['Mainnet', 'Stacks', 'Rootstock'] as BitcoinLayer[]).map(l => (
@@ -189,13 +311,13 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] flex flex-col items-center gap-6">
                  <div className="bg-white p-4 rounded-2xl shadow-xl overflow-hidden">
-                    <img src={`https://chart.googleapis.com/chart?cht=qr&chs=240x240&chl=${encodeURIComponent(getBip21Uri())}`} className="w-48 h-48" />
+                    <img src={`https://chart.googleapis.com/chart?cht=qr&chs=240x240&chl=${encodeURIComponent(getBip21Uri())}`} alt="Wallet Address QR Code" className="w-48 h-48" />
                  </div>
                  <div className="w-full space-y-3">
                     <p className="text-[9px] font-black text-zinc-600 uppercase text-center">{receiveLayer} Root</p>
                     <div className="flex items-center gap-3 bg-zinc-950 p-4 rounded-xl border border-zinc-800">
                        <p className="text-[10px] font-mono text-zinc-400 truncate flex-1">{receiveLayer === 'Stacks' ? stxAddress : btcAddress}</p>
-                       <button onClick={() => { navigator.clipboard.writeText(receiveLayer === 'Stacks' ? stxAddress : btcAddress); appContext.notify('info', 'Address Copied to Clipboard'); }} className="text-orange-500"><Copy size={14} /></button>
+                       <button onClick={() => { navigator.clipboard.writeText(receiveLayer === 'Stacks' ? stxAddress : btcAddress); appContext.notify('info', 'Address Copied to Clipboard'); }} aria-label="Copy Address" className="text-orange-500"><Copy size={14} /></button>
                     </div>
                  </div>
               </div>
