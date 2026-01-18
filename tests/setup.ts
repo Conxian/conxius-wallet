@@ -23,3 +23,7 @@ if (!global.crypto) {
     // @ts-ignore
     global.crypto = webcrypto;
 }
+
+// Ensure URL is globally available
+import { URL } from 'url';
+global.URL = URL;

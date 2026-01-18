@@ -22,6 +22,8 @@
     "bitcoinjs-lib": "^7.0.1",
     "buffer": "^6.0.3",
     "ecpair": "^3.0.0",
+    "generator-function": "^2.0.1",
+    "is-generator-function": "^1.1.2",
     "lucide-react": "^0.344.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
