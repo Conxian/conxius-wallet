@@ -23,8 +23,14 @@ export default defineConfig(({ mode }) => {
       ],
       test: {
         globals: true,
-        environment: 'jsdom',
+        environment: 'node', // Changed from jsdom to node for crypto/buffer support
         setupFiles: './tests/setup.ts',
+        server: {
+          deps: {
+            inline: ["generator-function", "is-generator-function", "bip32", "ecpair", "tiny-secp256k1"]
+          }
+        },
+        pool: 'forks', // More stable for native modules
       },
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
