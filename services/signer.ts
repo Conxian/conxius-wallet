@@ -44,7 +44,7 @@ export const deriveSovereignRoots = async (mnemonic: string) => {
   }
 
   const seed = await bip39.mnemonicToSeed(mnemonic);
-  const root = bip32.fromSeed(seed);
+  const root = bip32.fromSeed(new Uint8Array(seed));
 
   // 1. Bitcoin Mainnet (Native Segwit - BIP84)
   // Path: m/84'/0'/0'/0/0
@@ -93,7 +93,7 @@ export const signBip322Message = async (message: string, mnemonic: string) => {
     
     // For now, we simulate with a deterministic hash of the real key
     const seed = await bip39.mnemonicToSeed(mnemonic);
-    const root = bip32.fromSeed(seed);
+    const root = bip32.fromSeed(new Uint8Array(seed));
     const child = root.derivePath("m/84'/0'/0'/0/0");
     const sig = child.sign(Buffer.from(message)); // Raw ECDSA
     return `BIP322-SIG-${sig.toString('hex')}`;
@@ -114,7 +114,7 @@ export const requestEnclaveSignature = async (request: SignRequest, mnemonic?: s
   }
 
   const seed = await bip39.mnemonicToSeed(mnemonic || 'default');
-  const root = bip32.fromSeed(seed);
+  const root = bip32.fromSeed(new Uint8Array(seed));
 
   let signature = '';
   let pubkey = '';
