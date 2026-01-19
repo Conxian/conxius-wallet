@@ -1,15 +1,23 @@
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { TrendingUp, Layers, ShieldAlert, ExternalLink, Zap, Lock, RefreshCw, Loader2, ArrowRight, Activity, Percent, Network, AlertTriangle, Coins } from 'lucide-react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { MOCK_DEFI_POSITIONS, MOCK_YIELD_DATA, LAYER_COLORS } from '../constants';
 import { GoogleGenAI } from "@google/genai";
+import { AppContext } from '../context';
 
 const DeFiDashboard: React.FC = () => {
+  const appContext = useContext(AppContext);
   const [activeTab, setActiveTab] = useState<'positions' | 'opportunities'>('positions');
   const [riskAnalysis, setRiskAnalysis] = useState<string | null>(null);
   const [analyzingRisk, setAnalyzingRisk] = useState(false);
   const [isZapping, setIsZapping] = useState(false);
+
+  if (!appContext) return null;
+  const { mode } = appContext.state;
+
+  const positions = mode === 'simulation' ? MOCK_DEFI_POSITIONS : [];
+  const yieldData = mode === 'simulation' ? MOCK_YIELD_DATA : [];
 
   const analyzeProtocol = async (protocol: string) => {
     setAnalyzingRisk(true);
@@ -77,7 +85,13 @@ const DeFiDashboard: React.FC = () => {
               </div>
               <div className="h-64 w-full">
                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={MOCK_YIELD_DATA}>
+                    {mode === 'sovereign' ? (
+                       <div className="flex flex-col items-center justify-center h-full opacity-50 border border-zinc-800 rounded-xl bg-zinc-900/20">
+                          <Activity size={32} className="text-zinc-600 mb-2" />
+                          <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">No Yield Data</p>
+                       </div>
+                    ) : (
+                    <AreaChart data={yieldData}>
                        <defs>
                           <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
                              <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3}/>
@@ -105,6 +119,7 @@ const DeFiDashboard: React.FC = () => {
                           fill="url(#colorYield)" 
                        />
                     </AreaChart>
+                    )}
                  </ResponsiveContainer>
               </div>
            </div>
@@ -128,7 +143,14 @@ const DeFiDashboard: React.FC = () => {
 
               {activeTab === 'positions' ? (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {MOCK_DEFI_POSITIONS.map((pos) => (
+                    {mode === 'sovereign' && positions.length === 0 ? (
+                       <div className="col-span-2 flex flex-col items-center justify-center py-12 opacity-50 border border-zinc-800 rounded-3xl bg-zinc-900/20">
+                          <Lock size={48} className="text-zinc-700 mb-4" />
+                          <p className="text-sm font-bold text-zinc-500 uppercase tracking-widest">No Active Positions</p>
+                          <p className="text-xs text-zinc-600 italic mt-2">Connect to sovereign DeFi protocols to view positions.</p>
+                       </div>
+                    ) : (
+                    positions.map((pos) => (
                        <div key={pos.id} className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 hover:border-zinc-700 transition-all group">
                           <div className="flex justify-between items-start mb-4">
                              <div className="flex items-center gap-3">
@@ -169,7 +191,7 @@ const DeFiDashboard: React.FC = () => {
                              </button>
                           </div>
                        </div>
-                    ))}
+                    )))}
                  </div>
               ) : (
                  <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-8 text-center space-y-4">

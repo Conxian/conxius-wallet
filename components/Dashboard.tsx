@@ -311,7 +311,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] flex flex-col items-center gap-6">
                  <div className="bg-white p-4 rounded-2xl shadow-xl overflow-hidden">
-                    <img src={`https://chart.googleapis.com/chart?cht=qr&chs=240x240&chl=${encodeURIComponent(getBip21Uri())}`} alt="Wallet Address QR Code" className="w-48 h-48" />
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(getBip21Uri())}`} alt="Wallet Address QR Code" className="w-48 h-48" />
                  </div>
                  <div className="w-full space-y-3">
                     <p className="text-[9px] font-black text-zinc-600 uppercase text-center">{receiveLayer} Root</p>

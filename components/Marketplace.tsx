@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
-import { ShoppingBag, Wifi, Gift, Zap, Globe, Smartphone, Search, Filter, Loader2, CheckCircle2, ShieldCheck, Ticket, Plane, Copy, QrCode, Tag } from 'lucide-react';
+import React, { useState, useContext } from 'react';
+import { ShoppingBag, Wifi, Gift, Zap, Globe, Smartphone, Search, Filter, Loader2, CheckCircle2, ShieldCheck, Ticket, Plane, Copy, QrCode, Tag, Lock } from 'lucide-react';
+import { AppContext } from '../context';
 
 type Category = 'Airtime' | 'Data' | 'Vouchers' | 'eSIM';
 
@@ -25,6 +26,7 @@ const MOCK_PRODUCTS: Product[] = [
 ];
 
 const Marketplace: React.FC = () => {
+  const appContext = useContext(AppContext);
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -37,9 +39,15 @@ const Marketplace: React.FC = () => {
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
 
-  const providers = ['All', ...Array.from(new Set(MOCK_PRODUCTS.map(p => p.provider)))];
+  if (!appContext) return null;
+  const { mode } = appContext.state;
 
-  const filteredProducts = MOCK_PRODUCTS.filter(p => {
+  // In sovereign mode, we don't show mock products.
+  const productsToShow = mode === 'simulation' ? MOCK_PRODUCTS : [];
+
+  const providers = ['All', ...Array.from(new Set(productsToShow.map(p => p.provider)))];
+
+  const filteredProducts = productsToShow.filter(p => {
     const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
     const matchesRegion = regionFilter === 'All' || p.region === regionFilter || p.region === 'Global';
     const matchesProvider = providerFilter === 'All' || p.provider === providerFilter;
@@ -209,7 +217,13 @@ const Marketplace: React.FC = () => {
 
          {/* Product Grid */}
          <div className="lg:col-span-9">
-            {filteredProducts.length === 0 ? (
+            {mode === 'sovereign' ? (
+                <div className="flex flex-col items-center justify-center h-96 opacity-70 space-y-4 border border-zinc-800 rounded-[2.5rem] bg-zinc-900/20">
+                    <Lock size={48} className="text-zinc-700" />
+                    <p className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Marketplace Offline</p>
+                    <p className="text-xs text-zinc-600 italic">Sovereign P2P Bazaar connection requires active tor circuit.</p>
+                </div>
+            ) : filteredProducts.length === 0 ? (
                <div className="flex flex-col items-center justify-center h-96 opacity-50 space-y-4">
                   <Search size={48} className="text-zinc-700" />
                   <p className="text-sm font-bold text-zinc-500">No products found matching your filters.</p>

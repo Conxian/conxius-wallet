@@ -5,18 +5,17 @@ ext {
 buildscript {
     repositories {
         google()
-        mavenCentral()
+        jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.1'
+        classpath 'com.android.tools.build:gradle:3.6.1'
     }
 }
 
 apply plugin: 'com.android.library'
 
 android {
-    namespace "capacitor.android.plugins"
-    compileSdkVersion project.hasProperty('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 34
+    compileSdkVersion project.hasProperty('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 29
     defaultConfig {
         minSdkVersion project.hasProperty('minSdkVersion') ? rootProject.ext.minSdkVersion : 21
         targetSdkVersion project.hasProperty('targetSdkVersion') ? rootProject.ext.targetSdkVersion : 29
@@ -34,6 +33,7 @@ android {
 
 repositories {
     google()
+    jcenter()
     mavenCentral()
     flatDir{
         dirs 'src/main/libs', 'libs'
