@@ -26,7 +26,6 @@ const PaymentPortal: React.FC = () => {
   const [scanError, setScanError] = useState<string | null>(null);
   const [lnDetail, setLnDetail] = useState<any | null>(null);
   const [generatedInvoice, setGeneratedInvoice] = useState<string | null>(null);
-  const [lnStatus, setLnStatus] = useState<any | null>(null);
   const [onchainTxid, setOnchainTxid] = useState<string | null>(null);
   const [onchainError, setOnchainError] = useState<string | null>(null);
 
@@ -201,16 +200,6 @@ const PaymentPortal: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (method !== 'lightning') return;
-    const ldk: any = (window as any).LDK;
-    if (ldk && typeof ldk.getStatus === 'function') {
-      ldk.getStatus().then(setLnStatus).catch(() => setLnStatus(null));
-    } else {
-      setLnStatus(null);
-    }
-  }, [method]);
-
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-24">
       <header className="flex justify-between items-end">
@@ -353,15 +342,6 @@ const PaymentPortal: React.FC = () => {
                       <p>BOLT11 Invoice</p>
                       <p className="text-zinc-300">Amount: {lnDetail.info.amountMsat ? Math.floor(lnDetail.info.amountMsat/1000).toLocaleString() : 'n/a'} sats</p>
                       <p className="text-zinc-400">Payee: {lnDetail.info.payee || 'unknown'}</p>
-                      <button type="button" onClick={async () => {
-                        try {
-                          const backend = getLightningBackend(context?.state.lnBackend);
-                          await backend.payInvoice(recipient);
-                          setShowSuccess(true);
-                        } catch {
-                          setShowPrivacyWarning(true);
-                        }
-                }} className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase" aria-label="Pay Invoice" title="Pay Invoice">Pay Invoice</button>
                     </div>
                   )}
                   {lnDetail.type === 'error' && <p className="text-[10px] text-red-500">Lightning decode failed</p>}
@@ -371,16 +351,6 @@ const PaymentPortal: React.FC = () => {
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6">
             <p className="text-[10px] uppercase font-black text-zinc-500">Generated Invoice</p>
             <p className="text-xs font-mono text-zinc-300 break-all">{generatedInvoice}</p>
-          </div>
-        )}
-        {method === 'lightning' && lnStatus && (
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6">
-            <p className="text-[10px] uppercase font-black text-zinc-500">Lightning Status</p>
-            <div className="text-xs text-zinc-300">
-              <p>Balance: {lnStatus.balance ?? 'n/a'}</p>
-              <p>Max Pay: {lnStatus.maxAllowToPay ?? 'n/a'}</p>
-              <p>Max Receive: {lnStatus.maxAllowToReceive ?? 'n/a'}</p>
-            </div>
           </div>
         )}
             </div>

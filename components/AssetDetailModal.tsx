@@ -57,9 +57,12 @@ const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ asset, onClose }) =
               </div>
             </div>
           </div>
-          <button 
+          <button
+            type="button"
             onClick={onClose}
             className="p-2 hover:bg-zinc-900 rounded-full text-zinc-500 transition-colors"
+            aria-label="Close"
+            title="Close"
           >
             <X size={24} />
           </button>
@@ -119,7 +122,7 @@ const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ asset, onClose }) =
                 <History size={16} />
                 Layer Activity
               </h3>
-              <button className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 hover:text-orange-500 transition-colors flex items-center gap-1.5">
+              <button type="button" className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 hover:text-orange-500 transition-colors flex items-center gap-1.5" aria-label="Open Explorer" title="Open Explorer">
                 Explorer <ExternalLink size={10} />
               </button>
             </div>

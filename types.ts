@@ -2,7 +2,7 @@
 export type BitcoinLayer = 'Mainnet' | 'Stacks' | 'Rootstock' | 'Lightning' | 'Liquid' | 'Runes' | 'Ordinals';
 export type AppMode = 'sovereign' | 'simulation';
 export type Network = 'mainnet' | 'testnet' | 'regtest' | 'devnet';
-export type LnBackendType = 'None' | 'LDK' | 'CLN' | 'LND';
+export type LnBackendType = 'None' | 'LND';
 export interface LnBackendConfig {
   type: LnBackendType;
   endpoint?: string;

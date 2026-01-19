@@ -60,7 +60,7 @@ const NTTBridge: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-zinc-600">Source</label>
-                <select value={sourceLayer} onChange={e => setSourceLayer(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-zinc-200 focus:outline-none">
+                <select value={sourceLayer} onChange={e => setSourceLayer(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-zinc-200 focus:outline-none" aria-label="Source Layer" title="Source Layer">
                   <option>Mainnet</option>
                   <option>Stacks</option>
                   <option>Rootstock</option>
@@ -68,7 +68,7 @@ const NTTBridge: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-zinc-600">Destination</label>
-                <select value={targetLayer} onChange={e => setTargetLayer(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-zinc-200 focus:outline-none">
+                <select value={targetLayer} onChange={e => setTargetLayer(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-zinc-200 focus:outline-none" aria-label="Target Layer" title="Target Layer">
                   <option>Stacks</option>
                   <option>Mainnet</option>
                   <option>Liquid</option>
@@ -89,7 +89,7 @@ const NTTBridge: React.FC = () => {
                 </div>
             </div>
 
-            <button onClick={() => setStep(2)} disabled={!amount} className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-5 rounded-3xl text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95 disabled:opacity-50">
+            <button type="button" onClick={() => setStep(2)} disabled={!amount} className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-5 rounded-3xl text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95 disabled:opacity-50">
               Continue
             </button>
           </div>
@@ -112,8 +112,8 @@ const NTTBridge: React.FC = () => {
                 ))}
             </div>
             <div className="flex gap-4">
-                <button onClick={() => setStep(1)} className="flex-1 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-zinc-800">Back</button>
-                <button onClick={handleBridge} disabled={isBridging} className="flex-[2] bg-orange-600 hover:bg-orange-500 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2">
+                <button type="button" onClick={() => setStep(1)} className="flex-1 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-zinc-800">Back</button>
+                <button type="button" onClick={handleBridge} disabled={isBridging} className="flex-[2] bg-orange-600 hover:bg-orange-500 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2">
                     {isBridging ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
                     Open Tracking
                 </button>
@@ -136,7 +136,7 @@ const NTTBridge: React.FC = () => {
                     <label className="text-[10px] font-black uppercase text-zinc-600 ml-1">Live Transaction Hash</label>
                     <div className="relative">
                         <input value={txHash} onChange={e => setTxHash(e.target.value)} placeholder="0x... or bc1q..." className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 pl-5 pr-12 font-mono text-xs text-zinc-200 focus:outline-none" />
-                        <button onClick={handleTrack} className="absolute right-4 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400">
+                        <button type="button" onClick={handleTrack} className="absolute right-4 top-1/2 -translate-y-1/2 text-orange-500 hover:text-orange-400" aria-label="Track" title="Track">
                             {isTracking ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                         </button>
                     </div>
@@ -157,7 +157,7 @@ const NTTBridge: React.FC = () => {
                     </div>
                 )}
 
-                <button onClick={() => setStep(1)} className="w-full py-4 text-zinc-600 hover:text-zinc-400 text-[10px] font-black uppercase tracking-widest transition-all">New Transfer</button>
+                <button type="button" onClick={() => setStep(1)} className="w-full py-4 text-zinc-600 hover:text-zinc-400 text-[10px] font-black uppercase tracking-widest transition-all">New Transfer</button>
              </div>
           </div>
         )}

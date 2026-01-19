@@ -26,14 +26,15 @@ class NoneBackend implements LightningBackend {
 
 class LndBackend implements LightningBackend {
   configured = true;
-  host: string;
+  baseUrl: string;
   macaroon: string;
   constructor(host: string, macaroon: string) {
-    this.host = host;
+    const trimmed = host.trim();
+    this.baseUrl = trimmed.includes('://') ? trimmed : `https://${trimmed}`;
     this.macaroon = macaroon;
   }
   async createInvoice(amountSats: number, memo?: string) {
-    const url = `https://${this.host}/v1/invoices`;
+    const url = new URL('/v1/invoices', this.baseUrl).toString();
     const res = await fetch(url, {
       method: 'POST',
       headers: {
@@ -42,11 +43,12 @@ class LndBackend implements LightningBackend {
       },
       body: JSON.stringify({ value: amountSats, memo: memo || 'Conxius' })
     });
+    if (!res.ok) throw new Error('LND invoice request failed');
     const data = await res.json();
     return { invoice: data.payment_request };
   }
   async payInvoice(invoice: string) {
-    const url = `https://${this.host}/v1/channels/transactions`;
+    const url = new URL('/v1/channels/transactions', this.baseUrl).toString();
     const res = await fetch(url, {
       method: 'POST',
       headers: {
@@ -55,6 +57,7 @@ class LndBackend implements LightningBackend {
       },
       body: JSON.stringify({ payment_request: invoice })
     });
+    if (!res.ok) throw new Error('LND payment request failed');
     const data = await res.json();
     return { preimage: data.payment_preimage };
   }
@@ -75,34 +78,6 @@ class LndBackend implements LightningBackend {
     const res = await fetch(url.toString());
     const data = await res.json();
     return { status: data.status || 'ok' };
-  }
-}
-
-class LdkBackend implements LightningBackend {
-  configured = true;
-  async createInvoice(amountSats: number, memo?: string) {
-    const ldk: any = (window as any).LDK;
-    if (!ldk) throw new Error('LDK not available');
-    const inv = await ldk.createInvoice({ amountSats, description: memo || 'Conxius' });
-    return { invoice: inv.paymentRequest };
-  }
-  async payInvoice(invoice: string) {
-    const ldk: any = (window as any).LDK;
-    if (!ldk) throw new Error('LDK not available');
-    const res = await ldk.payInvoice({ paymentRequest: invoice });
-    return { preimage: res.paymentPreimage };
-  }
-  async lnurlPay(callback: string, amountMsat: number, comment?: string) {
-    const ldk: any = (window as any).LDK;
-    if (!ldk) throw new Error('LDK not available');
-    await ldk.lnurlPay({ callback, amountMsat, comment });
-    return { status: 'paid' };
-  }
-  async lnurlWithdraw(callback: string, k1: string, invoice: string) {
-    const ldk: any = (window as any).LDK;
-    if (!ldk) throw new Error('LDK not available');
-    const res = await ldk.lnurlWithdraw({ callback, k1, invoice });
-    return { status: res.status || 'ok' };
   }
 }
 

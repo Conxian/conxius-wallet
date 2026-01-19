@@ -7,9 +7,10 @@ interface LockScreenProps {
   onUnlock: (pin: string) => Promise<void>;
   isError: boolean;
   requireBiometric?: boolean;
+  onResetWallet?: () => void;
 }
 
-const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, isError, requireBiometric }) => {
+const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, isError, requireBiometric, onResetWallet }) => {
   const [pin, setPin] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [biometricApproved, setBiometricApproved] = useState(!requireBiometric);
@@ -117,6 +118,17 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, isError, requireBiome
               {isValidating ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
               {isValidating ? 'Decrypting State...' : 'Unlock Vault'}
            </button>
+           {onResetWallet && (
+             <button
+               type="button"
+               onClick={onResetWallet}
+               className="w-full text-zinc-500 hover:text-zinc-300 text-[10px] font-black uppercase tracking-widest py-2"
+               aria-label="Create New Wallet"
+               title="Create New Wallet"
+             >
+               Create New Wallet
+             </button>
+           )}
         </form>
       </div>
     </div>

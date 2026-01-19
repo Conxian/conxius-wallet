@@ -1,5 +1,6 @@
 import { bech32 } from 'bech32';
 import bolt11 from 'light-bolt11-decoder';
+import { Buffer } from 'buffer';
 
 export type LnurlPayParams = {
   callback: string;

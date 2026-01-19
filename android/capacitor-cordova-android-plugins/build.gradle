@@ -2,19 +2,10 @@ ext {
     cordovaAndroidVersion =  project.hasProperty('cordovaAndroidVersion') ? rootProject.ext.cordovaAndroidVersion : '7.0.0'
 }
 
-buildscript {
-    repositories {
-        google()
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.6.1'
-    }
-}
-
 apply plugin: 'com.android.library'
 
 android {
+    namespace "com.conxius.cordova.plugins"
     compileSdkVersion project.hasProperty('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 29
     defaultConfig {
         minSdkVersion project.hasProperty('minSdkVersion') ? rootProject.ext.minSdkVersion : 21
@@ -33,7 +24,6 @@ android {
 
 repositories {
     google()
-    jcenter()
     mavenCentral()
     flatDir{
         dirs 'src/main/libs', 'libs'

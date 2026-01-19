@@ -9,7 +9,7 @@ import * as bip39 from 'bip39';
 import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import * as bitcoin from 'bitcoinjs-lib';
-import { getAddressFromPrivateKey, TransactionVersion } from '@stacks/transactions';
+import { getAddressFromPrivateKey } from '@stacks/transactions';
 import { Buffer } from 'buffer';
 import { publicKeyToEvmAddress } from './evm';
 
@@ -58,8 +58,8 @@ export const deriveSovereignRoots = async (mnemonic: string, passphrase?: string
   // 2. Stacks L2 (SIP-005)
   // Path: m/44'/5757'/0'/0/0
   const stxNode = root.derivePath("m/44'/5757'/0'/0/0");
-  const stxPrivateKey = stxNode.privateKey!.toString('hex');
-  const stxAddress = getAddressFromPrivateKey(stxPrivateKey, TransactionVersion.Mainnet);
+  const stxPrivateKey = Buffer.from(stxNode.privateKey!).toString('hex');
+  const stxAddress = getAddressFromPrivateKey(stxPrivateKey, 'mainnet');
 
   // 3. Rootstock (RSK) / EVM Compatible
   // Path: m/44'/60'/0'/0/0 (Standard ETH/RSK path)
@@ -123,7 +123,7 @@ export const requestEnclaveSignature = async (request: SignRequest, seedOrMnemon
       if (request.payload && request.payload.psbt && request.payload.network) {
         const { signPsbtBase64WithSeed } = await import('./psbt');
         broadcastHex = await signPsbtBase64WithSeed(seedBytes, request.payload.psbt, request.payload.network);
-        signature = bitcoin.crypto.sha256(Buffer.from(broadcastHex, 'hex')).toString('hex');
+        signature = Buffer.from(bitcoin.crypto.sha256(Buffer.from(broadcastHex, 'hex'))).toString('hex');
       } else {
         const payloadHash = bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload)));
         signature = Buffer.from(child.sign(payloadHash)).toString('hex');

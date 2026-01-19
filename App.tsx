@@ -42,7 +42,7 @@ import { encryptSeed } from './services/seed';
 import * as bip39 from 'bip39';
 import { decryptSeed } from './services/seed';
 import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
-import { getEnclaveBlob, removeEnclaveBlob, setEnclaveBlob } from './services/enclave-storage';
+import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob } from './services/enclave-storage';
 
 const STORAGE_KEY = 'conxius_enclave_v3_encrypted';
 
@@ -89,6 +89,8 @@ const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
   const [lockError, setLockError] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [enclaveChecked, setEnclaveChecked] = useState(false);
+  const [enclaveExists, setEnclaveExists] = useState(false);
   const currentPinRef = useRef<string | null>(null);
 
   // Auto-lock timer
@@ -98,6 +100,7 @@ const App: React.FC = () => {
       if (timer) clearTimeout(timer);
       const minutes = state.security?.autoLockMinutes ?? 5;
       timer = setTimeout(() => {
+        clearEnclaveBiometricSession();
         setIsLocked(true);
       }, minutes * 60 * 1000);
     };
@@ -111,19 +114,38 @@ const App: React.FC = () => {
 
   // Persistence Logic
   useEffect(() => {
-    getEnclaveBlob(STORAGE_KEY).then(saved => {
-      if (saved) {
-        setIsLocked(true);
-      }
-    });
+    hasEnclaveBlob(STORAGE_KEY)
+      .then(exists => {
+        setEnclaveExists(exists);
+        if (exists) setIsLocked(true);
+      })
+      .finally(() => setEnclaveChecked(true));
   }, []);
+
+  const sanitizeStateForPersistence = (s: any) => {
+    const next: any = { ...s };
+    if (next.walletConfig) {
+      next.walletConfig = { ...next.walletConfig };
+      delete next.walletConfig.mnemonic;
+      delete next.walletConfig.passphrase;
+    }
+    if (next.lnBackend && next.lnBackend.type && next.lnBackend.type !== 'None' && next.lnBackend.type !== 'LND') {
+      next.lnBackend = { type: 'None' };
+    }
+    return next;
+  };
 
   const persistState = async (newState: any, pin: string) => {
     try {
-      const encrypted = await encryptState(newState, pin);
-      await setEnclaveBlob(STORAGE_KEY, encrypted);
+      const encrypted = await encryptState(sanitizeStateForPersistence(newState), pin);
+      await setEnclaveBlob(STORAGE_KEY, encrypted, { requireBiometric: !!newState.security?.biometricUnlock });
     } catch (e) {
-      notify('error', 'Encryption Failed: State not saved');
+      const msg = typeof (e as any)?.message === 'string' ? (e as any).message : '';
+      if (msg.toLowerCase().includes('auth required')) {
+        notify('warning', 'Re-authenticate to keep state in biometric vault');
+      } else {
+        notify('error', 'Encryption Failed: State not saved');
+      }
     }
   };
 
@@ -138,7 +160,6 @@ const App: React.FC = () => {
   }, [state]);
 
   useEffect(() => {
-    console.log(activeTab);
   }, [activeTab]);
 
   const BOOT_SEQUENCE = [
@@ -176,11 +197,12 @@ const App: React.FC = () => {
 
   const handleUnlock = async (pin: string) => {
     try {
-      const saved = await getEnclaveBlob(STORAGE_KEY);
+      const saved = await getEnclaveBlob(STORAGE_KEY, { requireBiometric: !!state.security?.biometricUnlock });
       if (!saved) return;
       if (state.security?.duressPin && pin === state.security.duressPin) {
         setState({ ...DEFAULT_STATE, assets: [], walletConfig: undefined });
         currentPinRef.current = null;
+        setEnclaveExists(false);
         setIsLocked(false);
         setLockError(false);
         notify('warning', 'Duress mode activated');
@@ -198,14 +220,23 @@ const App: React.FC = () => {
         delete walletConfig.passphrase;
         nextState.walletConfig = walletConfig;
       }
+      if (nextState.lnBackend && nextState.lnBackend.type && nextState.lnBackend.type !== 'None' && nextState.lnBackend.type !== 'LND') {
+        nextState.lnBackend = { type: 'None' };
+      }
       setState(nextState);
       currentPinRef.current = pin;
+      setEnclaveExists(true);
       setIsLocked(false);
       setLockError(false);
       notify('success', 'Enclave Decrypted Successfully');
     } catch (e) {
       setLockError(true);
-      notify('error', 'Decryption Failed: Invalid PIN');
+      const msg = typeof (e as any)?.message === 'string' ? (e as any).message : '';
+      if (msg.toLowerCase().includes('auth required')) {
+        notify('error', 'Biometric authentication required');
+      } else {
+        notify('error', 'Decryption Failed: Invalid PIN');
+      }
     }
   };
 
@@ -225,6 +256,7 @@ const App: React.FC = () => {
   const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } }));
   const lockWallet = () => {
      currentPinRef.current = null;
+     clearEnclaveBiometricSession();
      setIsLocked(true);
   };
 
@@ -262,6 +294,7 @@ const App: React.FC = () => {
   const resetEnclave = () => {
     if (confirm("Purge Enclave? Terminal state wipe.")) {
       removeEnclaveBlob(STORAGE_KEY);
+      setEnclaveExists(false);
       window.location.reload();
     }
   };
@@ -328,10 +361,40 @@ const App: React.FC = () => {
 
   // Lock Screen Intercept
   if (isLocked) {
-    return <LockScreen onUnlock={handleUnlock} isError={lockError} requireBiometric={state.security?.biometricUnlock ?? false} />;
+    return (
+      <LockScreen
+        onUnlock={handleUnlock}
+        isError={lockError}
+        requireBiometric={state.security?.biometricUnlock ?? false}
+        onResetWallet={resetEnclave}
+      />
+    );
+  }
+
+  if (!enclaveChecked) {
+    return (
+      <div className="fixed inset-0 bg-zinc-950 text-zinc-100 flex items-center justify-center p-8">
+        <div className="w-full max-w-sm space-y-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Checking Vault</p>
+          <div className="h-1 w-full bg-zinc-900 rounded-full overflow-hidden">
+            <div className="h-full bg-orange-500 w-2/3 animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!state.walletConfig) {
+    if (enclaveExists) {
+      return (
+        <LockScreen
+          onUnlock={handleUnlock}
+          isError={lockError}
+          requireBiometric={state.security?.biometricUnlock ?? false}
+          onResetWallet={resetEnclave}
+        />
+      );
+    }
     return (
       <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity }}>
         <Onboarding onComplete={(config, pin) => { if (config) setWalletConfig(config as any, pin); }} />

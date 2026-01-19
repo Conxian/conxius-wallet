@@ -10,20 +10,29 @@ afterEach(() => {
   cleanup();
 });
 
-// Polyfill for TextEncoder/TextDecoder in JSDOM
-import { TextEncoder, TextDecoder } from 'util';
-global.TextEncoder = TextEncoder;
-// @ts-ignore
-global.TextDecoder = TextDecoder;
+import { TextEncoder as NodeTextEncoder, TextDecoder as NodeTextDecoder } from 'node:util';
+try {
+  new globalThis.TextEncoder();
+} catch {
+  // @ts-ignore
+  globalThis.TextEncoder = NodeTextEncoder;
+}
+try {
+  new globalThis.TextDecoder();
+} catch {
+  // @ts-ignore
+  globalThis.TextDecoder = NodeTextDecoder;
+}
 
 // Polyfill for crypto.subtle
 import { webcrypto } from 'crypto';
 // @ts-ignore
-if (!global.crypto) {
+if (!globalThis.crypto) {
     // @ts-ignore
-    global.crypto = webcrypto;
+    globalThis.crypto = webcrypto;
 }
 
 // Ensure URL is globally available
 import { URL } from 'url';
-global.URL = URL;
+// @ts-ignore
+globalThis.URL = URL;
