@@ -8,5 +8,10 @@ import com.getcapacitor.Plugin;
 import java.util.ArrayList;
 
 public class MainActivity extends BridgeActivity {
-  // No need to override onCreate unless adding custom logic
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    registerPlugin(LdkPlugin.class);
+    registerPlugin(SecureEnclavePlugin.class);
+  }
 }

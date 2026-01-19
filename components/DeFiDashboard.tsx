@@ -18,6 +18,9 @@ const DeFiDashboard: React.FC = () => {
 
   const positions = mode === 'simulation' ? MOCK_DEFI_POSITIONS : [];
   const yieldData = mode === 'simulation' ? MOCK_YIELD_DATA : [];
+  if (mode === 'sovereign') {
+    console.info('DeFi mock data disabled in Sovereign mode');
+  }
 
   const analyzeProtocol = async (protocol: string) => {
     setAnalyzingRisk(true);
@@ -162,7 +165,7 @@ const DeFiDashboard: React.FC = () => {
                                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{pos.type}</p>
                                 </div>
                              </div>
-                             <button onClick={() => analyzeProtocol(pos.protocol)} className="p-2 text-zinc-600 hover:text-purple-500 transition-colors">
+                             <button type="button" onClick={() => analyzeProtocol(pos.protocol)} className="p-2 text-zinc-600 hover:text-purple-500 transition-colors" aria-label="Analyze Protocol Risk">
                                 <ShieldAlert size={16} />
                              </button>
                           </div>
@@ -183,10 +186,10 @@ const DeFiDashboard: React.FC = () => {
                           </div>
 
                           <div className="mt-4 pt-4 border-t border-zinc-900 flex gap-2">
-                             <button className="flex-1 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                             <button type="button" className="flex-1 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                                 Unstake
                              </button>
-                             <button className="flex-1 py-2 bg-zinc-100 hover:bg-white text-zinc-950 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                             <button type="button" className="flex-1 py-2 bg-zinc-100 hover:bg-white text-zinc-950 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
                                 Compound
                              </button>
                           </div>
@@ -252,12 +255,12 @@ const DeFiDashboard: React.FC = () => {
                        <span>BTC</span> <ArrowRight size={12} /> <span>sBTC</span> <ArrowRight size={12} /> <Coins size={14} />
                     </div>
                  </div>
-                 <button 
+                 <button type="button"
                   onClick={handleZap}
                   disabled={isZapping}
-                  className="w-full py-4 bg-white text-orange-600 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-zinc-100 transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-amber-600 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2"
                  >
-                    {isZapping ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} fill="currentColor" />}
+                    {isZapping ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
                     {isZapping ? 'Bundling Tx...' : 'One-Click Yield'}
                  </button>
               </div>

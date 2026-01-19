@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Network, Database, Globe, RefreshCw, CheckCircle2, AlertTriangle, Shield, Info, ArrowUpRight, Plus, Terminal, Cpu, HardDrive, Download, Activity, Zap, Share2, Layers, Loader2, Sparkles, BookOpen, Search, Filter, ShieldCheck, X } from 'lucide-react';
 import { getNodeEthosAdvice, getNetworkRPCResearch } from '../services/gemini';
+import { useContext } from 'react';
+import { AppContext } from '../context';
 
 interface NodeConfig {
   id: string;
@@ -30,6 +32,7 @@ const SOVEREIGN_BUNDLES = [
 ];
 
 const NodeSettings: React.FC = () => {
+  const appContext = useContext(AppContext);
   const [nodes, setNodes] = useState<NodeConfig[]>(DEFAULT_RPC_CATALOG);
   const [ethosAdvice, setEthosAdvice] = useState<string | null>(null);
   const [researchData, setResearchData] = useState<string | null>(null);
@@ -42,6 +45,7 @@ const NodeSettings: React.FC = () => {
 
   // Form State
   const [newNode, setNewNode] = useState({ layer: 'Bitcoin L1', endpoint: '', provider: '' });
+  const [lnBackend, setLnBackend] = useState({ type: 'None', endpoint: '', apiKey: '' });
 
   const fetchEthos = async (path: string) => {
     setIsLoadingEthos(true);
@@ -114,7 +118,7 @@ const NodeSettings: React.FC = () => {
                  </button>
               </div>
            </div>
-           <button onClick={() => setIsAddingNode(true)} className="bg-orange-600 hover:bg-orange-500 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-orange-600/20 active:scale-95">
+           <button onClick={() => setIsAddingNode(true)} className="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl shadow-amber-600/20 active:scale-95">
               <Plus size={18} /> Add Custom RPC
            </button>
         </div>
@@ -153,7 +157,7 @@ const NodeSettings: React.FC = () => {
                      </div>
                      <div className="flex items-center gap-4">
                         {!node.isDefault && (
-                          <button onClick={() => removeNode(node.id)} className="opacity-0 group-hover:opacity-100 p-2 text-zinc-700 hover:text-red-500 transition-all">
+                          <button type="button" onClick={() => removeNode(node.id)} className="opacity-0 group-hover:opacity-100 p-2 text-zinc-700 hover:text-red-500 transition-all" aria-label="Remove Node" title="Remove Node">
                              <X size={16} />
                           </button>
                         )}
@@ -207,6 +211,34 @@ const NodeSettings: React.FC = () => {
                    )}
                 </div>
              </div>
+          </div>
+          
+          {/* Lightning Backend */}
+          <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] p-6 space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+              <Zap size={14} /> Lightning Backend
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-[10px] font-black uppercase text-zinc-600">Type</label>
+                <select value={lnBackend.type} onChange={(e) => setLnBackend(prev => ({ ...prev, type: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" aria-label="Lightning Backend Type" title="Lightning Backend Type">
+                  <option>None</option>
+                  <option>LND REST</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase text-zinc-600">Endpoint</label>
+                <input value={lnBackend.endpoint} onChange={(e) => setLnBackend(prev => ({ ...prev, endpoint: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" aria-label="Lightning Endpoint" title="Lightning Endpoint" placeholder="https://host:port" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase text-zinc-600">API Key</label>
+                <input value={lnBackend.apiKey} onChange={(e) => setLnBackend(prev => ({ ...prev, apiKey: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" aria-label="Lightning API Key" title="Lightning API Key" placeholder="Macaroon hex or token" />
+              </div>
+            </div>
+            <div className="text-[10px] text-zinc-500">Configure your Lightning node or SDK. Not configured disables LN payments.</div>
+            <div className="flex justify-end">
+              <button type="button" onClick={() => appContext?.setLnBackend({ type: (lnBackend.type.includes('LND') ? 'LND' : 'None'), endpoint: lnBackend.endpoint, apiKey: lnBackend.apiKey })} className="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest" aria-label="Save Lightning Config" title="Save Lightning Config">Save Lightning Config</button>
+            </div>
           </div>
         </div>
 
@@ -266,7 +298,7 @@ const NodeSettings: React.FC = () => {
       {isAddingNode && (
          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
             <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[3rem] p-10 space-y-8 relative shadow-2xl">
-               <button onClick={() => setIsAddingNode(false)} className="absolute top-8 right-8 text-zinc-700 hover:text-zinc-300 transition-colors">
+               <button type="button" onClick={() => setIsAddingNode(false)} className="absolute top-8 right-8 text-zinc-700 hover:text-zinc-300 transition-colors" aria-label="Close Modal" title="Close Modal">
                   <X size={24} />
                </button>
                <div className="text-center space-y-2">
@@ -281,6 +313,8 @@ const NodeSettings: React.FC = () => {
                         value={newNode.layer}
                         onChange={e => setNewNode({ ...newNode, layer: e.target.value })}
                         className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 px-5 text-zinc-200 focus:outline-none"
+                        aria-label="Protocol Layer"
+                        title="Protocol Layer"
                      >
                         <option>Bitcoin L1</option>
                         <option>Stacks L2</option>

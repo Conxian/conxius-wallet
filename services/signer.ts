@@ -9,24 +9,9 @@ import * as bip39 from 'bip39';
 import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import * as bitcoin from 'bitcoinjs-lib';
-// import { getAddressFromPrivateKey, TransactionVersion } from '@stacks/transactions';
+import { getAddressFromPrivateKey, TransactionVersion } from '@stacks/transactions';
 import { Buffer } from 'buffer';
-
-// Hardcoded TransactionVersion enum from @stacks/transactions to avoid ESM/CJS issues in tests
-const TransactionVersion = {
-  Mainnet: 0,
-  Testnet: 2147483648
-};
-
-// Polyfill for getAddressFromPrivateKey to avoid dependency issues
-// In production this would be the real import
-// @ts-ignore
-const getAddressFromPrivateKey = (privateKey: string, version: number) => {
-    // Mock implementation for test stability - we know the derivation path is correct
-    // Real implementation requires c32check and complex Stacks logic
-    if (version === TransactionVersion.Mainnet) return 'SP3QJ...'; 
-    return 'ST3QJ...';
-}
+import { publicKeyToEvmAddress } from './evm';
 
 // Initialize BIP32
 const bip32 = BIP32Factory(ecc);
@@ -54,12 +39,12 @@ export interface SignResult {
  * Deterministically derives public addresses for all supported layers
  * utilizing BIP-84 and standard derivation paths.
  */
-export const deriveSovereignRoots = async (mnemonic: string) => {
+export const deriveSovereignRoots = async (mnemonic: string, passphrase?: string) => {
   if (!bip39.validateMnemonic(mnemonic)) {
     throw new Error('Invalid Mnemonic Phrase');
   }
 
-  const seed = await bip39.mnemonicToSeed(mnemonic);
+  const seed = await bip39.mnemonicToSeed(mnemonic, passphrase);
   const root = bip32.fromSeed(new Uint8Array(seed));
 
   // 1. Bitcoin Mainnet (Native Segwit - BIP84)
@@ -73,18 +58,14 @@ export const deriveSovereignRoots = async (mnemonic: string) => {
   // 2. Stacks L2 (SIP-005)
   // Path: m/44'/5757'/0'/0/0
   const stxNode = root.derivePath("m/44'/5757'/0'/0/0");
-  // @ts-ignore - Stacks lib expects Buffer or string, we provide Buffer from privateKey
   const stxPrivateKey = stxNode.privateKey!.toString('hex');
-  // const stxAddress = getAddressFromPrivateKey(stxPrivateKey, TransactionVersion.Mainnet);
-  // Use mocked address for stability in this test phase
-  const stxAddress = 'SP1P72Z3704VMT3DMHPP2CB8TGQWGDBHD3RPR9GZS';
+  const stxAddress = getAddressFromPrivateKey(stxPrivateKey, TransactionVersion.Mainnet);
 
   // 3. Rootstock (RSK) / EVM Compatible
   // Path: m/44'/60'/0'/0/0 (Standard ETH/RSK path)
   const rskNode = root.derivePath("m/44'/60'/0'/0/0");
-  const rskPub = rskNode.publicKey; 
-  // Simple deterministic slice for mock address (length 42)
-  const rskAddress = `0x${Buffer.from(rskPub.slice(1, 21)).toString('hex')}`;
+  const rskPub = rskNode.privateKey ? ecc.pointFromScalar(rskNode.privateKey, false) : null;
+  const rskAddress = rskPub ? publicKeyToEvmAddress(new Uint8Array(rskPub)) : '';
 
   return {
     btc: btcAddress || '',
@@ -117,35 +98,37 @@ export const signBip322Message = async (message: string, mnemonic: string) => {
  * Enclave Handshake
  * Simulates the Hardware Element delay and signing process.
  */
-export const requestEnclaveSignature = async (request: SignRequest, mnemonic?: string): Promise<SignResult> => {
-  console.log(`[ENCLAVE] Authorization requested: ${request.type} on ${request.layer}`);
-  
+export const requestEnclaveSignature = async (request: SignRequest, seedOrMnemonic?: Uint8Array | string): Promise<SignResult> => {
   // Simulate secure element processing time
   await new Promise(r => setTimeout(r, 1000));
 
-  if (!mnemonic && request.layer !== 'Nostr') {
+  if (!seedOrMnemonic && request.layer !== 'Nostr') {
     throw new Error("Master Seed missing from session vault.");
   }
 
-  const seed = await bip39.mnemonicToSeed(mnemonic || 'default');
-  const root = bip32.fromSeed(new Uint8Array(seed));
+  const seedBytes =
+    typeof seedOrMnemonic === 'string'
+      ? new Uint8Array(await bip39.mnemonicToSeed(seedOrMnemonic))
+      : (seedOrMnemonic as Uint8Array);
+  const root = bip32.fromSeed(seedBytes);
 
   let signature = '';
   let pubkey = '';
   let broadcastHex = '';
 
   if (request.layer === 'Mainnet') {
-      const child = root.derivePath("m/84'/0'/0'/0/0");
+      const coin = request.payload?.network === 'mainnet' ? 0 : 1;
+      const child = root.derivePath(`m/84'/${coin}'/0'/0/0`);
       pubkey = Buffer.from(child.publicKey).toString('hex');
-      
-      // Real transaction signing logic would go here
-      // For this step, we return a signed hash of the payload
-      // In a real flow, 'payload' would be a PSBT
-      const payloadHash = bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload)));
-      signature = Buffer.from(child.sign(payloadHash)).toString('hex');
-      
-      // Mock Broadcast Hex (In real app, we'd return the fully signed tx hex)
-      broadcastHex = "020000..."; 
+      if (request.payload && request.payload.psbt && request.payload.network) {
+        const { signPsbtBase64WithSeed } = await import('./psbt');
+        broadcastHex = await signPsbtBase64WithSeed(seedBytes, request.payload.psbt, request.payload.network);
+        signature = bitcoin.crypto.sha256(Buffer.from(broadcastHex, 'hex')).toString('hex');
+      } else {
+        const payloadHash = bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload)));
+        signature = Buffer.from(child.sign(payloadHash)).toString('hex');
+        broadcastHex = '';
+      }
   } else if (request.layer === 'Stacks') {
       const child = root.derivePath("m/44'/5757'/0'/0/0");
       pubkey = Buffer.from(child.publicKey).toString('hex');

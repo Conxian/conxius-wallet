@@ -1,6 +1,13 @@
 
 export type BitcoinLayer = 'Mainnet' | 'Stacks' | 'Rootstock' | 'Lightning' | 'Liquid' | 'Runes' | 'Ordinals';
 export type AppMode = 'sovereign' | 'simulation';
+export type Network = 'mainnet' | 'testnet' | 'regtest' | 'devnet';
+export type LnBackendType = 'None' | 'LDK' | 'CLN' | 'LND';
+export interface LnBackendConfig {
+  type: LnBackendType;
+  endpoint?: string;
+  apiKey?: string;
+}
 
 export interface Asset {
   id: string;
@@ -48,7 +55,7 @@ export interface Signer {
 
 export interface WalletConfig {
   type: 'single' | 'multisig' | 'hot';
-  mnemonic?: string;
+  seedVault?: string;
   quorum?: { m: number; n: number };
   signers?: Signer[];
   masterAddress?: string;
@@ -126,6 +133,7 @@ export interface Citadel {
 export interface AppState {
   version: string;
   mode: AppMode;
+  network: Network;
   privacyMode: boolean;
   nodeSyncProgress: number;
   integratorFeesAccumulated: number;
@@ -144,6 +152,12 @@ export interface AppState {
     minAskPrice: number;
     totalEarned: number;
   };
+  lnBackend?: LnBackendConfig;
+  security?: {
+    autoLockMinutes: number;
+    duressPin?: string;
+    biometricUnlock?: boolean;
+  }
 }
 
 export interface DIDProfile {

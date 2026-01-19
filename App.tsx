@@ -32,11 +32,17 @@ import SystemDiagnostics from './components/SystemDiagnostics';
 import LockScreen from './components/LockScreen';
 import ToastContainer, { ToastMessage, ToastType } from './components/Toast';
 import { Shield, Loader2, Zap, FlaskConical, ShieldCheck, Lock, Terminal, Cpu, CheckCircle2, RotateCcw, Database } from 'lucide-react';
-import { AppState, WalletConfig, Asset, Bounty, AppMode } from './types';
+import './styles/progress.css';
+import { AppState, WalletConfig, Asset, Bounty, AppMode, Network, LnBackendConfig } from './types';
 import { AppContext } from './context';
 import { MOCK_ASSETS } from './constants';
 import { Language, getTranslation } from './services/i18n';
 import { encryptState, decryptState } from './services/storage';
+import { encryptSeed } from './services/seed';
+import * as bip39 from 'bip39';
+import { decryptSeed } from './services/seed';
+import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
+import { getEnclaveBlob, removeEnclaveBlob, setEnclaveBlob } from './services/enclave-storage';
 
 const STORAGE_KEY = 'conxius_enclave_v3_encrypted';
 
@@ -48,7 +54,8 @@ const INITIAL_BOUNTIES: Bounty[] = [
 
 const DEFAULT_STATE: AppState & { language: Language } = {
   version: '1.3.0',
-  mode: 'simulation',
+  mode: 'sovereign',
+  network: 'mainnet',
   language: 'en',
   privacyMode: false,
   nodeSyncProgress: 100,
@@ -66,6 +73,9 @@ const DEFAULT_STATE: AppState & { language: Language } = {
     aiCapBoostActive: false,
     minAskPrice: 50,
     totalEarned: 0
+  },
+  security: {
+    autoLockMinutes: 5
   }
 };
 
@@ -81,18 +91,37 @@ const App: React.FC = () => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const currentPinRef = useRef<string | null>(null);
 
+  // Auto-lock timer
+  useEffect(() => {
+    let timer: any;
+    const resetTimer = () => {
+      if (timer) clearTimeout(timer);
+      const minutes = state.security?.autoLockMinutes ?? 5;
+      timer = setTimeout(() => {
+        setIsLocked(true);
+      }, minutes * 60 * 1000);
+    };
+    ['mousemove','mousedown','keypress','touchstart'].forEach(evt => window.addEventListener(evt, resetTimer));
+    resetTimer();
+    return () => {
+      ['mousemove','mousedown','keypress','touchstart'].forEach(evt => window.removeEventListener(evt, resetTimer));
+      if (timer) clearTimeout(timer);
+    };
+  }, [state.security?.autoLockMinutes]);
+
   // Persistence Logic
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      setIsLocked(true); // Enclave found, lock immediately
-    }
+    getEnclaveBlob(STORAGE_KEY).then(saved => {
+      if (saved) {
+        setIsLocked(true);
+      }
+    });
   }, []);
 
   const persistState = async (newState: any, pin: string) => {
     try {
       const encrypted = await encryptState(newState, pin);
-      localStorage.setItem(STORAGE_KEY, encrypted);
+      await setEnclaveBlob(STORAGE_KEY, encrypted);
     } catch (e) {
       notify('error', 'Encryption Failed: State not saved');
     }
@@ -147,10 +176,29 @@ const App: React.FC = () => {
 
   const handleUnlock = async (pin: string) => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = await getEnclaveBlob(STORAGE_KEY);
       if (!saved) return;
+      if (state.security?.duressPin && pin === state.security.duressPin) {
+        setState({ ...DEFAULT_STATE, assets: [], walletConfig: undefined });
+        currentPinRef.current = null;
+        setIsLocked(false);
+        setLockError(false);
+        notify('warning', 'Duress mode activated');
+        return;
+      }
       const decryptedState = await decryptState(saved, pin);
-      setState({ ...DEFAULT_STATE, ...decryptedState });
+      const nextState: any = { ...DEFAULT_STATE, ...decryptedState };
+      if (nextState.walletConfig) {
+        const walletConfig: any = { ...nextState.walletConfig };
+        if (!walletConfig.seedVault && typeof walletConfig.mnemonic === 'string') {
+          const seedBytes = await bip39.mnemonicToSeed(walletConfig.mnemonic, walletConfig.passphrase || undefined);
+          walletConfig.seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
+        }
+        delete walletConfig.mnemonic;
+        delete walletConfig.passphrase;
+        nextState.walletConfig = walletConfig;
+      }
+      setState(nextState);
       currentPinRef.current = pin;
       setIsLocked(false);
       setLockError(false);
@@ -167,17 +215,40 @@ const App: React.FC = () => {
   const updateFees = (val: number) => setState(prev => ({ ...prev, integratorFeesAccumulated: prev.integratorFeesAccumulated + val }));
   const updateAssets = (assets: Asset[]) => setState(prev => ({ ...prev, assets }));
   const setLanguage = (language: Language) => setState(prev => ({ ...prev, language }));
+  const setNetwork = (network: Network) => setState(prev => ({ ...prev, network }));
+  const setMode = (mode: AppMode) => setState(prev => ({ 
+    ...prev, 
+    mode,
+    assets: mode === 'simulation' ? MOCK_ASSETS : []
+  }));
+  const setLnBackend = (cfg: LnBackendConfig) => setState(prev => ({ ...prev, lnBackend: cfg }));
+  const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } }));
   const lockWallet = () => {
      currentPinRef.current = null;
      setIsLocked(true);
   };
+
+  const authorizeSignature = async (request: SignRequest): Promise<SignResult> => {
+    const pin = currentPinRef.current;
+    const seedVault = state.walletConfig?.seedVault;
+    if (!pin || !seedVault) {
+      throw new Error('Master Seed missing from session vault.');
+    }
+    const seed = await decryptSeed(seedVault, pin);
+    try {
+      return await requestEnclaveSignature(request, seed);
+    } finally {
+      seed.fill(0);
+    }
+  };
   
-  const setWalletConfig = (config: WalletConfig & { mode: AppMode }, pin?: string) => {
-     const initialAssets = config.mode === 'sovereign' ? [] : MOCK_ASSETS;
+  const setWalletConfig = (config: WalletConfig & { mode?: AppMode }, pin?: string) => {
+     const effectiveMode: AppMode = config.mode ?? 'sovereign';
+     const initialAssets = effectiveMode === 'sovereign' ? [] : MOCK_ASSETS;
      if (pin) currentPinRef.current = pin;
      setState(prev => ({ 
         ...prev, 
-        mode: config.mode,
+        mode: effectiveMode,
         walletConfig: config,
         assets: initialAssets,
      }));
@@ -190,7 +261,7 @@ const App: React.FC = () => {
 
   const resetEnclave = () => {
     if (confirm("Purge Enclave? Terminal state wipe.")) {
-      localStorage.removeItem(STORAGE_KEY);
+      removeEnclaveBlob(STORAGE_KEY);
       window.location.reload();
     }
   };
@@ -241,10 +312,11 @@ const App: React.FC = () => {
               Conxius<span className="text-orange-500">Labs</span>
            </h1>
            <div className="h-1 w-full bg-zinc-900 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-orange-500 transition-all duration-500" 
-                style={{ width: `${((bootStep + 1) / BOOT_SEQUENCE.length) * 100}%` }} 
-              />
+              {(() => {
+                const pct = Math.round(((bootStep + 1) / BOOT_SEQUENCE.length) * 100);
+                const quant = Math.min(100, Math.max(0, Math.round(pct / 5) * 5));
+                return <div className={`h-full bg-orange-500 transition-all duration-500 progress-${quant}`} />;
+              })()}
            </div>
            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest animate-pulse">
               {BOOT_SEQUENCE[bootStep].text}
@@ -256,19 +328,19 @@ const App: React.FC = () => {
 
   // Lock Screen Intercept
   if (isLocked) {
-    return <LockScreen onUnlock={handleUnlock} isError={lockError} />;
+    return <LockScreen onUnlock={handleUnlock} isError={lockError} requireBiometric={state.security?.biometricUnlock ?? false} />;
   }
 
   if (!state.walletConfig) {
     return (
-      <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, lockWallet }}>
+      <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity }}>
         <Onboarding onComplete={(config, pin) => { if (config) setWalletConfig(config as any, pin); }} />
       </AppContext.Provider>
     );
   }
 
   return (
-    <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, lockWallet }}>
+    <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity }}>
       <div className={`flex bg-zinc-950 text-zinc-100 min-h-screen selection:bg-orange-500/30 overflow-hidden`}>
         <div className="hidden md:block">
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -280,8 +352,8 @@ const App: React.FC = () => {
                  state.isMainnetLive 
                    ? 'bg-zinc-100 text-zinc-950 border-zinc-100' 
                    : state.mode === 'sovereign'
-                     ? 'bg-green-500/10 text-green-500 border-green-500/20'
-                     : 'bg-orange-500/10 text-orange-500 border-orange-500/20'
+                    ? 'bg-green-600/10 text-green-600 border-green-600/20'
+                    : 'bg-amber-600/10 text-amber-600 border-amber-600/20'
                }`}>
                  {state.isMainnetLive ? t('status.stable') : state.mode === 'sovereign' ? t('status.sovereign') : t('status.simulation')}
                </span>
@@ -289,13 +361,18 @@ const App: React.FC = () => {
             <div className="flex items-center gap-4">
                <div className="text-right">
                   <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Sovereignty</p>
-                  <p className="text-xs font-mono font-bold text-orange-500">{state.sovereigntyScore}/100</p>
+                  <p className="text-xs font-mono font-bold text-amber-600">{state.sovereigntyScore}/100</p>
                </div>
-               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-orange-600 to-yellow-500 cursor-pointer hover:scale-105 transition-transform" onClick={lockWallet} title="Lock Enclave">
+               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-green-600 to-amber-600 cursor-pointer hover:scale-105 transition-transform" onClick={lockWallet} title="Lock Enclave">
                   <Lock size={14} className="text-white mx-auto mt-2" />
                </div>
             </div>
           </div>
+          {state.network !== 'mainnet' && (
+            <div className="px-6 md:px-8 py-2 bg-amber-600/10 border-b border-amber-600/30 text-amber-600 text-[10px] font-black uppercase tracking-widest sticky top-16 z-40">
+              Warning: Non-Mainnet Environment • {state.network.toUpperCase()}
+            </div>
+          )}
           <div className="max-w-7xl mx-auto">
             {renderContent()}
           </div>
