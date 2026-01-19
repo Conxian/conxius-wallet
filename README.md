@@ -49,3 +49,9 @@ Mobile-first sovereign wallet with a hardened local enclave model.
 ## Roadmap
 
 - See [ROADMAP.md](ROADMAP.md)
+
+## Project Docs
+
+- [WHITEPAPER.md](WHITEPAPER.md)
+- [PRD.md](PRD.md)
+- [CHANGELOG.md](CHANGELOG.md)
