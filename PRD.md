@@ -1,121 +1,100 @@
 # Conxius Wallet PRD (Android-First)
 
-## 1. Summary
+## 1. Product Overview
 
-Conxius is a mobile-first wallet for Bitcoin L1 and Bitcoin-adjacent layers with an Android-secured local vault model and an explicit roadmap toward interlayer execution (Wormhole/NTT). This PRD defines user journeys, requirements, and acceptance criteria aligned with implementation-grade standards.
+Conxius is a sovereign, offline-first Android wallet that bridges the Bitcoin ecosystem (L1, Lightning, Stacks, Rootstock) with interlayer execution capabilities (Wormhole/NTT).
 
-## 2. Target Users
+The primary differentiator is the "Enclave Model": keys are generated and used within a hardened boundary (Android Keystore + memory-only seed handling) and never leave the device.
 
-- **Bitcoin-native user**: wants simple receive/send with reliable confirmations and strong local security.
-- **Power user / operator**: uses their own nodes, wants explicit network control, and accepts advanced configuration.
-- **Interlayer user**: wants to move assets across domains with recoverable, verifiable workflows.
+## 2. User Personas
 
-## 3. Core Journeys
+- **The Sovereign Hodler**: Wants deep cold storage security on a mobile device. Uses Conxius as a daily driver for small-to-medium amounts, trusting the Android TEE.
+- **The Interlayer Explorer**: Moves assets between Bitcoin L1 and rollups/sidechains. Needs a reliable bridge client that verifies attestations locally.
+- **The Node Operator**: Connects to their own LND/Core node for privacy.
 
-### J1 — First Run (No Wallet Exists)
+## 3. User Journeys
 
-1. App starts and checks if an encrypted wallet exists.
-2. If none exists, onboarding offers create/import.
-3. User sets PIN and (optionally) enables biometric/device-credential gate.
-4. Wallet created and state persisted.
+### 3.1. Onboarding (New Wallet)
+- **Trigger**: First launch.
+- **Flow**:
+  1. Splash screen (Boot sequence).
+  2. "Create Wallet" vs "Import Wallet".
+  3. PIN creation (6+ digits).
+  4. Seed generation (BIP-39).
+  5. **Critical**: User must verify backup (e.g., select words 3, 7, 12).
+  6. Biometric enrollment (optional but encouraged).
+  7. Dashboard loads.
 
-**Acceptance Criteria**
+### 3.2. Daily Spend (BTC L1)
+- **Trigger**: User wants to send BTC.
+- **Flow**:
+  1. Scan QR or paste address.
+  2. Enter amount (Fiat/BTC toggle).
+  3. Review fee (Low/Med/High).
+  4. "Slide to Pay".
+  5. Auth challenge (Biometric/PIN).
+  6. Success screen (TxID + Explorer link).
+  7. Notification when confirmed.
 
-- No onboarding shown when a wallet exists.
-- PIN must meet minimum length rules.
-- No mnemonic/passphrase persisted at rest in plaintext.
+### 3.3. Lightning Payment
+- **Trigger**: User scans LNURL/BOLT11.
+- **Flow**:
+  1. App parses intent (Pay/Withdraw).
+  2. Shows amount/description.
+  3. Confirm payment.
+  4. Background execution via LND REST.
+  5. Instant settlement toast.
 
-### J2 — Resume Existing Wallet
+### 3.4. Bridge Execution (Wormhole)
+- **Trigger**: User wants to move BTC -> Wrapped Asset.
+- **Flow**:
+  1. Select Source (BTC) and Dest (e.g., Ethereum/Solana).
+  2. "Lock" transaction on BTC.
+  3. App polls for VAA (Guardian attestation).
+  4. App prompts "Redeem" transaction on Dest chain.
+  5. Completion receipt.
 
-1. App detects encrypted wallet exists.
-2. User sees lock screen.
-3. If biometric gate enabled, user must pass device auth before unlock.
-4. User enters PIN to decrypt state.
+### 3.5. Emergency Wipe
+- **Trigger**: Duress or lost PIN.
+- **Flow**:
+  1. From Lock Screen: "Forgot PIN?" -> "Reset Wallet".
+  2. Warning: "This will delete all keys. Ensure you have your backup."
+  3. Confirm wipe.
+  4. App reboots to onboarding state.
 
-**Acceptance Criteria**
+## 4. Functional Requirements
 
-- Unlock requires device auth when enabled.
-- Wrong PIN yields generic failure (no oracle).
-- After successful unlock, signing uses session-only seed bytes and wipes memory after use.
+### 4.1. Key Management
+- **FR-KEY-01**: Seed must be encrypted at rest using Android Keystore AES-GCM.
+- **FR-KEY-02**: Decrypted seed must reside in memory only during signing operations and be zeroed immediately after.
+- **FR-KEY-03**: Biometric authentication (when enabled) must be required to decrypt the master seed.
 
-### J3 — Emergency Wipe / Create New Wallet
+### 4.2. Transactions
+- **FR-TX-01**: Must support BIP-84 (Native Segwit) derivation.
+- **FR-TX-02**: Must parse and validate BIP-21 URIs.
+- **FR-TX-03**: Must prevent dust outputs during coin selection.
 
-1. From lock screen, user chooses “Create New Wallet”.
-2. App confirms destructive action.
-3. Vault is wiped; onboarding starts.
-
-**Acceptance Criteria**
-
-- Wipe requires explicit confirmation.
-- After wipe, vault no longer exists and app behaves as first run.
-
-### J4 — Send Bitcoin (L1)
-
-1. User enters recipient and amount.
-2. App builds PSBT from available UTXOs.
-3. User authorizes signing; tx broadcasts.
-4. App tracks confirmation state.
-
-**Acceptance Criteria**
-
-- PSBT validates script types; unsupported scripts fail with a clear error.
-- Pending txs persist across restarts.
-- Confirmation state updates deterministically.
-
-### J5 — Lightning (LND Backend)
-
-1. User configures an LND REST endpoint and scoped macaroon.
-2. User pays invoice / LNURL pay and receives explicit result.
-
-**Acceptance Criteria**
-
-- Macaroons treated as secrets: stored only in secure vault, never logged.
-- LNURL parsing is strict; user must confirm outbound requests.
-
-### J6 — Bridge / Interlayer Execution (Wormhole/NTT)
-
-1. User initiates a transfer.
-2. App creates and signs source tx.
-3. App retrieves and verifies attestation/VAA.
-4. App creates and signs redemption tx.
-
-**Acceptance Criteria**
-
-- State machine with recoverability at each phase.
-- Provider redundancy and verification (no single-source attestation).
-
-## 4. Functional Requirements (MVP + Next)
-
-- **Vault**: encrypted state storage, migration, lock/unlock, wipe.
-- **Security controls**: auto-lock policy, duress PIN, biometric gate.
-- **BTC L1**: address derivation, UTXO tracking, PSBT creation, signing, broadcast, history.
-- **Lightning**: invoice decode, LNURL pay/withdraw support, LND backend integration (scoped).
-- **Interlayer**: tracking now; execution milestones defined in roadmap.
-- **Notifications**: local notifications for tx and security events.
+### 4.3. Connectivity
+- **FR-NET-01**: All external API calls must be user-auditable (list of endpoints).
+- **FR-NET-02**: Support for user-provided LND REST endpoint + macaroon.
 
 ## 5. Non-Functional Requirements
 
-### Security
+### 5.1. Security
+- **NFR-SEC-01**: No sensitive data in logs (seed, private keys, macaroons).
+- **NFR-SEC-02**: App preview in "Recents" must be obscured (FLAG_SECURE).
+- **NFR-SEC-03**: Root detection warning on startup.
 
-- No secrets in logs, analytics, crash reports, or notifications.
-- Clear threat model and trust boundaries maintained in WHITEPAPER.
-- Credentials classification: seed, vault, macaroons treated as highest sensitivity.
+### 5.2. Reliability
+- **NFR-REL-01**: App must work offline (view cached state).
+- **NFR-REL-02**: Bridge state must persist across app restarts (don't lose an in-flight transfer).
 
-### Reliability
+### 5.3. Performance
+- **NFR-PERF-01**: Cold launch to Lock Screen < 1s.
+- **NFR-PERF-02**: Unlock to Dashboard < 2s.
 
-- Offline-safe UI styling and stable startup path.
-- Clear retry/backoff strategy for network calls.
-- Data providers are pluggable for indexers/bridge APIs.
+## 6. Release Strategy
 
-### Performance
-
-- Fast startup budget with skeleton loading.
-- Bundle size targets and code-splitting where practical.
-
-## 6. Observability and Advisories
-
-- Provide user-facing advisories for:\n  - insecure node endpoints\n  - missing backups\n  - biometric session expired\n  - pending txs requiring attention\n+- Internal events drive both toasts and notifications.\n+
-
-## 7. Release Policy
-
-- Semantic Versioning and Keep a Changelog.\n- Each release documents migrations and security-relevant changes.\n+
+- **Alpha (Internal)**: Debug builds, mock assets.
+- **Beta (Testnet)**: Public testnet builds, real crypto disabled or testnet-only.
+- **Production**: Mainnet enabled, strict security review, APK signing with release keys.
