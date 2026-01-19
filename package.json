@@ -12,6 +12,10 @@
   "dependencies": {
     "@capacitor/android": "^5.7.8",
     "@capacitor/core": "^5.7.8",
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.0",
+    "bech32": "^2.0.0",
+    "light-bolt11-decoder": "^3.0.0",
     "@google/genai": "*",
     "@stacks/auth": "^7.3.1",
     "@stacks/common": "^7.3.1",
@@ -29,6 +33,7 @@
     "react-dom": "^18.2.0",
     "recharts": "^2.12.2",
     "tiny-secp256k1": "^2.2.4",
+    "qrcode": "^1.5.3",
     "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.5.0"
   },

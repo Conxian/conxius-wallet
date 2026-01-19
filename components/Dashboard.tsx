@@ -1,14 +1,17 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import { LAYER_COLORS } from '../constants';
-import { Asset, BitcoinLayer } from '../types';
+import { Asset, BitcoinLayer, UTXO } from '../types';
 import { TrendingUp, ArrowUpRight, ArrowRight, Search, Bot, Loader2, Zap, Layers, Activity, Sparkles, Shield, Send, Plus, Network, ShieldCheck, EyeOff, Users, FileSignature, CheckCircle2, X, Binary, Castle, Palette, ShoppingBag, Hammer, Award, RefreshCw, Import, Wallet, QrCode, Copy, ExternalLink, AlertTriangle, Key } from 'lucide-react';
-import { fetchBtcBalance, fetchStacksBalances, fetchBtcPrice, fetchStxPrice, fetchLiquidBalance, fetchRskBalance, broadcastBtcTx, fetchRunesBalances } from '../services/protocol';
-import { requestEnclaveSignature } from '../services/signer';
+import { fetchBtcBalance, fetchStacksBalances, fetchBtcPrice, fetchStxPrice, fetchLiquidBalance, fetchRskBalance, broadcastBtcTx, fetchRunesBalances, fetchBtcUtxos } from '../services/protocol';
+import { SignRequest } from '../services/signer';
+import { getRecommendedFees } from '../services/fees';
+import { buildPsbt } from '../services/psbt';
 import AssetDetailModal from './AssetDetailModal';
 import SovereigntyMeter from './SovereigntyMeter';
 import { AppContext } from '../context';
 import { getTranslation } from '../services/i18n';
+import QRCode from 'qrcode';
 
 const Dashboard: React.FC = () => {
   const appContext = useContext(AppContext);
@@ -22,6 +25,12 @@ const Dashboard: React.FC = () => {
   const [sendStep, setSendStep] = useState<'form' | 'sign' | 'broadcast'>('form');
   const [sendAddress, setSendAddress] = useState('');
   const [sendAmount, setSendAmount] = useState('');
+  const [feeRate, setFeeRate] = useState<number>(8);
+  const [feesRec, setFeesRec] = useState<{ fastestFee?: number; halfHourFee?: number; hourFee?: number }>({});
+  const [availableUtxos, setAvailableUtxos] = useState<UTXO[]>([]);
+  const [selectedUtxos, setSelectedUtxos] = useState<string[]>([]);
+  const [psbtBase64, setPsbtBase64] = useState<string>('');
+  const [rbfEnabled, setRbfEnabled] = useState<boolean>(true);
   const [signedHex, setSignedHex] = useState('');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastResult, setBroadcastResult] = useState<string | null>(null);
@@ -29,7 +38,7 @@ const Dashboard: React.FC = () => {
   const [receiveLayer, setReceiveLayer] = useState<BitcoinLayer>('Mainnet');
 
   if (!appContext) return null;
-  const { mode, assets, privacyMode, walletConfig, language } = appContext.state;
+  const { mode, network, assets, privacyMode, walletConfig, language } = appContext.state;
   const btcAddress = walletConfig?.masterAddress || '';
   const stxAddress = walletConfig?.stacksAddress || '';
 
@@ -41,10 +50,10 @@ const Dashboard: React.FC = () => {
     try {
         const btcPrice = await fetchBtcPrice();
         const results = await Promise.all([
-            fetchBtcBalance(btcAddress),
-            fetchStacksBalances(stxAddress),
-            fetchLiquidBalance(btcAddress),
-            fetchRskBalance(btcAddress),
+            fetchBtcBalance(btcAddress, network),
+            fetchStacksBalances(stxAddress, network),
+            fetchLiquidBalance(btcAddress, network),
+            fetchRskBalance(btcAddress, network),
             fetchRunesBalances(btcAddress)
         ]);
 
@@ -70,6 +79,14 @@ const Dashboard: React.FC = () => {
     if (mode === 'sovereign' && btcAddress && assets.length === 0) syncAllLayers();
   }, [btcAddress]);
 
+  useEffect(() => {
+    if (btcAddress) {
+      fetchBtcUtxos(btcAddress, network).then(setAvailableUtxos);
+      const base = network === 'mainnet' ? 'https://mempool.space' : network === 'testnet' ? 'https://mempool.space/testnet' : 'https://mempool.space/signet';
+      getRecommendedFees(base).then(setFeesRec);
+    }
+  }, [btcAddress, network]);
+
   const totalBalance = assets.reduce((acc, curr) => acc + curr.valueUsd, 0);
 
   // BIP-21 URI Generation
@@ -77,6 +94,26 @@ const Dashboard: React.FC = () => {
      if (receiveLayer === 'Mainnet') return `bitcoin:${btcAddress}?label=Conxius`;
      if (receiveLayer === 'Stacks') return `stacks:${stxAddress}`;
      return btcAddress;
+  };
+
+  const [qrSrc, setQrSrc] = useState<string>('');
+  const [qrError, setQrError] = useState<boolean>(false);
+
+  useEffect(() => {
+    const data = getBip21Uri();
+    const external = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(data)}`;
+    setQrSrc(external);
+    setQrError(false);
+  }, [receiveLayer, btcAddress, stxAddress]);
+
+  const handleQrError = async () => {
+    try {
+      const dataUrl = await QRCode.toDataURL(getBip21Uri(), { width: 240, margin: 1 });
+      setQrSrc(dataUrl);
+      setQrError(false);
+    } catch (e) {
+      setQrError(true);
+    }
   };
 
   return (
@@ -95,7 +132,7 @@ const Dashboard: React.FC = () => {
                <span className="text-[9px] font-mono text-zinc-600 font-bold uppercase tracking-widest">BIP-84 • SIP-010 • PSBT Ready</span>
             </div>
          </div>
-         <button onClick={syncAllLayers} aria-label="Refresh Layers" className="p-2 text-zinc-600 hover:text-orange-500 transition-all border border-zinc-900 rounded-lg bg-zinc-900/50">
+         <button type="button" onClick={syncAllLayers} aria-label="Refresh Layers" className="p-2 text-zinc-600 hover:text-orange-500 transition-all border border-zinc-900 rounded-lg bg-zinc-900/50">
             <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
          </button>
       </div>
@@ -117,10 +154,10 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4 w-full md:w-auto">
-             <button onClick={() => { setShowSend(true); setSendStep('form'); }} className="flex-1 md:flex-none bg-orange-600 hover:bg-orange-500 text-white px-8 py-5 rounded-3xl transition-all font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 text-xs uppercase tracking-widest">
+             <button type="button" onClick={() => { setShowSend(true); setSendStep('form'); }} className="flex-1 md:flex-none bg-amber-600 hover:bg-amber-500 text-white px-8 py-5 rounded-3xl transition-all font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 text-xs uppercase tracking-widest">
                <Send size={18} /> {t('action.transmit')}
              </button>
-             <button onClick={() => setShowReceive(true)} className="flex-1 md:flex-none bg-zinc-100 hover:bg-white text-zinc-950 px-8 py-5 rounded-3xl transition-all font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 text-xs uppercase tracking-widest">
+             <button type="button" onClick={() => setShowReceive(true)} className="flex-1 md:flex-none bg-green-600 hover:bg-green-500 text-white px-8 py-5 rounded-3xl transition-all font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 text-xs uppercase tracking-widest">
                <Plus size={18} /> {t('action.ingest')}
              </button>
           </div>
@@ -198,13 +235,68 @@ const Dashboard: React.FC = () => {
                             className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm font-mono text-white focus:outline-none focus:border-orange-500 transition-colors"
                           />
                       </div>
-                      <button 
-                        onClick={() => setSendStep('sign')}
-                        disabled={!sendAddress || !sendAmount}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-zinc-600 ml-4">Fee Rate (sat/vB)</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="number"
+                            value={feeRate}
+                            onChange={(e) => setFeeRate(parseFloat(e.target.value))}
+                            className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-sm font-mono text-white focus:outline-none focus:border-orange-500 transition-colors"
+                            placeholder="sat/vB"
+                            aria-label="Fee Rate (sat/vB)"
+                            title="Fee Rate (sat/vB)"
+                          />
+                          <button type="button" onClick={() => feesRec.fastestFee && setFeeRate(feesRec.fastestFee)} className="px-3 py-2 rounded-xl text-[10px] font-black uppercase bg-amber-600 text-white" aria-label="Set Fast Fee">Fast</button>
+                          <button type="button" onClick={() => feesRec.halfHourFee && setFeeRate(feesRec.halfHourFee)} className="px-3 py-2 rounded-xl text-[10px] font-black uppercase bg-green-600 text-white" aria-label="Set 30 minutes Fee">30m</button>
+                          <button type="button" onClick={() => feesRec.hourFee && setFeeRate(feesRec.hourFee)} className="px-3 py-2 rounded-xl text-[10px] font-black uppercase bg-zinc-800 text-zinc-200" aria-label="Set 1 hour Fee">1h</button>
+                          <button type="button" onClick={() => setRbfEnabled(!rbfEnabled)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase ${rbfEnabled ? 'bg-amber-600 text-white' : 'bg-zinc-800 text-zinc-200'}`} aria-label="Toggle RBF">RBF</button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-zinc-600 ml-4">Coin Selection</label>
+                        <div className="max-h-40 overflow-auto border border-zinc-800 rounded-2xl">
+                          {availableUtxos.map(u => (
+                            <label key={`${u.txid}:${u.vout}`} className="flex items-center justify-between px-4 py-2 text-xs border-b border-zinc-900">
+                              <div className="flex items-center gap-2">
+                                <input type="checkbox" checked={selectedUtxos.includes(`${u.txid}:${u.vout}`)} onChange={(e) => {
+                                  const id = `${u.txid}:${u.vout}`;
+                                  setSelectedUtxos(prev => e.target.checked ? [...prev, id] : prev.filter(x => x !== id));
+                                }} />
+                                <span className="font-mono text-zinc-300">{u.amount} sats</span>
+                              </div>
+                              <span className="text-[9px] text-zinc-600">{u.status}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                          <button type="button"
+                        onClick={() => {
+                          const utxos = availableUtxos.filter(u => selectedUtxos.includes(`${u.txid}:${u.vout}`));
+                          const psbt = buildPsbt({
+                            utxos,
+                            toAddress: sendAddress,
+                            amountSats: parseInt(sendAmount),
+                            changeAddress: btcAddress,
+                            feeRate,
+                            rbf: rbfEnabled,
+                            network
+                          });
+                          setPsbtBase64(psbt);
+                          setSendStep('sign');
+                        }}
+                        disabled={!sendAddress || !sendAmount || selectedUtxos.length === 0}
                         className="w-full bg-white text-black font-black py-4 rounded-2xl uppercase tracking-widest hover:bg-zinc-200 transition-colors disabled:opacity-50"
                       >
                         Construct PSBT
                       </button>
+                      <div className="flex items-center justify-between">
+                        <button type="button" onClick={() => { if (psbtBase64) navigator.clipboard.writeText(psbtBase64); }} className="text-[10px] uppercase font-black text-amber-600">Export PSBT</button>
+                        <button type="button" onClick={() => {
+                          const b = prompt('Paste PSBT base64');
+                          if (b) { setPsbtBase64(b); setSendStep('sign'); }
+                        }} className="text-[10px] uppercase font-black text-green-600">Import PSBT</button>
+                      </div>
                   </div>
               )}
 
@@ -228,13 +320,13 @@ const Dashboard: React.FC = () => {
                         onClick={async () => {
                             setIsSigning(true);
                             try {
-                                const result = await requestEnclaveSignature({
+                                const signReq: SignRequest = {
                                     type: 'transaction',
                                     layer: 'Mainnet',
-                                    payload: { to: sendAddress, amount: parseInt(sendAmount) },
-                                    description: `Send ${sendAmount} sats to ${sendAddress}`
-                                }, walletConfig?.mnemonic); // Pass mnemonic if available in context/config
-                                
+                                    payload: { psbt: psbtBase64, network },
+                                    description: `Sign PSBT`
+                                };
+                                const result = await appContext.authorizeSignature(signReq);
                                 setSignedHex(result.broadcastReadyHex || '');
                                 setSendStep('broadcast');
                             } catch (e) {
@@ -264,7 +356,7 @@ const Dashboard: React.FC = () => {
                         onClick={async () => {
                             setIsBroadcasting(true);
                             try {
-                                const txid = await broadcastBtcTx(signedHex);
+                                const txid = await broadcastBtcTx(signedHex, network);
                                 setBroadcastResult(txid);
                                 appContext.notify('success', 'Transaction Broadcasted!');
                                 setTimeout(() => { setShowSend(false); setSendStep('form'); }, 2000);
@@ -311,7 +403,13 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-[2.5rem] flex flex-col items-center gap-6">
                  <div className="bg-white p-4 rounded-2xl shadow-xl overflow-hidden">
-                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(getBip21Uri())}`} alt="Wallet Address QR Code" className="w-48 h-48" />
+                    {!qrError ? (
+                      <img src={qrSrc} onError={handleQrError} alt="Wallet Address QR Code" className="w-48 h-48" />
+                    ) : (
+                      <div className="w-48 h-48 flex items-center justify-center text-xs text-zinc-600">
+                        QR unavailable. Share address below.
+                      </div>
+                    )}
                  </div>
                  <div className="w-full space-y-3">
                     <p className="text-[9px] font-black text-zinc-600 uppercase text-center">{receiveLayer} Root</p>

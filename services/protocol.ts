@@ -4,12 +4,40 @@
  * Handles REAL network requests and blockchain broadcasting with resilience.
  */
 
-import { BitcoinLayer, Asset, UTXO } from '../types';
+import { BitcoinLayer, Asset, UTXO, Network } from '../types';
 
-const BTC_API = "https://mempool.space/api";
-const STX_API = "https://api.mainnet.hiro.so";
-const LIQUID_API = "https://blockstream.info/liquid/api";
-const RSK_API = "https://public-node.rsk.co";
+function endpointsFor(network: Network) {
+  switch (network) {
+    case 'testnet':
+      return {
+        BTC_API: "https://mempool.space/testnet/api",
+        STX_API: "https://api.testnet.hiro.so",
+        LIQUID_API: "https://blockstream.info/liquidtestnet/api",
+        RSK_API: "https://public-node.testnet.rsk.co"
+      };
+    case 'regtest':
+      return {
+        BTC_API: "http://127.0.0.1:3002/api", // typical mempool regtest
+        STX_API: "http://127.0.0.1:3999",
+        LIQUID_API: "http://127.0.0.1:7040",
+        RSK_API: "http://127.0.0.1:4444"
+      };
+    case 'devnet':
+      return {
+        BTC_API: "https://mempool.space/signet/api",
+        STX_API: "https://api.hiro.so", // placeholder devnet
+        LIQUID_API: "https://blockstream.info/liquid/api",
+        RSK_API: "https://public-node.rsk.co"
+      };
+    default:
+      return {
+        BTC_API: "https://mempool.space/api",
+        STX_API: "https://api.mainnet.hiro.so",
+        LIQUID_API: "https://blockstream.info/liquid/api",
+        RSK_API: "https://public-node.rsk.co"
+      };
+  }
+}
 
 /**
  * Robust fetch wrapper with exponential backoff and timeout.
@@ -36,8 +64,9 @@ async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 
   }
 }
 
-export const fetchBtcBalance = async (address: string): Promise<number> => {
+export const fetchBtcBalance = async (address: string, network: Network = 'mainnet'): Promise<number> => {
   try {
+    const { BTC_API } = endpointsFor(network);
     const response = await fetchWithRetry(`${BTC_API}/address/${address}`);
     if (!response.ok) return 0;
     const data = await response.json();
@@ -58,8 +87,9 @@ export const fetchRunesBalances = async (address: string): Promise<Asset[]> => {
     } catch { return []; }
 };
 
-export const fetchStacksBalances = async (address: string): Promise<Asset[]> => {
+export const fetchStacksBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
   try {
+    const { STX_API } = endpointsFor(network);
     const response = await fetchWithRetry(`${STX_API}/extended/v1/address/${address}/balances`);
     if (!response.ok) return [];
     const data = await response.json();
@@ -96,7 +126,8 @@ export const fetchStacksBalances = async (address: string): Promise<Asset[]> => 
   } catch { return []; }
 };
 
-export const broadcastBtcTx = async (hex: string): Promise<string> => {
+export const broadcastBtcTx = async (hex: string, network: Network = 'mainnet'): Promise<string> => {
+  const { BTC_API } = endpointsFor(network);
   const response = await fetchWithRetry(`${BTC_API}/tx`, {
     method: 'POST',
     body: hex
@@ -105,8 +136,9 @@ export const broadcastBtcTx = async (hex: string): Promise<string> => {
   return await response.text();
 };
 
-export const fetchBtcUtxos = async (address: string): Promise<UTXO[]> => {
+export const fetchBtcUtxos = async (address: string, network: Network = 'mainnet'): Promise<UTXO[]> => {
   try {
+    const { BTC_API } = endpointsFor(network);
     const response = await fetchWithRetry(`${BTC_API}/address/${address}/utxo`);
     if (!response.ok) return [];
     const data = await response.json();
@@ -123,8 +155,9 @@ export const fetchBtcUtxos = async (address: string): Promise<UTXO[]> => {
   } catch { return []; }
 };
 
-export const fetchLiquidBalance = async (address: string): Promise<number> => {
+export const fetchLiquidBalance = async (address: string, network: Network = 'mainnet'): Promise<number> => {
   try {
+    const { LIQUID_API } = endpointsFor(network);
     const response = await fetchWithRetry(`${LIQUID_API}/address/${address}`);
     if (!response.ok) return 0;
     const data = await response.json();
@@ -134,8 +167,9 @@ export const fetchLiquidBalance = async (address: string): Promise<number> => {
   } catch { return 0; }
 };
 
-export const fetchRskBalance = async (address: string): Promise<number> => {
+export const fetchRskBalance = async (address: string, network: Network = 'mainnet'): Promise<number> => {
   try {
+    const { RSK_API } = endpointsFor(network);
     const response = await fetchWithRetry(RSK_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

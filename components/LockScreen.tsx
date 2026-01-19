@@ -1,15 +1,19 @@
 
 import React, { useState } from 'react';
-import { Lock, ChevronRight, Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Lock, Loader2, ShieldCheck, AlertCircle, Fingerprint } from 'lucide-react';
+import { authenticateBiometric } from '../services/biometric';
 
 interface LockScreenProps {
   onUnlock: (pin: string) => Promise<void>;
   isError: boolean;
+  requireBiometric?: boolean;
 }
 
-const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, isError }) => {
+const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, isError, requireBiometric }) => {
   const [pin, setPin] = useState('');
   const [isValidating, setIsValidating] = useState(false);
+  const [biometricApproved, setBiometricApproved] = useState(!requireBiometric);
+  const [isBiometricChecking, setIsBiometricChecking] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +28,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, isError }) => {
   };
 
   const handleNumClick = (num: string) => {
+    if (!biometricApproved) return;
     if (pin.length < 8) setPin(prev => prev + num);
   };
 
@@ -46,6 +51,24 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, isError }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="w-full space-y-8">
+           {requireBiometric && !biometricApproved && (
+             <button
+               type="button"
+               onClick={async () => {
+                 setIsBiometricChecking(true);
+                 const ok = await authenticateBiometric();
+                 setBiometricApproved(ok);
+                 setIsBiometricChecking(false);
+               }}
+               disabled={isBiometricChecking}
+               className="w-full bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 font-black py-4 rounded-3xl text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-50"
+               aria-label="Unlock with Biometrics"
+               title="Unlock with Biometrics"
+             >
+               {isBiometricChecking ? <Loader2 size={16} className="animate-spin" /> : <Fingerprint size={16} />}
+               {isBiometricChecking ? 'Verifying...' : 'Verify Biometrics'}
+             </button>
+           )}
            <div className="flex justify-center gap-4">
               {[...Array(4)].map((_, i) => (
                  <div 
@@ -68,6 +91,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, isError }) => {
                       key={i}
                       onClick={() => setPin(prev => prev.slice(0, -1))}
                       className="h-16 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 transition-all font-bold text-xs uppercase"
+                      disabled={!biometricApproved}
                     >
                        Delete
                     </button>
@@ -76,7 +100,8 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, isError }) => {
                       type="button" 
                       key={i}
                       onClick={() => handleNumClick(item.toString())}
-                      className="h-16 bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-900 hover:border-zinc-700 rounded-2xl text-xl font-bold text-zinc-200 transition-all active:scale-95"
+                      disabled={!biometricApproved}
+                      className="h-16 bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-900 hover:border-zinc-700 rounded-2xl text-xl font-bold text-zinc-200 transition-all active:scale-95 disabled:opacity-40 disabled:hover:bg-zinc-900/50 disabled:active:scale-100"
                     >
                        {item}
                     </button>
@@ -86,7 +111,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ onUnlock, isError }) => {
 
            <button 
              type="submit" 
-             disabled={pin.length < 4 || isValidating}
+             disabled={!biometricApproved || pin.length < 4 || isValidating}
              className="w-full bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-5 rounded-3xl text-xs uppercase tracking-widest shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all"
            >
               {isValidating ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}

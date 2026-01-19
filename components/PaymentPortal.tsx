@@ -1,7 +1,15 @@
 
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Send, CreditCard, Zap, Globe, Smartphone, QrCode, ArrowRight, ShieldCheck, Loader2, CheckCircle2, Search, User, TrendingDown, Info, Sparkles, ShieldAlert, X, DollarSign } from 'lucide-react';
 import { AppContext } from '../context';
+import { BrowserMultiFormatReader } from '@zxing/browser';
+import { isLnurl, decodeLnurl, fetchLnurlParams, decodeBolt11 } from '../services/lightning';
+import { getLightningBackend } from '../services/lightning-backend';
+import { fetchBtcUtxos, broadcastBtcTx } from '../services/protocol';
+import { getRecommendedFees } from '../services/fees';
+import { buildPsbt } from '../services/psbt';
+import { parseBip21 } from '../services/bip21';
+import { Network } from '../types';
 
 const PaymentPortal: React.FC = () => {
   const context = useContext(AppContext);
@@ -12,8 +20,109 @@ const PaymentPortal: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSmartRouting, setIsSmartRouting] = useState(true);
   const [showPrivacyWarning, setShowPrivacyWarning] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [lnDetail, setLnDetail] = useState<any | null>(null);
+  const [generatedInvoice, setGeneratedInvoice] = useState<string | null>(null);
+  const [lnStatus, setLnStatus] = useState<any | null>(null);
+  const [onchainTxid, setOnchainTxid] = useState<string | null>(null);
+  const [onchainError, setOnchainError] = useState<string | null>(null);
 
-  const handleSend = () => {
+  const handleSend = async () => {
+    if (method === 'onchain') {
+      setIsSending(true);
+      setShowSuccess(false);
+      setOnchainTxid(null);
+      setOnchainError(null);
+      try {
+        const network = (context?.state.network ?? 'mainnet') as Network;
+        const fromAddress = context?.state.walletConfig?.masterAddress;
+        if (!fromAddress) throw new Error('Wallet not configured');
+
+        const parsed = parseBip21(recipient);
+        const toAddress = parsed.address;
+        const btcAmount = parsed.amount ?? Number(amount || '0');
+        if (!toAddress) throw new Error('Invalid recipient');
+        if (!Number.isFinite(btcAmount) || btcAmount <= 0) throw new Error('Invalid amount');
+
+        const amountSats = Math.floor(btcAmount * 100000000);
+        const utxos = await fetchBtcUtxos(fromAddress, network);
+        if (!utxos.length) throw new Error('No spendable UTXOs');
+
+        const base =
+          network === 'mainnet'
+            ? 'https://mempool.space'
+            : network === 'testnet'
+              ? 'https://mempool.space/testnet'
+              : network === 'regtest'
+                ? 'http://127.0.0.1:3002'
+                : 'https://mempool.space/signet';
+        const fees = await getRecommendedFees(base);
+        const feeRate = fees.halfHourFee || 8;
+
+        const psbt = buildPsbt({
+          utxos,
+          toAddress,
+          amountSats,
+          changeAddress: fromAddress,
+          feeRate,
+          rbf: true,
+          network
+        });
+        const signed = await context?.authorizeSignature({
+          type: 'transaction',
+          layer: 'Mainnet',
+          payload: { psbt, network },
+          description: 'Sign PSBT'
+        });
+        const rawHex = signed?.broadcastReadyHex;
+        if (!rawHex) throw new Error('Signing failed');
+        const txid = await broadcastBtcTx(rawHex, network);
+        setOnchainTxid(txid);
+        setShowSuccess(true);
+        context?.notify('success', `Broadcasted: ${txid.substring(0, 12)}...`);
+        setRecipient('');
+        setAmount('');
+      } catch (e: any) {
+        const msg = e?.message || 'On-chain send failed';
+        setOnchainError(msg);
+        context?.notify('error', msg);
+      } finally {
+        setIsSending(false);
+      }
+      return;
+    }
+
+    if (method === 'lightning') {
+      setIsSending(true);
+      setShowSuccess(false);
+      try {
+        const backend = getLightningBackend(context?.state.lnBackend);
+        if (!backend.configured) throw new Error('Lightning backend not configured');
+
+        if (lnDetail?.type === 'lnurl') {
+          const sats = Math.floor(Number(amount || '0') * 100000000);
+          if (!Number.isFinite(sats) || sats <= 0) throw new Error('Invalid amount');
+          await backend.lnurlPay(lnDetail.params.callback, sats * 1000);
+        } else if (lnDetail?.type === 'bolt11') {
+          await backend.payInvoice(recipient);
+        } else {
+          throw new Error('Enter a BOLT11 invoice or LNURL');
+        }
+
+        setShowSuccess(true);
+        setRecipient('');
+        setAmount('');
+      } catch (e: any) {
+        context?.notify('error', e?.message || 'Lightning send failed');
+      } finally {
+        setIsSending(false);
+      }
+      return;
+    }
+
     setIsSending(true);
     setTimeout(() => {
       setIsSending(false);
@@ -47,6 +156,60 @@ const PaymentPortal: React.FC = () => {
   };
 
   const fees = getFees();
+  const bolt11HasAmount = lnDetail?.type === 'bolt11' && !!lnDetail.info?.amountMsat;
+
+  useEffect(() => {
+    let reader: BrowserMultiFormatReader | null = null;
+    let stop: (() => void) | null = null;
+    if (showScanner) {
+      setIsScanning(true);
+      setScanError(null);
+      reader = new BrowserMultiFormatReader();
+      reader.decodeFromVideoDevice(undefined, videoRef.current!, (result, err) => {
+        if (result) {
+          const text = result.getText();
+          setRecipient(text);
+          handleRecipientChange(text);
+          setShowScanner(false);
+          if (stop) stop();
+          setIsScanning(false);
+        } else if (err && `${err}`.includes('NotFoundException')) {
+        } else if (err) {
+          setScanError('Camera error');
+        }
+      }).then(ctrl => { stop = () => ctrl.stop(); }).catch(e => { setScanError('Unable to access camera'); setIsScanning(false); });
+    }
+    return () => {
+      if (stop) stop();
+      reader = null;
+    };
+  }, [showScanner]);
+
+  const handleRecipientChange = async (text: string) => {
+    if (method !== 'lightning') return;
+    try {
+      if (isLnurl(text)) {
+        const url = decodeLnurl(text);
+        const params = await fetchLnurlParams(url);
+        setLnDetail({ type: 'lnurl', params });
+      } else {
+        const info = decodeBolt11(text);
+        setLnDetail({ type: 'bolt11', info });
+      }
+    } catch (e) {
+      setLnDetail({ type: 'error' });
+    }
+  };
+
+  useEffect(() => {
+    if (method !== 'lightning') return;
+    const ldk: any = (window as any).LDK;
+    if (ldk && typeof ldk.getStatus === 'function') {
+      ldk.getStatus().then(setLnStatus).catch(() => setLnStatus(null));
+    } else {
+      setLnStatus(null);
+    }
+  }, [method]);
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-24">
@@ -65,18 +228,18 @@ const PaymentPortal: React.FC = () => {
         <div className="space-y-6">
           <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-8 space-y-8 shadow-2xl">
             <div className="flex bg-zinc-950 p-1.5 rounded-2xl border border-zinc-900 overflow-hidden">
-              <button onClick={() => setMethod('lightning')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'lightning' ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-600 hover:text-zinc-400'}`}><Zap size={14} /> Lightning</button>
-              <button onClick={() => setMethod('onchain')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'onchain' ? 'bg-zinc-100 text-zinc-950' : 'text-zinc-600 hover:text-zinc-400'}`}><Globe size={14} /> On-chain</button>
-              <button onClick={() => setMethod('onramp')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'onramp' ? 'bg-zinc-100 text-zinc-950' : 'text-zinc-600 hover:text-zinc-400'}`}><Smartphone size={14} /> Fiat</button>
+              <button type="button" onClick={() => setMethod('lightning')} title="Lightning" className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'lightning' ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-600 hover:text-zinc-400'}`}><Zap size={14} /> Lightning</button>
+              <button type="button" onClick={() => setMethod('onchain')} title="On-chain" className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'onchain' ? 'bg-zinc-100 text-zinc-950' : 'text-zinc-600 hover:text-zinc-400'}`}><Globe size={14} /> On-chain</button>
+              <button type="button" onClick={() => setMethod('onramp')} title="Fiat On-ramp" className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'onramp' ? 'bg-zinc-100 text-zinc-950' : 'text-zinc-600 hover:text-zinc-400'}`}><Smartphone size={14} /> Fiat</button>
             </div>
 
             <div className="space-y-6">
               {method !== 'onramp' ? (
                 <>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 flex justify-between">Recipient <button className="text-orange-500 hover:text-orange-400 flex items-center gap-1 font-black"><QrCode size={12} /> Scan QR</button></label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 flex justify-between">Recipient <button type="button" onClick={() => setShowScanner(true)} className="text-orange-500 hover:text-orange-400 flex items-center gap-1 font-black" aria-label="Scan QR" title="Scan QR"><QrCode size={12} /> Scan QR</button></label>
                     <div className="relative">
-                      <input type="text" value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder={method === 'lightning' ? 'Invoice or lnurl...' : 'bc1q... or handle.btc'} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-5 pl-5 pr-12 font-mono text-sm text-zinc-200 focus:outline-none focus:border-orange-500/50 transition-all" />
+                      <input type="text" value={recipient} onChange={(e) => { setRecipient(e.target.value); handleRecipientChange(e.target.value); }} placeholder={method === 'lightning' ? 'Invoice or lnurl...' : 'bc1q... or handle.btc'} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-5 pl-5 pr-12 font-mono text-sm text-zinc-200 focus:outline-none focus:border-orange-500/50 transition-all" />
                       <Search className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-700" size={18} />
                     </div>
                   </div>
@@ -87,6 +250,23 @@ const PaymentPortal: React.FC = () => {
                       <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-6 px-6 text-4xl font-black text-zinc-100 focus:outline-none focus:border-orange-500/50 transition-all font-mono tracking-tighter" />
                     </div>
                   </div>
+                  {method === 'lightning' && (
+                    <div className="flex items-center gap-3">
+                      <button type="button" onClick={async () => {
+                        try {
+                          const backend = getLightningBackend(context?.state.lnBackend);
+                          const sats = Math.floor(parseFloat(amount || '0') * 100000000);
+                          const inv = await backend.createInvoice(sats, 'Conxius');
+                          setGeneratedInvoice(inv.invoice);
+                        } catch {
+                          setGeneratedInvoice(null);
+                        }
+                      }} className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-[10px] font-black uppercase" aria-label="Generate Invoice">Generate Invoice</button>
+                      {generatedInvoice && (
+                        <button type="button" onClick={() => navigator.clipboard.writeText(generatedInvoice!)} className="px-4 py-2 bg-zinc-800 text-zinc-200 rounded-xl text-[10px] font-black uppercase" aria-label="Copy Invoice">Copy Invoice</button>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="space-y-6 animate-in fade-in duration-500">
@@ -112,7 +292,7 @@ const PaymentPortal: React.FC = () => {
                        <Sparkles size={14} className="text-orange-500" />
                        <span className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Protocol Optimizer</span>
                     </div>
-                    <button onClick={() => setIsSmartRouting(!isSmartRouting)} className={`w-10 h-5 rounded-full transition-colors relative ${isSmartRouting ? 'bg-orange-600' : 'bg-zinc-800'}`}>
+                    <button type="button" onClick={() => setIsSmartRouting(!isSmartRouting)} className={`w-10 h-5 rounded-full transition-colors relative ${isSmartRouting ? 'bg-orange-600' : 'bg-zinc-800'}`} aria-label="Toggle Smart Routing" title="Toggle Smart Routing">
                        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-all ${isSmartRouting ? 'left-5.5' : 'left-0.5'}`} />
                     </button>
                  </div>
@@ -128,16 +308,81 @@ const PaymentPortal: React.FC = () => {
                  </div>
               </div>
 
-              <button 
+              <button type="button"
                 onClick={method === 'onramp' ? handleOnrampInitiate : handleSend}
-                disabled={isSending || !amount || (method !== 'onramp' && !recipient) || showSuccess}
+                disabled={isSending || (method !== 'onramp' && !recipient) || (method === 'lightning' ? (!amount && !bolt11HasAmount) : (method !== 'onramp' && method !== 'onchain' && !amount)) || (method === 'onchain' && !amount && !parseBip21(recipient).amount) || showSuccess}
                 className={`w-full font-black py-5 rounded-[2rem] text-xs uppercase tracking-widest transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95 ${
-                  showSuccess ? 'bg-green-600 text-white' : 'bg-orange-600 hover:bg-orange-500 text-white shadow-orange-600/30'
+                  showSuccess ? 'bg-green-600 text-white' : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/30'
                 }`}
+                aria-label="Execute Transfer"
+                title="Execute Transfer"
               >
                 {isSending ? <Loader2 size={20} className="animate-spin" /> : showSuccess ? <CheckCircle2 size={20} /> : <Send size={20} />}
                 {isSending ? 'Routing...' : showSuccess ? 'Success' : method === 'onramp' ? 'Buy via Google Pay' : 'Execute Transfer'}
               </button>
+              {method === 'onchain' && onchainError && (
+                <div className="text-[10px] text-red-500 font-black uppercase tracking-widest">{onchainError}</div>
+              )}
+              {method === 'onchain' && onchainTxid && (
+                <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6">
+                  <p className="text-[10px] uppercase font-black text-zinc-500">Broadcast Result</p>
+                  <p className="text-xs font-mono text-zinc-300 break-all">{onchainTxid}</p>
+                </div>
+              )}
+              {method === 'lightning' && lnDetail && (
+                <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6">
+                  {lnDetail.type === 'lnurl' && (
+                    <div className="text-[10px] uppercase font-black text-zinc-500 space-y-2">
+                      <p>LNURL Detected</p>
+                      <p className="text-zinc-300">Min: {(lnDetail.params.minSendable/1000).toLocaleString()} sats • Max: {(lnDetail.params.maxSendable/1000).toLocaleString()} sats</p>
+                      <p className="text-zinc-400">Callback: {lnDetail.params.callback}</p>
+                      <button type="button" onClick={async () => {
+                        try {
+                          const backend = getLightningBackend(context?.state.lnBackend);
+                          const sats = Math.floor(parseFloat(amount || '0') * 100000000);
+                          await backend.lnurlPay(lnDetail.params.callback, sats * 1000);
+                          setShowSuccess(true);
+                        } catch {
+                          setShowPrivacyWarning(true);
+                        }
+                }} className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase" aria-label="Pay LNURL" title="Pay LNURL">Pay LNURL</button>
+                    </div>
+                  )}
+                  {lnDetail.type === 'bolt11' && lnDetail.info && (
+                    <div className="text-[10px] uppercase font-black text-zinc-500 space-y-2">
+                      <p>BOLT11 Invoice</p>
+                      <p className="text-zinc-300">Amount: {lnDetail.info.amountMsat ? Math.floor(lnDetail.info.amountMsat/1000).toLocaleString() : 'n/a'} sats</p>
+                      <p className="text-zinc-400">Payee: {lnDetail.info.payee || 'unknown'}</p>
+                      <button type="button" onClick={async () => {
+                        try {
+                          const backend = getLightningBackend(context?.state.lnBackend);
+                          await backend.payInvoice(recipient);
+                          setShowSuccess(true);
+                        } catch {
+                          setShowPrivacyWarning(true);
+                        }
+                }} className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase" aria-label="Pay Invoice" title="Pay Invoice">Pay Invoice</button>
+                    </div>
+                  )}
+                  {lnDetail.type === 'error' && <p className="text-[10px] text-red-500">Lightning decode failed</p>}
+                </div>
+              )}
+        {method === 'lightning' && generatedInvoice && (
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6">
+            <p className="text-[10px] uppercase font-black text-zinc-500">Generated Invoice</p>
+            <p className="text-xs font-mono text-zinc-300 break-all">{generatedInvoice}</p>
+          </div>
+        )}
+        {method === 'lightning' && lnStatus && (
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6">
+            <p className="text-[10px] uppercase font-black text-zinc-500">Lightning Status</p>
+            <div className="text-xs text-zinc-300">
+              <p>Balance: {lnStatus.balance ?? 'n/a'}</p>
+              <p>Max Pay: {lnStatus.maxAllowToPay ?? 'n/a'}</p>
+              <p>Max Receive: {lnStatus.maxAllowToReceive ?? 'n/a'}</p>
+            </div>
+          </div>
+        )}
             </div>
           </div>
         </div>
@@ -150,7 +395,7 @@ const PaymentPortal: React.FC = () => {
                 { name: 'Alice (D.i.D)', address: 'did:btc:alice...123', avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=alice' },
                 { name: 'Bob (BNS)', address: 'bob.btc', avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=bob' },
               ].map((contact, i) => (
-                <button key={i} onClick={() => {setRecipient(contact.address); setMethod('lightning');}} className="w-full flex items-center justify-between p-4 rounded-2xl bg-zinc-950/50 border border-zinc-900 hover:border-orange-500/30 transition-all group">
+                <button type="button" key={i} onClick={() => {setRecipient(contact.address); setMethod('lightning');}} className="w-full flex items-center justify-between p-4 rounded-2xl bg-zinc-950/50 border border-zinc-900 hover:border-orange-500/30 transition-all group" aria-label={`Select contact ${contact.name}`} title={`Select contact ${contact.name}`}>
                   <div className="flex items-center gap-3 text-left">
                     <img src={contact.avatar} alt={contact.name} className="w-10 h-10 rounded-xl border border-zinc-800 shadow-inner" />
                     <div>
@@ -175,7 +420,7 @@ const PaymentPortal: React.FC = () => {
                   : "Sending via Lightning or Rootstock maintains end-to-end encryption and Tor-level network obfuscation."}
              </p>
              {method !== 'onramp' && (
-               <button className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-[8px] font-black uppercase text-zinc-500 tracking-widest transition-all">Invite Friend to Enclave</button>
+               <button type="button" className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-[8px] font-black uppercase text-zinc-500 tracking-widest transition-all" aria-label="Invite Friend to Enclave" title="Invite Friend to Enclave">Invite Friend to Enclave</button>
              )}
           </div>
         </div>
@@ -185,7 +430,7 @@ const PaymentPortal: React.FC = () => {
       {showPrivacyWarning && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-lg animate-in fade-in duration-300">
            <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[3rem] p-10 space-y-8 relative shadow-[0_0_100px_rgba(249,115,22,0.1)]">
-              <button onClick={() => setShowPrivacyWarning(false)} className="absolute top-8 right-8 text-zinc-700 hover:text-zinc-300 transition-colors">
+              <button type="button" onClick={() => setShowPrivacyWarning(false)} className="absolute top-8 right-8 text-zinc-700 hover:text-zinc-300 transition-colors" aria-label="Close Modal" title="Close Modal">
                 <X size={24} />
               </button>
               <div className="text-center space-y-4">
@@ -209,13 +454,13 @@ const PaymentPortal: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-3">
-                 <button 
+                 <button type="button"
                   onClick={confirmGateway}
                   className="w-full bg-zinc-100 hover:bg-white text-zinc-950 font-black py-5 rounded-[2rem] text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-2xl"
                  >
                     I Accept the Trade-off
                  </button>
-                 <button 
+                 <button type="button"
                   onClick={() => setShowPrivacyWarning(false)}
                   className="w-full py-4 text-zinc-600 hover:text-zinc-300 font-black text-[10px] uppercase tracking-widest transition-all"
                  >
@@ -223,6 +468,26 @@ const PaymentPortal: React.FC = () => {
                  </button>
               </div>
            </div>
+        </div>
+      )}
+      {showScanner && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-lg animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[3rem] p-8 space-y-6 relative shadow-2xl">
+            <button type="button" onClick={() => setShowScanner(false)} className="absolute top-6 right-6 text-zinc-700 hover:text-zinc-300 transition-colors" aria-label="Close Scanner" title="Close Scanner">
+              <X size={24} />
+            </button>
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 bg-orange-600/10 rounded-2xl flex items-center justify-center mx-auto text-orange-500"><QrCode size={32} /></div>
+              <h3 className="text-xl font-black uppercase tracking-widest text-zinc-200">Scan Code</h3>
+              {scanError && <p className="text-[10px] text-red-500">{scanError}</p>}
+            </div>
+            <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl">
+              <video ref={videoRef} className="w-full rounded-xl" autoPlay muted playsInline />
+            </div>
+            <div className="text-center">
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">{isScanning ? 'Scanning...' : 'Ready'}</span>
+            </div>
+          </div>
         </div>
       )}
     </div>

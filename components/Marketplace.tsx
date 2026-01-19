@@ -44,6 +44,9 @@ const Marketplace: React.FC = () => {
 
   // In sovereign mode, we don't show mock products.
   const productsToShow = mode === 'simulation' ? MOCK_PRODUCTS : [];
+  if (mode === 'sovereign') {
+    console.info('Marketplace offline in Sovereign mode');
+  }
 
   const providers = ['All', ...Array.from(new Set(productsToShow.map(p => p.provider)))];
 
@@ -236,6 +239,7 @@ const Marketplace: React.FC = () => {
                         setSearchQuery('');
                      }}
                      className="text-[10px] uppercase font-black text-orange-500 hover:underline"
+                     type="button"
                   >
                      Reset Filters
                   </button>
@@ -247,6 +251,7 @@ const Marketplace: React.FC = () => {
                         key={product.id}
                         onClick={() => handleBuy(product)}
                         className="bg-zinc-900/20 border border-zinc-800 rounded-[2.5rem] p-6 text-left hover:bg-zinc-900/40 hover:border-orange-500/30 transition-all group flex flex-col h-full"
+                        type="button"
                      >
                         <div className="flex justify-between items-start mb-6">
                            <div className="w-12 h-12 bg-zinc-950 rounded-2xl flex items-center justify-center border border-zinc-900 group-hover:border-zinc-800">
@@ -305,7 +310,7 @@ const Marketplace: React.FC = () => {
                            <p className="text-[9px] font-black uppercase text-zinc-600">Total Due</p>
                            <p className="text-lg font-mono font-bold text-orange-500">{selectedProduct.priceSats.toLocaleString()} sats</p>
                         </div>
-                        <button className="p-2 bg-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-colors">
+                        <button type="button" className="p-2 bg-zinc-800 rounded-xl text-zinc-400 hover:text-white transition-colors" aria-label="Copy Total Due">
                            <Copy size={16} />
                         </button>
                      </div>
@@ -339,7 +344,8 @@ const Marketplace: React.FC = () => {
 
                      <button 
                         onClick={closePurchase}
-                        className="w-full py-4 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+                        className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all"
+                        type="button"
                      >
                         Done
                      </button>

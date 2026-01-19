@@ -17,13 +17,11 @@ const NTTBridge: React.FC = () => {
 
   const handleBridge = () => {
     setIsBridging(true);
-    // In production, this would trigger an actual transaction via Sparrow/Hiro
-    // Here we jump to the tracking UI
     setTimeout(() => {
-        setStep(3);
-        setIsBridging(false);
-        context?.notify('success', 'Bridge Transaction Broadcasted');
-    }, 2000);
+      setStep(3);
+      setIsBridging(false);
+      context?.notify('info', 'Tracking-only mode: broadcast the bridge transaction externally, then paste the tx hash here.');
+    }, 500);
   };
 
   const handleTrack = async () => {
@@ -38,9 +36,8 @@ const NTTBridge: React.FC = () => {
             setTrackingData(data);
             context?.notify('success', 'Wormhole Attestation Found');
         } else {
-            // Simulated fallback for demo if API returns null
-            context?.notify('info', 'Simulating Tracking Data...');
-            setTrackingData({ status: 'InProgress', signatures: 12 });
+            setTrackingData(null);
+            context?.notify('info', 'No attestation found for this tx hash yet.');
         }
     } catch (e) {
         context?.notify('error', 'Wormhole API Unreachable. Retrying via Tor...');
@@ -53,7 +50,7 @@ const NTTBridge: React.FC = () => {
     <div className="p-8 max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
       <div className="text-center">
         <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-2">NTT Protocol</h2>
-        <p className="text-zinc-500 text-sm">Real-time Cross-Chain Bridge via Wormhole Guardian Mesh</p>
+        <p className="text-zinc-500 text-sm">Tracking-only monitor for Wormhole NTT attestations.</p>
       </div>
 
       <div className="bg-zinc-900/40 border border-zinc-800 rounded-[3rem] p-10 space-y-8 shadow-2xl relative overflow-hidden">
@@ -93,7 +90,7 @@ const NTTBridge: React.FC = () => {
             </div>
 
             <button onClick={() => setStep(2)} disabled={!amount} className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-5 rounded-3xl text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95 disabled:opacity-50">
-              Initialize Attestation
+              Continue
             </button>
           </div>
         )}
@@ -118,7 +115,7 @@ const NTTBridge: React.FC = () => {
                 <button onClick={() => setStep(1)} className="flex-1 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-zinc-800">Back</button>
                 <button onClick={handleBridge} disabled={isBridging} className="flex-[2] bg-orange-600 hover:bg-orange-500 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-xl flex items-center justify-center gap-2">
                     {isBridging ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-                    Execute Bridge
+                    Open Tracking
                 </button>
             </div>
           </div>
@@ -130,8 +127,8 @@ const NTTBridge: React.FC = () => {
                 <div className="w-20 h-20 bg-orange-600/10 border border-orange-500/20 rounded-full flex items-center justify-center mx-auto text-orange-500">
                     <Globe size={40} className="animate-pulse" />
                 </div>
-                <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">Broadcast Complete</h3>
-                <p className="text-xs text-zinc-500 max-w-xs mx-auto italic leading-relaxed">Your transfer is propagating. Monitor real-time attestation via WormholeScan.</p>
+                <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">Tracking Only</h3>
+                <p className="text-xs text-zinc-500 max-w-xs mx-auto italic leading-relaxed">Paste a bridge transaction hash to monitor Wormhole guardian attestations.</p>
              </div>
 
              <div className="space-y-4">
@@ -149,13 +146,13 @@ const NTTBridge: React.FC = () => {
                     <div className="p-6 bg-zinc-950 border border-zinc-900 rounded-[2rem] space-y-4 animate-in slide-in-from-top-4">
                         <div className="flex justify-between items-center">
                             <span className="text-[10px] font-black uppercase text-zinc-600">Guardian Status</span>
-                            <span className="text-[10px] font-bold text-green-500 uppercase px-2 py-0.5 bg-green-500/10 rounded">In Progress</span>
+                            <span className="text-[10px] font-bold text-green-500 uppercase px-2 py-0.5 bg-green-500/10 rounded">{trackingData.status || 'In Progress'}</span>
                         </div>
                         <div className="space-y-1">
                             <div className="w-full h-1 bg-zinc-900 rounded-full overflow-hidden">
                                 <div className="w-1/3 h-full bg-orange-500" />
                             </div>
-                            <p className="text-[9px] text-zinc-600 italic">Confirmed by 12/19 Guardians</p>
+                            <p className="text-[9px] text-zinc-600 italic">Confirmed by {trackingData.signatures ?? 'n/a'}/19 Guardians</p>
                         </div>
                     </div>
                 )}

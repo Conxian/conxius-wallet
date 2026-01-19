@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Shield, ArrowRight, Key, Users, Zap, ShieldCheck, RefreshCcw, RotateCcw, Loader2, Eye, Lock, AlertTriangle, Database, Globe, CheckCircle2 } from 'lucide-react';
 import { WalletConfig, AppMode } from '../types';
 import { deriveSovereignRoots } from '../services/signer';
+import { encryptSeed } from '../services/seed';
 import * as bip39 from 'bip39';
 
 interface OnboardingProps {
@@ -23,8 +24,8 @@ const BIP39_SUBSET = [
 ];
 
 const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
-  const [step, setStep] = useState<'mode' | 'type' | 'entropy' | 'security' | 'backup'>('mode');
-  const [appMode, setAppMode] = useState<AppMode>('simulation');
+  const [step, setStep] = useState<'type' | 'entropy' | 'security' | 'backup'>('type');
+  const [appMode, setAppMode] = useState<AppMode>('sovereign');
   const [walletType, setWalletType] = useState<'single' | 'multisig' | 'hot'>('single');
   const [entropyProgress, setEntropyProgress] = useState(0);
   const [mnemonic, setMnemonic] = useState<string[]>([]);
@@ -39,6 +40,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   // Security State
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [passphrase, setPassphrase] = useState('');
 
   // Entropy Harvesting
   const handleEntropyInput = () => {
@@ -86,13 +88,15 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     setIsFinalizing(true);
     const seedString = mnemonic.join(' ');
     // Async derivation ensures UI doesn't freeze during heavy hashing
-    const roots = await deriveSovereignRoots(seedString);
+    const roots = await deriveSovereignRoots(seedString, passphrase || undefined);
+    const seedBytes = await bip39.mnemonicToSeed(seedString, passphrase || undefined);
+    const seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
     
     // Pass PIN up to App for encryption
     onComplete({ 
       mode: appMode,
       type: walletType,
-      mnemonic: seedString,
+      seedVault,
       masterAddress: roots.btc,
       stacksAddress: roots.stx
     }, pin);
@@ -107,49 +111,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     >
       <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl md:rounded-[3rem] p-6 md:p-10 space-y-6 md:space-y-8 shadow-2xl animate-in fade-in zoom-in duration-500">
         
-        {step === 'mode' && (
-          <div className="space-y-6 md:space-y-8 animate-in fade-in">
-             <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-orange-500 shadow-xl">
-                   <Database size={32} />
-                </div>
-                <h2 className="text-2xl md:text-3xl font-black tracking-tighter text-zinc-100 uppercase italic">Initialize System</h2>
-                <p className="text-zinc-500 text-sm italic">Choose your environment of trust.</p>
-             </div>
-
-             <div className="space-y-4">
-                <button 
-                   onClick={() => { setAppMode('sovereign'); setStep('type'); }}
-                   className="w-full p-6 rounded-[2rem] border border-green-500/30 bg-green-500/5 text-left transition-all hover:bg-green-500/10 group"
-                >
-                   <div className="flex items-center gap-4">
-                      <div className="p-3 bg-green-500 rounded-xl text-black">
-                         <Globe size={24} />
-                      </div>
-                      <div>
-                         <p className="font-bold text-green-100">Sovereign Mode (Real)</p>
-                         <p className="text-[10px] text-green-500/70 uppercase font-black">Full Production • Live RPC</p>
-                      </div>
-                   </div>
-                </button>
-
-                <button 
-                   onClick={() => { setAppMode('simulation'); setStep('type'); }}
-                   className="w-full p-6 rounded-[2rem] border border-orange-500/30 bg-orange-500/5 text-left transition-all hover:bg-orange-500/10 group"
-                >
-                   <div className="flex items-center gap-4">
-                      <div className="p-3 bg-orange-500 rounded-xl text-white">
-                         <Zap size={24} />
-                      </div>
-                      <div>
-                         <p className="font-bold text-orange-100">Simulation Mode (Demo)</p>
-                         <p className="text-[10px] text-orange-500/70 uppercase font-black">Pre-loaded Assets • High-Fidelity Mock</p>
-                      </div>
-                   </div>
-                </button>
-             </div>
-          </div>
-        )}
+        
 
         {step === 'type' && (
           <div className="space-y-8 animate-in fade-in">
@@ -268,6 +230,17 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       maxLength={8}
                    />
                 </div>
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase text-zinc-600 ml-1">BIP-39 Passphrase (Optional)</label>
+                   <input 
+                      type="password"
+                      value={passphrase}
+                      onChange={(e) => setPassphrase(e.target.value)}
+                      placeholder="Optional passphrase"
+                      aria-label="BIP-39 Passphrase"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 px-6 text-center text-sm font-mono text-white tracking-widest focus:outline-none focus:border-orange-500/50"
+                   />
+                </div>
              </div>
 
              <button 
@@ -326,7 +299,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         )}
 
         <p className="text-center text-[9px] text-zinc-700 uppercase tracking-widest font-black">
-          Conxius v1.2.0 • {appMode.toUpperCase()}
+          Conxius v1.2.0 • SOVEREIGN
         </p>
       </div>
     </div>
