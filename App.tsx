@@ -59,7 +59,7 @@ const DEFAULT_STATE: AppState & { language: Language } = {
   externalGatewaysActive: false,
   isMainnetLive: false,
   walletConfig: undefined,
-  assets: MOCK_ASSETS,
+  assets: [], // Default to empty, load mocks only if explicit simulation
   bounties: INITIAL_BOUNTIES,
   dataSharing: {
     enabled: false,

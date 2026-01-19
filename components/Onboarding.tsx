@@ -41,10 +41,18 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [confirmPin, setConfirmPin] = useState('');
 
   // Entropy Harvesting
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleEntropyInput = () => {
     if (step === 'entropy' && entropyProgress < 100) {
-      setEntropyProgress(prev => Math.min(100, prev + 0.3));
+      setEntropyProgress(prev => Math.min(100, prev + 0.5)); // Increased speed slightly for better mobile feel
     }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    handleEntropyInput();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    handleEntropyInput();
   };
 
   const generateSeed = async () => {
@@ -93,18 +101,19 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
   return (
     <div 
-      className="min-h-screen bg-zinc-950 flex items-center justify-center p-6 font-sans select-none"
+      className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 font-sans select-none touch-none"
       onMouseMove={handleMouseMove}
+      onTouchMove={handleTouchMove}
     >
-      <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-[3rem] p-10 space-y-8 shadow-2xl animate-in fade-in zoom-in duration-500">
+      <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl md:rounded-[3rem] p-6 md:p-10 space-y-6 md:space-y-8 shadow-2xl animate-in fade-in zoom-in duration-500">
         
         {step === 'mode' && (
-          <div className="space-y-8 animate-in fade-in">
+          <div className="space-y-6 md:space-y-8 animate-in fade-in">
              <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-orange-500 shadow-xl">
                    <Database size={32} />
                 </div>
-                <h2 className="text-3xl font-black tracking-tighter text-zinc-100 uppercase italic">Initialize System</h2>
+                <h2 className="text-2xl md:text-3xl font-black tracking-tighter text-zinc-100 uppercase italic">Initialize System</h2>
                 <p className="text-zinc-500 text-sm italic">Choose your environment of trust.</p>
              </div>
 
@@ -148,7 +157,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               <div className="w-16 h-16 bg-orange-600 rounded-2xl flex items-center justify-center mx-auto text-white shadow-lg">
                 <Shield size={32} />
               </div>
-              <h2 className="text-3xl font-black tracking-tighter text-zinc-100 uppercase italic">Configure Vault</h2>
+              <h2 className="text-2xl md:text-3xl font-black tracking-tighter text-zinc-100 uppercase italic">Configure Vault</h2>
               <p className="text-zinc-500 text-sm">Define your multi-layer signature policy.</p>
             </div>
 
@@ -201,7 +210,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                    />
                    <RotateCcw className={`text-zinc-200 relative z-10 ${entropyProgress < 100 ? 'animate-spin' : ''}`} size={32} />
                 </div>
-                <h3 className="text-2xl font-black italic uppercase tracking-tighter">Gathering Entropy</h3>
+                <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">Gathering Entropy</h3>
                 <p className="text-xs text-zinc-500 italic max-w-[240px] mx-auto">
                    Hardware-level noise captured via cursor trajectory.
                 </p>
@@ -230,7 +239,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 <div className="w-16 h-16 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-orange-500 shadow-xl mb-4">
                    <Lock size={32} />
                 </div>
-                <h3 className="text-2xl font-black italic uppercase tracking-tighter">Secure Enclave</h3>
+                <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">Secure Enclave</h3>
                 <p className="text-xs text-zinc-500 italic">Set a PIN to encrypt your local session.</p>
              </div>
 
@@ -274,7 +283,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         {step === 'backup' && (
           <div className="space-y-8 animate-in slide-in-from-bottom-4">
              <div className="text-center space-y-2">
-                <h3 className="text-2xl font-black italic uppercase tracking-tighter">Master Seed Backup</h3>
+                <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">Master Seed Backup</h3>
                 <p className="text-xs text-zinc-500 italic">Production-grade recovery phrase.</p>
              </div>
 
