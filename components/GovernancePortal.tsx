@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { Vote, ShieldCheck, Scale, MessageSquare, ChevronRight, Gavel, Award, Zap, Loader2, Sparkles, Filter, AlertCircle, Users, UserPlus, Undo2, Fingerprint, Info } from 'lucide-react';
+import { Vote, ShieldCheck, Scale, MessageSquare, ChevronRight, Gavel, Award, Zap, Loader2, Sparkles, Filter, AlertCircle, Users, UserPlus, Undo2, Fingerprint, Info, Globe2, Briefcase, Backpack, Wallet, Landmark } from 'lucide-react';
+import { GovernanceService, OpsPersona, PERSONA_CONFIGS } from '../services/governance';
 
 interface Proposal {
   id: string;
@@ -64,7 +65,10 @@ const GovernancePortal: React.FC = () => {
   const [delegatedTo, setDelegatedTo] = useState<string | null>(null);
   const [delegationInput, setDelegationInput] = useState('');
   const [receivedDelegations, setReceivedDelegations] = useState<Delegation[]>(MOCK_RECEIVED_DELEGATIONS);
+  const [receivedDelegations, setReceivedDelegations] = useState<Delegation[]>(MOCK_RECEIVED_DELEGATIONS);
   const [showDelegationModal, setShowDelegationModal] = useState(false);
+  const [opsMode, setOpsMode] = useState<'view' | 'setup'>( 'view' ); // Toggle for Ops Setup
+  const [selectedPersona, setSelectedPersona] = useState<OpsPersona | null>(null);
 
   const baseTier = 3; // Citadel Guard Tier
   const delegatedWeight = receivedDelegations.reduce((acc, curr) => acc + curr.weight, 0);
@@ -116,8 +120,81 @@ const GovernancePortal: React.FC = () => {
                  </div>
               </div>
            </div>
+           <button onClick={() => setOpsMode('setup')} className="bg-zinc-100 hover:bg-white text-black px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center gap-2">
+               <Briefcase size={16} /> Ops Setup
+           </button>
         </div>
       </header>
+
+      {/* Ops Persona Setup Modal */}
+      {opsMode === 'setup' && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-300 overflow-y-auto">
+             <div className="w-full max-w-5xl bg-zinc-950 border border-zinc-900 rounded-[3rem] p-10 space-y-8 relative shadow-2xl">
+                <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                        <h3 className="text-3xl font-black tracking-tighter text-zinc-100">Initialize Ops Governance</h3>
+                        <p className="text-sm text-zinc-500">Select a structural template for your Sovereign Entity.</p>
+                    </div>
+                    <button onClick={() => setOpsMode('view')} className="p-4 hover:bg-zinc-900 rounded-full text-zinc-500"><Undo2 /></button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {(Object.keys(PERSONA_CONFIGS) as OpsPersona[]).map(key => {
+                        const p = PERSONA_CONFIGS[key];
+                        const isSelected = selectedPersona === key;
+                        return (
+                            <button 
+                                key={key}
+                                onClick={() => setSelectedPersona(key)}
+                                className={`p-8 rounded-[2rem] border text-left transition-all space-y-4 group relative overflow-hidden ${
+                                    isSelected ? 'bg-zinc-900 border-orange-500 ring-2 ring-orange-500/20' : 'bg-zinc-900/40 border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700'
+                                }`}
+                            >
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 ${
+                                    key === 'brics' ? 'bg-red-500' : 
+                                    key === 'business' ? 'bg-blue-600' :
+                                    key === 'nomad' ? 'bg-purple-600' : 
+                                    key === 'unbanked' ? 'bg-green-600' : 'bg-zinc-600'
+                                }`}>
+                                    {key === 'brics' && <Globe2 size={24} />}
+                                    {key === 'business' && <Landmark size={24} />}
+                                    {key === 'nomad' && <Backpack size={24} />}
+                                    {key === 'unbanked' && <Wallet size={24} />}
+                                    {key === 'retail' && <UserPlus size={24} />}
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-black text-zinc-100">{p.name}</h4>
+                                    <p className="text-[10px] font-mono text-orange-500 mt-1 uppercase tracking-wider">{p.minSigners}-of-{p.totalSigners} • {p.defaults.backup.toUpperCase()} Backup</p>
+                                </div>
+                                <p className="text-xs text-zinc-400 leading-relaxed min-h-[3rem]">{p.description}</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {p.features.slice(0, 2).map((f, i) => (
+                                        <span key={i} className="text-[9px] bg-zinc-950 px-2 py-1 rounded-md text-zinc-500 border border-zinc-900">{f}</span>
+                                    ))}
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {selectedPersona && (
+                    <div className="flex justify-end pt-4 border-t border-zinc-900">
+                        <button 
+                            className="bg-orange-600 hover:bg-orange-500 text-white px-12 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-600/20 transition-all flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4"
+                            onClick={async () => {
+                                const svc = new GovernanceService();
+                                await svc.initializeOpsWallet(PERSONA_CONFIGS[selectedPersona]);
+                                alert(`Initialized ${PERSONA_CONFIGS[selectedPersona].name} Structure!`);
+                                setOpsMode('view');
+                            }}
+                        >
+                            <ShieldCheck size={18} /> Deploy Structure
+                        </button>
+                    </div>
+                )}
+             </div>
+          </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         {/* Left Column: Proposals & Delegation Management */}

@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Network, Database, Globe, RefreshCw, CheckCircle2, AlertTriangle, Shield, Info, ArrowUpRight, Plus, Terminal, Cpu, HardDrive, Download, Activity, Zap, Share2, Layers, Loader2, Sparkles, BookOpen, Search, Filter, ShieldCheck, X } from 'lucide-react';
+import { Zap, Activity, Globe, Copy, Info, AlertTriangle, Loader2, RefreshCw, X, ShieldCheck, BookOpen, Cpu, Database, Download, Layers, Network, Plus, Shield, Sparkles, Terminal } from 'lucide-react';
 import { getNodeEthosAdvice, getNetworkRPCResearch } from '../services/gemini';
 import { useContext } from 'react';
 import { AppContext } from '../context';
@@ -269,6 +268,24 @@ const NodeSettings: React.FC = () => {
                      Save Config
                   </button>
                </div>
+            </div>
+
+            {/* Network Sovereignty / Tor */}
+            <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] p-6 space-y-4">
+               <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                  <ShieldCheck size={14} /> Network Sovereignty
+               </h3>
+               <div className="flex items-center justify-between">
+                  <div>
+                     <p className="text-zinc-200 text-sm font-bold">Tor Proxy (Orbot/Internal)</p>
+                     <p className="text-[10px] text-zinc-500">Route all HTTP and PayJoin traffic through Tor network.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                     <input type="checkbox" className="sr-only peer" disabled checked={false} />
+                     <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-500 after:border-zinc-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 opacity-50 cursor-not-allowed"></div>
+                  </label>
+               </div>
+               <p className="text-[9px] text-red-500 italic">Tor integration requires native binary. Currently disabled in Alpha.</p>
             </div>
         </div>
 

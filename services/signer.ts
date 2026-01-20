@@ -39,6 +39,7 @@ export interface SignResult {
   signature: string;
   pubkey: string;
   broadcastReadyHex?: string;
+  psbtBase64?: string;
   timestamp: number;
 }
 
@@ -176,9 +177,28 @@ export const requestEnclaveSignature = async (
           pubkeyBuf,
           network,
         );
+        // Also get PSBT Base64 for flows that need it (PayJoin)
+        // We import it dynamically or assume it's available since we are in the same module bundle conceptually,
+        // but cleaner to call the helper we just added.
+        const { finalizePsbtWithSigsReturnBase64 } = await import("./psbt");
+        const signedBase64 = finalizePsbtWithSigsReturnBase64(
+          request.payload.psbt,
+          signatures,
+          pubkeyBuf,
+          network,
+        );
+
         signature = Buffer.from(
           bitcoin.crypto.sha256(Buffer.from(broadcastHex, "hex")),
         ).toString("hex");
+
+        return {
+          signature,
+          pubkey,
+          broadcastReadyHex: broadcastHex,
+          psbtBase64: signedBase64,
+          timestamp: Date.now(),
+        };
       } else {
         // General Payload Signing
         const cx = Buffer.from(JSON.stringify(request.payload));

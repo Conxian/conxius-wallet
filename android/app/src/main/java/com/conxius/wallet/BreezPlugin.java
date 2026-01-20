@@ -152,6 +152,40 @@ public class BreezPlugin extends Plugin {
     }
     
     @PluginMethod
+    public void lnurlAuth(PluginCall call) {
+        if (breezServices == null) {
+            call.reject("Not started");
+            return;
+        }
+        String lnurl = call.getString("lnurl");
+        if (lnurl == null) {
+            call.reject("Missing lnurl");
+            return;
+        }
+
+        executor.submit(() -> {
+            try {
+                breez_sdk.InputType input = breez_sdk.BreezSdkMethods.parseInput(lnurl);
+                if (input instanceof breez_sdk.InputType.LnUrlAuth) {
+                    breez_sdk.LnUrlAuthRequestData data = ((breez_sdk.InputType.LnUrlAuth) input).getData();
+                    breez_sdk.LnUrlCallbackStatus result = breezServices.lnurlAuth(data);
+                    
+                    if (result instanceof breez_sdk.LnUrlCallbackStatus.Ok) {
+                         call.resolve();
+                    } else {
+                         // Extract error details if available in the variant
+                         call.reject("LNURL Auth failed with status: " + result.toString());
+                    }
+                } else {
+                    call.reject("Provided string is not a valid LNURL-Auth URL");
+                }
+            } catch (Exception e) {
+                call.reject("LNURL Auth Error: " + e.getMessage());
+            }
+        });
+    }
+
+    @PluginMethod
     public void stop(PluginCall call) {
         if (breezServices != null) {
              try {
