@@ -545,8 +545,8 @@ public class SecureEnclavePlugin extends Plugin {
             child = HDKeyDerivation.deriveChildKey(child, new org.bitcoinj.crypto.ChildNumber(index, hardened));
         }
 
-        if (networkStr.equals("rsk") || networkStr.equals("ethereum") || networkStr.equals("evm")) {
-            // RSK / EVM Signing (Secp256k1 + Keccak256 usually handled by caller or we sign hash directly)
+        if (networkStr.equals("rsk") || networkStr.equals("ethereum") || networkStr.equals("evm") || networkStr.equals("stacks")) {
+            // RSK / EVM / Stacks Signing (Secp256k1 + Keccak256 usually handled by caller or we sign hash directly)
             // Web3j Helper
             ECKeyPair keyPair = ECKeyPair.create(child.getPrivKeyBytes());
             // Sign.signMessage takes a byte array. We have a hex hash.
@@ -558,7 +558,14 @@ public class SecureEnclavePlugin extends Plugin {
              byte[] retval = new byte[65];
              System.arraycopy(signature.getR(), 0, retval, 0, 32);
              System.arraycopy(signature.getS(), 0, retval, 32, 32);
-             System.arraycopy(signature.getV(), 0, retval, 64, 1);
+             
+             // Normalize V (Web3j returns 27/28, we might want 0/1 for compact/stacks depending on lib, but standard eth is 27/28 for legacy or EIP155)
+             // Stacks usually expects 0/1. Let's normalize to 0/1 if 'stacks'
+             byte v = signature.getV()[0];
+             if (networkStr.equals("stacks") && v >= 27) {
+                 v -= 27;
+             }
+             retval[64] = v;
              
              String sigHex = Numeric.toHexString(retval);
              

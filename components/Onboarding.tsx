@@ -125,9 +125,9 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
             <div className="space-y-4">
               {[
-                { id: 'single', label: 'Single-Sig Enclave', desc: 'Standard security for agile management.', icon: Key },
-                { id: 'multisig', label: 'Citadel M-of-N', desc: 'Institutional multi-sig protection.', icon: Users },
-                { id: 'hot', label: 'Hot Vault (Fast)', desc: 'Ephemeral keys for high-speed bridging.', icon: Zap },
+                { id: 'single', label: 'Personal Vault', desc: 'Standard security for personal assets.', icon: Key },
+                { id: 'multisig', label: 'Treasury (Multi-Sig)', desc: 'Institutional grade M-of-N protection.', icon: Users },
+                { id: 'hot', label: 'Lightning Hot Wallet', desc: 'Ephemeral keys for high-speed payments.', icon: Zap },
               ].map((type) => (
                 <button
                   key={type.id}

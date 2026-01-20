@@ -101,9 +101,9 @@ const GovernancePortal: React.FC = () => {
         <div>
           <h2 className="text-3xl font-black tracking-tighter text-zinc-100 flex items-center gap-3">
             <Gavel className="text-orange-500" />
-            The Sovereign Senate
+            Governance & Treasury
           </h2>
-          <p className="text-zinc-500 text-sm italic">Governance managed by proof-of-contribution NFTs and delegated trust.</p>
+          <p className="text-zinc-500 text-sm italic">Protocol management via proof-of-contribution and delegated trust.</p>
         </div>
         <div className="flex gap-4">
            <div className="bg-zinc-900 border border-zinc-800 px-6 py-3 rounded-2xl flex items-center gap-4">
