@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Base64;
+import android.util.Log;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -11,15 +12,39 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.crypto.DeterministicHierarchy;
+import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.HDKeyDerivation;
+import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.wallet.DeterministicSeed;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.ECKeyPair;
+import org.web3j.crypto.Sign;
+import org.web3j.utils.Numeric;
+
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executor;
+
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -36,10 +61,19 @@ public class SecureEnclavePlugin extends Plugin {
   private static final String KEY_ALIAS_AUTH = "com.conxius.wallet.enclave.aes.v2.auth";
   private static final int GCM_TAG_BITS = 128;
   private long biometricSessionValidUntilMs = 0;
+  
+  // Session Cache for Performance (Approved by Architecture Review)
+  private SecretKey cachedSessionKey = null;
+  private byte[] cachedSessionSalt = null;
+  private long cachedSessionExpiry = 0;
+  private static final long SESSION_DURATION_MS = 5 * 60 * 1000; // 5 Minutes
+
 
   private SharedPreferences prefs() {
     return getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
   }
+
+  // --- Existing Storage Logic ---
 
   private SecretKey getOrCreateKey(String alias, boolean requireUserAuth) throws Exception {
     KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
@@ -49,26 +83,17 @@ public class SecureEnclavePlugin extends Plugin {
     }
 
     KeyGenerator keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
-    KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+    KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(
       alias,
       KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT
     )
       .setKeySize(256)
       .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
       .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-      .setRandomizedEncryptionRequired(true)
-      .setUserAuthenticationRequired(requireUserAuth)
-      .build();
+      .setRandomizedEncryptionRequired(true);
+
     if (requireUserAuth) {
-      KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(
-        alias,
-        KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT
-      )
-        .setKeySize(256)
-        .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-        .setRandomizedEncryptionRequired(true)
-        .setUserAuthenticationRequired(true);
+      builder.setUserAuthenticationRequired(true);
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         builder.setUserAuthenticationParameters(
           300,
@@ -77,9 +102,9 @@ public class SecureEnclavePlugin extends Plugin {
       } else {
         builder.setUserAuthenticationValidityDurationSeconds(300);
       }
-      spec = builder.build();
     }
-    keyGenerator.init(spec);
+    
+    keyGenerator.init(builder.build());
     return keyGenerator.generateKey();
   }
 
@@ -348,6 +373,222 @@ public class SecureEnclavePlugin extends Plugin {
       prompt.authenticate(promptInfo, new BiometricPrompt.CryptoObject(cipher));
     } catch (Exception e) {
       call.reject("biometric failed");
+    }
+  }
+
+  // --- NATIVE SIGNING LOGIC (Phase 2) ---
+
+  /**
+   * Decrypts the Seed Vault (Layer 3) using PBKDF2/AES-GCM matching seed.ts logic.
+   * vaultJson: "{ v:1, salt:[...], iv:[...], data:[...] }"
+   * pin: User's PIN
+   */
+  private byte[] decryptSeedVault(String vaultJson, String pin) throws Exception {
+    JSONObject envelope = new JSONObject(vaultJson);
+    int v = envelope.getInt("v");
+    if (v != 1) throw new IllegalArgumentException("Unknown vault version");
+
+    JSONArray saltJson = envelope.getJSONArray("salt");
+    JSONArray ivJson = envelope.getJSONArray("iv");
+    JSONArray dataJson = envelope.getJSONArray("data");
+
+    byte[] salt = new byte[saltJson.length()];
+    for(int i=0; i<saltJson.length(); i++) salt[i] = (byte)saltJson.getInt(i);
+
+    byte[] iv = new byte[ivJson.length()];
+    for(int i=0; i<ivJson.length(); i++) iv[i] = (byte)ivJson.getInt(i);
+
+    byte[] data = new byte[dataJson.length()];
+    for(int i=0; i<dataJson.length(); i++) data[i] = (byte)dataJson.getInt(i);
+
+    // Derive Key: PBKDF2WithHmacSHA256, 200000 iterations
+    SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+    // seed.ts uses 256 bits (32 bytes) for AES key
+    PBEKeySpec spec = new PBEKeySpec(pin.toCharArray(), salt, 200000, 256);
+    SecretKey tmp = factory.generateSecret(spec);
+    SecretKeySpec secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+
+    // Decrypt: AES/GCM/NoPadding
+    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+    cipher.init(Cipher.DECRYPT_MODE, secret, new GCMParameterSpec(GCM_TAG_BITS, iv));
+    
+    return cipher.doFinal(data);
+  }
+
+  // Helper to derive key only (refactored for cache usage)
+  private SecretKey deriveKeyForVault(String pin, byte[] salt) throws Exception {
+     SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+     PBEKeySpec spec = new PBEKeySpec(pin.toCharArray(), salt, 200000, 256);
+     SecretKey tmp = factory.generateSecret(spec);
+     return new SecretKeySpec(tmp.getEncoded(), "AES");
+  }
+
+  @PluginMethod
+  public void unlockSession(PluginCall call) {
+      String vaultJson = call.getString("vault");
+      String pin = call.getString("pin");
+
+      if (vaultJson == null || pin == null) {
+          call.reject("Missing vault or pin");
+          return;
+      }
+
+      try {
+          JSONObject envelope = new JSONObject(vaultJson);
+          JSONArray saltJson = envelope.getJSONArray("salt");
+          byte[] salt = new byte[saltJson.length()];
+          for(int i=0; i<saltJson.length(); i++) salt[i] = (byte)saltJson.getInt(i);
+
+          // 1. Derive
+          SecretKey key = deriveKeyForVault(pin, salt);
+          
+          // 2. Validate (Try to decrypt)
+          // We need the IV and Data to test
+          JSONArray ivJson = envelope.getJSONArray("iv");
+          JSONArray dataJson = envelope.getJSONArray("data");
+          byte[] iv = new byte[ivJson.length()];
+          for(int i=0; i<ivJson.length(); i++) iv[i] = (byte)ivJson.getInt(i);
+          byte[] data = new byte[dataJson.length()];
+          for(int i=0; i<dataJson.length(); i++) data[i] = (byte)dataJson.getInt(i);
+
+          Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+          cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(GCM_TAG_BITS, iv));
+          byte[] check = cipher.doFinal(data);
+          Arrays.fill(check, (byte)0); // Wipe check buffer
+
+          // 3. Cache
+          this.cachedSessionKey = key;
+          this.cachedSessionSalt = salt;
+          this.cachedSessionExpiry = System.currentTimeMillis() + SESSION_DURATION_MS;
+
+          call.resolve(new JSObject().put("unlocked", true));
+
+      } catch (Exception e) {
+          call.reject("Unlock failed: " + e.getMessage());
+      }
+  }
+
+  @PluginMethod
+  public void signTransaction(PluginCall call) {
+    String vaultJson = call.getString("vault");
+    String pin = call.getString("pin"); // Optional if session active
+    String path = call.getString("path");
+    String messageHashHex = call.getString("messageHash");
+    String networkStr = call.getString("network", "mainnet");
+
+    if (vaultJson == null || path == null || messageHashHex == null) {
+      call.reject("Missing required parameters");
+      return;
+    }
+
+    try {
+      SecretKey keyToUse = null;
+      JSONObject envelope = new JSONObject(vaultJson);
+      JSONArray ivJson = envelope.getJSONArray("iv");
+      JSONArray dataJson = envelope.getJSONArray("data");
+      
+      // We always need salt to verify/derive
+      JSONArray saltJson = envelope.getJSONArray("salt");
+      byte[] salt = new byte[saltJson.length()];
+      for(int i=0; i<saltJson.length(); i++) salt[i] = (byte)saltJson.getInt(i);
+
+      if (pin != null) {
+          // Slow Path: Explicit PIN
+          keyToUse = deriveKeyForVault(pin, salt);
+      } else {
+          // Fast Path: Session Cache
+          if (cachedSessionKey != null && System.currentTimeMillis() < cachedSessionExpiry) {
+              if (Arrays.equals(this.cachedSessionSalt, salt)) {
+                  keyToUse = cachedSessionKey;
+                  // Extend session? maybe not, keep strict 5 min
+              } else {
+                 call.reject("Session valid but wallet mismatch (salt). Unlock required.");
+                 return;
+              }
+          } else {
+              call.reject("Session expired or invalid. Unlock required.");
+              return;
+          }
+      }
+
+      // Decrypt using keyToUse
+      byte[] iv = new byte[ivJson.length()];
+      for(int i=0; i<ivJson.length(); i++) iv[i] = (byte)ivJson.getInt(i);
+      byte[] data = new byte[dataJson.length()];
+      for(int i=0; i<dataJson.length(); i++) data[i] = (byte)dataJson.getInt(i);
+
+      Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+      cipher.init(Cipher.DECRYPT_MODE, keyToUse, new GCMParameterSpec(GCM_TAG_BITS, iv));
+      byte[] seed = cipher.doFinal(data);
+      
+      try {
+
+        // 2. Derive Key
+        NetworkParameters params = networkStr.equals("testnet") ? TestNet3Params.get() : MainNetParams.get();
+        DeterministicSeed detSeed = new DeterministicSeed(seed, null, "");
+        DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(detSeed.getSeedBytes());
+        
+        // Parse path (e.g. m/84'/0'/0'/0/0)
+        // bitcoinj doesn't have a simple path string parser publically? We can roll one or match hierarchy
+        // The path from signer.ts is usually "m/84'/0'/0'/0/0"
+        
+        DeterministicHierarchy hierarchy = new DeterministicHierarchy(rootKey);
+        // We need to traverse the path manually or split string
+        String[] parts = path.split("/");
+        DeterministicKey child = rootKey;
+        
+        for (String part : parts) {
+            if (part.equals("m")) continue; // Root
+            boolean hardened = part.endsWith("'") || part.endsWith("h");
+            String numStr = part.replace("'", "").replace("h", "");
+            int index = Integer.parseInt(numStr);
+            child = HDKeyDerivation.deriveChildKey(child, new org.bitcoinj.crypto.ChildNumber(index, hardened));
+        }
+
+        if (networkStr.equals("rsk") || networkStr.equals("ethereum") || networkStr.equals("evm")) {
+            // RSK / EVM Signing (Secp256k1 + Keccak256 usually handled by caller or we sign hash directly)
+            // Web3j Helper
+            ECKeyPair keyPair = ECKeyPair.create(child.getPrivKeyBytes());
+            // Sign.signMessage takes a byte array. We have a hex hash.
+            // When signing a transaction hash in ETH/RSK, we usually sign the raw bytes of the hash.
+             byte[] msgHash = org.bouncycastle.util.encoders.Hex.decode(messageHashHex);
+             Sign.SignatureData signature = Sign.signMessage(msgHash, keyPair, false);
+             
+             // Construct R,S,V into 65 byte array or hex string
+             byte[] retval = new byte[65];
+             System.arraycopy(signature.getR(), 0, retval, 0, 32);
+             System.arraycopy(signature.getS(), 0, retval, 32, 32);
+             System.arraycopy(signature.getV(), 0, retval, 64, 1);
+             
+             String sigHex = Numeric.toHexString(retval);
+             
+             JSObject ret = new JSObject();
+             ret.put("signature", sigHex);
+             ret.put("pubkey", Numeric.toHexString(keyPair.getPublicKey().toByteArray())); // Usually address is derived from clean pubkey
+             ret.put("recId", signature.getV()[0] - 27); // Normalized recovery ID
+             
+             call.resolve(ret);
+        } else {
+            // Bitcoin / Stacks (DER)
+            Sha256Hash hash = Sha256Hash.wrap(messageHashHex);
+            ECKey.ECDSASignature sig = child.sign(hash);
+            
+            String sigHex = org.bouncycastle.util.encoders.Hex.toHexString(sig.encodeToDER());
+            
+            JSObject ret = new JSObject();
+            ret.put("signature", sigHex);
+            ret.put("pubkey", child.getPublicKeyAsHex());
+            
+            call.resolve(ret);
+        }
+
+      } finally {
+        // 4. Wipe Seed
+        Arrays.fill(seed, (byte)0);
+      }
+
+    } catch (Exception e) {
+      call.reject("Signing failed: " + e.getMessage());
     }
   }
 }

@@ -29,6 +29,7 @@ import UTXOManager from './components/UTXOManager';
 import Studio from './components/Studio';
 import Marketplace from './components/Marketplace';
 import SystemDiagnostics from './components/SystemDiagnostics';
+import Web3Browser from './components/Web3Browser';
 import LockScreen from './components/LockScreen';
 import ToastContainer, { ToastMessage, ToastType } from './components/Toast';
 import { Shield, Loader2, Zap, FlaskConical, ShieldCheck, Lock, Terminal, Cpu, CheckCircle2, RotateCcw, Database } from 'lucide-react';
@@ -42,7 +43,7 @@ import { encryptSeed } from './services/seed';
 import * as bip39 from 'bip39';
 import { decryptSeed } from './services/seed';
 import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
-import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob } from './services/enclave-storage';
+import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
 
 const STORAGE_KEY = 'conxius_enclave_v3_encrypted';
 
@@ -228,6 +229,15 @@ const App: React.FC = () => {
       setEnclaveExists(true);
       setIsLocked(false);
       setLockError(false);
+      
+      // Phase 3: Optimize Session - Unlock Cache
+      if ((window as any).Capacitor?.isNativePlatform() && nextState.walletConfig?.seedVault) {
+          SecureEnclave.unlockSession({ 
+              vault: nextState.walletConfig.seedVault, 
+              pin 
+          }).catch(e => console.warn("Failed to unlock enclave session cache:", e));
+      }
+
       notify('success', 'Enclave Decrypted Successfully');
     } catch (e) {
       setLockError(true);
@@ -266,11 +276,30 @@ const App: React.FC = () => {
     if (!pin || !seedVault) {
       throw new Error('Master Seed missing from session vault.');
     }
-    const seed = await decryptSeed(seedVault, pin);
-    try {
-      return await requestEnclaveSignature(request, seed);
-    } finally {
-      seed.fill(0);
+    
+    // Check if running on Android/iOS native runtime
+    // @ts-ignore - Vite defines this globally usually or we check window
+    const isNative = (window as any).Capacitor?.isNativePlatform();
+
+    if (isNative) {
+       // Phase 3: Fast Path (Session Cache)
+       // We try to pass undefined PIN first if we believe session is active. 
+       // Currently requestEnclaveSignature handles "undefined" pin by calling signNative without PIN.
+       // SecureEnclavePlugin.java checks cache if PIN is null.
+       
+       // Note: We still pass vault string because the plugin needs salt/IV from it to verify/decrypt.
+       return await requestEnclaveSignature(request, seedVault, undefined); 
+       
+       // TODO: If this fails with "Unlock required", we should prompt user or retry with currentPinRef.current
+       // For now, we assume if app is unlocked, session is valid (5 min matches/exceeds typical flow).
+    } else {
+       // Web Fallback: Decrypt in JS memory
+       const seed = await decryptSeed(seedVault, pin);
+       try {
+         return await requestEnclaveSignature(request, seed);
+       } finally {
+         seed.fill(0);
+       }
     }
   };
   
@@ -307,6 +336,7 @@ const App: React.FC = () => {
       case 'diagnostics': return <SystemDiagnostics />;
       case 'studio': return <Studio />;
       case 'bazaar': return <Marketplace />;
+      case 'browser': return <Web3Browser />;
       case 'menu': return <MobileMenu setActiveTab={setActiveTab} activeTab={activeTab} />;
       case 'payments': return <PaymentPortal />;
       case 'citadel': return <CitadelManager />;

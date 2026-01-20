@@ -1,0 +1,29 @@
+import { registerPlugin } from '@capacitor/core';
+
+export interface BreezPluginDef {
+  start(options: { mnemonic: string; apiKey: string; inviteCode?: string }): Promise<{ id: string; balanceMsat: number }>;
+  nodeInfo(): Promise<{ id: string; blockHeight: number; maxPayableMsat: number; maxReceivableMsat: number }>;
+  invoice(options: { amountMsat?: number; description?: string }): Promise<{ bolt11: string; paymentHash: string }>;
+  pay(options: { bolt11: string }): Promise<{ paymentHash: string; status: string; amountMsat: number }>;
+  stop(): Promise<void>;
+}
+
+const Breez = registerPlugin<BreezPluginDef>('Breez');
+
+export { Breez };
+
+export async function startBreezNode(mnemonic: string, apiKey: string, inviteCode?: string) {
+    return Breez.start({ mnemonic, apiKey, inviteCode });
+}
+
+export async function getBreezInfo() {
+    return Breez.nodeInfo();
+}
+
+export async function createLnInvoice(amountMsat: number, description: string) {
+    return Breez.invoice({ amountMsat, description });
+}
+
+export async function payLnInvoice(bolt11: string) {
+    return Breez.pay({ bolt11 });
+}

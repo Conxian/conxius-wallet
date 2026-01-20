@@ -27,10 +27,27 @@ const PaymentPortal: React.FC = () => {
   const [lnDetail, setLnDetail] = useState<any | null>(null);
   const [generatedInvoice, setGeneratedInvoice] = useState<string | null>(null);
   const [onchainTxid, setOnchainTxid] = useState<string | null>(null);
-  const [onchainError, setOnchainError] = useState<string | null>(null);
+  const [breezBalance, setBreezBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+     // Poll for cached balance if Breez is active
+     if (context?.state.lnBackend?.type === 'Breez' || context?.state.lnBackend?.type === 'Greenlight') {
+         const check = async () => {
+             try {
+                const { getBreezInfo } = await import('../services/breez');
+                const info = await getBreezInfo();
+                setBreezBalance(info.maxPayableMsat / 1000); // sats
+             } catch {}
+         };
+         check();
+     }
+  }, [context?.state.lnBackend]);
 
   const handleSend = async () => {
+    // ... (existing Onchain Logic) ...
     if (method === 'onchain') {
+      // ... same as before ...
+      // Keeping original method body for creating diff...
       setIsSending(true);
       setShowSuccess(false);
       setOnchainTxid(null);
@@ -100,6 +117,14 @@ const PaymentPortal: React.FC = () => {
       try {
         const backend = getLightningBackend(context?.state.lnBackend);
         if (!backend.configured) throw new Error('Lightning backend not configured');
+        
+        // Smart Check: Balance
+        if (breezBalance !== null) {
+            const sats = Math.floor(Number(amount || '0') * 100000000);
+            if (sats > breezBalance) {
+                throw new Error(`Insufficient Lightning Liquidity (Max: ${breezBalance} sats)`);
+            }
+        }
 
         if (lnDetail?.type === 'lnurl') {
           const sats = Math.floor(Number(amount || '0') * 100000000);
@@ -122,6 +147,7 @@ const PaymentPortal: React.FC = () => {
       return;
     }
 
+    // ... Onramp logic ...
     setIsSending(true);
     setTimeout(() => {
       setIsSending(false);
@@ -133,6 +159,7 @@ const PaymentPortal: React.FC = () => {
       }, 3000);
     }, 2000);
   };
+
 
   const handleOnrampInitiate = () => {
     if (!context?.state.externalGatewaysActive) {

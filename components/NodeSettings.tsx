@@ -45,7 +45,12 @@ const NodeSettings: React.FC = () => {
 
   // Form State
   const [newNode, setNewNode] = useState({ layer: 'Bitcoin L1', endpoint: '', provider: '' });
-  const [lnBackend, setLnBackend] = useState({ type: 'None', endpoint: '', apiKey: '' });
+  const [lnBackend, setLnBackend] = useState({ 
+      type: appContext?.state.lnBackend?.type || 'None', 
+      endpoint: appContext?.state.lnBackend?.endpoint || '', 
+      apiKey: appContext?.state.lnBackend?.apiKey || '' 
+  });
+  const appLnType = appContext?.state.lnBackend?.type;
 
   const fetchEthos = async (path: string) => {
     setIsLoadingEthos(true);
@@ -213,33 +218,58 @@ const NodeSettings: React.FC = () => {
              </div>
           </div>
           
-          {/* Lightning Backend */}
-          <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] p-6 space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-              <Zap size={14} /> Lightning Backend
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-[10px] font-black uppercase text-zinc-600">Type</label>
-                <select value={lnBackend.type} onChange={(e) => setLnBackend(prev => ({ ...prev, type: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" aria-label="Lightning Backend Type" title="Lightning Backend Type">
-                  <option>None</option>
-                  <option>LND REST</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase text-zinc-600">Endpoint</label>
-                <input value={lnBackend.endpoint} onChange={(e) => setLnBackend(prev => ({ ...prev, endpoint: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" aria-label="Lightning Endpoint" title="Lightning Endpoint" placeholder="https://host:port" />
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase text-zinc-600">API Key</label>
-                <input value={lnBackend.apiKey} onChange={(e) => setLnBackend(prev => ({ ...prev, apiKey: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" aria-label="Lightning API Key" title="Lightning API Key" placeholder="Macaroon hex or token" />
-              </div>
+            {/* Lightning Backend & Status */}
+            <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] p-6 space-y-6">
+               <div className="flex items-center justify-between">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                     <Zap size={14} /> Lightning Backend
+                  </h3>
+                  {lnBackend.type === 'Breez' && (
+                     <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-[8px] font-bold uppercase text-green-500">Greenlight Active</span>
+                     </div>
+                  )}
+               </div>
+
+               {lnBackend.type === 'Breez' || appLnType === 'Breez' || appLnType === 'Greenlight' ? (
+                  <BreezStatsView />
+               ) : (
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div>
+                       <label className="text-[10px] font-black uppercase text-zinc-600">Type</label>
+                       <select value={lnBackend.type} onChange={(e) => setLnBackend(prev => ({ ...prev, type: e.target.value as any }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" aria-label="Lightning Backend Type" title="Lightning Backend Type">
+                         <option>None</option>
+                         <option value="Breez">Breez / Greenlight (Embedded)</option>
+                         <option value="LND">LND (Remote)</option>
+                       </select>
+                     </div>
+                     {lnBackend.type === 'LND' && (
+                        <>
+                           <div>
+                             <label className="text-[10px] font-black uppercase text-zinc-600">Endpoint</label>
+                             <input value={lnBackend.endpoint} onChange={(e) => setLnBackend(prev => ({ ...prev, endpoint: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" placeholder="https://host:port" />
+                           </div>
+                           <div>
+                             <label className="text-[10px] font-black uppercase text-zinc-600">API Key</label>
+                             <input value={lnBackend.apiKey} onChange={(e) => setLnBackend(prev => ({ ...prev, apiKey: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" placeholder="Macaroon hex or token" />
+                           </div>
+                        </>
+                     )}
+                   </div>
+               )}
+               
+               <div className="flex justify-end gap-3">
+                  {(lnBackend.type === 'Breez' || appLnType === 'Breez') && (
+                      <p className="text-[9px] text-zinc-500 self-center mr-auto italic">
+                          Breez SDK is running locally. Keys are in Secure Enclave.
+                      </p>
+                  )}
+                  <button type="button" onClick={() => appContext?.setLnBackend({ type: (lnBackend.type as any), endpoint: lnBackend.endpoint, apiKey: lnBackend.apiKey })} className="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest" aria-label="Save Config">
+                     Save Config
+                  </button>
+               </div>
             </div>
-            <div className="text-[10px] text-zinc-500">Configure your Lightning node or SDK. Not configured disables LN payments.</div>
-            <div className="flex justify-end">
-              <button type="button" onClick={() => appContext?.setLnBackend({ type: (lnBackend.type.includes('LND') ? 'LND' : 'None'), endpoint: lnBackend.endpoint, apiKey: lnBackend.apiKey })} className="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest" aria-label="Save Lightning Config" title="Save Lightning Config">Save Lightning Config</button>
-            </div>
-          </div>
         </div>
 
         <div className="lg:col-span-4 space-y-8">
@@ -349,6 +379,45 @@ const NodeSettings: React.FC = () => {
       )}
     </div>
   );
+};
+
+const BreezStatsView: React.FC = () => {
+    const [info, setInfo] = useState<any>(null);
+    useEffect(() => {
+        const poll = async () => {
+             const { getBreezInfo } = await import('../services/breez');
+             try {
+                const data = await getBreezInfo();
+                setInfo(data);
+             } catch(e) { console.warn("Breez info failed", e); }
+        };
+        poll();
+        const interval = setInterval(poll, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    if (!info) return <div className="text-xs text-zinc-500 italic"><Loader2 className="inline animate-spin mr-2" size={12}/>Connecting to Greenlight...</div>;
+    
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-zinc-950/50 p-4 rounded-2xl border border-zinc-900">
+            <div>
+               <p className="text-[9px] font-black uppercase text-zinc-600">Node ID</p>
+               <p className="text-xs font-mono text-zinc-300 truncate" title={info.id}>{info.id.substring(0,8)}...</p>
+            </div>
+            <div>
+               <p className="text-[9px] font-black uppercase text-zinc-600">Block Height</p>
+               <p className="text-xs font-mono text-orange-500">{info.blockHeight}</p>
+            </div>
+            <div>
+               <p className="text-[9px] font-black uppercase text-zinc-600">Spendable (Local)</p>
+               <p className="text-xs font-mono text-zinc-200">{(info.maxPayableMsat/1000).toLocaleString()} sats</p>
+            </div>
+            <div>
+               <p className="text-[9px] font-black uppercase text-zinc-600">Inbound (Remote)</p>
+               <p className="text-xs font-mono text-zinc-200">{(info.maxReceivableMsat/1000).toLocaleString()} sats</p>
+            </div>
+        </div>
+    );
 };
 
 export default NodeSettings;

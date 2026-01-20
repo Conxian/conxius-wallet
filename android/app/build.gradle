@@ -10,7 +10,14 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -34,6 +41,12 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+    implementation('org.bitcoinj:bitcoinj-core:0.16.3') {
+        exclude group: 'org.hamcrest', module: 'hamcrest-core'
+    }
+    implementation 'org.breez.sdk:breez-sdk-android:0.2.14' 
+    // For RSK / EVM Signing
+    implementation 'org.web3j:core:4.8.7-android'
 }
 
 apply from: 'capacitor.build.gradle'

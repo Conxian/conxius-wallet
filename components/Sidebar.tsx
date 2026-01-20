@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Repeat, Settings, Shield, Zap, Info, UserCheck, Coins, CreditCard, Network, Lock, Crown, TrendingUp, Trophy, BarChart3, Briefcase, Terminal, FlaskConical, Medal, Gavel, Landmark, BookOpen, Package, Rocket, Layers, Castle, Binary, Palette, ShoppingBag, Activity } from 'lucide-react';
+import { LayoutDashboard, Repeat, Settings, Shield, Zap, Info, UserCheck, Coins, CreditCard, Network, Lock, Crown, TrendingUp, Trophy, BarChart3, Briefcase, Terminal, FlaskConical, Medal, Gavel, Landmark, BookOpen, Package, Rocket, Layers, Castle, Binary, Palette, ShoppingBag, Activity, Globe } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -12,6 +12,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'diagnostics', icon: Activity, label: 'System Health' },
     { id: 'bazaar', icon: ShoppingBag, label: 'Sovereign Bazaar' },
+    { id: 'browser', icon: Globe, label: 'Web3 Browser' },
     { id: 'studio', icon: Palette, label: 'Sovereign Studio' },
     { id: 'payments', icon: CreditCard, label: 'Payments' },
     { id: 'utxos', icon: Binary, label: 'Coin Control' },

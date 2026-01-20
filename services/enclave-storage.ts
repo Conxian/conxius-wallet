@@ -3,14 +3,39 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 type SecureEnclavePlugin = {
   isAvailable(): Promise<{ available: boolean }>;
   hasItem(options: { key: string }): Promise<{ exists: boolean }>;
-  getItem(options: { key: string; requireBiometric?: boolean }): Promise<{ value: string | null }>;
-  setItem(options: { key: string; value: string; requireBiometric?: boolean }): Promise<void>;
-  removeItem(options: { key: string; requireBiometric?: boolean }): Promise<void>;
-  authenticate(options?: { durationSeconds?: number }): Promise<{ authenticated: boolean; validUntilMs?: number }>;
+  getItem(options: {
+    key: string;
+    requireBiometric?: boolean;
+  }): Promise<{ value: string | null }>;
+  setItem(options: {
+    key: string;
+    value: string;
+    requireBiometric?: boolean;
+  }): Promise<void>;
+  removeItem(options: {
+    key: string;
+    requireBiometric?: boolean;
+  }): Promise<void>;
+  authenticate(options?: {
+    durationSeconds?: number;
+  }): Promise<{ authenticated: boolean; validUntilMs?: number }>;
   clearBiometricSession(): Promise<void>;
+  signTransaction(options: {
+    vault: string;
+    pin?: string; // Made optional as per instruction
+    path: string;
+    messageHash: string;
+    network?: string;
+  }): Promise<{ signature: string; pubkey: string }>;
+  unlockSession(options: {
+    vault: string;
+    pin: string;
+  }): Promise<{ unlocked: boolean }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
+
+export { SecureEnclave }; // Export the plugin instance for direct access if needed
 
 async function hasNativeSecureEnclave() {
   if (!Capacitor.isNativePlatform()) return false;

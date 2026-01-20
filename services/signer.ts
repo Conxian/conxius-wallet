@@ -12,6 +12,13 @@ import * as bitcoin from 'bitcoinjs-lib';
 import { getAddressFromPrivateKey } from '@stacks/transactions';
 import { Buffer } from 'buffer';
 import { publicKeyToEvmAddress } from './evm';
+import { Capacitor } from "@capacitor/core";
+import { signNative } from "./enclave-storage";
+import {
+  getPsbtSighashes,
+  finalizePsbtWithSigs,
+  signPsbtBase64WithSeed,
+} from "./psbt";
 
 // Initialize BIP32
 const bip32 = BIP32Factory(ecc);
@@ -98,48 +105,213 @@ export const signBip322Message = async (message: string, mnemonic: string) => {
  * Enclave Handshake
  * Simulates the Hardware Element delay and signing process.
  */
-export const requestEnclaveSignature = async (request: SignRequest, seedOrMnemonic?: Uint8Array | string): Promise<SignResult> => {
+export const requestEnclaveSignature = async (
+  request: SignRequest,
+  seedOrVault?: Uint8Array | string,
+  pin?: string,
+): Promise<SignResult> => {
   // Simulate secure element processing time
-  await new Promise(r => setTimeout(r, 1000));
+  if (
+    typeof window !== "undefined" &&
+    !(window as any).Capacitor?.isNativePlatform()
+  ) {
+    await new Promise((r) => setTimeout(r, 1000));
+  }
 
-  if (!seedOrMnemonic && request.layer !== 'Nostr') {
+  if (!seedOrVault && request.layer !== "Nostr") {
     throw new Error("Master Seed missing from session vault.");
   }
 
+  // --- NATIVE PATH (Android/iOS) ---
+  if (Capacitor.isNativePlatform() && typeof seedOrVault === "string" && pin) {
+    const vault = seedOrVault;
+    // We assume Mainnet/Bitcoin Layer for now in this snippet
+    if (request.layer === "Mainnet") {
+      const network = request.payload?.network || "mainnet";
+      const coin = network === "mainnet" ? 0 : 1;
+      const path = `m/84'/${coin}'/0'/0/0`;
+
+      // 1. Get Pubkey (Dummy Sign to derive path public key)
+      // Ideally we cache this or pass it in request, but to be sure we ask enclave
+      // We sign specific dummy hash to get pubkey
+      const idRes = await signNative({
+        vault,
+        pin, // Can be undefined now (checking session)
+        path,
+        messageHash:
+          "0000000000000000000000000000000000000000000000000000000000000000",
+        network,
+      });
+      const pubkey = idRes.pubkey;
+
+      let signature = "";
+      let broadcastHex = "";
+
+      if (request.payload?.psbt) {
+        const pubkeyBuf = Buffer.from(pubkey, "hex");
+        const hashes = getPsbtSighashes(
+          request.payload.psbt,
+          pubkeyBuf,
+          network,
+        );
+        const signatures = [];
+
+        for (const item of hashes) {
+          const res = await signNative({
+            vault,
+            pin,
+            path,
+            messageHash: item.hash.toString("hex"),
+            network,
+          });
+          signatures.push({
+            index: item.index,
+            signature: Buffer.from(res.signature, "hex"),
+          });
+        }
+
+        broadcastHex = finalizePsbtWithSigs(
+          request.payload.psbt,
+          signatures,
+          pubkeyBuf,
+          network,
+        );
+        signature = Buffer.from(
+          bitcoin.crypto.sha256(Buffer.from(broadcastHex, "hex")),
+        ).toString("hex");
+      } else {
+        // General Payload Signing
+        const cx = Buffer.from(JSON.stringify(request.payload));
+        const hash = bitcoin.crypto.sha256(cx).toString("hex");
+        const res = await signNative({
+          vault,
+          pin,
+          path,
+          messageHash: hash,
+          network,
+        });
+        signature = res.signature;
+      }
+
+      return {
+        signature,
+        pubkey,
+        broadcastReadyHex: broadcastHex,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "Stacks") {
+      const path = "m/44'/5757'/0'/0/0";
+      // Stacks usually signs a sha256d hash or similar, payload should be prepared hash usually
+      // For Stacks transactions, we usually sign the txhash (Recoverable or not? Stacks uses V,R,S or DER? Stacks is compact recoverable)
+      // Wait, Stacks is compact recoverable (65 bytes). BitcoinJ sign gives DER.
+      // We need generic signing in Java to support different outputs or basic SECP256k1.
+      // Current Java 'Stacks' branch (fallback below) does `child.sign(Buffer.from("stacks-sig"))`.
+      // Let's implement real path:
+
+      let hashToSign: string;
+      if (request.payload?.txHex) {
+        // If full tx passed, hash it? Stacks logic suggests we sign the presig hash.
+        // Assuming payload is the 32-byte hash
+        hashToSign = request.payload.hash;
+      } else {
+        // Generic message
+        const cx = Buffer.from(JSON.stringify(request.payload));
+        hashToSign = bitcoin.crypto.sha256(cx).toString("hex");
+      }
+
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: hashToSign,
+        network: "stacks", // We need to handle this in Java if Stacks specific, but for now Standard DER or if we want Compact, we might need 'rsk' style logic? Stacks is technically recoverable.
+      });
+      // TODO: If Stacks needs compact, we might need to use 'rsk' style in Java but with 'stacks' flag.
+      // For now, returning DER as per current stub logic, or if we want to be safe we can use the RSK path if Stacks uses ETH-style curves (it does, secp256k1) and format.
+
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "Rootstock" || request.layer === "Liquid") {
+      // Liquid also similar
+      const path = "m/44'/60'/0'/0/0"; // Standard RSK/ETH
+
+      // RSK Payload is usually a transaction hash (keccak256 hash of rlp encoded tx)
+      let hashToSign = "";
+      if (typeof request.payload === "string") {
+        hashToSign = request.payload.replace("0x", "");
+      } else if (request.payload?.hash) {
+        hashToSign = request.payload.hash.replace("0x", "");
+      } else {
+        throw new Error("Invalid RSK Payload");
+      }
+
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: hashToSign,
+        network: "rsk",
+      });
+
+      return {
+        signature: res.signature, // already hex (r,s,v)
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    }
+
+    throw new Error("Native signing for this layer not implemented yet");
+  }
+
+  // --- WEB / LEGACY PATH ---
   const seedBytes =
-    typeof seedOrMnemonic === 'string'
-      ? new Uint8Array(await bip39.mnemonicToSeed(seedOrMnemonic))
-      : (seedOrMnemonic as Uint8Array);
+    typeof seedOrVault === "string"
+      ? new Uint8Array(await bip39.mnemonicToSeed(seedOrVault)) // Fallback if string passed but no PIN/Native (Should not happen flow-wise) or if passing mnemonic directly
+      : (seedOrVault as Uint8Array);
+
   const root = bip32.fromSeed(seedBytes);
 
-  let signature = '';
-  let pubkey = '';
-  let broadcastHex = '';
+  let signature = "";
+  let pubkey = "";
+  let broadcastHex = "";
 
-  if (request.layer === 'Mainnet') {
-      const coin = request.payload?.network === 'mainnet' ? 0 : 1;
-      const child = root.derivePath(`m/84'/${coin}'/0'/0/0`);
-      pubkey = Buffer.from(child.publicKey).toString('hex');
-      if (request.payload && request.payload.psbt && request.payload.network) {
-        const { signPsbtBase64WithSeed } = await import('./psbt');
-        broadcastHex = await signPsbtBase64WithSeed(seedBytes, request.payload.psbt, request.payload.network);
-        signature = Buffer.from(bitcoin.crypto.sha256(Buffer.from(broadcastHex, 'hex'))).toString('hex');
-      } else {
-        const payloadHash = bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload)));
-        signature = Buffer.from(child.sign(payloadHash)).toString('hex');
-        broadcastHex = '';
-      }
-  } else if (request.layer === 'Stacks') {
-      const child = root.derivePath("m/44'/5757'/0'/0/0");
-      pubkey = Buffer.from(child.publicKey).toString('hex');
-      // Stacks signing logic
-      signature = Buffer.from(child.sign(Buffer.from("stacks-sig"))).toString('hex');
+  if (request.layer === "Mainnet") {
+    const coin = request.payload?.network === "mainnet" ? 0 : 1;
+    const child = root.derivePath(`m/84'/${coin}'/0'/0/0`);
+    pubkey = Buffer.from(child.publicKey).toString("hex");
+    if (request.payload && request.payload.psbt && request.payload.network) {
+      // Use imported helper
+      broadcastHex = await signPsbtBase64WithSeed(
+        seedBytes,
+        request.payload.psbt,
+        request.payload.network,
+      );
+      signature = Buffer.from(
+        bitcoin.crypto.sha256(Buffer.from(broadcastHex, "hex")),
+      ).toString("hex");
+    } else {
+      const payloadHash = bitcoin.crypto.sha256(
+        Buffer.from(JSON.stringify(request.payload)),
+      );
+      signature = Buffer.from(child.sign(payloadHash)).toString("hex");
+      broadcastHex = "";
+    }
+  } else if (request.layer === "Stacks") {
+    const child = root.derivePath("m/44'/5757'/0'/0/0");
+    pubkey = Buffer.from(child.publicKey).toString("hex");
+    // Stacks signing logic
+    signature = Buffer.from(child.sign(Buffer.from("stacks-sig"))).toString(
+      "hex",
+    );
   }
 
   return {
     signature,
     pubkey,
     broadcastReadyHex: broadcastHex,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 };

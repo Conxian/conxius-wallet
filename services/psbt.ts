@@ -71,3 +71,56 @@ export async function signPsbtBase64WithSeed(seed: Uint8Array, psbtBase64: strin
   psbt.finalizeAllInputs();
   return psbt.extractTransaction().toHex();
 }
+
+export function getPsbtSighashes(
+  psbtBase64: string,
+  pubkey: Buffer,
+  network: Network,
+): { hash: Buffer; index: number }[] {
+  const psbt = bitcoin.Psbt.fromBase64(psbtBase64, {
+    network: networkFrom(network),
+  });
+  const hashes: { hash: Buffer; index: number }[] = [];
+
+  // Dummy signer to capture hashes
+  const captureSigner = {
+    publicKey: pubkey,
+    sign: (hash: Buffer) => {
+      hashes.push({ hash, index: -1 }); // index update below
+      return Buffer.alloc(64);
+    },
+  };
+
+  for (let i = 0; i < psbt.inputCount; i++) {
+    const startLen = hashes.length;
+    try {
+      psbt.signInput(i, captureSigner);
+    } catch (e) {}
+    if (hashes.length > startLen) {
+      hashes[hashes.length - 1].index = i;
+    }
+  }
+  return hashes;
+}
+
+export function finalizePsbtWithSigs(
+  psbtBase64: string,
+  signatures: { index: number; signature: Buffer }[],
+  pubkey: Buffer,
+  network: Network,
+) {
+  const psbt = bitcoin.Psbt.fromBase64(psbtBase64, {
+    network: networkFrom(network),
+  });
+
+  signatures.forEach((sigItem) => {
+    const signer = {
+      publicKey: pubkey,
+      sign: () => sigItem.signature,
+    };
+    psbt.signInput(sigItem.index, signer);
+  });
+
+  psbt.finalizeAllInputs();
+  return psbt.extractTransaction().toHex();
+}

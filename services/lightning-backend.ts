@@ -80,11 +80,56 @@ class LndBackend implements LightningBackend {
     return { status: data.status || 'ok' };
   }
 }
+import { createLnInvoice, payLnInvoice, startBreezNode } from "./breez";
+
+class BreezBackend implements LightningBackend {
+  configured = true;
+
+  async createInvoice(amountSats: number, memo?: string) {
+    // Breez expects msats
+    const { bolt11 } = await createLnInvoice(
+      amountSats * 1000,
+      memo || "Conxius",
+    );
+    return { invoice: bolt11 };
+  }
+
+  async payInvoice(invoice: string) {
+    const res = await payLnInvoice(invoice);
+    return { preimage: res.paymentHash }; // Note: Breez might strictly return hash or preimage, we mapped hash in plugin. Preimage is usually hidden or ID.
+  }
+
+  async lnurlPay(callback: string, amountMsat: number, comment?: string) {
+    // Breez SDK handles LNURL parsing and payment internally usually, but here we can reimplement
+    // or use basic manual flow if Breez SDK exposes raw pay method.
+    // For now, standard manual flow:
+    const cb = new URL(callback);
+    cb.searchParams.set("amount", `${amountMsat}`);
+    if (comment) cb.searchParams.set("comment", comment);
+    const res = await fetch(cb.toString());
+    const data = await res.json();
+    if (!data.pr) throw new Error("LNURL callback missing invoice");
+    await this.payInvoice(data.pr);
+    return { status: "paid" };
+  }
+
+  async lnurlWithdraw(callback: string, k1: string, invoice: string) {
+    const url = new URL(callback);
+    url.searchParams.set("k1", k1);
+    url.searchParams.set("pr", invoice);
+    const res = await fetch(url.toString());
+    const data = await res.json();
+    return { status: data.status || "ok" };
+  }
+}
 
 export function getLightningBackend(cfg?: LnBackendConfig): LightningBackend {
   if (!cfg || cfg.type === 'None') return new NoneBackend();
   if (cfg.type === 'LND' && cfg.endpoint && cfg.apiKey) {
     return new LndBackend(cfg.endpoint, cfg.apiKey);
+  }
+  if (cfg.type === "Greenlight" || cfg.type === "Breez") {
+    return new BreezBackend();
   }
   return new NoneBackend();
 }
