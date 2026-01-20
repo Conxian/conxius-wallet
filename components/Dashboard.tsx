@@ -100,13 +100,22 @@ const Dashboard: React.FC = () => {
   const [qrError, setQrError] = useState<boolean>(false);
 
   useEffect(() => {
-    const data = getBip21Uri();
-    const external = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(data)}`;
-    setQrSrc(external);
-    setQrError(false);
+    const generate = async () => {
+        try {
+            const data = getBip21Uri();
+            // Local generation only - Privacy Preserved
+            const dataUrl = await QRCode.toDataURL(data, { width: 240, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
+            setQrSrc(dataUrl);
+            setQrError(false);
+        } catch (e) {
+            setQrError(true);
+        }
+    };
+    generate();
   }, [receiveLayer, btcAddress, stxAddress]);
 
   const handleQrError = async () => {
+    // Retry local generation
     try {
       const dataUrl = await QRCode.toDataURL(getBip21Uri(), { width: 240, margin: 1 });
       setQrSrc(dataUrl);
@@ -254,7 +263,22 @@ const Dashboard: React.FC = () => {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-zinc-600 ml-4">Coin Selection</label>
+                        <label className="text-[10px] font-black uppercase text-zinc-600 ml-4 flex items-center justify-between">
+                            <span>Coin Selection</span>
+                            <button 
+                                type="button" 
+                                onClick={() => {
+                                    if (selectedUtxos.length === availableUtxos.length) {
+                                        setSelectedUtxos([]);
+                                    } else {
+                                        setSelectedUtxos(availableUtxos.map(u => `${u.txid}:${u.vout}`));
+                                    }
+                                }}
+                                className="text-orange-500 hover:text-orange-400"
+                            >
+                                {selectedUtxos.length === availableUtxos.length ? 'Deselect All' : 'Select All'}
+                            </button>
+                        </label>
                         <div className="max-h-40 overflow-auto border border-zinc-800 rounded-2xl">
                           {availableUtxos.map(u => (
                             <label key={`${u.txid}:${u.vout}`} className="flex items-center justify-between px-4 py-2 text-xs border-b border-zinc-900">

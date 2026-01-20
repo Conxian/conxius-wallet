@@ -14,14 +14,14 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
@@ -44,7 +44,7 @@ dependencies {
     implementation('org.bitcoinj:bitcoinj-core:0.16.3') {
         exclude group: 'org.hamcrest', module: 'hamcrest-core'
     }
-    implementation 'org.breez.sdk:breez-sdk-android:0.2.14' 
+    implementation "breez_sdk:bindings-android:0.8.0"
     // For RSK / EVM Signing
     implementation 'org.web3j:core:4.8.7-android'
 }
