@@ -27,6 +27,7 @@ const PaymentPortal: React.FC = () => {
   const [lnDetail, setLnDetail] = useState<any | null>(null);
   const [generatedInvoice, setGeneratedInvoice] = useState<string | null>(null);
   const [onchainTxid, setOnchainTxid] = useState<string | null>(null);
+  const [onchainError, setOnchainError] = useState<string | null>(null);
   const [breezBalance, setBreezBalance] = useState<number | null>(null);
 
   useEffect(() => {
@@ -46,8 +47,6 @@ const PaymentPortal: React.FC = () => {
   const handleSend = async () => {
     // ... (existing Onchain Logic) ...
     if (method === 'onchain') {
-      // ... same as before ...
-      // Keeping original method body for creating diff...
       setIsSending(true);
       setShowSuccess(false);
       setOnchainTxid(null);
@@ -63,6 +62,58 @@ const PaymentPortal: React.FC = () => {
         if (!toAddress) throw new Error('Invalid recipient');
         if (!Number.isFinite(btcAmount) || btcAmount <= 0) throw new Error('Invalid amount');
 
+        // Check for PayJoin
+        let payJoinResult: any = null;
+        const { PayJoinService } = await import('../services/payjoin');
+        const pjService = new PayJoinService(network);
+        if (pjService.hasPayJoin(recipient)) {
+             try {
+                 context?.notify('info', 'Negotiating PayJoin privacy transaction...');
+                 
+                 // 1. Build Original PSBT (Simulated for brevity, typically uses same buildPsbt logic)
+                 const utxos = await fetchBtcUtxos(fromAddress, network);
+                 const amountSats = Math.floor(btcAmount * 100000000);
+                 const base = network === 'mainnet' ? 'https://mempool.space' : 'https://mempool.space/testnet';
+                 const fees = await getRecommendedFees(base);
+                 
+                 const originalPsbtObject = buildPsbt({
+                    utxos, toAddress, amountSats, changeAddress: fromAddress, feeRate: fees.halfHourFee || 10, rbf: true, network
+                 });
+                 // Determine if we need to convert base64 back to Psbt object or if service takes hex/base64
+                 // The service expects bitcoin.Psbt. Importing bitcoinjs-lib here dynamically or assuming it's available.
+                 const bitcoin = await import('bitcoinjs-lib');
+                 const originalPsbt = bitcoin.Psbt.fromBase64(originalPsbtObject as string);
+
+                 // 2. Execute PayJoin
+                 const result = await pjService.sendPayJoin(recipient, originalPsbt, async (psbtToSign) => {
+                      // Callback to sign the PayJoin PSBT
+                      const signed = await context?.authorizeSignature({
+                          type: 'transaction',
+                          layer: 'Mainnet',
+                          payload: { psbt: psbtToSign.toBase64(), network },
+                          description: 'Sign PayJoin Transaction'
+                      });
+                      if (!signed?.psbtBase64) throw new Error('User declined Sign or signing failed');
+                      // Reconstruct PSBT from base64 string returned by authorizeSignature
+                      return bitcoin.Psbt.fromBase64(signed.psbtBase64);
+                 });
+                 payJoinResult = result;
+             } catch (e) {
+                 console.warn("PayJoin failed, falling back to standard tx", e);
+             }
+        }
+
+        if (payJoinResult) {
+             const txid = await broadcastBtcTx(payJoinResult.txHex, network);
+             setOnchainTxid(txid);
+             setShowSuccess(true);
+             context?.notify('success', `Privacy PayJoin Broadcasted: ${txid.substring(0, 12)}...`);
+             setRecipient('');
+             setAmount('');
+             return;
+        }
+
+        // Standard Logic Fallback
         const amountSats = Math.floor(btcAmount * 100000000);
         const utxos = await fetchBtcUtxos(fromAddress, network);
         if (!utxos.length) throw new Error('No spendable UTXOs');

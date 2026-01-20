@@ -129,3 +129,16 @@ export async function clearEnclaveBiometricSession(): Promise<void> {
     }
   }
 }
+
+export async function signNative(options: {
+  vault: string;
+  pin?: string;
+  path: string;
+  messageHash: string;
+  network?: string;
+}): Promise<{ signature: string; pubkey: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.signTransaction(options);
+  }
+  throw new Error("Native Enclave not available");
+}

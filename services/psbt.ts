@@ -124,3 +124,25 @@ export function finalizePsbtWithSigs(
   psbt.finalizeAllInputs();
   return psbt.extractTransaction().toHex();
 }
+
+export function finalizePsbtWithSigsReturnBase64(
+  psbtBase64: string,
+  signatures: { index: number; signature: Buffer }[],
+  pubkey: Buffer,
+  network: Network,
+) {
+  const psbt = bitcoin.Psbt.fromBase64(psbtBase64, {
+    network: networkFrom(network),
+  });
+
+  signatures.forEach((sigItem) => {
+    const signer = {
+      publicKey: pubkey,
+      sign: () => sigItem.signature,
+    };
+    psbt.signInput(sigItem.index, signer);
+  });
+
+  psbt.finalizeAllInputs();
+  return psbt.toBase64();
+}

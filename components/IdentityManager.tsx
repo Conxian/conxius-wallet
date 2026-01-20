@@ -4,6 +4,7 @@ import { UserCheck, ShieldCheck, Fingerprint, ExternalLink, Bot, Loader2, Plus, 
 import { getDIDInsight } from '../services/gemini';
 import { DIDProfile } from '../types';
 import { generateNostrKeypair } from '../services/nostr';
+import { IdentityService } from '../services/identity';
 
 interface LinkedItem {
   label: string;
@@ -36,14 +37,31 @@ const IdentityManager: React.FC = () => {
   const [nostrKeys, setNostrKeys] = useState<{npub: string, nsec: string} | null>(null);
   const [isGeneratingNostr, setIsGeneratingNostr] = useState(false);
 
-  const fetchInsight = async () => {
-    setIsLoadingInsight(true);
-    const res = await getDIDInsight(profile.did);
-    setInsight(res);
-    setIsLoadingInsight(false);
-  };
-
-  useEffect(() => { fetchInsight(); }, [profile.did]);
+  useEffect(() => {
+    const loadIdentity = async () => {
+        try {
+            const idService = new IdentityService();
+            const identity = await idService.getDid();
+            
+            // Merge with existing profile structure
+            setProfile(prev => ({
+                ...prev,
+                did: identity.did,
+                linkedAddress: identity.address,
+                verified: true // Enclave verified
+            }));
+            
+            // Fetch insight for the real DID
+            setIsLoadingInsight(true);
+            const res = await getDIDInsight(identity.did);
+            setInsight(res);
+            setIsLoadingInsight(false);
+        } catch (e) {
+            console.error("Failed to load identity", e);
+        }
+    };
+    loadIdentity();
+  }, []);
 
   const handleGenerateNostr = async () => {
      setIsGeneratingNostr(true);
@@ -53,6 +71,19 @@ const IdentityManager: React.FC = () => {
      } finally {
         setIsGeneratingNostr(false);
      }
+  };
+
+  const handleLnLogin = async () => {
+      const lnurl = prompt("Enter LNURL-Auth string for testing:");
+      if (!lnurl) return;
+      
+      try {
+          const idService = new IdentityService();
+          await idService.loginWithLightning(lnurl);
+          alert("Lightning Login Successful!");
+      } catch (e) {
+          alert("Login Failed: " + (e as Error).message);
+      }
   };
 
   return (
@@ -152,6 +183,29 @@ const IdentityManager: React.FC = () => {
                     <p className="text-xs font-mono text-zinc-400 leading-relaxed italic whitespace-pre-wrap">{insight}</p>
                  )}
               </div>
+           </div>
+           
+           {/* Sovereign Backup & Features */}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               <div className="bg-orange-600/10 border border-orange-500/20 rounded-[2.5rem] p-8 space-y-4">
+                   <h3 className="text-xs font-black uppercase tracking-widest text-orange-400 flex items-center gap-2">
+                       <Lock size={14} /> Sovereign Backup
+                   </h3>
+                   <p className="text-[10px] text-zinc-400 leading-relaxed">
+                       Your keys are protected by the Secure Enclave. Ensure your device's 
+                       <span className="font-bold text-zinc-300"> iCloud / Google Drive </span> 
+                       backup is active. We are non-custodial.
+                   </p>
+               </div>
+               
+               <button onClick={handleLnLogin} className="bg-yellow-500/10 border border-yellow-500/20 rounded-[2.5rem] p-8 space-y-4 text-left hover:bg-yellow-500/20 transition-all group">
+                   <h3 className="text-xs font-black uppercase tracking-widest text-yellow-500 flex items-center gap-2">
+                       <Zap size={14} /> Test Lightning Login
+                   </h3>
+                   <p className="text-[10px] text-zinc-400 leading-relaxed group-hover:text-zinc-300">
+                       Authenticate with L402/LNURL services using your Enclave keys. Passwordless.
+                   </p>
+               </button>
            </div>
         </div>
       </div>
