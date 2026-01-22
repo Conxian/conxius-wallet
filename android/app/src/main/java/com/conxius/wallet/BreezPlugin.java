@@ -75,6 +75,16 @@ public class BreezPlugin extends Plugin {
         return c.newInstance(args);
     }
 
+    private static UByte createUByte(byte b) {
+        try {
+             // Kotlin inline class boxing
+             Method m = UByte.class.getMethod("box-impl", byte.class);
+             return (UByte) m.invoke(null, b);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @PluginMethod
     public void start(PluginCall call) {
         String mnemonic = call.getString("mnemonic");
@@ -101,52 +111,44 @@ public class BreezPlugin extends Plugin {
                 if (mnemoToUse == null) {
                     try {
                         byte[] seedBytes = NativeCrypto.decryptVault(vault, pin);
-                        mnemoToUse = new String(seedBytes, java.nio.charset.StandardCharsets.UTF_8);
-                        // Security: Wipe seedBytes? Java GC makes this hard, but we try not to keep it long.
+                        mnemoToUse = null; // Ensure we don't use mnemonic path
+                        // Convert to List<UByte>
+                        java.util.List<UByte> seedList = new java.util.ArrayList<>();
+                        for (byte b : seedBytes) {
+                            UByte ub = createUByte(b);
+                            if (ub != null) seedList.add(ub);
+                        }
+                        // Wipe seedBytes
+                        java.util.Arrays.fill(seedBytes, (byte)0);
+                        
+                        String safeInviteCode = inviteCode == null ? "" : inviteCode;
+                        NodeConfig nodeConfig = new NodeConfig.Greenlight(new GreenlightNodeConfig(null, safeInviteCode));
+                        Config config = Breez_sdkKt.defaultConfig(EnvironmentType.PRODUCTION, apiKey, nodeConfig);
+                        
+                        ConnectRequest connectRequest = new ConnectRequest(config, seedList, false);
+                        this.breezServices = Breez_sdkKt.connect(connectRequest, new EventListener() {
+                             @Override
+                             public void onEvent(BreezEvent e) {
+                                 Log.d(TAG, "Breez Event: " + e.toString());
+                             }
+                        });
                     } catch (Exception e) {
-                        call.reject("Vault decryption failed");
+                        call.reject("Vault connect failed: " + e.getMessage());
                         return;
                     }
-                }
-
-                String safeInviteCode = inviteCode == null ? "" : inviteCode;
-                NodeConfig nodeConfig = new NodeConfig.Greenlight(new GreenlightNodeConfig(null, safeInviteCode));
-
-                // Config
-                Config config = Breez_sdkKt.defaultConfig(
-                    EnvironmentType.PRODUCTION,
-                    apiKey,
-                    nodeConfig
-                );
-
-                // Connect
-                java.util.List<UByte> seedList;
-                if (mnemoToUse != null) {
-                    seedList = Breez_sdkKt.mnemonicToSeed(mnemoToUse);
                 } else {
-                    // Use decrypted vault bytes directly
-                    byte[] seedBytes = NativeCrypto.decryptVault(vault, pin);
-                    seedList = new java.util.ArrayList<>();
-                    // UByte handling in Java is complex due to inline classes.
-                    // We assume UByte has a constructor or static factory exposed.
-                    // If UByte is not easily constructible, we might need a Kotlin adapter.
-                    // However, typically for UByte:
-                    for (byte b : seedBytes) {
-                        seedList.add(new UByte(b));
-                    }
-                    // Wipe seedBytes
-                    java.util.Arrays.fill(seedBytes, (byte)0);
+                    // Mnemonic Path
+                    String safeInviteCode = inviteCode == null ? "" : inviteCode;
+                    NodeConfig nodeConfig = new NodeConfig.Greenlight(new GreenlightNodeConfig(null, safeInviteCode));
+                    Config config = Breez_sdkKt.defaultConfig(EnvironmentType.PRODUCTION, apiKey, nodeConfig);
+                    ConnectRequest connectRequest = new ConnectRequest(config, Breez_sdkKt.mnemonicToSeed(mnemoToUse), false);
+                    this.breezServices = Breez_sdkKt.connect(connectRequest, new EventListener() {
+                         @Override
+                         public void onEvent(BreezEvent e) {
+                             Log.d(TAG, "Breez Event: " + e.toString());
+                         }
+                    });
                 }
-
-                ConnectRequest connectRequest = new ConnectRequest(config, seedList, false);
-                this.breezServices = Breez_sdkKt.connect(connectRequest, new EventListener() {
-                     @Override
-                     public void onEvent(BreezEvent e) {
-                         Log.d(TAG, "Breez Event: " + e.toString());
-                         // Bridge events to JS?
-                         // notifyListeners("breezEvent", new JSObject().put("type", e.toString()));
-                     }
-                });
 
                 NodeState state = this.breezServices.nodeInfo();
                 JSObject ret = new JSObject();

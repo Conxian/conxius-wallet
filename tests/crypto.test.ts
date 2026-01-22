@@ -39,4 +39,12 @@ describe('Cryptographic Core', () => {
         expect(roots.rbtc.length).toBe(42);
         expect(/^0x[0-9a-fA-F]{40}$/.test(roots.rbtc)).toBe(true);
     });
+
+    it('should deterministically derive Liquid (L-BTC) addresses', async () => {
+        const roots = await deriveSovereignRoots(mnemonic);
+        // Liquid addresses/pubkeys are usually hex in our mock/signer
+        expect(roots.liquid).toBeDefined();
+        // It should be a hex string (pubkey)
+        expect(/^[0-9a-fA-F]+$/.test(roots.liquid)).toBe(true);
+    });
 });

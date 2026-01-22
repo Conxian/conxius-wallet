@@ -6,10 +6,11 @@ Mobile-first sovereign wallet with a hardened local enclave model.
 
 - React + Vite UI bundled with Tailwind CSS (offline-safe; no CDN dependency)
 - Android app via Capacitor
-- Local vault model
-  - Encrypted wallet state persisted on-device
-  - PIN-based encryption
-  - Optional biometric/device-credential gate on Android Keystore keys
+- **Native Enclave Core**
+  - Encrypted wallet state persisted on-device (Android Keystore)
+  - Memory-only seed handling for zero-leak operations
+  - Native key derivation for Bitcoin, Stacks, Liquid, Rootstock, and Nostr
+  - Embedded Greenlight (Breez SDK) node with direct enclave access
 
 ## Wallet Lifecycle
 
@@ -21,14 +22,15 @@ Mobile-first sovereign wallet with a hardened local enclave model.
 
 **Prerequisites**
 
-- Node.js
+- Node.js (v18+)
 - Android Studio + Android SDK (for device installs)
+- Java 17+
 
 **Install**
 
 - `npm install`
 
-**Run web**
+**Run web (Mock Enclave)**
 
 - `npm run dev`
 
@@ -36,15 +38,25 @@ Mobile-first sovereign wallet with a hardened local enclave model.
 
 - `npm run build`
 
-## Android
+## Android (Production Environment)
 
 **Build + install debug**
 
-- `cd android && .\\gradlew.bat :app:installDebug`
+- `cd android && ./gradlew :app:installDebug`
 
 **Sync web assets into Android**
 
-- `npx cap copy android`
+- `npx cap sync android`
+
+**Run Unit Tests**
+
+- `cd android && ./gradlew :app:testDebugUnitTest`
+
+## Key Architecture
+
+- **SecureEnclavePlugin**: Native Java bridge handling all sensitive key operations.
+- **BreezPlugin**: Lightning Network node running in a foreground service, connected natively to the Enclave.
+- **IdentityService**: Manages D.iD and Nostr identity using 0-gas enclave derivation.
 
 ## Roadmap
 
@@ -53,5 +65,5 @@ Mobile-first sovereign wallet with a hardened local enclave model.
 ## Project Docs
 
 - [WHITEPAPER.md](WHITEPAPER.md)
-- [PRD.md](PRD.md)
+- [PRD.md](PRD.md) - **Source of Truth**
 - [CHANGELOG.md](CHANGELOG.md)
