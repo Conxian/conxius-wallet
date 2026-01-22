@@ -44,7 +44,7 @@ const HandoffProtocol: React.FC = () => {
 
     // 2. Faucet
     await new Promise(r => setTimeout(r, 1000));
-    addLog("Requesting testnet coins from Conxian Faucet...");
+    addLog("Requesting testnet coins from Conxius Faucet...");
     setTestBalance(5.0);
     addLog("Airdrop Received: 5.00000000 sBTC");
     setTestProgress(40);

@@ -1,8 +1,8 @@
 
 # Conxius Business Source License 1.1
 
-**Licensor:** Conxian Labs
-**Licensed Work:** Conxius Sovereign Enclave (v1.2.0+)
+**Licensor:** Conxius Labs
+**Licensed Work:** Conxius Sovereign Enclave (SVN 0.3+)
 **Change Date:** 2028-01-01
 **Change License:** GNU General Public License v3.0 (or later)
 
@@ -12,7 +12,7 @@ The Licensor hereby grants you a world-wide, royalty-free, non-exclusive, non-tr
 
 ## 2. Commercial Use
 
-Commercial use is permitted provided that the "Integrator Fee" (0.05% software support incentive) remains intact and directed to the Conxian Treasury multisig. Any fork or derivative work that removes, bypasses, or redirects this fee is strictly prohibited for commercial distribution until the Change Date.
+Commercial use is permitted provided that the "Integrator Fee" (0.05% software support incentive) remains intact and directed to the Conxius Treasury multisig. Any fork or derivative work that removes, bypasses, or redirects this fee is strictly prohibited for commercial distribution until the Change Date.
 
 ## 3. Individual Usage
 

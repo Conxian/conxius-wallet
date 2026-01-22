@@ -283,7 +283,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
              <div className="bg-orange-500/10 border border-orange-500/20 p-5 rounded-2xl flex gap-4">
                 <AlertTriangle className="text-orange-500 shrink-0" size={20} />
                 <p className="text-[10px] text-orange-200 italic font-medium">
-                   This phrase is encrypted locally. It is NEVER transmitted to Conxian Labs.
+                   This phrase is encrypted locally. It is NEVER transmitted to Conxius Labs.
                 </p>
              </div>
 
@@ -299,7 +299,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         )}
 
         <p className="text-center text-[9px] text-zinc-700 uppercase tracking-widest font-black">
-          Conxius v1.2.0 • SOVEREIGN
+          Conxius SVN 0.3 • SOVEREIGN
         </p>
       </div>
     </div>

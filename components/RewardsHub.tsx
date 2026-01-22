@@ -27,9 +27,9 @@ const RewardsHub: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: "Perform an economic audit for a Conxius Wallet user. Explain how the 0.05% integrator fee supports Conxian Labs R&D. Compare this to CEX spreads (1-2%). Highlight that this fee builds a whole ecosystem of sovereign tools. Use technical institutional tone.",
+        contents: "Perform an economic audit for a Conxius Wallet user. Explain how the 0.05% integrator fee supports Conxius Labs R&D. Compare this to CEX spreads (1-2%). Highlight that this fee builds a whole ecosystem of sovereign tools. Use technical institutional tone.",
         config: {
-          systemInstruction: "You are the Conxian Labs Economic Strategist. You specialize in proving that supporting independent labs is ethical and efficient.",
+          systemInstruction: "You are the Conxius Labs Economic Strategist. You specialize in proving that supporting independent labs is ethical and efficient.",
         }
       });
       setAuditReport(response.text);
@@ -92,7 +92,7 @@ const RewardsHub: React.FC = () => {
                     </h4>
                     <p className="text-3xl font-bold text-orange-500 font-mono">{accumulatedFees.toFixed(6)} <span className="text-xs">BTC</span></p>
                     <p className="text-[10px] text-zinc-600 leading-relaxed italic">
-                      Verified by the Conxian Treasury multisig. Funding local-first privacy infrastructure.
+                      Verified by the Conxius Treasury multisig. Funding local-first privacy infrastructure.
                     </p>
                  </div>
                  <div className="pt-6">
