@@ -300,6 +300,15 @@ const PaymentPortal: React.FC = () => {
               <button type="button" onClick={() => setMethod('onramp')} title="Fiat On-ramp" className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'onramp' ? 'bg-zinc-100 text-zinc-950' : 'text-zinc-600 hover:text-zinc-400'}`}><Smartphone size={14} /> Fiat</button>
             </div>
 
+            {/* Balance Display */}
+            {method === 'lightning' && breezBalance !== null && (
+               <div className="flex justify-end px-2">
+                  <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">
+                     Available Liquidity: <span className="text-orange-500 font-mono">{(breezBalance).toLocaleString()} sats</span>
+                  </p>
+               </div>
+            )}
+
             <div className="space-y-6">
               {method !== 'onramp' ? (
                 <>

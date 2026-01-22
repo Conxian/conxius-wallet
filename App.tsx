@@ -38,7 +38,7 @@ import { AppState, WalletConfig, Asset, Bounty, AppMode, Network, LnBackendConfi
 import { AppContext } from './context';
 import { MOCK_ASSETS } from './constants';
 import { Language, getTranslation } from './services/i18n';
-import { encryptState, decryptState } from './services/storage';
+import { encryptState, decryptState, isLegacyBlob } from './services/storage';
 import { encryptSeed } from './services/seed';
 import * as bip39 from 'bip39';
 import { decryptSeed } from './services/seed';
@@ -230,6 +230,12 @@ const App: React.FC = () => {
       setIsLocked(false);
       setLockError(false);
       
+      // Migration: If legacy blob detected, re-encrypt immediately to harden
+      if (isLegacyBlob(saved)) {
+         persistState(nextState, pin);
+         notify('success', 'Vault Upgraded to V2 Security');
+      }
+      
       // Phase 3: Optimize Session - Unlock Cache
       if ((window as any).Capacitor?.isNativePlatform() && nextState.walletConfig?.seedVault) {
           SecureEnclave.unlockSession({ 
@@ -288,10 +294,13 @@ const App: React.FC = () => {
        // SecureEnclavePlugin.java checks cache if PIN is null.
        
        // Note: We still pass vault string because the plugin needs salt/IV from it to verify/decrypt.
-       return await requestEnclaveSignature(request, seedVault, undefined); 
-       
-       // TODO: If this fails with "Unlock required", we should prompt user or retry with currentPinRef.current
-       // For now, we assume if app is unlocked, session is valid (5 min matches/exceeds typical flow).
+       try {
+          return await requestEnclaveSignature(request, seedVault, undefined); 
+       } catch (e: any) {
+          // If session expired (Native cache cleared), fallback to explicit PIN (Slow Path)
+          console.warn("Session Native Cache Miss/Expired, falling back to explicit PIN", e);
+          return await requestEnclaveSignature(request, seedVault, pin);
+       }
     } else {
        // Web Fallback: Decrypt in JS memory
        const seed = await decryptSeed(seedVault, pin);

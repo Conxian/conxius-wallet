@@ -18,11 +18,13 @@ interface Product {
 
 const MOCK_PRODUCTS: Product[] = [
   { id: '1', name: 'Global Ghost eSIM', description: '1GB Data, 30 Days. Works in 140 countries. No KYC.', priceSats: 25000, category: 'eSIM', icon: Plane, provider: 'Silent.Link', region: 'Global' },
-  { id: '2', name: 'US Mobile Refill', description: '$25 Top-up for AT&T, Verizon, T-Mobile.', priceSats: 42000, category: 'Airtime', icon: Smartphone, provider: 'Bitrefill', region: 'USA' },
-  { id: '3', name: 'Amazon Gift Card', description: '$50 Balance. Instant delivery.', priceSats: 85000, category: 'Vouchers', icon: Gift, provider: 'Bitrefill', region: 'USA' },
-  { id: '4', name: 'Uber Credits', description: '€20 Ride Credits. Valid in EU.', priceSats: 38000, category: 'Vouchers', icon: Ticket, provider: 'Bitrefill', region: 'EU' },
+  { id: '2', name: 'Africa Mobile Refill', description: '1000 NGN Airtime for MTN, Airtel, Glo.', priceSats: 12000, category: 'Airtime', icon: Smartphone, provider: 'Bitrefill', region: 'Nigeria' },
+  { id: '3', name: 'AliExpress Voucher', description: '¥100 Shopping Credit. Global shipping.', priceSats: 28000, category: 'Vouchers', icon: Gift, provider: 'AliPay', region: 'China' },
+  { id: '4', name: 'Uber Credits MENA', description: '50 AED Ride Credits. Valid in UAE, Egypt, Saudi.', priceSats: 25000, category: 'Vouchers', icon: Ticket, provider: 'Bitrefill', region: 'MENA' },
   { id: '5', name: 'Private VPN', description: '1 Month Mullvad VPN. Account number delivery.', priceSats: 8500, category: 'Data', icon: ShieldCheck, provider: 'Mullvad', region: 'Global' },
   { id: '6', name: 'LatAm Airtime', description: '50 BRL Claro/Vivo Recharge.', priceSats: 15000, category: 'Airtime', icon: Smartphone, provider: 'Bitrefill', region: 'Brazil' },
+  { id: '7', name: 'M-Pesa Top-Up', description: '1000 KES mobile money credit.', priceSats: 14000, category: 'Airtime', icon: Smartphone, provider: 'Bitrefill', region: 'Kenya' },
+  { id: '8', name: 'GrabFood Voucher', description: '500 PHP food delivery credit. Philippines/SEA.', priceSats: 18000, category: 'Vouchers', icon: Gift, provider: 'Grab', region: 'SEA' },
 ];
 
 const Marketplace: React.FC = () => {
@@ -129,7 +131,7 @@ const Marketplace: React.FC = () => {
                   <Globe size={14} /> Region
                </h3>
                <div className="flex flex-wrap gap-2">
-                  {['All', 'Global', 'USA', 'EU', 'Brazil'].map(r => (
+                  {['All', 'Global', 'Brazil', 'Nigeria', 'Kenya', 'China', 'MENA', 'SEA', 'EU'].map(r => (
                      <button 
                         key={r}
                         onClick={() => setRegionFilter(r)}
