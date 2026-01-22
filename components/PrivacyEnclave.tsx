@@ -56,6 +56,8 @@ const PrivacyEnclave: React.FC = () => {
                  <div className="flex items-center gap-4 pt-2">
                     <button 
                       onClick={toggleDataUnion}
+                      aria-label="Toggle sovereign data union"
+                      title="Toggle sovereign data union"
                       className={`relative w-14 h-7 rounded-full transition-colors ${isDataUnionActive ? 'bg-purple-600' : 'bg-zinc-800'}`}
                     >
                        <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow-md ${isDataUnionActive ? 'left-8' : 'left-1'}`} />
@@ -86,6 +88,8 @@ const PrivacyEnclave: React.FC = () => {
                           value={askPrice} 
                           onChange={(e) => setAskPrice(parseInt(e.target.value))}
                           disabled={!isDataUnionActive}
+                          aria-label="Minimum ask price"
+                          title="Minimum ask price"
                           className="flex-1 accent-purple-500"
                        />
                        <span className="text-lg font-mono font-bold text-white">{askPrice} <span className="text-xs text-zinc-500">SATS</span></span>
@@ -114,6 +118,8 @@ const PrivacyEnclave: React.FC = () => {
                 </div>
                 <button 
                   onClick={() => setLocalOnly(!localOnly)}
+                  aria-label="Toggle local-only key generation"
+                  title="Toggle local-only key generation"
                   className={`relative w-12 h-6 rounded-full transition-colors ${localOnly ? 'bg-orange-600' : 'bg-zinc-800'}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${localOnly ? 'left-7' : 'left-1'}`} />
@@ -127,6 +133,8 @@ const PrivacyEnclave: React.FC = () => {
                 </div>
                 <button 
                   onClick={() => setNostrMetadata(!nostrMetadata)}
+                  aria-label="Toggle Nostr metadata storage"
+                  title="Toggle Nostr metadata storage"
                   className={`relative w-12 h-6 rounded-full transition-colors ${nostrMetadata ? 'bg-orange-600' : 'bg-zinc-800'}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${nostrMetadata ? 'left-7' : 'left-1'}`} />
@@ -149,6 +157,8 @@ const PrivacyEnclave: React.FC = () => {
                 </div>
                 <button 
                   onClick={() => setTorEnabled(!torEnabled)}
+                  aria-label="Toggle Tor routing"
+                  title="Toggle Tor routing"
                   className={`relative w-12 h-6 rounded-full transition-colors ${torEnabled ? 'bg-orange-600' : 'bg-zinc-800'}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${torEnabled ? 'left-7' : 'left-1'}`} />
@@ -193,7 +203,7 @@ const PrivacyEnclave: React.FC = () => {
             <p className="text-xs text-zinc-500 leading-relaxed">
               We are working on integrating <strong>ZK-Rollup</strong> metadata. Soon, you'll be able to prove you own a specific amount of BTC or a D.i.D credential without revealing your actual addresses.
             </p>
-            <button className="w-full py-2 bg-zinc-800 rounded-xl text-[10px] font-bold text-zinc-400 uppercase tracking-widest hover:bg-zinc-700 transition-colors">
+            <button className="w-full py-2 bg-zinc-800 rounded-xl text-[10px] font-bold text-zinc-400 uppercase tracking-widest hover:bg-zinc-700 transition-colors" aria-label="Request early access" title="Request early access">
               Request Early Access
             </button>
           </div>
