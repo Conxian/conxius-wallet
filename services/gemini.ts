@@ -18,7 +18,7 @@ export const getBountyAudit = async (bountyTitle: string, description: string) =
       1. Evaluate the technical feasibility within the Conxius Enclave architecture.
       2. Identify potential security risks (e.g., side-channel attacks on local keys).
       3. Recommend a fair reward in BTC/STX based on the complexity.
-      4. Suggest 3 specific acceptance criteria for the Conxian Treasury multisig to verify before release.`,
+      4. Suggest 3 specific acceptance criteria for the Conxius Treasury multisig to verify before release.`,
       config: {
         systemInstruction: "You are the Conxius Lead Auditor. You ensure all community contributions maintain the highest standards of sovereignty and security.",
         thinkingConfig: { thinkingBudget: 32768 }
@@ -35,7 +35,7 @@ export const generateReleaseNotes = async (version: string) => {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: `Generate a high-density, professional 'Cypherpunk' style release report for Conxius Wallet version ${version}. 
+      contents: `Generate a high-density, professional 'Cypherpunk' style release report for Conxius Wallet SVN ${version}. 
       Highlight:
       - The transition to BSL 1.1 Licensing.
       - Integrated System Health Sentinel.
@@ -44,7 +44,7 @@ export const generateReleaseNotes = async (version: string) => {
       - DAO Bounty Integration for community devs.
       The tone should be clinical, authoritative, and visionary.`,
       config: {
-        systemInstruction: "You are the Chief Technical Evangelist at Conxian Labs.",
+        systemInstruction: "You are the Chief Technical Evangelist at Conxius Labs.",
         thinkingConfig: { thinkingBudget: 32768 }
       }
     });
@@ -79,7 +79,7 @@ export const getNetworkRPCResearch = async (layer: string) => {
       model: 'gemini-3-flash-preview',
       contents: `Research into RPC infrastructure for: "${layer}". Identify top 3 providers and one Tor endpoint.`,
       config: {
-        systemInstruction: "You are the Conxian Infrastructure Lead.",
+        systemInstruction: "You are the Conxius Infrastructure Lead.",
       }
     });
     return response.text;

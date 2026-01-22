@@ -173,7 +173,7 @@ const SystemDiagnostics: React.FC = () => {
                  <span className="text-[10px] font-black uppercase font-mono tracking-widest">SENTINEL_DEBUG_OUTPUT</span>
               </div>
               <div className="space-y-3 font-mono text-[10px] text-zinc-500 h-full overflow-y-auto custom-scrollbar selection:bg-orange-500/50">
-                 <p className="text-green-500">&gt; [OK] LICENSE_VALIDATED: BSL-1.1 (Conxian Labs)</p>
+                 <p className="text-green-500">&gt; [OK] LICENSE_VALIDATED: BSL-1.1 (Conxius Labs)</p>
                  <p className="text-zinc-700">&gt; [OK] ENCLAVE_ISOLATION_VERIFIED</p>
                  {tests.filter(t => t.status === 'passed').map(t => (
                     <p key={t.id} className="animate-in slide-in-from-left-2">&gt; [VERIFIED] {t.label.toUpperCase()}... SUCCESS</p>

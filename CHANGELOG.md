@@ -19,7 +19,7 @@ The format is based on Keep a Changelog, and this project aims to follow Semanti
 
 - Documented security requirements and quality gates for future changes.
 
-## [1.2.0] - 2026-01-19
+## [0.3.0] - 2026-01-22
 
 ### Added
 
@@ -31,6 +31,7 @@ The format is based on Keep a Changelog, and this project aims to follow Semanti
 
 ### Changed
 
+- SVN version alignment across app, docs, and release hub.
 - Lightning backend alignment to LND-only support and safer endpoint handling.
 - Persistence sanitization to prevent mnemonic/passphrase from being re-persisted at rest.
 

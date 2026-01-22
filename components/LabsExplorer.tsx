@@ -4,9 +4,9 @@ import { Rocket, FlaskConical, Terminal, ArrowRight, Sparkles, Shield, Cpu, Code
 import { GoogleGenAI } from "@google/genai";
 
 const UPCOMING_PROJECTS = [
-  { id: 'guard', name: 'Conxian Guard', status: 'Incubating', desc: 'Hardware-level entropy monitoring for mobile devices.', icon: Shield, color: 'text-blue-500' },
+  { id: 'guard', name: 'Conxius Guard', status: 'Incubating', desc: 'Hardware-level entropy monitoring for mobile devices.', icon: Shield, color: 'text-blue-500' },
   { id: 'mesh', name: 'Sovereign Mesh V2', status: 'Alpha', desc: 'Peer-to-peer mempool sharing via encrypted local tunnels.', icon: Cpu, color: 'text-purple-500' },
-  { id: 'relay', name: 'Conxian Relay', status: 'Concept', desc: 'Universal Nostr-to-Bitcoin settlement engine.', icon: Code2, color: 'text-emerald-500' },
+  { id: 'relay', name: 'Conxius Relay', status: 'Concept', desc: 'Universal Nostr-to-Bitcoin settlement engine.', icon: Code2, color: 'text-emerald-500' },
 ];
 
 const LabsExplorer: React.FC = () => {
@@ -22,14 +22,14 @@ const LabsExplorer: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Provide a high-level technical blueprint for a new Conxian Labs project: "${project}". 
+        contents: `Provide a high-level technical blueprint for a new Conxius Labs project: "${project}". 
         Explain: 
         1. How it enhances user sovereignty.
         2. Its integration points with the existing Conxius Wallet.
         3. Why it is a necessary addition to the Bitcoin multi-layer ecosystem. 
         Focus on technical moats and developer-first architecture.`,
         config: {
-          systemInstruction: "You are the Lead Architect at Conxian Labs. Your tone is visionary, highly technical, and deeply aligned with open-source sovereign principles.",
+          systemInstruction: "You are the Lead Architect at Conxius Labs. Your tone is visionary, highly technical, and deeply aligned with open-source sovereign principles.",
         }
       });
       setBlueprint(response.text);
@@ -46,7 +46,7 @@ const LabsExplorer: React.FC = () => {
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-zinc-100 flex items-center gap-3">
             <FlaskConical className="text-orange-500" />
-            Conxian Labs
+            Conxius Labs
           </h2>
           <p className="text-zinc-500 text-sm italic">The production engine for sovereign multi-layer software.</p>
         </div>
