@@ -60,7 +60,7 @@ export async function signPsbtBase64(mnemonic: string, psbtBase64: string, netwo
 }
 
 export async function signPsbtBase64WithSeed(seed: Uint8Array, psbtBase64: string, network: Network) {
-  const root = bip32.fromSeed(seed);
+  const root = bip32.fromSeed(Buffer.from(seed));
   const path = `m/84'/${coinType(network)}'/0'/0/0`;
   const child = root.derivePath(path);
   const keyPair = ECPair.fromPrivateKey(child.privateKey!, { network: networkFrom(network) });
