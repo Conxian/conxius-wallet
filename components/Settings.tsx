@@ -1,6 +1,6 @@
 
 import React, { useState, useContext } from 'react';
-import { Settings as SettingsIcon, Globe, Moon, Sun, DollarSign, Bell, Shield, Info, Database, Eye, Crown, Zap, CheckCircle2, RotateCcw, Languages, MapPin, Lock } from 'lucide-react';
+import { Settings as SettingsIcon, Globe, Moon, Sun, DollarSign, Bell, Shield, Info, Database, Eye, Crown, Zap, CheckCircle2, RotateCcw, Languages, MapPin, Lock, Briefcase } from 'lucide-react';
 import { AppContext } from '../context';
 import { Language } from '../services/i18n';
 import { Network } from '../types';
@@ -49,9 +49,18 @@ const Settings: React.FC = () => {
                 title="Interface Language"
               >
                 <option value="en">English (Global)</option>
-                <option value="es">Spanish (LatAm)</option>
-                <option value="de">German (DACH)</option>
-                <option value="zh">Chinese (Simplified)</option>
+                <option value="ar">العربية (Arabic)</option>
+                <option value="fr">Français (Afrique)</option>
+                <option value="zh">中文 (Chinese)</option>
+                <option value="ru">Русский (Russian)</option>
+                <option value="pt">Português (Brasil)</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+                <option value="fa">فارسی (Persian)</option>
+                <option value="id">Bahasa Indonesia</option>
+                <option value="tr">Türkçe (Turkish)</option>
+                <option value="sw">Kiswahili (Swahili)</option>
+                <option value="es">Español (LatAm)</option>
+                <option value="de">Deutsch (German)</option>
                 <option value="cypher">Cypherpunk (Standard)</option>
               </select>
             </div>
@@ -165,6 +174,19 @@ const Settings: React.FC = () => {
                 <option value="devnet">Devnet (Experimental)</option>
               </select>
               <p className="text-[10px] text-zinc-500 italic">Applies to BTC, Stacks, Liquid, and Rootstock endpoints.</p>
+            </div>
+
+            {/* Corporate Profile (Sovereign Entity) */}
+            <div className="space-y-4 md:col-span-2 border-t border-zinc-800 pt-6 mt-2">
+               <label className="text-[10px] font-black uppercase text-zinc-600 flex items-center gap-2">
+                 <Briefcase size={12} /> Corporate Entity (Encrypted)
+               </label>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input placeholder="Legal Entity Name" className="bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:outline-none" />
+                  <input placeholder="Tax / VAT ID (Optional)" className="bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:outline-none" />
+                  <input placeholder="Registered Address" className="md:col-span-2 bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:outline-none" />
+               </div>
+               <p className="text-[10px] text-zinc-500 italic">These details are signed by your DID and included in PayJoin invoices.</p>
             </div>
             
             <div className="space-y-4">

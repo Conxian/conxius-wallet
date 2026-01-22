@@ -81,3 +81,12 @@ export const decryptState = async (stored: string, pin: string): Promise<any> =>
     throw new Error("Invalid Credentials");
   }
 };
+
+export const isLegacyBlob = (stored: string): boolean => {
+  try {
+    const parsed = JSON.parse(stored);
+    return !parsed.salt || parsed.v !== CURRENT_VERSION;
+  } catch {
+    return false;
+  }
+};

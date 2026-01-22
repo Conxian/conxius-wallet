@@ -1,6 +1,6 @@
 
 import React, { useContext } from 'react';
-import { LayoutDashboard, CreditCard, Trophy, FlaskConical, Gavel, Landmark, Briefcase, BarChart3, BookOpen, Package, Rocket, Coins, Repeat, UserCheck, Network, Lock, Shield, Settings, X, ChevronRight, LogOut, Zap, Layers, Palette, ShoppingBag } from 'lucide-react';
+import { LayoutDashboard, CreditCard, Trophy, FlaskConical, Gavel, Landmark, Briefcase, BarChart3, BookOpen, Package, Rocket, Coins, Repeat, UserCheck, Network, Lock, Shield, Settings, X, ChevronRight, LogOut, Zap, Layers, Palette, ShoppingBag, Globe } from 'lucide-react';
 import { AppContext } from '../context';
 
 interface MobileMenuProps {
@@ -21,6 +21,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ setActiveTab, activeTab }) => {
         { id: 'defi', label: 'DeFi', icon: Layers },
         { id: 'stacking', label: 'Stacking', icon: Coins },
         { id: 'bridge', label: 'Bridge', icon: Repeat },
+        { id: 'browser', label: 'Browser', icon: Globe },
       ]
     },
     {
