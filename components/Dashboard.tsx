@@ -147,17 +147,17 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Sovereign Capital Dashboard */}
-      <div className="bg-zinc-900/40 border border-zinc-800 rounded-[3rem] p-8 md:p-12 relative overflow-hidden group shadow-2xl">
+      <div className="bg-[var(--surface-1)]/85 border border-[var(--border)] rounded-[3rem] p-8 md:p-12 relative overflow-hidden group shadow-2xl ring-1 ring-[rgba(247,147,26,0.15)]">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <ShieldCheck size={18} className="text-green-500" />
-              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">{t('balance.title')}</p>
+              <p className="text-[10px] font-black text-[var(--muted)] uppercase tracking-[0.3em]">{t('balance.title')}</p>
             </div>
             <div className={`flex items-baseline gap-3 transition-all duration-500 ${privacyMode ? 'blur-xl grayscale' : 'blur-0'}`}>
-              <span className="text-5xl md:text-7xl font-black tracking-tighter text-zinc-100 font-mono">${totalBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              <span className="text-5xl md:text-7xl font-black tracking-tighter text-[var(--text)] font-mono">${totalBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
             </div>
-            <button onClick={() => appContext.setPrivacyMode(!privacyMode)} className="text-[9px] font-black uppercase tracking-widest text-zinc-600 hover:text-zinc-400 flex items-center gap-2">
+            <button onClick={() => appContext.setPrivacyMode(!privacyMode)} className="text-[9px] font-black uppercase tracking-widest text-[var(--muted)] hover:text-[var(--text)] flex items-center gap-2">
                 <EyeOff size={12} /> {t('balance.privacy')}
             </button>
           </div>

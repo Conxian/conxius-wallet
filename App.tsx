@@ -54,7 +54,7 @@ const INITIAL_BOUNTIES: Bounty[] = [
 ];
 
 const DEFAULT_STATE: AppState & { language: Language } = {
-  version: '1.3.0',
+  version: '0.3.0',
   mode: 'sovereign',
   network: 'mainnet',
   language: 'en',
@@ -443,29 +443,32 @@ const App: React.FC = () => {
 
   return (
     <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity }}>
-      <div className={`flex bg-zinc-950 text-zinc-100 min-h-screen selection:bg-orange-500/30 overflow-hidden`}>
+      <div className={`flex bg-[var(--bg)] text-[var(--text)] min-h-screen selection:bg-[rgba(247,147,26,0.35)] overflow-hidden`}>
         <div className="hidden md:block">
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
         <main className="flex-1 overflow-y-auto relative pb-24 md:pb-0 custom-scrollbar">
-          <div className="h-16 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md flex items-center justify-between px-6 md:px-8 sticky top-0 z-50">
+          <div className="h-16 border-b border-[var(--border)] bg-[var(--surface-1)]/80 backdrop-blur-md flex items-center justify-between px-6 md:px-8 sticky top-0 z-50">
             <div className="flex items-center gap-3">
+               <div className="w-7 h-7 rounded-lg overflow-hidden ring-1 ring-[var(--border)] md:hidden">
+                 <img src="/conxius-logo.svg" alt="Conxius" className="w-full h-full object-cover" />
+               </div>
                <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
                  state.isMainnetLive 
-                   ? 'bg-zinc-100 text-zinc-950 border-zinc-100' 
+                   ? 'bg-[var(--text)] text-[var(--bg)] border-[var(--text)]' 
                    : state.mode === 'sovereign'
-                    ? 'bg-green-600/10 text-green-600 border-green-600/20'
-                    : 'bg-amber-600/10 text-amber-600 border-amber-600/20'
+                    ? 'bg-[rgba(34,197,94,0.12)] text-[var(--success)] border-[rgba(34,197,94,0.35)]'
+                    : 'bg-[rgba(251,191,36,0.12)] text-[var(--accent-2)] border-[rgba(251,191,36,0.35)]'
                }`}>
                  {state.isMainnetLive ? t('status.stable') : state.mode === 'sovereign' ? t('status.sovereign') : t('status.simulation')}
                </span>
             </div>
             <div className="flex items-center gap-4">
                <div className="text-right">
-                  <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Sovereignty</p>
-                  <p className="text-xs font-mono font-bold text-amber-600">{state.sovereigntyScore}/100</p>
+                  <p className="text-[9px] font-black text-[var(--muted)] uppercase tracking-widest">Sovereignty</p>
+                  <p className="text-xs font-mono font-bold text-[var(--accent-2)]">{state.sovereigntyScore}/100</p>
                </div>
-               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-green-600 to-amber-600 cursor-pointer hover:scale-105 transition-transform" onClick={lockWallet} title="Lock Enclave">
+               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[var(--success)] to-[var(--accent-2)] cursor-pointer hover:scale-105 transition-transform" onClick={lockWallet} title="Lock Enclave">
                   <Lock size={14} className="text-white mx-auto mt-2" />
                </div>
             </div>
