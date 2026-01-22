@@ -202,7 +202,7 @@ export const requestEnclaveSignature = async (
       } else {
         // General Payload Signing
         const cx = Buffer.from(JSON.stringify(request.payload));
-        const hash = bitcoin.crypto.sha256(cx).toString("hex");
+        const hash = Buffer.from(bitcoin.crypto.sha256(cx)).toString("hex");
         const res = await signNative({
           vault,
           pin,
@@ -236,7 +236,7 @@ export const requestEnclaveSignature = async (
       } else {
         // Generic message
         const cx = Buffer.from(JSON.stringify(request.payload));
-        hashToSign = bitcoin.crypto.sha256(cx).toString("hex");
+        hashToSign = Buffer.from(bitcoin.crypto.sha256(cx)).toString("hex");
       }
 
       const res = await signNative({

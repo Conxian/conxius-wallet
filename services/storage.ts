@@ -23,14 +23,14 @@ async function getKey(keyMaterial: CryptoKey, salt: Uint8Array): Promise<CryptoK
   return globalThis.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt: salt,
+      salt: salt as unknown as ArrayBuffer,
       iterations: 100000,
-      hash: "SHA-256"
+      hash: "SHA-256",
     },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     true,
-    ["encrypt", "decrypt"]
+    ["encrypt", "decrypt"],
   );
 }
 

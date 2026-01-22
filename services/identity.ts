@@ -82,7 +82,9 @@ export class IdentityService {
       
       const message = `${domain} wants you to sign in with your Conxius Identity:\n${didInfo.address}\n\nURI: ${didInfo.did}\nNonce: ${challenge}\nIssued At: ${timestamp}`;
       
-      const messageHash = bitcoin.crypto.sha256(Buffer.from(message)).toString('hex');
+      const messageHash = Buffer.from(
+        bitcoin.crypto.sha256(Buffer.from(message)),
+      ).toString("hex");
       const path = this.network === 'mainnet' ? "m/84'/0'/0'/0/0" : "m/84'/1'/0'/0/0";
       
       const sigRes = await signNative({
