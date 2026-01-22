@@ -7,7 +7,7 @@ import { getFinalSystemHardeningChecklist, generateReleaseNotes } from '../servi
 const ARTIFACTS = [
   { 
     platform: 'Android (Sovereign APK)', 
-    file: 'conxius-v1.2.0-stable.apk', 
+    file: 'conxius-svn-0.3.apk', 
     size: '48 MB', 
     hash: 'sha256:a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0',
     icon: Smartphone,
@@ -15,7 +15,7 @@ const ARTIFACTS = [
   },
   { 
     platform: 'Desktop (macOS/Linux)', 
-    file: 'conxius-desktop-v1.2.0.tar.gz', 
+    file: 'conxius-desktop-svn-0.3.tar.gz', 
     size: '156 MB', 
     hash: 'sha256:7c8a4b2e9f1d0c5a3b9e8f7d6c5b4a3b9e8f7d6c5b4a3b9e8f7d6c5b4a3b9',
     icon: HardDrive,
@@ -39,7 +39,7 @@ const ReleaseManager: React.FC = () => {
     'Auditing DAO Bounty Smart Logic',
     'Hardening Enclave Entropy Source',
     'Signing Artifacts with Air-Gapped Key',
-    'Finalizing v1.2.0 Release Candidate'
+    'Finalizing SVN 0.3 Release Candidate'
   ];
 
   const startPackaging = async () => {
@@ -57,12 +57,12 @@ const ReleaseManager: React.FC = () => {
     setHardeningReport(report);
     
     setIsGeneratingNotes(true);
-    const notes = await generateReleaseNotes('1.2.0');
+    const notes = await generateReleaseNotes('0.3.0');
     setReleaseNotes(notes);
     setIsGeneratingNotes(false);
     
     setIsPackaging(false);
-    setBuildLogs(prev => [...prev, `[FINALIZE] RELEASE v1.2.0 READY FOR DISTRIBUTION.`]);
+    setBuildLogs(prev => [...prev, `[FINALIZE] RELEASE SVN 0.3 READY FOR DISTRIBUTION.`]);
   };
 
   return (
@@ -95,7 +95,7 @@ const ReleaseManager: React.FC = () => {
                     <FileText size={16} className="text-orange-500" />
                     Sovereign Release Report
                  </h3>
-                 <span className="text-[10px] font-mono text-zinc-600">ID: SL-1.2.0-FINAL</span>
+                 <span className="text-[10px] font-mono text-zinc-600">ID: SVN-0.3-RC</span>
               </div>
               
               <div className="p-10 font-serif text-sm leading-loose text-zinc-300 min-h-[500px] whitespace-pre-wrap custom-scrollbar max-h-[700px] overflow-y-auto selection:bg-orange-500/30">

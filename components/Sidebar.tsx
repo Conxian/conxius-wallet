@@ -37,16 +37,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   ];
 
   return (
-    <div className="w-64 h-screen border-r border-zinc-800 bg-zinc-950 flex flex-col p-6 sticky top-0">
+    <div className="w-64 h-screen border-r border-[var(--border)] bg-[var(--surface-1)]/95 backdrop-blur-xl flex flex-col p-6 sticky top-0">
       <div className="flex items-center gap-3 mb-10">
-        <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20">
-          <FlaskConical className="text-white fill-current" size={20} />
+        <div className="w-10 h-10 rounded-xl overflow-hidden ring-1 ring-[var(--border)] shadow-lg shadow-black/30">
+          <img src="/conxius-logo.svg" alt="Conxius" className="w-full h-full object-cover" />
         </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-zinc-100">Conxian <span className="text-orange-500">Labs</span></h1>
+          <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">Conxius <span className="text-[var(--accent)]">Wallet</span></h1>
           <div className="flex items-center gap-1.5">
-            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em]">Conxius Wallet</p>
-            <span className="bg-orange-500/10 text-orange-500 text-[8px] px-1.5 py-0.5 rounded border border-orange-500/20 font-black uppercase shadow-sm">v1.2.0-ST</span>
+            <p className="text-[10px] text-[var(--muted)] font-black uppercase tracking-[0.2em]">Native Enclave</p>
+            <span className="bg-[rgba(247,147,26,0.12)] text-[var(--accent)] text-[8px] px-1.5 py-0.5 rounded border border-[rgba(247,147,26,0.35)] font-black uppercase shadow-sm">SVN 0.3</span>
           </div>
         </div>
       </div>
@@ -58,24 +58,24 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
             onClick={() => setActiveTab(item.id)}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
               activeTab === item.id 
-                ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20 shadow-sm' 
-                : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900/50'
+                ? 'bg-[rgba(247,147,26,0.12)] text-[var(--accent)] border border-[rgba(247,147,26,0.35)] shadow-sm' 
+                : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]'
             }`}
           >
-            <item.icon size={18} className={activeTab === item.id ? 'text-orange-500' : 'text-zinc-500'} />
+            <item.icon size={18} className={activeTab === item.id ? 'text-[var(--accent)]' : 'text-[var(--muted)]'} />
             <span className="font-semibold text-sm">{item.label}</span>
           </button>
         ))}
       </nav>
 
-      <div className="mt-auto pt-6 border-t border-zinc-900 space-y-4">
-        <div className="bg-gradient-to-tr from-orange-600/20 to-zinc-900 border border-orange-500/20 rounded-2xl p-4 flex items-center gap-3">
-           <div className="p-2 bg-orange-500 rounded-lg text-white">
+      <div className="mt-auto pt-6 border-t border-[var(--border)] space-y-4">
+        <div className="bg-gradient-to-tr from-[rgba(247,147,26,0.18)] to-[rgba(17,24,39,0.9)] border border-[rgba(247,147,26,0.3)] rounded-2xl p-4 flex items-center gap-3">
+           <div className="p-2 bg-[var(--accent)] rounded-lg text-white">
               <Medal size={16} />
            </div>
            <div>
-              <p className="text-[8px] font-black uppercase text-orange-500 tracking-widest">BSL License</p>
-              <p className="text-[10px] font-bold text-zinc-200 italic">Commercial Limited</p>
+              <p className="text-[8px] font-black uppercase text-[var(--accent-2)] tracking-widest">Sovereign Build</p>
+              <p className="text-[10px] font-bold text-[var(--text)] italic">Hardware-Backed</p>
            </div>
         </div>
       </div>
