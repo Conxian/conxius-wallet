@@ -51,11 +51,25 @@ const IdentityManager: React.FC = () => {
                 verified: true // Enclave verified
             }));
             
-            // Fetch insight for the real DID
-            setIsLoadingInsight(true);
-            const res = await getDIDInsight(identity.did);
-            setInsight(res);
-            setIsLoadingInsight(false);
+            // Check cache for insight to avoid expensive API call
+            const cacheKey = `did_insight_${identity.did}`;
+            const cachedInsight = localStorage.getItem(cacheKey);
+            
+            if (cachedInsight) {
+                setInsight(cachedInsight);
+            } else {
+                // Fetch insight for the real DID
+                setIsLoadingInsight(true);
+                try {
+                    const res = await getDIDInsight(identity.did);
+                    setInsight(res);
+                    localStorage.setItem(cacheKey, res);
+                } catch (err) {
+                    console.error("Insight fetch failed", err);
+                } finally {
+                    setIsLoadingInsight(false);
+                }
+            }
         } catch (e) {
             console.error("Failed to load identity", e);
         }

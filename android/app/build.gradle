@@ -24,6 +24,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    packaging {
+        resources {
+            excludes += ['org/bouncycastle/x509/CertPathReviewerMessages_de.properties']
+        }
+    }
 }
 
 repositories {
@@ -46,7 +52,9 @@ dependencies {
     }
     implementation "breez_sdk:bindings-android:0.8.0"
     // For RSK / EVM Signing
-    implementation 'org.web3j:core:4.8.7-android'
+    implementation('org.web3j:core:4.8.7-android') {
+        exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
+    }
 }
 
 apply from: 'capacitor.build.gradle'

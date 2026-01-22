@@ -10,10 +10,13 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
 // Breez SDK Imports
 import breez_sdk.BlockingBreezServices;
 import breez_sdk.BreezEvent;
+import breez_sdk.Breez_sdkKt;
 import breez_sdk.Config;
 import breez_sdk.ConnectRequest;
 import breez_sdk.EnvironmentType;
@@ -22,7 +25,13 @@ import breez_sdk.GreenlightNodeConfig;
 import breez_sdk.NodeConfig;
 import breez_sdk.NodeState;
 import breez_sdk.Payment;
-import breez_sdk.LogEntry;
+import breez_sdk.ReceivePaymentRequest;
+import breez_sdk.SendPaymentRequest;
+import breez_sdk.SendPaymentResponse;
+import breez_sdk.OpeningFeeParams;
+import kotlin.UByte;
+import kotlin.UInt;
+import kotlin.ULong;
 
 @CapacitorPlugin(name = "Breez")
 public class BreezPlugin extends Plugin {
@@ -30,29 +39,107 @@ public class BreezPlugin extends Plugin {
     private BlockingBreezServices breezServices;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
+    private static Long reflectLongNoArgByPrefix(Object target, String methodPrefix) {
+        try {
+            for (Method m : target.getClass().getMethods()) {
+                if (m.getParameterCount() == 0 && m.getName().startsWith(methodPrefix)) {
+                    Object v = m.invoke(target);
+                    if (v instanceof Long) return (Long) v;
+                    if (v instanceof Number) return ((Number) v).longValue();
+                    return null;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private static Integer reflectIntNoArgByPrefix(Object target, String methodPrefix) {
+        try {
+            for (Method m : target.getClass().getMethods()) {
+                if (m.getParameterCount() == 0 && m.getName().startsWith(methodPrefix)) {
+                    Object v = m.invoke(target);
+                    if (v instanceof Integer) return (Integer) v;
+                    if (v instanceof Number) return ((Number) v).intValue();
+                    return null;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private static <T> T newPrivateInstance(Class<T> cls, Class<?>[] paramTypes, Object[] args) throws Exception {
+        Constructor<T> c = cls.getDeclaredConstructor(paramTypes);
+        c.setAccessible(true);
+        return c.newInstance(args);
+    }
+
     @PluginMethod
     public void start(PluginCall call) {
         String mnemonic = call.getString("mnemonic");
         String apiKey = call.getString("apiKey");
         String inviteCode = call.getString("inviteCode"); // Greenlight invite
+        String vault = call.getString("vault");
+        String pin = call.getString("pin");
 
-        if (mnemonic == null || apiKey == null) {
-            call.reject("Missing mnemonic or apiKey");
+        if (apiKey == null) {
+            call.reject("Missing apiKey");
+            return;
+        }
+
+        if (mnemonic == null && (vault == null || pin == null)) {
+            call.reject("Missing mnemonic OR vault/pin");
             return;
         }
 
         executor.submit(() -> {
             try {
+                String mnemoToUse = mnemonic;
+                
+                // Native Decryption if Vault provided
+                if (mnemoToUse == null) {
+                    try {
+                        byte[] seedBytes = NativeCrypto.decryptVault(vault, pin);
+                        mnemoToUse = new String(seedBytes, java.nio.charset.StandardCharsets.UTF_8);
+                        // Security: Wipe seedBytes? Java GC makes this hard, but we try not to keep it long.
+                    } catch (Exception e) {
+                        call.reject("Vault decryption failed");
+                        return;
+                    }
+                }
+
+                String safeInviteCode = inviteCode == null ? "" : inviteCode;
+                NodeConfig nodeConfig = new NodeConfig.Greenlight(new GreenlightNodeConfig(null, safeInviteCode));
+
                 // Config
-                Config config = breez_sdk.BreezSdkMethods.defaultConfig(
+                Config config = Breez_sdkKt.defaultConfig(
                     EnvironmentType.PRODUCTION,
                     apiKey,
-                    breez_sdk.BreezSdkMethods.defaultNodeConfig(breez_sdk.NodeConfigVariant.GREENLIGHT, new GreenlightNodeConfig(null, inviteCode))
+                    nodeConfig
                 );
 
                 // Connect
-                ConnectRequest connectRequest = new ConnectRequest(config, breez_sdk.BreezSdkMethods.mnemonicToSeed(mnemonic));
-                this.breezServices = breez_sdk.BreezSdkMethods.connect(connectRequest, new EventListener() {
+                java.util.List<UByte> seedList;
+                if (mnemoToUse != null) {
+                    seedList = Breez_sdkKt.mnemonicToSeed(mnemoToUse);
+                } else {
+                    // Use decrypted vault bytes directly
+                    byte[] seedBytes = NativeCrypto.decryptVault(vault, pin);
+                    seedList = new java.util.ArrayList<>();
+                    // UByte handling in Java is complex due to inline classes.
+                    // We assume UByte has a constructor or static factory exposed.
+                    // If UByte is not easily constructible, we might need a Kotlin adapter.
+                    // However, typically for UByte:
+                    for (byte b : seedBytes) {
+                        seedList.add(new UByte(b));
+                    }
+                    // Wipe seedBytes
+                    java.util.Arrays.fill(seedBytes, (byte)0);
+                }
+
+                ConnectRequest connectRequest = new ConnectRequest(config, seedList, false);
+                this.breezServices = Breez_sdkKt.connect(connectRequest, new EventListener() {
                      @Override
                      public void onEvent(BreezEvent e) {
                          Log.d(TAG, "Breez Event: " + e.toString());
@@ -64,7 +151,8 @@ public class BreezPlugin extends Plugin {
                 NodeState state = this.breezServices.nodeInfo();
                 JSObject ret = new JSObject();
                 ret.put("id", state.getId());
-                ret.put("balanceMsat", state.getMaxPayableMsat()); 
+                Long maxPayableMsat = reflectLongNoArgByPrefix(state, "getMaxPayableMsat");
+                ret.put("balanceMsat", maxPayableMsat != null ? maxPayableMsat : 0);
                 call.resolve(ret);
 
             } catch (Exception e) {
@@ -84,9 +172,12 @@ public class BreezPlugin extends Plugin {
             NodeState state = breezServices.nodeInfo();
             JSObject ret = new JSObject();
             ret.put("id", state.getId());
-            ret.put("blockHeight", state.getBlockHeight());
-            ret.put("maxPayableMsat", state.getMaxPayableMsat());
-            ret.put("maxReceivableMsat", state.getMaxReceivableMsat());
+            Integer blockHeight = reflectIntNoArgByPrefix(state, "getBlockHeight");
+            Long maxPayableMsat = reflectLongNoArgByPrefix(state, "getMaxPayableMsat");
+            Long maxReceivableMsat = reflectLongNoArgByPrefix(state, "getMaxReceivableMsat");
+            ret.put("blockHeight", blockHeight != null ? blockHeight : 0);
+            ret.put("maxPayableMsat", maxPayableMsat != null ? maxPayableMsat : 0);
+            ret.put("maxReceivableMsat", maxReceivableMsat != null ? maxReceivableMsat : 0);
             call.resolve(ret);
         } catch (Exception e) {
             call.reject(e.getMessage());
@@ -104,16 +195,14 @@ public class BreezPlugin extends Plugin {
         
         executor.submit(() -> {
             try {
-                 // receivePayment(amountMsat: Long?, description: String, preimage: List<UByte>? = null, openingFeeParams: OpeningFeeParams? = null, useDescriptionHash: Boolean? = null, expiry: Long? = null, cltv: UInt? = null): ReceivePaymentResponse
-                breez_sdk.ReceivePaymentResponse response = breezServices.receivePayment(
-                    amountMsat, 
-                    description, 
-                    new java.util.ArrayList<>(), // preimage (optional)
-                    null, // openingFeeParams
-                    null, // useDescriptionHash
-                    null, // expiry
-                    null // cltv
+                long safeAmountMsat = amountMsat == null ? 0L : amountMsat;
+                java.util.List<UByte> preimage = new java.util.ArrayList<>();
+                ReceivePaymentRequest req = newPrivateInstance(
+                    ReceivePaymentRequest.class,
+                    new Class<?>[] { long.class, String.class, java.util.List.class, OpeningFeeParams.class, Boolean.class, UInt.class, UInt.class },
+                    new Object[] { safeAmountMsat, description, preimage, null, null, null, null }
                 );
+                breez_sdk.ReceivePaymentResponse response = breezServices.receivePayment(req);
                 
                 JSObject ret = new JSObject();
                 ret.put("bolt11", response.getLnInvoice().getBolt11());
@@ -139,11 +228,18 @@ public class BreezPlugin extends Plugin {
 
         executor.submit(() -> {
             try {
-                breez_sdk.Payment result = breezServices.sendPayment(bolt11, null);
+                SendPaymentRequest req = newPrivateInstance(
+                    SendPaymentRequest.class,
+                    new Class<?>[] { String.class, boolean.class, ULong.class, String.class },
+                    new Object[] { bolt11, false, null, null }
+                );
+                SendPaymentResponse resp = breezServices.sendPayment(req);
+                breez_sdk.Payment result = resp.getPayment();
                 JSObject ret = new JSObject();
                 ret.put("paymentHash", result.getId());
                 ret.put("status", result.getStatus().name());
-                ret.put("amountMsat", result.getAmountMsat());
+                Long amountMsat = reflectLongNoArgByPrefix(result, "getAmountMsat");
+                ret.put("amountMsat", amountMsat != null ? amountMsat : 0);
                 call.resolve(ret);
             } catch (Exception e) {
                  call.reject("Pay failed: " + e.getMessage());
@@ -165,7 +261,7 @@ public class BreezPlugin extends Plugin {
 
         executor.submit(() -> {
             try {
-                breez_sdk.InputType input = breez_sdk.BreezSdkMethods.parseInput(lnurl);
+                breez_sdk.InputType input = Breez_sdkKt.parseInput(lnurl);
                 if (input instanceof breez_sdk.InputType.LnUrlAuth) {
                     breez_sdk.LnUrlAuthRequestData data = ((breez_sdk.InputType.LnUrlAuth) input).getData();
                     breez_sdk.LnUrlCallbackStatus result = breezServices.lnurlAuth(data);

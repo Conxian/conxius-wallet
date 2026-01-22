@@ -1,4 +1,4 @@
-import { signNative } from './enclave-storage';
+import { signNative, getPublicKeyNative } from './enclave-storage';
 import { Network } from '../types';
 import * as bitcoin from 'bitcoinjs-lib';
 
@@ -15,6 +15,7 @@ export interface ConxiusIdentity {
 export class IdentityService {
   private network: string;
   private vaultName: string;
+  private static cache: Map<string, ConxiusIdentity> = new Map();
 
   constructor(vaultName: string = 'primary_vault', network: Network = 'mainnet') {
      this.vaultName = vaultName;
@@ -27,30 +28,37 @@ export class IdentityService {
    * Current implementation uses the Bitcoin Mainnet/Testnet address as the anchor.
    */
   async getDid(): Promise<ConxiusIdentity> {
-     // We request a signature of a deterministic "ID Salt" to derive/retrieve the public key
-     // without needing to store it loosely. 
+     const cacheKey = `${this.vaultName}:${this.network}`;
+     if (IdentityService.cache.has(cacheKey)) {
+         return IdentityService.cache.get(cacheKey)!;
+     }
+
      // Path: m/84'/0'/0'/0/0 (Standard Native Segwit)
-     
-     // Note: In a real "Zero-Knowledge" setup, we might use a different path for Identity (e.g. m/73'/...)
-     // to keep funds and identity separate. For "Sovereign Business", using the Master Address 
-     // as the Identity Anchor is the most compatible with existing tools (like verifyMessage).
-     
      const path = this.network === 'mainnet' ? "m/84'/0'/0'/0/0" : "m/84'/1'/0'/0/0";
      
-     // We use a dummy hash to get the pubkey from the enclave if we don't have it.
-     // Ideally, we should add `getPublicKey` to the Enclave plugin to avoid signing.
-     // Optimization: Usage of signNative to retrieve pubkey.
-     const dummyHash = "0000000000000000000000000000000000000000000000000000000000000000";
-     
      try {
-         const res = await signNative({
-             vault: this.vaultName,
-             path,
-             messageHash: dummyHash,
-             network: this.network
-         });
+         let pubkey: string;
+         try {
+            // Optimization: Try to get public key directly without signing
+            const res = await getPublicKeyNative({
+                vault: this.vaultName,
+                path,
+                network: this.network
+            });
+            pubkey = res.pubkey;
+         } catch (e) {
+             // Fallback to legacy dummy signature if native method fails (e.g. old plugin version)
+             console.warn("Native getPublicKey failed, falling back to signNative", e);
+             const dummyHash = "0000000000000000000000000000000000000000000000000000000000000000";
+             const res = await signNative({
+                 vault: this.vaultName,
+                 path,
+                 messageHash: dummyHash,
+                 network: this.network
+             });
+             pubkey = res.pubkey;
+         }
          
-         const pubkey = res.pubkey;
          const pubkeyBuffer = Buffer.from(pubkey, 'hex');
          
          // Derive Address (P2WPKH)
@@ -64,7 +72,9 @@ export class IdentityService {
          const chainId = this.network === 'mainnet' ? 'mainnet' : 'testnet'; 
          const did = `did:pkh:btc:${chainId}:${address}`;
          
-         return { did, address, publicKey: pubkey };
+         const identity = { did, address, publicKey: pubkey };
+         IdentityService.cache.set(cacheKey, identity);
+         return identity;
      } catch (e) {
          console.error("Identity retrieval failed", e);
          throw new Error('Secure Enclave Identity inaccessible');

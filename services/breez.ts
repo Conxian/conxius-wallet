@@ -2,7 +2,9 @@ import { registerPlugin } from '@capacitor/core';
 
 export interface BreezPluginDef {
   start(options: {
-    mnemonic: string;
+    mnemonic?: string;
+    vault?: string;
+    pin?: string;
     apiKey: string;
     inviteCode?: string;
   }): Promise<{ id: string; balanceMsat: number }>;
@@ -28,11 +30,15 @@ const Breez = registerPlugin<BreezPluginDef>("Breez");
 export { Breez };
 
 export async function startBreezNode(
-  mnemonic: string,
-  apiKey: string,
-  inviteCode?: string,
+  options: {
+    mnemonic?: string;
+    vault?: string;
+    pin?: string;
+    apiKey: string;
+    inviteCode?: string;
+  }
 ) {
-  return Breez.start({ mnemonic, apiKey, inviteCode });
+  return Breez.start(options);
 }
 
 export async function getBreezInfo() {

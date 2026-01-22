@@ -31,6 +31,21 @@ type SecureEnclavePlugin = {
     vault: string;
     pin: string;
   }): Promise<{ unlocked: boolean }>;
+  getPublicKey(options: {
+    vault: string;
+    pin?: string;
+    path: string;
+    network?: string;
+  }): Promise<{ pubkey: string }>;
+  getDerivedSecret(options: {
+    vault: string;
+    pin?: string;
+    path: string;
+  }): Promise<{ secret: string; pubkey: string }>;
+  getWalletInfo(options: {
+    vault: string;
+    pin?: string;
+  }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -139,6 +154,39 @@ export async function signNative(options: {
 }): Promise<{ signature: string; pubkey: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.signTransaction(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+export async function getPublicKeyNative(options: {
+  vault: string;
+  pin?: string;
+  path: string;
+  network?: string;
+}): Promise<{ pubkey: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.getPublicKey(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+export async function getDerivedSecretNative(options: {
+  vault: string;
+  pin?: string;
+  path: string;
+}): Promise<{ secret: string; pubkey: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.getDerivedSecret(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+export async function getWalletInfoNative(options: {
+  vault: string;
+  pin?: string;
+}): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.getWalletInfo(options);
   }
   throw new Error("Native Enclave not available");
 }
