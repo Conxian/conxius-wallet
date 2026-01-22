@@ -53,7 +53,7 @@ export const deriveSovereignRoots = async (mnemonic: string, passphrase?: string
   }
 
   const seed = await bip39.mnemonicToSeed(mnemonic, passphrase);
-  const root = bip32.fromSeed(new Uint8Array(seed));
+  const root = bip32.fromSeed(Buffer.from(new Uint8Array(seed)));
 
   // 1. Bitcoin Mainnet (Native Segwit - BIP84)
   // Path: m/84'/0'/0'/0/0
@@ -96,7 +96,7 @@ export const signBip322Message = async (message: string, mnemonic: string) => {
     
     // For now, we simulate with a deterministic hash of the real key
     const seed = await bip39.mnemonicToSeed(mnemonic);
-    const root = bip32.fromSeed(new Uint8Array(seed));
+    const root = bip32.fromSeed(Buffer.from(new Uint8Array(seed)));
     const child = root.derivePath("m/84'/0'/0'/0/0");
     const sig = child.sign(Buffer.from(message)); // Raw ECDSA
     return `BIP322-SIG-${Buffer.from(sig).toString('hex')}`;
@@ -292,7 +292,7 @@ export const requestEnclaveSignature = async (
       ? new Uint8Array(await bip39.mnemonicToSeed(seedOrVault)) // Fallback if string passed but no PIN/Native (Should not happen flow-wise) or if passing mnemonic directly
       : (seedOrVault as Uint8Array);
 
-  const root = bip32.fromSeed(seedBytes);
+  const root = bip32.fromSeed(Buffer.from(seedBytes));
 
   let signature = "";
   let pubkey = "";
@@ -316,7 +316,9 @@ export const requestEnclaveSignature = async (
       const payloadHash = bitcoin.crypto.sha256(
         Buffer.from(JSON.stringify(request.payload)),
       );
-      signature = Buffer.from(child.sign(payloadHash)).toString("hex");
+      signature = Buffer.from(child.sign(Buffer.from(payloadHash))).toString(
+        "hex",
+      );
       broadcastHex = "";
     }
   } else if (request.layer === "Stacks") {
