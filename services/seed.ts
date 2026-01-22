@@ -20,11 +20,16 @@ async function getKeyMaterial(pin: string): Promise<CryptoKey> {
 
 async function deriveAesKey(keyMaterial: CryptoKey, salt: Uint8Array): Promise<CryptoKey> {
   return getCrypto().subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: 200000, hash: 'SHA-256' },
+    {
+      name: "PBKDF2",
+      salt: salt as unknown as ArrayBuffer,
+      iterations: 200000,
+      hash: "SHA-256",
+    },
     keyMaterial,
-    { name: 'AES-GCM', length: 256 },
+    { name: "AES-GCM", length: 256 },
     false,
-    ['encrypt', 'decrypt']
+    ["encrypt", "decrypt"],
   );
 }
 
@@ -40,7 +45,11 @@ export async function encryptSeed(seed: Uint8Array, pin: string): Promise<string
   const iv = cryptoObj.getRandomValues(new Uint8Array(12));
   const keyMaterial = await getKeyMaterial(pin);
   const key = await deriveAesKey(keyMaterial, salt);
-  const ciphertext = await cryptoObj.subtle.encrypt({ name: 'AES-GCM', iv }, key, seed);
+  const ciphertext = await cryptoObj.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    seed as unknown as ArrayBuffer,
+  );
   const envelope: SeedEnvelopeV1 = {
     v: 1,
     salt: Array.from(salt),

@@ -65,7 +65,6 @@ const GovernancePortal: React.FC = () => {
   const [delegatedTo, setDelegatedTo] = useState<string | null>(null);
   const [delegationInput, setDelegationInput] = useState('');
   const [receivedDelegations, setReceivedDelegations] = useState<Delegation[]>(MOCK_RECEIVED_DELEGATIONS);
-  const [receivedDelegations, setReceivedDelegations] = useState<Delegation[]>(MOCK_RECEIVED_DELEGATIONS);
   const [showDelegationModal, setShowDelegationModal] = useState(false);
   const [opsMode, setOpsMode] = useState<'view' | 'setup'>( 'view' ); // Toggle for Ops Setup
   const [selectedPersona, setSelectedPersona] = useState<OpsPersona | null>(null);
