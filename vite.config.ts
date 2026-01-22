@@ -10,14 +10,14 @@ export default defineConfig(({ mode }) => {
     return {
       server: {
         port: 3000,
-        host: '0.0.0.0',
+        host: "0.0.0.0",
       },
       plugins: [
         wasm(),
         topLevelAwait(),
         react(),
         nodePolyfills({
-          include: ['buffer', 'stream', 'util', 'crypto'],
+          include: ["buffer", "stream", "util", "crypto", "string_decoder"],
           globals: {
             Buffer: true,
             global: true,
@@ -27,23 +27,29 @@ export default defineConfig(({ mode }) => {
       ],
       test: {
         globals: true,
-        environment: 'node', // Changed from jsdom to node for crypto/buffer support
-        setupFiles: './tests/setup.ts',
+        environment: "node", // Changed from jsdom to node for crypto/buffer support
+        setupFiles: "./tests/setup.ts",
         server: {
           deps: {
-            inline: ["generator-function", "is-generator-function", "bip32", "ecpair", "tiny-secp256k1"]
-          }
+            inline: [
+              "generator-function",
+              "is-generator-function",
+              "bip32",
+              "ecpair",
+              "tiny-secp256k1",
+            ],
+          },
         },
-        pool: 'forks', // More stable for native modules
+        pool: "forks", // More stable for native modules
       },
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        "process.env.API_KEY": JSON.stringify(env.GEMINI_API_KEY),
+        "process.env.GEMINI_API_KEY": JSON.stringify(env.GEMINI_API_KEY),
       },
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
-        }
-      }
+          "@": path.resolve(__dirname, "."),
+        },
+      },
     };
 });
