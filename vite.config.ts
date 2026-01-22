@@ -7,6 +7,7 @@ import topLevelAwait from "vite-plugin-top-level-await";
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    const isVitest = process.env.VITEST === 'true';
     return {
       server: {
         port: 3000,
@@ -16,14 +17,18 @@ export default defineConfig(({ mode }) => {
         wasm(),
         topLevelAwait(),
         react(),
-        nodePolyfills({
-          include: ["buffer", "stream", "util", "crypto", "string_decoder"],
-          globals: {
-            Buffer: true,
-            global: true,
-            process: true,
-          },
-        }),
+        ...(!isVitest
+          ? [
+              nodePolyfills({
+                include: ["buffer", "stream", "util", "crypto", "string_decoder"],
+                globals: {
+                  Buffer: true,
+                  global: true,
+                  process: true,
+                },
+              }),
+            ]
+          : []),
       ],
       test: {
         globals: true,

@@ -469,6 +469,277 @@ public class SecureEnclavePlugin extends Plugin {
   }
 
   @PluginMethod
+  public void getPublicKey(PluginCall call) {
+    String vaultJson = call.getString("vault");
+    String pin = call.getString("pin");
+    String path = call.getString("path");
+
+    if (vaultJson == null || path == null) {
+      call.reject("Missing required parameters");
+      return;
+    }
+
+    try {
+      SecretKey keyToUse = null;
+      JSONObject envelope = new JSONObject(vaultJson);
+      JSONArray ivJson = envelope.getJSONArray("iv");
+      JSONArray dataJson = envelope.getJSONArray("data");
+      
+      JSONArray saltJson = envelope.getJSONArray("salt");
+      byte[] salt = new byte[saltJson.length()];
+      for(int i=0; i<saltJson.length(); i++) salt[i] = (byte)saltJson.getInt(i);
+
+      if (pin != null) {
+          keyToUse = deriveKeyForVault(pin, salt);
+      } else {
+          if (cachedSessionKey != null && System.currentTimeMillis() < cachedSessionExpiry) {
+              if (Arrays.equals(this.cachedSessionSalt, salt)) {
+                  keyToUse = cachedSessionKey;
+              } else {
+                 call.reject("Session valid but wallet mismatch (salt). Unlock required.");
+                 return;
+              }
+          } else {
+              call.reject("Session expired or invalid. Unlock required.");
+              return;
+          }
+      }
+
+      byte[] iv = new byte[ivJson.length()];
+      for(int i=0; i<ivJson.length(); i++) iv[i] = (byte)ivJson.getInt(i);
+      byte[] data = new byte[dataJson.length()];
+      for(int i=0; i<dataJson.length(); i++) data[i] = (byte)dataJson.getInt(i);
+
+      Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+      cipher.init(Cipher.DECRYPT_MODE, keyToUse, new GCMParameterSpec(GCM_TAG_BITS, iv));
+      byte[] seed = cipher.doFinal(data);
+      
+      try {
+        DeterministicSeed detSeed = new DeterministicSeed(seed, (List<String>) null, 0L);
+        DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(detSeed.getSeedBytes());
+        
+        DeterministicHierarchy hierarchy = new DeterministicHierarchy(rootKey);
+        String[] parts = path.split("/");
+        DeterministicKey child = rootKey;
+        
+        for (String part : parts) {
+            if (part.equals("m")) continue;
+            boolean hardened = part.endsWith("'") || part.endsWith("h");
+            String numStr = part.replace("'", "").replace("h", "");
+            int index = Integer.parseInt(numStr);
+            child = HDKeyDerivation.deriveChildKey(child, new org.bitcoinj.crypto.ChildNumber(index, hardened));
+        }
+
+        JSObject ret = new JSObject();
+        ret.put("pubkey", child.getPublicKeyAsHex());
+        call.resolve(ret);
+
+      } finally {
+        Arrays.fill(seed, (byte)0);
+      }
+
+    } catch (Exception e) {
+      call.reject("GetPublicKey failed: " + e.getMessage());
+    }
+  }
+
+  @PluginMethod
+  public void getDerivedSecret(PluginCall call) {
+      String vaultJson = call.getString("vault");
+      String pin = call.getString("pin");
+      String path = call.getString("path");
+
+      if (vaultJson == null || path == null) {
+          call.reject("Missing required parameters");
+          return;
+      }
+
+      try {
+          SecretKey keyToUse = null;
+          JSONObject envelope = new JSONObject(vaultJson);
+          JSONArray ivJson = envelope.getJSONArray("iv");
+          JSONArray dataJson = envelope.getJSONArray("data");
+          JSONArray saltJson = envelope.getJSONArray("salt");
+          byte[] salt = new byte[saltJson.length()];
+          for(int i=0; i<saltJson.length(); i++) salt[i] = (byte)saltJson.getInt(i);
+
+          if (pin != null) {
+              keyToUse = deriveKeyForVault(pin, salt);
+          } else {
+              if (cachedSessionKey != null && System.currentTimeMillis() < cachedSessionExpiry) {
+                  if (Arrays.equals(this.cachedSessionSalt, salt)) {
+                      keyToUse = cachedSessionKey;
+                  } else {
+                     call.reject("Session valid but wallet mismatch. Unlock required.");
+                     return;
+                  }
+              } else {
+                  call.reject("Session expired. Unlock required.");
+                  return;
+              }
+          }
+
+          byte[] iv = new byte[ivJson.length()];
+          for(int i=0; i<ivJson.length(); i++) iv[i] = (byte)ivJson.getInt(i);
+          byte[] data = new byte[dataJson.length()];
+          for(int i=0; i<dataJson.length(); i++) data[i] = (byte)dataJson.getInt(i);
+
+          Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+          cipher.init(Cipher.DECRYPT_MODE, keyToUse, new GCMParameterSpec(GCM_TAG_BITS, iv));
+          byte[] seed = cipher.doFinal(data);
+
+          try {
+              DeterministicSeed detSeed = new DeterministicSeed(seed, (List<String>) null, 0L);
+              DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(detSeed.getSeedBytes());
+              
+              DeterministicHierarchy hierarchy = new DeterministicHierarchy(rootKey);
+              String[] parts = path.split("/");
+              DeterministicKey child = rootKey;
+              
+              for (String part : parts) {
+                  if (part.equals("m")) continue;
+                  boolean hardened = part.endsWith("'") || part.endsWith("h");
+                  String numStr = part.replace("'", "").replace("h", "");
+                  int index = Integer.parseInt(numStr);
+                  child = HDKeyDerivation.deriveChildKey(child, new org.bitcoinj.crypto.ChildNumber(index, hardened));
+              }
+              
+              JSObject ret = new JSObject();
+              ret.put("secret", child.getPrivateKeyAsHex());
+              ret.put("pubkey", child.getPublicKeyAsHex());
+              call.resolve(ret);
+          } finally {
+              Arrays.fill(seed, (byte)0);
+          }
+      } catch (Exception e) {
+          call.reject("Derivation failed: " + e.getMessage());
+      }
+  }
+
+  @PluginMethod
+  public void getWalletInfo(PluginCall call) {
+      String vaultJson = call.getString("vault");
+      String pin = call.getString("pin");
+
+      if (vaultJson == null) {
+          call.reject("Missing vault");
+          return;
+      }
+
+      try {
+          // Use NativeCrypto or internal logic?
+          // For consistency with session cache, we use internal logic or check session
+          SecretKey keyToUse = null;
+          JSONObject envelope = new JSONObject(vaultJson);
+          JSONArray ivJson = envelope.getJSONArray("iv");
+          JSONArray dataJson = envelope.getJSONArray("data");
+          JSONArray saltJson = envelope.getJSONArray("salt");
+          byte[] salt = new byte[saltJson.length()];
+          for(int i=0; i<saltJson.length(); i++) salt[i] = (byte)saltJson.getInt(i);
+
+          if (pin != null) {
+              keyToUse = deriveKeyForVault(pin, salt);
+          } else {
+              if (cachedSessionKey != null && System.currentTimeMillis() < cachedSessionExpiry) {
+                  if (Arrays.equals(this.cachedSessionSalt, salt)) {
+                      keyToUse = cachedSessionKey;
+                  } else {
+                     call.reject("Session valid but wallet mismatch. Unlock required.");
+                     return;
+                  }
+              } else {
+                  call.reject("Session expired. Unlock required.");
+                  return;
+              }
+          }
+
+          byte[] iv = new byte[ivJson.length()];
+          for(int i=0; i<ivJson.length(); i++) iv[i] = (byte)ivJson.getInt(i);
+          byte[] data = new byte[dataJson.length()];
+          for(int i=0; i<dataJson.length(); i++) data[i] = (byte)dataJson.getInt(i);
+
+          Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+          cipher.init(Cipher.DECRYPT_MODE, keyToUse, new GCMParameterSpec(GCM_TAG_BITS, iv));
+          byte[] seed = cipher.doFinal(data);
+
+          try {
+              DeterministicSeed detSeed = new DeterministicSeed(seed, (List<String>) null, 0L);
+              DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(detSeed.getSeedBytes());
+              DeterministicHierarchy hierarchy = new DeterministicHierarchy(rootKey);
+
+              // 1. BTC (Native Segwit m/84'/0'/0'/0/0)
+              DeterministicKey btcKey = hierarchy.deriveChild(
+                  Arrays.asList(
+                      new org.bitcoinj.crypto.ChildNumber(84, true),
+                      new org.bitcoinj.crypto.ChildNumber(0, true),
+                      new org.bitcoinj.crypto.ChildNumber(0, true),
+                      new org.bitcoinj.crypto.ChildNumber(0, false),
+                      new org.bitcoinj.crypto.ChildNumber(0, false)
+                  ),
+                  true, true, new org.bitcoinj.crypto.ChildNumber(0, false)
+              );
+              // Address derivation (Bech32)
+              // BitcoinJ SegwitAddress not always straightforward in older versions, using script hash
+              // Actually, simpler to return pubkey and let JS do address if complex, 
+              // BUT user asked for native handling.
+              // Let's return pubkey for consistency with Stacks
+              
+              // 2. Stacks (m/44'/5757'/0'/0/0)
+              DeterministicKey stxKey = hierarchy.deriveChild(
+                  Arrays.asList(
+                      new org.bitcoinj.crypto.ChildNumber(44, true),
+                      new org.bitcoinj.crypto.ChildNumber(5757, true),
+                      new org.bitcoinj.crypto.ChildNumber(0, true),
+                      new org.bitcoinj.crypto.ChildNumber(0, false),
+                      new org.bitcoinj.crypto.ChildNumber(0, false)
+                  ),
+                  true, true, new org.bitcoinj.crypto.ChildNumber(0, false)
+              );
+
+              // 3. EVM (m/44'/60'/0'/0/0)
+              DeterministicKey evmKey = hierarchy.deriveChild(
+                  Arrays.asList(
+                      new org.bitcoinj.crypto.ChildNumber(44, true),
+                      new org.bitcoinj.crypto.ChildNumber(60, true),
+                      new org.bitcoinj.crypto.ChildNumber(0, true),
+                      new org.bitcoinj.crypto.ChildNumber(0, false),
+                      new org.bitcoinj.crypto.ChildNumber(0, false)
+                  ),
+                  true, true, new org.bitcoinj.crypto.ChildNumber(0, false)
+              );
+
+              // 4. Liquid (m/84'/1776'/0'/0/0)
+              DeterministicKey liquidKey = hierarchy.deriveChild(
+                  Arrays.asList(
+                      new org.bitcoinj.crypto.ChildNumber(84, true),
+                      new org.bitcoinj.crypto.ChildNumber(1776, true),
+                      new org.bitcoinj.crypto.ChildNumber(0, true),
+                      new org.bitcoinj.crypto.ChildNumber(0, false),
+                      new org.bitcoinj.crypto.ChildNumber(0, false)
+                  ),
+                  true, true, new org.bitcoinj.crypto.ChildNumber(0, false)
+              );
+
+              JSObject ret = new JSObject();
+              ret.put("btcPubkey", btcKey.getPublicKeyAsHex());
+              ret.put("stxPubkey", stxKey.getPublicKeyAsHex());
+              ret.put("liquidPubkey", liquidKey.getPublicKeyAsHex());
+              
+              // For EVM, we can easily get address
+              ECKeyPair evmPair = ECKeyPair.create(evmKey.getPrivKeyBytes());
+              ret.put("evmAddress", "0x" + org.web3j.crypto.Keys.getAddress(evmPair));
+              
+              call.resolve(ret);
+
+          } finally {
+              Arrays.fill(seed, (byte)0);
+          }
+      } catch (Exception e) {
+          call.reject("GetWalletInfo failed: " + e.getMessage());
+      }
+  }
+
+  @PluginMethod
   public void signTransaction(PluginCall call) {
     String vaultJson = call.getString("vault");
     String pin = call.getString("pin"); // Optional if session active
@@ -525,7 +796,7 @@ public class SecureEnclavePlugin extends Plugin {
 
         // 2. Derive Key
         NetworkParameters params = networkStr.equals("testnet") ? TestNet3Params.get() : MainNetParams.get();
-        DeterministicSeed detSeed = new DeterministicSeed(seed, null, "");
+        DeterministicSeed detSeed = new DeterministicSeed(seed, (String) null, 0L);
         DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(detSeed.getSeedBytes());
         
         // Parse path (e.g. m/84'/0'/0'/0/0)

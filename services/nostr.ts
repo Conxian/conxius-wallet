@@ -1,4 +1,8 @@
 
+import { getDerivedSecretNative } from './enclave-storage';
+import * as tiny from 'tiny-secp256k1';
+import { bech32 } from 'bech32';
+
 /**
  * Nostr Identity Service - Production Grade
  * Handles NIP-01 event creation and cryptographic identity management.
@@ -14,20 +18,44 @@ export interface NostrEvent {
   sig?: string;
 }
 
-export const generateNostrKeypair = async () => {
-  // High-entropy key generation using Browser CSPRNG
-  const entropy = new Uint8Array(32);
-  window.crypto.getRandomValues(entropy);
-  
-  const hex = Array.from(entropy).map(b => b.toString(16).padStart(2, '0')).join('');
-  
-  // In a real lib we'd derive the pubkey via SECP256K1
-  // We simulate the Bech32 encoding for UI alignment
-  return {
-    nsec: `nsec1${hex.substring(0, 32)}`,
-    npub: `npub1${hex.substring(32, 64)}`,
-    rawPriv: hex
-  };
+export const generateNostrKeypair = async (vault: string = 'primary_vault') => {
+  try {
+      // NIP-06: m/44'/1237'/0'/0/0
+      const path = "m/44'/1237'/0'/0/0";
+      
+      const res = await getDerivedSecretNative({
+          vault,
+          path
+      });
+      
+      const secretHex = res.secret;
+      
+      // Derive Schnorr Public Key (X-only)
+      const privBuffer = Buffer.from(secretHex, 'hex');
+      
+      // Verify private key is valid
+      if (!tiny.isPrivate(privBuffer)) {
+          throw new Error("Invalid private key derived");
+      }
+      
+      const pubKey = tiny.pointFromScalar(privBuffer);
+      const pubKeyX = pubKey.subarray(1, 33); // Drop prefix
+      const pubKeyHex = Buffer.from(pubKeyX).toString('hex');
+      
+      // Encode npub (bech32)
+      const words = bech32.toWords(pubKeyX);
+      const npub = bech32.encode('npub', words, 1500); // 1500 is limit, standard
+      
+      return {
+        nsec: `ENCLAVE_SECURED_KEY`, // UI display only
+        npub: npub,
+        rawPriv: secretHex, // INTERNAL USE ONLY
+        pubKeyHex: pubKeyHex
+      };
+  } catch (e) {
+      console.error("Nostr key derivation failed", e);
+      throw e;
+  }
 };
 
 export const createNostrEvent = (content: string, pubkey: string, kind: number = 1): NostrEvent => {
@@ -40,8 +68,8 @@ export const createNostrEvent = (content: string, pubkey: string, kind: number =
   };
 };
 
-export const signNostrEvent = async (event: NostrEvent, nsec: string): Promise<NostrEvent> => {
-  console.log("[NOSTR] Signing event with nsec enclave...");
+export const signNostrEvent = async (event: NostrEvent, rawPrivHex: string): Promise<NostrEvent> => {
+  console.log("[NOSTR] Signing event with derived enclave key...");
   
   // Real cryptographic ID calculation (SHA256 of serialized event)
   const encoder = new TextEncoder();
@@ -58,11 +86,13 @@ export const signNostrEvent = async (event: NostrEvent, nsec: string): Promise<N
   const id = Array.from(new Uint8Array(hashBuffer))
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
-
-  // Signature simulation (would use schnorr.sign in production)
-  const sig = Array.from(crypto.getRandomValues(new Uint8Array(64)))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+    
+  const idBuffer = Buffer.from(id, 'hex');
+  const privBuffer = Buffer.from(rawPrivHex, 'hex');
+  
+  // Sign using Schnorr
+  const sigBuffer = tiny.signSchnorr(idBuffer, privBuffer);
+  const sig = Buffer.from(sigBuffer).toString('hex');
 
   return { ...event, id, sig };
 };
