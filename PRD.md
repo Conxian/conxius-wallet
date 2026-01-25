@@ -2,7 +2,7 @@
 
 ## 1. Product Overview
 
-Conxius is a sovereign, offline-first Android wallet that bridges the Bitcoin ecosystem (L1, Lightning, Stacks, Rootstock, Liquid, Nostr) with interlayer execution capabilities.
+Conxius is a **Multi-Chain Sovereign Interface**, an offline-first Android wallet that bridges the Bitcoin ecosystem (L1, Lightning, Stacks, Rootstock, Liquid, Nostr) with interlayer execution capabilities, including Wormhole-based Native Token Transfers (NTT).
 
 The primary differentiator is the **Native Enclave Core**: keys for all supported protocols are generated and used within a hardened boundary (Android Keystore + memory-only seed handling) and never leave the device's secure memory.
 
@@ -87,6 +87,11 @@ The primary differentiator is the **Native Enclave Core**: keys for all supporte
 - **FR-TX-02**: Must parse and validate BIP-21 URIs.
 - **FR-TX-03**: Must prevent dust outputs during coin selection.
 - **FR-TX-04**: Support atomic swaps and peg-ins/peg-outs where applicable.
+
+### 4.2.1. Wormhole NTT (Native Token Transfers)
+
+- **FR-NTT-01**: Native Token Transfers are executed via the `NttManager` but authorized via the Conclave P-256/Schnorr signing paths.
+- **FR-NTT-02**: No NTT "VAA" (Verified Action Approval) can be broadcast without a local Conclave-generated proof.
 
 ### 4.3. Connectivity
 
