@@ -41,8 +41,9 @@
 - BTC on-chain send pipeline (PSBT build → sign → broadcast).
 - Lightning parsing (BOLT11/LNURL) and LND REST backend plumbing.
 - Wormhole/NTT tracking view (execution still planned).
+- Secure Enclave session management and basic signing.
 
-## Milestones
+## Sovereign Expansion Milestones
 
 ### M1 — Notifications + Event Model (Local-First)
 
@@ -91,6 +92,27 @@
 **Acceptance Criteria**
 - No cross-wallet leakage (state, history, credentials).
 - Safe delete/export per wallet with explicit confirmations.
+
+### M6 — Native L2 Pegs (sBTC & LBTC)
+
+**Scope**
+
+- Native Peg-in/Peg-out state machines.
+- Support for Stacks sBTC (Nakamoto) and Liquid LBTC.
+**Acceptance Criteria**
+- Peg-in transactions generated with correct OP_RETURN/Multisig scripts.
+- Automated tracking of 102 confirmations for Liquid.
+- Enclave-authorized peg-in claim/redemption.
+
+### M7 — Institutional Policy Vaults (Policy-Gated Enclave)
+
+**Scope**
+
+- Vault-level spend policies (Daily limits, Whitelisted addresses).
+- Multi-sig quorum (M-of-N) with hardware/remote participants.
+**Acceptance Criteria**
+- Enclave refuses to sign if policy is violated (enforced natively).
+- Quorum collection UI for multi-sig coordination.
 
 ## Notification Strategy
 

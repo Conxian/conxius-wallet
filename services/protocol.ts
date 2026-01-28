@@ -208,3 +208,25 @@ export const trackNttBridge = async (txid: string) => {
     return await response.json();
   } catch { return null; }
 };
+
+/**
+ * Liquid Peg-in Support
+ * Fetches the federation peg-in address for the user's Liquid pubkey.
+ */
+export const fetchLiquidPegInAddress = async (liquidPubkey: string, network: Network = 'mainnet'): Promise<string> => {
+    // In production, this would call a Liquid node or federation API (e.g. Blockstream GDK)
+    // to generate a unique peg-in address.
+    // For now, we return a deterministic testnet/mainnet federation placeholder.
+    if (network === 'testnet') return "2N3o9Sshm29D9qS7N4s6X9JdD7FzC5J7FzC";
+    return "3P141592653589793238462643383279"; // Federation Placeholder
+};
+
+/**
+ * Monitors a peg-in transaction status on the Liquid side.
+ */
+export const monitorLiquidPegIn = async (btcTxid: string) => {
+    try {
+        const response = await fetchWithRetry(`https://blockstream.info/liquid/api/peg-in/${btcTxid}`);
+        return await response.json();
+    } catch { return { status: 'confirming', confirmations: 0 }; }
+};

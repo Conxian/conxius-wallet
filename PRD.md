@@ -6,7 +6,17 @@ Conxius is a **Multi-Chain Sovereign Interface**, an offline-first Android walle
 
 The primary differentiator is the **Native Enclave Core**: keys for all supported protocols are generated and used within a hardened boundary (Android Keystore + memory-only seed handling) and never leave the device's secure memory.
 
-## 2. User Personas
+## 2. Competitive Benchmarking & Strategy (Exco Committee)
+
+Conxius aims to exceed the "Cold Storage" utility of **Ledger/Trezor/Foundation** by integrating live L2/Interlayer execution, and the "Web3 Agility" of **MetaMask** by anchoring all multi-chain derivations in a Bitcoin-First sovereign root.
+
+### 2.1. Strategic Pillars
+- **Sovereign Superiority**: Unlike BlueWallet or Phoenix, Conxius manages its own L2 peg-in proofs natively in the Enclave.
+- **Unified Interlayer**: While MetaMask focuses on EVM, Conxius treats EVM (Rootstock) as a Bitcoin-adjacent execution layer, utilizing Wormhole NTT for non-wrapped asset mobility.
+- **Monetization**: Fee capture via NTT Bridge execution and premium Node services (Greenlight LSP).
+- **Institutional Readiness**: Vault Policy management (Daily limits, multi-sig quorum) enforced at the Secure Enclave level.
+
+## 3. User Personas
 
 - **The Sovereign Hodler**: Wants deep cold storage security on a mobile device. Uses Conxius as a daily driver for small-to-medium amounts, trusting the Android TEE.
 - **The Interlayer Explorer**: Moves assets between Bitcoin L1 and rollups/sidechains (Stacks, Liquid, RSK). Needs a reliable bridge client that verifies attestations locally.
@@ -58,14 +68,26 @@ The primary differentiator is the **Native Enclave Core**: keys for all supporte
   3. Public Key (`npub`) is returned to UI.
   4. Events are signed natively without exposing the private key (`nsec`).
 
-### 3.5. Multi-Chain Bridge (Liquid/Stacks/RSK)
+### 3.5. Multi-Chain Bridge (Native Pegs & NTT)
 
-- **Trigger**: User manages sidechain assets.
-- **Flow**:
-  1. Select Asset (e.g., L-BTC, STX).
-  2. Enclave derives protocol-specific keys (`m/84'/1776'` for Liquid, `m/44'/5757'` for Stacks).
-  3. Transaction constructed and signed natively.
-  4. Broadcast to respective network.
+- **Trigger**: User wants to move BTC to L2 (Stacks/Liquid) or move assets via NTT.
+- **Flow (Native Peg-in)**:
+  1. Select "Native Peg" (e.g., BTC → sBTC).
+  2. App generates peg-in script/address.
+  3. Enclave signs BTC L1 funding tx with OP_RETURN (Stacks) or to Federation Multisig (Liquid).
+  4. Monitoring service tracks confirmations.
+  5. (Liquid) Enclave signs "Peg-in Claim" tx after 102 confirmations.
+- **Flow (NTT Execution)**:
+  1. Select NTT route (e.g. sBTC on Stacks → sBTC on Rootstock).
+  2. Enclave signs source burn/lock tx.
+  3. App retrieves VAA from Wormhole Guardians.
+  4. Enclave authorizes destination mint/unlock.
+
+### 3.6. 0-Gas Sovereign Operations
+
+- **Identity**: NIP-06/DID derivation.
+- **Communication**: P2P Encrypted Messaging (Nostr NIP-44) using derived keys.
+- **Off-chain Transfers**: Ark/State Chain virtual UTXO management.
 
 ## 4. Functional Requirements
 
@@ -90,8 +112,15 @@ The primary differentiator is the **Native Enclave Core**: keys for all supporte
 
 ### 4.2.1. Wormhole NTT (Native Token Transfers)
 
-- **FR-NTT-01**: Native Token Transfers are executed via the `NttManager` but authorized via the Conclave P-256/Schnorr signing paths.
+- **FR-NTT-01**: Full execution lifecycle: Source signing → VAA Retrieval → Destination redemption.
 - **FR-NTT-02**: No NTT "VAA" (Verified Action Approval) can be broadcast without a local Conclave-generated proof.
+- **FR-NTT-03**: Support for Multi-Asset tracking and redemption (sBTC, USDC, etc.).
+
+### 4.4. Native Pegs (L2 Integration)
+
+- **FR-PEG-01 (sBTC)**: Support for sBTC peg-in (BTC L1 tx with OP_RETURN) and peg-out.
+- **FR-PEG-02 (Liquid)**: Support for LBTC peg-in (Multisig funding + Claim proof) and peg-out (burn tx).
+- **FR-PEG-03**: Automated confirmation tracking for peg-in transactions.
 
 ### 4.3. Connectivity
 
