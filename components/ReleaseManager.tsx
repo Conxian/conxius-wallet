@@ -54,11 +54,11 @@ const ReleaseManager: React.FC = () => {
     }
     
     const report = await getFinalSystemHardeningChecklist();
-    setHardeningReport(report);
+    setHardeningReport(report || "Report unavailable.");
     
     setIsGeneratingNotes(true);
     const notes = await generateReleaseNotes('0.3.0');
-    setReleaseNotes(notes);
+    setReleaseNotes(notes || "Notes unavailable.");
     setIsGeneratingNotes(false);
     
     setIsPackaging(false);

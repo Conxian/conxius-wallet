@@ -62,8 +62,9 @@ const IdentityManager: React.FC = () => {
                 setIsLoadingInsight(true);
                 try {
                     const res = await getDIDInsight(identity.did);
-                    setInsight(res);
-                    localStorage.setItem(cacheKey, res);
+                    const insightStr = res || "Insight unavailable.";
+                    setInsight(insightStr);
+                    localStorage.setItem(cacheKey, insightStr);
                 } catch (err) {
                     console.error("Insight fetch failed", err);
                 } finally {

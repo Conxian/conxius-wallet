@@ -25,14 +25,11 @@ const RewardsHub: React.FC = () => {
     setIsAuditing(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
+      const result = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: "Perform an economic audit for a Conxius Wallet user. Explain how the 0.05% integrator fee supports Conxius Labs R&D. Compare this to CEX spreads (1-2%). Highlight that this fee builds a whole ecosystem of sovereign tools. Use technical institutional tone.",
-        config: {
-          systemInstruction: "You are the Conxius Labs Economic Strategist. You specialize in proving that supporting independent labs is ethical and efficient.",
-        }
       });
-      setAuditReport(response.text);
+      setAuditReport(result.text || "Audit unavailable.");
     } catch (e) {
       setAuditReport("Audit engine offline. Your contributions are currently securing the mesh.");
     } finally {

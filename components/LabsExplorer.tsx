@@ -20,7 +20,7 @@ const LabsExplorer: React.FC = () => {
     setActiveProject(project);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
+      const result = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Provide a high-level technical blueprint for a new Conxius Labs project: "${project}". 
         Explain: 
@@ -28,11 +28,8 @@ const LabsExplorer: React.FC = () => {
         2. Its integration points with the existing Conxius Wallet.
         3. Why it is a necessary addition to the Bitcoin multi-layer ecosystem. 
         Focus on technical moats and developer-first architecture.`,
-        config: {
-          systemInstruction: "You are the Lead Architect at Conxius Labs. Your tone is visionary, highly technical, and deeply aligned with open-source sovereign principles.",
-        }
       });
-      setBlueprint(response.text);
+      setBlueprint(result.text || "Blueprint unavailable.");
     } catch (e) {
       setBlueprint("Blueprint engine offline. Local R&D logs indicate progress is steady.");
     } finally {

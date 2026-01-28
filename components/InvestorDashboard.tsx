@@ -27,9 +27,12 @@ const InvestorDashboard: React.FC = () => {
 
   const runInstitutionalAudit = async () => {
     setIsLoading(true);
-    const result = await getRiskProfileAudit(MOCK_ASSETS);
-    setMemo(result);
-    setIsLoading(false);
+    try {
+      const result = await getRiskProfileAudit(MOCK_ASSETS);
+      setMemo(result || "Risk profile unavailable.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => { runInstitutionalAudit(); }, []);

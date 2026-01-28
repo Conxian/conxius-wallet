@@ -47,7 +47,7 @@ const SystemDiagnostics: React.FC = () => {
     // Generate AI Summary
     setIsGeneratingReport(true);
     const report = await getSystemHealthSummary(tests.map(t => ({ label: t.label, status: t.status })));
-    setAiReport(report);
+    setAiReport(report || "Report unavailable.");
     setIsGeneratingReport(false);
   };
 

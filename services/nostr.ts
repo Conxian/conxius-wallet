@@ -39,6 +39,7 @@ export const generateNostrKeypair = async (vault: string = 'primary_vault') => {
       }
       
       const pubKey = tiny.pointFromScalar(privBuffer);
+      if (!pubKey) throw new Error("Public key derivation failed");
       const pubKeyX = pubKey.subarray(1, 33); // Drop prefix
       const pubKeyHex = Buffer.from(pubKeyX).toString('hex');
       

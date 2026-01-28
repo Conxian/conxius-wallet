@@ -27,14 +27,11 @@ const Benchmarking: React.FC = () => {
     setIsLoading(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
+      const result = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: "Benchmark Conxius Wallet (Sovereign, Multi-layer, Local-first) against the current wallet industry. Advise on how to stay ahead regarding upcoming Bitcoin tech like BitVM, OP_CAT, and expansion into the Nostr ecosystem.",
-        config: {
-          systemInstruction: "You are the Chief Strategy Officer of Conxius. You provide sharp, institutional-grade advice on maintaining a technical moat in the Bitcoin ecosystem. Your focus is on self-sovereignty as a competitive advantage.",
-        }
       });
-      setAdvice(response.text);
+      setAdvice(result.text || "Advice unavailable.");
     } catch (e) {
       setAdvice("Strategic intelligence feed interrupted. Maintain local node synchronization.");
     } finally {
