@@ -94,7 +94,7 @@ const HandoffProtocol: React.FC = () => {
 
   useEffect(() => {
     // Pre-fetch audit for visual filler
-    getDeploymentReadinessAudit({ nodeSyncProgress: 100 }).then(setAuditMemo);
+    getDeploymentReadinessAudit({ nodeSyncProgress: 100 }).then(res => setAuditMemo(res || "Audit unavailable."));
   }, []);
 
   return (

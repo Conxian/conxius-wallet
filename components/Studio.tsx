@@ -27,14 +27,11 @@ const Studio: React.FC = () => {
     setIsAnalyzing(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
+      const result = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: "Analyze the current Bitcoin mempool state (simulate real-time data). Advise on the optimal fee rate for inscribing a 15KB image to ensure it confirms within 3 blocks but doesn't overpay. Suggest a specific sat/vB rate and explain why. Use a technical, 'Economic Scribe' persona.",
-        config: {
-          systemInstruction: "You are the Conxius Economic Scribe. You optimize Bitcoin block space usage.",
-        }
       });
-      setAiFeeAdvice(response.text);
+      setAiFeeAdvice(result.text || "Advice unavailable.");
       setFeeRate(18); // Simulated optimization result
     } catch (e) {
       setAiFeeAdvice("Fee oracle offline. Reverting to safe estimate: 22 sat/vB.");

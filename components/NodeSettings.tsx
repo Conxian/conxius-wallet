@@ -53,16 +53,22 @@ const NodeSettings: React.FC = () => {
 
   const fetchEthos = async (path: string) => {
     setIsLoadingEthos(true);
-    const res = await getNodeEthosAdvice(path);
-    setEthosAdvice(res);
-    setIsLoadingEthos(false);
+    try {
+      const res = await getNodeEthosAdvice(path);
+      setEthosAdvice(res || "Advice unavailable.");
+    } finally {
+      setIsLoadingEthos(false);
+    }
   };
 
   const researchLayer = async (layer: string) => {
     setIsLoadingResearch(true);
-    const res = await getNetworkRPCResearch(layer);
-    setResearchData(res);
-    setIsLoadingResearch(false);
+    try {
+      const res = await getNetworkRPCResearch(layer);
+      setResearchData(res || "Research unavailable.");
+    } finally {
+      setIsLoadingResearch(false);
+    }
   };
 
   useEffect(() => {

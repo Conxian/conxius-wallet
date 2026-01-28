@@ -28,18 +28,23 @@ const StackingManager: React.FC = () => {
   useEffect(() => {
     const fetchInsight = async () => {
       setIsLoadingInsight(true);
-      // Fix: Passing a mock Asset object to match the expected signature of getAssetInsight (expects 1 argument of type Asset)
-      const res = await getAssetInsight({
-        id: 'pox-protocol',
-        name: 'Proof of Transfer (PoX)',
-        symbol: 'STX',
-        balance: 0,
-        valueUsd: 0,
-        layer: 'Stacks',
-        type: 'Native'
-      } as Asset);
-      setInsight(res);
-      setIsLoadingInsight(false);
+      try {
+        // Fix: Passing a mock Asset object to match the expected signature of getAssetInsight (expects 1 argument of type Asset)
+        const res = await getAssetInsight({
+          id: 'pox-protocol',
+          name: 'Proof of Transfer (PoX)',
+          symbol: 'STX',
+          balance: 0,
+          valueUsd: 0,
+          layer: 'Stacks',
+          type: 'Native'
+        } as Asset);
+        setInsight(res || "Insight unavailable.");
+      } catch (e) {
+        setInsight("Insight unavailable.");
+      } finally {
+        setIsLoadingInsight(false);
+      }
     };
     fetchInsight();
   }, []);

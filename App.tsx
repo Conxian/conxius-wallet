@@ -269,7 +269,7 @@ const App: React.FC = () => {
     assets: mode === 'simulation' ? MOCK_ASSETS : []
   }));
   const setLnBackend = (cfg: LnBackendConfig) => setState(prev => ({ ...prev, lnBackend: cfg }));
-  const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } }));
+  const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } as any }));
   const lockWallet = () => {
      currentPinRef.current = null;
      clearEnclaveBiometricSession();

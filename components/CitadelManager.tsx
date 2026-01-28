@@ -48,9 +48,14 @@ const CitadelManager: React.FC = () => {
   const auditBounty = async (bounty: Bounty) => {
     setSelectedBounty(bounty);
     setIsAuditing(true);
-    const res = await getBountyAudit(bounty.title, bounty.description);
-    setBountyAudit(res);
-    setIsAuditing(false);
+    try {
+      const res = await getBountyAudit(bounty.title, bounty.description);
+      setBountyAudit(res || "Audit unavailable.");
+    } catch (e) {
+      setBountyAudit("Audit failed.");
+    } finally {
+      setIsAuditing(false);
+    }
   };
 
   const handleClaim = () => {

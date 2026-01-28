@@ -17,9 +17,14 @@ const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ asset, onClose }) =
   useEffect(() => {
     const fetchInsight = async () => {
       setIsLoadingInsight(true);
-      const res = await getAssetInsight(asset);
-      setInsight(res);
-      setIsLoadingInsight(false);
+      try {
+        const res = await getAssetInsight(asset);
+        setInsight(res || "No insight available.");
+      } catch (e) {
+        setInsight("Insight unavailable at this time.");
+      } finally {
+        setIsLoadingInsight(false);
+      }
     };
     fetchInsight();
   }, [asset]);

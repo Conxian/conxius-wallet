@@ -18,10 +18,10 @@ const SovereigntyMeter: React.FC = () => {
   // Dynamic quests based on wallet state
   const MOCK_QUESTS: Quest[] = [
     { id: 'wallet_setup', label: 'Initialize Wallet', points: 10, completed: true, category: 'Security' },
-    { id: 'node', label: 'Connect Local Node', points: 30, completed: context?.state.sovereigntyScore > 80, category: 'Security' },
+    { id: 'node', label: 'Connect Local Node', points: 30, completed: (context?.state.sovereigntyScore ?? 0) > 80, category: 'Security' },
     { id: 'hardware', label: 'Migrate to Hardware', points: 40, completed: !isHotWallet, category: 'Security' },
     { id: 'citadel', label: 'Join a Citadel', points: 20, completed: !!context?.state.activeCitadel, category: 'Community' },
-    { id: 'tor', label: 'Enable Tor Routing', points: 20, completed: context?.state.isTorActive, category: 'Privacy' },
+    { id: 'tor', label: 'Enable Tor Routing', points: 20, completed: context?.state.isTorActive ?? false, category: 'Privacy' },
   ];
 
   const currentXP = MOCK_QUESTS.reduce((acc, q) => q.completed ? acc + q.points : acc, 0);
