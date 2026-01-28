@@ -6,6 +6,7 @@ import { AppContext } from '../context';
 
 const NTTBridge: React.FC = () => {
   const context = useContext(AppContext);
+  const [bridgeType, setBridgeType] = useState<'NTT' | 'Native Peg'>('NTT');
   const [step, setStep] = useState(1);
   const [sourceLayer, setSourceLayer] = useState('Mainnet');
   const [targetLayer, setTargetLayer] = useState('Stacks');
@@ -49,8 +50,13 @@ const NTTBridge: React.FC = () => {
   return (
     <div className="p-8 max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
       <div className="text-center">
-        <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-2">NTT Protocol</h2>
-        <p className="text-zinc-500 text-sm">Tracking-only monitor for Wormhole NTT attestations.</p>
+        <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-2">Interlayer Bridge</h2>
+        <p className="text-zinc-500 text-sm">Cross-chain execution and native sovereign pegs.</p>
+      </div>
+
+      <div className="flex bg-zinc-950 p-1 rounded-2xl border border-zinc-900 mx-auto max-w-xs">
+         <button onClick={() => setBridgeType('NTT')} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${bridgeType === 'NTT' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600'}`}>Wormhole NTT</button>
+         <button onClick={() => setBridgeType('Native Peg')} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${bridgeType === 'Native Peg' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600'}`}>Native Peg</button>
       </div>
 
       <div className="bg-zinc-900/40 border border-zinc-800 rounded-[3rem] p-10 space-y-8 shadow-2xl relative overflow-hidden">
@@ -121,13 +127,13 @@ const NTTBridge: React.FC = () => {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 3 && bridgeType === 'NTT' && (
           <div className="space-y-8 animate-in zoom-in">
              <div className="text-center space-y-4">
                 <div className="w-20 h-20 bg-orange-600/10 border border-orange-500/20 rounded-full flex items-center justify-center mx-auto text-orange-500">
                     <Globe size={40} className="animate-pulse" />
                 </div>
-                <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">Tracking Only</h3>
+                <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">NTT Execution</h3>
                 <p className="text-xs text-zinc-500 max-w-xs mx-auto italic leading-relaxed">Paste a bridge transaction hash to monitor Wormhole guardian attestations.</p>
              </div>
 
@@ -160,6 +166,32 @@ const NTTBridge: React.FC = () => {
                 <button type="button" onClick={() => setStep(1)} className="w-full py-4 text-zinc-600 hover:text-zinc-400 text-[10px] font-black uppercase tracking-widest transition-all">New Transfer</button>
              </div>
           </div>
+        )}
+
+        {step === 3 && bridgeType === 'Native Peg' && (
+           <div className="space-y-8 animate-in slide-in-from-bottom-4">
+              <div className="text-center space-y-4">
+                <div className="w-20 h-20 bg-green-600/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto text-green-500">
+                    <ShieldCheck size={40} />
+                </div>
+                <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">Native Peg Construction</h3>
+                <p className="text-xs text-zinc-500 max-w-xs mx-auto italic leading-relaxed">Your peg-in transaction is being prepared in the Secure Enclave.</p>
+             </div>
+
+             <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-900 space-y-4">
+                <div className="flex justify-between items-center text-[10px] font-black uppercase text-zinc-600">
+                    <span>Target Network</span>
+                    <span className="text-zinc-200">{targetLayer}</span>
+                </div>
+                <div className="flex justify-between items-center text-[10px] font-black uppercase text-zinc-600">
+                    <span>Protocol</span>
+                    <span className="text-zinc-200">{targetLayer === 'Stacks' ? 'sBTC (Nakamoto)' : 'LBTC (Elements)'}</span>
+                </div>
+             </div>
+
+             <button type="button" onClick={() => context?.notify('info', 'Secure Enclave: Peg-in PSBT Generated.')} className="w-full bg-green-600 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest">Execute Native Peg</button>
+             <button type="button" onClick={() => setStep(1)} className="w-full py-2 text-zinc-600 text-[10px] font-black uppercase tracking-widest">Cancel</button>
+           </div>
         )}
       </div>
 

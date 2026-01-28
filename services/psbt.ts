@@ -54,6 +54,54 @@ export function buildPsbt(params: {
   return psbt.toBase64();
 }
 
+/**
+ * Builds a PSBT for sBTC Peg-in (Stacks)
+ * Includes an OP_RETURN output with the Stacks address.
+ */
+export function buildSbtcPegInPsbt(params: {
+    utxos: UTXO[];
+    stacksAddress: string;
+    amountSats: number;
+    changeAddress: string;
+    feeRate: number;
+    network: Network;
+    pegInAddress: string; // The sBTC wallet address on BTC L1
+}) {
+    const net = networkFrom(params.network);
+    const psbt = new bitcoin.Psbt({ network: net });
+    let totalIn = 0;
+
+    params.utxos.forEach(u => {
+        totalIn += u.amount;
+        psbt.addInput({
+            hash: u.txid,
+            index: u.vout,
+            witnessUtxo: {
+                script: bitcoin.payments.p2wpkh({ address: u.address, network: net })!.output!,
+                value: BigInt(u.amount)
+            }
+        });
+    });
+
+    // Output 1: Peg-in Address
+    psbt.addOutput({ address: params.pegInAddress, value: BigInt(params.amountSats) });
+
+    // Output 2: OP_RETURN with Stacks Address (sBTC Protocol)
+    const data = Buffer.from(params.stacksAddress);
+    const embed = bitcoin.payments.embed({ data: [data] });
+    psbt.addOutput({ script: embed.output!, value: 0n });
+
+    const vbytes = estimateVbytes(params.utxos.length, 3);
+    const fee = Math.floor(vbytes * params.feeRate);
+    const change = totalIn - params.amountSats - fee;
+
+    if (change > 546) {
+        psbt.addOutput({ address: params.changeAddress, value: BigInt(change) });
+    }
+
+    return psbt.toBase64();
+}
+
 export async function signPsbtBase64(mnemonic: string, psbtBase64: string, network: Network) {
   const seed = await (await import('bip39')).mnemonicToSeed(mnemonic);
   return signPsbtBase64WithSeed(new Uint8Array(seed), psbtBase64, network);

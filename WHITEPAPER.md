@@ -90,6 +90,15 @@ This document describes the security boundary, threat model, cryptographic archi
 - LNURL must not treat arbitrary HTTP(S) as safe by default; enforce strict parsing and user confirmation.
 - Provide transport abstraction for Tor/proxying if “Tor routed” is a product promise.
 
+## Sovereign Interoperability (sBTC & Liquid Native Pegs)
+
+Conxius rejects "Wrapped Bitcoin" (WBTC) on centralized bridges in favor of native 1:1 sidechain pegs.
+
+- **sBTC (Stacks)**: Utilizes the Nakamoto threshold signature scheme. Peg-in is achieved via a Bitcoin L1 transaction with a specific `OP_RETURN` carrying the user's Stacks address.
+- **LBTC (Liquid)**: Utilizes the federation multisig peg-in. Peg-in requires a BTC transaction to a federation address, followed by a claim transaction on Liquid after 102 confirmations.
+
+Both mechanisms require the Signing Enclave to handle specific Bitcoin script types and proof generation (Merkle proofs for peg-in claims).
+
 ## Interlayer / Wormhole Execution (Implementation Requirements)
 
 Tracking-only is not sufficient for an interlayer client. Execution requires:
