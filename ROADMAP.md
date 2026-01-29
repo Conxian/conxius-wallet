@@ -114,6 +114,15 @@
 - Enclave refuses to sign if policy is violated (enforced natively).
 - Quorum collection UI for multi-sig coordination.
 
+## Go-to-Market Alignment
+
+This section maps the technical milestones defined in "Sovereign Expansion Milestones" to their corresponding business and marketing initiatives.
+
+-   **M4 — Wormhole/NTT Execution (Interlayer):**
+    -   **Biz:** "Unwrap Your Bitcoin" Campaign Launch. This campaign will highlight the ability to move assets seamlessly between Bitcoin and other chains without relying on wrapped assets.
+-   **M6 — Native L2 Pegs (sBTC & LBTC):**
+    -   **Biz:** "Bringing Smart Contracts to Bitcoin" campaign. This campaign will focus on the new possibilities unlocked by bringing smart contract functionality to Bitcoin through L2s and sidechains.
+
 ## Notification Strategy
 
 - Phase 1: Android local notifications (on-device only).

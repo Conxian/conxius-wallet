@@ -1,6 +1,10 @@
 # Conxius Wallet
 
-Mobile-first sovereign wallet with a hardened local enclave model.
+## The Sovereign Wallet for the Bitcoin Ecosystem
+
+Conxius is a "Bitcoin-First" mobile wallet that offers hardware-level security without the need for a separate hardware device. It achieves this through its on-device TEE (Trusted Execution Environment), known as the "Conclave," which ensures that your private keys never leave your device.
+
+**Value Proposition:** *Hardware-level security without the dongle.*
 
 ## What This Repo Contains
 
