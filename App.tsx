@@ -44,6 +44,7 @@ import * as bip39 from 'bip39';
 import { decryptSeed } from './services/seed';
 import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
 import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
+import { notificationService } from './services/notifications';
 
 const STORAGE_KEY = 'conxius_enclave_v3_encrypted';
 
@@ -103,6 +104,7 @@ const App: React.FC = () => {
       timer = setTimeout(() => {
         clearEnclaveBiometricSession();
         setIsLocked(true);
+        notify('warning', 'Session expired for your security.', 'Vault Auto-Locked');
       }, minutes * 60 * 1000);
     };
     ['mousemove','mousedown','keypress','touchstart'].forEach(evt => window.addEventListener(evt, resetTimer));
@@ -115,6 +117,7 @@ const App: React.FC = () => {
 
   // Persistence Logic
   useEffect(() => {
+    notificationService.requestPermissions();
     hasEnclaveBlob(STORAGE_KEY)
       .then(exists => {
         setEnclaveExists(exists);
@@ -184,11 +187,18 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const notify = (type: ToastType, message: string) => {
-    const id = Math.random().toString(36).substring(7);
-    setToasts(prev => [...prev, { id, type, message }]);
+  const notify = async (type: ToastType, message: string, title?: string) => {
+    const defaultTitle = type === 'error' ? 'Security Alert' : type === 'success' ? 'Operation Success' : 'Wallet Update';
+    const event = await notificationService.notify({
+      category: (type === 'error' || type === 'warning') ? 'SECURITY' : 'SYSTEM',
+      type,
+      title: title || defaultTitle,
+      message
+    });
+
+    setToasts(prev => [...prev, { id: event.id, type: event.type, message: event.message }]);
     setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
+      setToasts(prev => prev.filter(t => t.id !== event.id));
     }, 4000);
   };
 
@@ -401,12 +411,15 @@ const App: React.FC = () => {
   // Lock Screen Intercept
   if (isLocked) {
     return (
-      <LockScreen
-        onUnlock={handleUnlock}
-        isError={lockError}
-        requireBiometric={state.security?.biometricUnlock ?? false}
-        onResetWallet={resetEnclave}
-      />
+      <>
+        <LockScreen
+          onUnlock={handleUnlock}
+          isError={lockError}
+          requireBiometric={state.security?.biometricUnlock ?? false}
+          onResetWallet={resetEnclave}
+        />
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+      </>
     );
   }
 
@@ -437,6 +450,7 @@ const App: React.FC = () => {
     return (
       <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity }}>
         <Onboarding onComplete={(config, pin) => { if (config) setWalletConfig(config as any, pin); }} />
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
       </AppContext.Provider>
     );
   }
