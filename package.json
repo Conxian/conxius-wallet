@@ -42,7 +42,7 @@
     "vite-plugin-wasm": "^3.5.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.0.1",
+    "@capacitor/cli": "^8.0.2",
     "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
