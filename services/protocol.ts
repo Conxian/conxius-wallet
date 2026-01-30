@@ -5,6 +5,7 @@
  */
 
 import { BitcoinLayer, Asset, UTXO, Network } from '../types';
+import { notificationService } from './notifications';
 
 function endpointsFor(network: Network) {
   switch (network) {
@@ -128,12 +129,23 @@ export const fetchStacksBalances = async (address: string, network: Network = 'm
 
 export const broadcastBtcTx = async (hex: string, network: Network = 'mainnet'): Promise<string> => {
   const { BTC_API } = endpointsFor(network);
-  const response = await fetchWithRetry(`${BTC_API}/tx`, {
-    method: 'POST',
-    body: hex
-  });
-  if (!response.ok) throw new Error(await response.text());
-  return await response.text();
+  try {
+    const response = await fetchWithRetry(`${BTC_API}/tx`, {
+      method: 'POST',
+      body: hex
+    });
+    if (!response.ok) {
+        const err = await response.text();
+        notificationService.notifyTransaction('Broadcast Failed', `BTC Tx failed: ${err.substring(0, 50)}...`, false);
+        throw new Error(err);
+    }
+    const txid = await response.text();
+    notificationService.notifyTransaction('Transaction Broadcasted', `BTC Tx ${txid.substring(0, 8)}... is now pending.`);
+    return txid;
+  } catch (e: any) {
+    notificationService.notifyTransaction('Network Error', 'Failed to reach Bitcoin broadcast node.', false);
+    throw e;
+  }
 };
 
 export const fetchBtcUtxos = async (address: string, network: Network = 'mainnet'): Promise<UTXO[]> => {
