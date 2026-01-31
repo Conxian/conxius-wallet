@@ -211,12 +211,14 @@ const App: React.FC = () => {
       const saved = await getEnclaveBlob(STORAGE_KEY, { requireBiometric: !!state.security?.biometricUnlock });
       if (!saved) return;
       if (state.security?.duressPin && pin === state.security.duressPin) {
+        // Duress Mode: Immediately wipe the persistent enclave data and revert to decoy state.
+        await removeEnclaveBlob(STORAGE_KEY);
         setState({ ...DEFAULT_STATE, assets: [], walletConfig: undefined });
         currentPinRef.current = null;
         setEnclaveExists(false);
         setIsLocked(false);
         setLockError(false);
-        notify('warning', 'Duress mode activated');
+        notify('warning', 'Duress mode activated. Vault purged.');
         return;
       }
       const decryptedState = await decryptState(saved, pin);
