@@ -304,9 +304,17 @@ public class SecureEnclavePlugin extends Plugin {
     call.resolve(new JSObject());
   }
 
+  private void clearCachedSession() {
+    this.cachedSessionKey = null;
+    this.cachedSessionSalt = null;
+    this.cachedSessionExpiry = 0;
+    Log.d("SecureEnclave", "Session cache cleared");
+  }
+
   @PluginMethod
   public void clearBiometricSession(PluginCall call) {
     biometricSessionValidUntilMs = 0;
+    clearCachedSession();
     call.resolve(new JSObject());
   }
 
