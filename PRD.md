@@ -116,6 +116,13 @@ Conxius aims to exceed the "Cold Storage" utility of **Ledger/Trezor/Foundation*
 - **FR-NTT-02**: No NTT "VAA" (Verified Action Approval) can be broadcast without a local Conclave-generated proof.
 - **FR-NTT-03**: Support for Multi-Asset tracking and redemption (sBTC, USDC, etc.).
 
+### 4.2.2. Sovereign Bridge Protocol
+
+- **Root Alignment**: All multi-chain assets, including NTT-bridged tokens, are slaves to the Bitcoin-root Conclave. ETH addresses are treated as deterministic derivatives.
+- **Identity Mapping**: NTT operations (Burn/Mint) are mapped to BTC-anchored identities.
+- **Authorization**: No "VAA" (Verified Action Approval) can be broadcast without a local Conclave-generated proof (P-256 or Schnorr).
+- **Logic Isolation**: Bridge transceiver logic functions as a "messenger" preparing payloads for the Conclave, rather than an independent signing entity.
+
 ### 4.4. Native Pegs (L2 Integration)
 
 - **FR-PEG-01 (sBTC)**: Support for sBTC peg-in (BTC L1 tx with OP_RETURN) and peg-out.

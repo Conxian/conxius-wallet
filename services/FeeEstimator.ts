@@ -16,11 +16,12 @@ export interface FeeEstimation {
   totalFee: number;
 }
 
-const MOCK_FEES = {
+const MOCK_FEES: Record<string, any> = {
   // Simulating real-time fee fluctuations by using a base and a random component
   'mainnet': { base: 0.00004, fluctuation: 0.00002 }, // BTC
   'stacks': { base: 0.000025, fluctuation: 0.00001 },  // STX
   'rootstock': { base: 0.00008, fluctuation: 0.00005 }, // RBTC
+  'ethereum': { base: 0.00025, fluctuation: 0.00015 }, // ETH
   'liquid': { base: 0.000035, fluctuation: 0.00001 },  // L-BTC
   'wormhole': 0.00012, // Flat fee in BTC
   'swap': 0.00002,      // Flat fee for auto-swap
