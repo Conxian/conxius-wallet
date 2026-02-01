@@ -1,17 +1,9 @@
 
 import React, { useState, useContext, useEffect } from 'react';
 import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp, ShieldCheck, Zap, Globe, Search, RefreshCw, ExternalLink } from 'lucide-react';
-import { trackNttBridge } from '../services/protocol';
 import { AppContext } from '../context';
 import { estimateFees, FeeEstimation } from '../services/FeeEstimator';
-import { executeGasSwap } from '../services/swap';
-
-// Define the stages of the bridge process
-const BRIDGE_STAGES = [
-  { id: 'CONFIRMATION', text: 'Source Confirmation', userMessage: 'Patience, Sovereign. The Bitcoin machine is etching your transaction into history.' },
-  { id: 'VAA', text: 'Wormhole VAA Generation', userMessage: 'The Guardians are witnessing your transfer. A cross-chain message is being prepared.' },
-  { id: 'REDEMPTION', text: 'Destination Redemption', userMessage: 'Finalizing the bridge. Your assets are arriving on Rootstock.' },
-];
+import { NttService, BRIDGE_STAGES } from '../services/ntt';
 
 const NTTBridge: React.FC = () => {
   const context = useContext(AppContext);
@@ -45,21 +37,12 @@ const NTTBridge: React.FC = () => {
   // Real-time bridge progress tracking
   useEffect(() => {
     if (isBridgeInProgress && txHash) {
-      const trackProgress = async () => {
-        const data = await trackNttBridge(txHash);
-        if (data && data.length > 0) {
-          const operation = data[0];
-          // This is a simplified mapping. A real implementation would need
-          // to handle the various statuses returned by the Wormhole API.
-          if (operation.status === 'confirmed') {
-            setCurrentStage(2); // Redemption
-          } else if (operation.vaa) {
-            setCurrentStage(1); // VAA Generation
-          }
-        }
+      const pollProgress = async () => {
+        const stage = await NttService.trackProgress(txHash);
+        setCurrentStage(stage);
       };
 
-      const interval = setInterval(trackProgress, 10000); // Poll every 10 seconds
+      const interval = setInterval(pollProgress, 10000); // Poll every 10 seconds
       return () => clearInterval(interval);
     }
   }, [isBridgeInProgress, txHash]);
@@ -67,23 +50,21 @@ const NTTBridge: React.FC = () => {
   const handleBridge = async () => {
     setIsBridging(true);
 
-    if (autoSwap && feeEstimation) {
-      const swapSuccess = await executeGasSwap(
-        'BTC', // Assuming the source asset is always BTC for now
-        feeEstimation.gasAbstractionSwapFee,
-        targetLayer // Assuming the target layer is the destination asset
-      );
+    const hash = await NttService.executeBridge(
+      amount,
+      sourceLayer,
+      targetLayer,
+      autoSwap,
+      feeEstimation?.gasAbstractionSwapFee
+    );
 
-      if (!swapSuccess) {
-        context?.notify('error', 'Gas abstraction swap failed. Please try again.');
-        setIsBridging(false);
-        return;
-      }
+    if (!hash) {
+      context?.notify('error', 'Bridge execution failed (Gas Swap or Enclave error).');
+      setIsBridging(false);
+      return;
     }
 
-    // In a real app, this would be the actual transaction hash from the broadcasted transaction
-    const mockTxHash = '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-    setTxHash(mockTxHash);
+    setTxHash(hash);
 
     // Simulate API call and then start the progress view
     setTimeout(() => {
@@ -101,7 +82,7 @@ const NTTBridge: React.FC = () => {
     }
     setIsTracking(true);
     try {
-        const data = await trackNttBridge(txHash);
+        const data = await NttService.getTrackingDetails(txHash);
         if (data) {
             setTrackingData(data);
             context?.notify('success', 'Wormhole Attestation Found');

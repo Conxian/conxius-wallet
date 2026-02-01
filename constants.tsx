@@ -2,7 +2,7 @@
 import React from 'react';
 import { Asset, BitcoinLayer, Transaction, ReserveAsset } from './types';
 
-export const LAYERS: BitcoinLayer[] = ['Mainnet', 'Stacks', 'Rootstock', 'Lightning', 'Liquid', 'Runes', 'Ordinals'];
+export const LAYERS: BitcoinLayer[] = ['Mainnet', 'Stacks', 'Rootstock', 'Ethereum', 'Lightning', 'Liquid', 'Runes', 'Ordinals'];
 
 export const MOCK_ASSETS: Asset[] = [
   { id: 'btc-main', name: 'Bitcoin', symbol: 'BTC', balance: 1.42, valueUsd: 92300, layer: 'Mainnet', type: 'Native' },
@@ -47,6 +47,7 @@ export const LAYER_COLORS: Record<BitcoinLayer, string> = {
   'Mainnet': 'bg-orange-500',
   'Stacks': 'bg-purple-600',
   'Rootstock': 'bg-blue-600',
+  'Ethereum': 'bg-blue-400',
   'Lightning': 'bg-yellow-400',
   'Liquid': 'bg-emerald-500',
   'Runes': 'bg-pink-600',

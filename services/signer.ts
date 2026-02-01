@@ -93,6 +93,7 @@ export const deriveSovereignRoots = async (mnemonicOrVault: string, passphraseOr
             btc: btcAddress || '',
             stx: `SP...`, // Placeholder until we import helper
             rbtc: info.evmAddress, // Native returned address
+            eth: info.evmAddress, // Ethereum shared root with RSK
             liquid: liquidAddress,
             derivationPath: "m/84'/0'/0'/0/0"
           };
@@ -139,6 +140,7 @@ export const deriveSovereignRoots = async (mnemonicOrVault: string, passphraseOr
     btc: btcAddress || '',
     stx: stxAddress,
     rbtc: rskAddress,
+    eth: rskAddress, // Ethereum shared root with RSK
     liquid: liquidPub,
     derivationPath: "m/84'/0'/0'/0/0"
   };
@@ -344,18 +346,18 @@ export const requestEnclaveSignature = async (
             pubkey: res.pubkey,
             timestamp: Date.now(),
         };
-    } else if (request.layer === "Rootstock") {
-      // RSK
+    } else if (request.layer === "Rootstock" || request.layer === "Ethereum") {
+      // RSK / Ethereum
       const path = "m/44'/60'/0'/0/0"; // Standard RSK/ETH
 
-      // RSK Payload is usually a transaction hash (keccak256 hash of rlp encoded tx)
+      // Payload is usually a transaction hash (keccak256 hash of rlp encoded tx)
       let hashToSign = "";
       if (typeof request.payload === "string") {
         hashToSign = request.payload.replace("0x", "");
       } else if (request.payload?.hash) {
         hashToSign = request.payload.hash.replace("0x", "");
       } else {
-        throw new Error("Invalid RSK Payload");
+        throw new Error(`Invalid ${request.layer} Payload`);
       }
 
       const res = await signNative({
@@ -363,7 +365,7 @@ export const requestEnclaveSignature = async (
         pin,
         path,
         messageHash: hashToSign,
-        network: "rsk",
+        network: request.layer === "Ethereum" ? "ethereum" : "rsk",
       });
 
       return {
