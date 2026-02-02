@@ -16,6 +16,15 @@ Conxius aims to exceed the "Cold Storage" utility of **Ledger/Trezor/Foundation*
 - **Monetization**: Fee capture via NTT Bridge execution and premium Node services (Greenlight LSP).
 - **Institutional Readiness**: Vault Policy management (Daily limits, multi-sig quorum) enforced at the Secure Enclave level.
 
+### 2.2. Industry Benchmarking (2024 Analysis)
+
+| Competitor | Core Strength | Conxius Advantage |
+| :--- | :--- | :--- |
+| **Zeus / Phoenix** | Deep Lightning UX | Conxius anchors Lightning in a multi-chain Enclave, allowing sBTC/LBTC swaps without external trust. |
+| **Ledger / Trezor** | Hardware Security | Conxius provides "Hardware security without the dongle" via Android TEE, plus native L2 execution which HW wallets lack. |
+| **MetaMask** | Web3 Ecosystem | Conxius applies "Web3 Agility" to the Bitcoin ecosystem while maintaining a Bitcoin-first sovereign root. |
+| **BlueWallet** | Multi-account BTC | Conxius expands multi-account utility to Nostr, Identity, and NTT Bridging. |
+
 ## 3. User Personas
 
 - **The Sovereign Hodler**: Wants deep cold storage security on a mobile device. Uses Conxius as a daily driver for small-to-medium amounts, trusting the Android TEE.
@@ -25,17 +34,23 @@ Conxius aims to exceed the "Cold Storage" utility of **Ledger/Trezor/Foundation*
 
 ## 3. User Journeys
 
-### 3.1. Onboarding (New Wallet)
+### 3.1. Onboarding (Unified Flow)
 
 - **Trigger**: First launch.
-- **Flow**:
+- **Flow (Create)**:
   1. Splash screen (Boot sequence).
-  2. "Create Wallet" vs "Import Wallet".
-  3. PIN creation (6+ digits).
-  4. Seed generation (BIP-39) inside the Secure Enclave.
-  5. **Critical**: User must verify backup (e.g., select words 3, 7, 12).
-  6. Biometric enrollment (optional but encouraged).
-  7. Dashboard loads with multi-chain view.
+  2. "Create Vault" selected.
+  3. Wallet Type selection (Single, Multi-sig, Hot).
+  4. Entropy gathering via local noise.
+  5. PIN creation (4-8 digits) and optional BIP-39 passphrase.
+  6. Seed generation and display.
+  7. **Verification**: User must confirm 3 random words from the mnemonic.
+  8. Enclave derivation and initialization.
+- **Flow (Import)**:
+  1. "Import Recovery" selected.
+  2. Mnemonic entry (12/24 words) with BIP-39 validation.
+  3. PIN creation and optional passphrase.
+  4. Enclave derivation and initialization.
 
 ### 3.2. Daily Spend (BTC L1)
 
@@ -94,10 +109,12 @@ Conxius aims to exceed the "Cold Storage" utility of **Ledger/Trezor/Foundation*
 ### 4.1. Key Management (Native Enclave Core)
 
 - **FR-KEY-01**: Master Seed must be encrypted at rest using Android Keystore AES-GCM.
-- **FR-KEY-02**: Decrypted seed must reside in memory only during signing/startup and be zeroed immediately after.
-- **FR-KEY-03**: Biometric authentication must be required to decrypt the master seed for high-value operations.
-- **FR-KEY-04**: Support standard derivation paths:
-  - Bitcoin: `m/84'/0'/0'/0/0` (Native Segwit)
+- **FR-KEY-02**: Recovery Phrase (Mnemonic) must be encrypted and stored in `mnemonicVault` for future secure retrieval.
+- **FR-KEY-03**: Decrypted seed must reside in memory only during signing/startup and be zeroed immediately after.
+- **FR-KEY-04**: Biometric authentication must be required to decrypt the master seed or mnemonic for high-value operations.
+- **FR-KEY-05**: Support standard derivation paths:
+  - Bitcoin (Native Segwit): `m/84'/0'/0'/0/0`
+  - Bitcoin (Taproot): `m/86'/0'/0'/0/0`
   - Stacks: `m/44'/5757'/0'/0/0`
   - Rootstock (EVM): `m/44'/60'/0'/0/0`
   - Liquid: `m/84'/1776'/0'/0/0`
@@ -134,6 +151,21 @@ Conxius aims to exceed the "Cold Storage" utility of **Ledger/Trezor/Foundation*
 - **FR-NET-01**: All external API calls must be user-auditable (list of endpoints).
 - **FR-NET-02**: Support for Greenlight (Breez SDK) for non-custodial Lightning.
 
+### 4.5. Backup & Restore
+
+- **FR-BR-01**: Users can view their recovery phrase after providing their PIN/Biometrics.
+- **FR-BR-02**: Users can export an encrypted JSON vault backup for off-device storage.
+- **FR-BR-03**: The app tracks backup verification status and incorporates it into the Sovereignty Score.
+- **FR-BR-04 (Health Check)**: Support for periodic "Health Checks" where users verify a subset of their mnemonic to ensure physical backup integrity.
+- **FR-BR-05 (Decoy Vault)**: Support for a secondary "decoy" PIN that opens a limited/simulated vault (Duress Mode alignment).
+
+### 4.6. Privacy & Advanced Protocols
+- **FR-PRIV-01 (Silent Payments)**: Support for BIP-352 key derivation (m/352') and sp1-encoded address generation.
+- **FR-PRIV-02**: Enclave-authorized scanning for incoming silent payment outputs.
+- **FR-PRIV-03**: Private sending capability to sp1 addresses using sender's UTXO set.
+- **FR-PRIV-04 (Taproot Assets)**: Infrastructure readiness for Taproot Assets (BIP-341/342).
+- **FR-PRIV-05 (Privacy Score)**: Implementation of a Privacy Metric that weighs usage of Silent Payments, Confidential Transactions, and UTXO hygiene.
+
 ## 5. Non-Functional Requirements
 
 ### 5.1. Security
@@ -165,3 +197,29 @@ Conxius aims to exceed the "Cold Storage" utility of **Ledger/Trezor/Foundation*
 - **PRD Updates**: This document is the source of truth. Any architectural change (e.g., adding a new chain) triggers a PRD update PR.
 - **Testing**: Every PR must pass `testDebugUnitTest` for Android and `npm test` for logic.
 - **Verification**: Release builds are verified on physical Pixel devices before publication.
+
+## 8. Sovereign Expansion Architecture
+
+To achieve the "Great Unification" of Bitcoin layers, Conxius leverages a hybrid architecture of native JNI (Rust) and Capacitor (JS) interfaces.
+
+### 8.1. Layer Unification Matrix
+
+| Protocol | Conclave Integration Path | Turnkey SDK Reference | Status |
+| :--- | :--- | :--- | :--- |
+| **Bitcoin L1** | Native Rust (BDK) | [BDK](https://bitcoindevkit.org/) | PRODUCTION |
+| **Lightning** | JNI Bridge (Greenlight) | [Breez SDK](https://breez.technology/) | PRODUCTION |
+| **Stacks** | Capacitor (Stacks.js) | [Stacks.js](https://github.com/hirosystems/stacks.js) | PRODUCTION |
+| **Liquid** | GDK Integration | [Blockstream GDK](https://github.com/Blockstream/gdk) | PRODUCTION |
+| **Rootstock** | Web3 / Ethers.js | [Web3.js](https://web3js.org/) | PRODUCTION |
+| **Ark** | Native ASP Client | [Ark Research](https://ark-protocol.org/) | RESEARCH |
+| **Statechains**| Mercury Integration | [Mercury Layer](https://mercurylayer.com/) | RESEARCH |
+| **BitVM** | Fraud Proof Verifier | [BitVM.org](https://bitvm.org/) | RESEARCH |
+| **Citrea** | ZK-STARK Verifier | [Citrea.xyz](https://citrea.xyz/) | RESEARCH |
+| **Botanix** | EVM-compatible Bridge | [Botanix Labs](https://botanixlabs.xyz/) | TESTNET |
+
+### 8.2. Advanced Feature Requirements (Phase 2)
+
+- **FR-EXP-01 (Ordinals/Runes)**: Enclave-authorized coin selection to prevent accidental burning of digital artifacts.
+- **FR-EXP-02 (BitVM Verification)**: Local verification of BitVM fraud proofs within the Enclave's memory boundary.
+- **FR-EXP-03 (Virtual UTXOs)**: Support for Ark-style virtual UTXOs, enabling instant, low-fee L1 transfers.
+- **FR-EXP-04 (Atomic Swaps)**: Trustless cross-layer swaps (e.g., Lightning <-> Liquid) using Submarine Swaps or PTLCs.

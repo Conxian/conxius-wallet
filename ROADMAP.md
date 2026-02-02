@@ -35,13 +35,17 @@
 
 ## Current State (Implemented)
 
-- Encrypted state vault with migration support.
-- Android SecureEnclave backed by Keystore AES-GCM and user authentication gating (biometric/device credential).
-- Auto-lock, duress PIN, and session-only seed usage for signing.
-- BTC on-chain send pipeline (PSBT build → sign → broadcast).
-- Lightning parsing (BOLT11/LNURL) and LND REST backend plumbing.
-- Wormhole/NTT tracking view (execution still planned).
-- Secure Enclave session management and basic signing.
+- **Unified Onboarding**: Create and Import flows with mandatory backup verification.
+- **Secure Persistence**: Encrypted state vault with `mnemonicVault` support and auto-migrations.
+- **Android SecureEnclave**: Backed by Keystore AES-GCM and user authentication gating.
+- **Advanced Security**: Auto-lock, duress PIN, biometric gating, and functional "View Recovery Phrase".
+- **Vault Mobility**: Encrypted JSON vault export for sovereign backups.
+- **BTC L1 Transaction Pipeline**: Full PSBT lifecycle (Build → Sign → Broadcast), Taproot (BIP-341) support, and Dust detection.
+- **Lightning Integration**: BOLT11/LNURL parsing and LND REST backend plumbing.
+- **Interlayer Interop**: Wormhole/NTT tracking and real-time protocol diagnostics.
+- **Privacy Core**: Full Taproot (BIP-341) signing and Silent Payments (BIP-352) key management.
+- **Sovereign Layers (L2)**: Stacks BNS (.btc) resolution, Nakamoto/sBTC readiness, and Liquid Confidentiality audits.
+- **AI Integration**: Gemini-powered Protocol Auditor and Yield Optimizer for sovereign risk analysis.
 
 ## Sovereign Expansion Milestones
 
@@ -113,6 +117,38 @@
 **Acceptance Criteria**
 - Enclave refuses to sign if policy is violated (enforced natively).
 - Quorum collection UI for multi-sig coordination.
+
+### M8 — Privacy Scoring & Backup Health
+
+**Scope**
+
+- Implement "Privacy Score" engine in the Sovereign Meter.
+- Add "Backup Health Check" UI for mnemonic audit.
+- Unified Transaction Timeline view across all layers.
+**Acceptance Criteria**
+- Privacy score reflects usage of BIP-352 and Confidential Transactions.
+- Health Check confirms user still possesses the correct recovery phrase.
+
+### M9 — The Great Unification (Phase 1: Artifacts & Experimental)
+
+**Scope**
+
+- Ordinals/Runes safety checks (Coin Control 2.0).
+- Ark V-UTXO demo on Testnet.
+- Botanix/Citrea Bridge tracking.
+**Acceptance Criteria**
+- UTXO manager prevents spending "Inscribed" outputs without explicit override.
+- Ark SDK integrated into the Enclave JNI layer.
+
+### M10 — BitVM & ZK-Proofs (Phase 2: Verifier Core)
+
+**Scope**
+
+- BitVM Fraud Proof Verifier integrated into the Enclave.
+- ZK-STARK verification for Citrea/Rollup state transitions.
+**Acceptance Criteria**
+- Enclave can verify an off-chain fraud proof without a full node.
+- Real-time "Proof Health" dashboard.
 
 ## Go-to-Market Alignment
 

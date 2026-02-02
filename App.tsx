@@ -26,13 +26,14 @@ import DeFiDashboard from './components/DeFiDashboard';
 import CitadelManager from './components/CitadelManager';
 import Onboarding from './components/Onboarding';
 import UTXOManager from './components/UTXOManager';
+import SilentPayments from './components/SilentPayments';
 import Studio from './components/Studio';
 import Marketplace from './components/Marketplace';
 import SystemDiagnostics from './components/SystemDiagnostics';
 import Web3Browser from './components/Web3Browser';
 import LockScreen from './components/LockScreen';
 import ToastContainer, { ToastMessage, ToastType } from './components/Toast';
-import { Shield, Loader2, Zap, FlaskConical, ShieldCheck, Lock, Terminal, Cpu, CheckCircle2, RotateCcw, Database } from 'lucide-react';
+import { Shield as ShieldIcon, Loader2, Zap, FlaskConical, ShieldCheck, Lock, Terminal, Cpu, CheckCircle2, RotateCcw, Database } from 'lucide-react';
 import './styles/progress.css';
 import { AppState, WalletConfig, Asset, Bounty, AppMode, Network, LnBackendConfig } from './types';
 import { AppContext } from './context';
@@ -168,7 +169,7 @@ const App: React.FC = () => {
 
   const BOOT_SEQUENCE = [
     { text: "BIP-322 Verification...", icon: Lock },
-    { text: "Tor V3 Tunnel Stable...", icon:  Shield },
+    { text: "Tor V3 Tunnel Stable...", icon: ShieldIcon },
     { text: "BIP-84 Roots Loaded...", icon: Cpu },
     { text: "Sovereignty Confirmed.", icon: CheckCircle2 }
   ];
@@ -225,10 +226,18 @@ const App: React.FC = () => {
       const nextState: any = { ...DEFAULT_STATE, ...decryptedState };
       if (nextState.walletConfig) {
         const walletConfig: any = { ...nextState.walletConfig };
-        if (!walletConfig.seedVault && typeof walletConfig.mnemonic === 'string') {
+
+        // Migration/Upgrade: Ensure seedVault and mnemonicVault exist
+        if (typeof walletConfig.mnemonic === 'string') {
           const seedBytes = await bip39.mnemonicToSeed(walletConfig.mnemonic, walletConfig.passphrase || undefined);
-          walletConfig.seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
+          if (!walletConfig.seedVault) {
+            walletConfig.seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
+          }
+          if (!walletConfig.mnemonicVault) {
+            walletConfig.mnemonicVault = await encryptSeed(new TextEncoder().encode(walletConfig.mnemonic), pin);
+          }
         }
+
         delete walletConfig.mnemonic;
         delete walletConfig.passphrase;
         nextState.walletConfig = walletConfig;
@@ -333,6 +342,7 @@ const App: React.FC = () => {
         mode: effectiveMode,
         walletConfig: config,
         assets: initialAssets,
+        sovereigntyScore: config.backupVerified ? 100 : 70
      }));
   };
 
@@ -362,6 +372,7 @@ const App: React.FC = () => {
       case 'payments': return <PaymentPortal />;
       case 'citadel': return <CitadelManager />;
       case 'utxos': return <div className="p-8"><UTXOManager /></div>;
+      case 'silent-payments': return <div className="p-8"><SilentPayments /></div>;
       case 'defi': return <DeFiDashboard />;
       case 'rewards': return <RewardsHub />;
       case 'labs': return <LabsExplorer />;

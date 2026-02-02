@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Shield, ArrowRight, Key, Users, Zap, ShieldCheck, RefreshCcw, RotateCcw, Loader2, Eye, Lock, AlertTriangle, Database, Globe, CheckCircle2 } from 'lucide-react';
+import { Shield as ShieldIcon, ArrowRight, Key, Users, Zap, ShieldCheck, RefreshCcw, RotateCcw, Loader2, Eye, Lock, AlertTriangle, Database, Globe, CheckCircle2, FlaskConical } from 'lucide-react';
 import { WalletConfig, AppMode } from '../types';
 import { deriveSovereignRoots } from '../services/signer';
 import { encryptSeed } from '../services/seed';
@@ -24,7 +24,7 @@ const BIP39_SUBSET = [
 ];
 
 const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
-  const [step, setStep] = useState<'type' | 'entropy' | 'security' | 'backup'>('type');
+  const [step, setStep] = useState<'start' | 'import' | 'type' | 'entropy' | 'security' | 'backup' | 'verify'>('start');
   const [appMode, setAppMode] = useState<AppMode>('sovereign');
   const [walletType, setWalletType] = useState<'single' | 'multisig' | 'hot'>('single');
   const [entropyProgress, setEntropyProgress] = useState(0);
@@ -41,6 +41,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [passphrase, setPassphrase] = useState('');
+
+  // Import State
+  const [importText, setImportText] = useState('');
+
+  // Verification State
+  const [verifyIndices, setVerifyIndices] = useState<number[]>([]);
+  const [verifyWords, setVerifyWords] = useState<string[]>([]);
 
   // Entropy Harvesting
   const handleEntropyInput = () => {
@@ -91,13 +98,17 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     const roots = await deriveSovereignRoots(seedString, passphrase || undefined);
     const seedBytes = await bip39.mnemonicToSeed(seedString, passphrase || undefined);
     const seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
+    const mnemonicVault = await encryptSeed(new TextEncoder().encode(seedString), pin);
     
     // Pass PIN up to App for encryption
     onComplete({ 
       mode: appMode,
       type: walletType,
       seedVault,
+      mnemonicVault,
+      backupVerified: true,
       masterAddress: roots.btc,
+      taprootAddress: roots.taproot,
       stacksAddress: roots.stx
     }, pin);
     setIsFinalizing(false);
@@ -111,13 +122,76 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     >
       <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl md:rounded-[3rem] p-6 md:p-10 space-y-6 md:space-y-8 shadow-2xl animate-in fade-in zoom-in duration-500">
         
-        
+        {step === 'start' && (
+          <div className="space-y-8 animate-in fade-in">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-orange-500 shadow-xl">
+                <FlaskConical size={32} />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-black tracking-tighter text-zinc-100 uppercase italic">Conxius Enclave</h2>
+              <p className="text-zinc-500 text-sm">Initialize your sovereign interface.</p>
+            </div>
+
+            <div className="space-y-4">
+              <button
+                onClick={() => setStep('type')}
+                className="w-full p-6 bg-orange-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:bg-orange-500 transition-all flex items-center justify-between"
+              >
+                <span>Create Vault</span>
+                <ArrowRight size={20} />
+              </button>
+              <button
+                onClick={() => setStep('import')}
+                className="w-full p-6 bg-zinc-950 border border-zinc-800 text-zinc-400 rounded-[2rem] font-black uppercase tracking-widest hover:border-zinc-700 transition-all flex items-center justify-between"
+              >
+                <span>Import Recovery</span>
+                <RefreshCcw size={20} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 'import' && (
+          <div className="space-y-8 animate-in slide-in-from-right-4">
+            <div className="text-center space-y-2">
+              <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">Import Vault</h3>
+              <p className="text-xs text-zinc-500">Enter your 12 or 24 word BIP-39 phrase.</p>
+            </div>
+
+            <div className="space-y-4">
+              <textarea
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder="abandon ability able..."
+                className="w-full h-40 bg-zinc-950 border border-zinc-800 rounded-2xl p-6 text-sm font-mono text-white focus:outline-none focus:border-orange-500/50 resize-none"
+              />
+              <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl flex gap-3">
+                <AlertTriangle className="text-orange-500 shrink-0" size={16} />
+                <p className="text-[10px] text-orange-200">Warning: Never enter your seed on an untrusted device.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+               <button onClick={() => setStep('start')} className="flex-1 py-4 bg-zinc-800 text-zinc-400 rounded-2xl font-black text-xs uppercase">Cancel</button>
+               <button
+                  disabled={!bip39.validateMnemonic(importText.trim())}
+                  onClick={() => {
+                    setMnemonic(importText.trim().split(/\s+/));
+                    setStep('security');
+                  }}
+                  className="flex-[2] py-4 bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest disabled:opacity-50"
+               >
+                  Verify Mnemonic
+               </button>
+            </div>
+          </div>
+        )}
 
         {step === 'type' && (
           <div className="space-y-8 animate-in fade-in">
             <div className="text-center space-y-4">
               <div className="w-16 h-16 bg-orange-600 rounded-2xl flex items-center justify-center mx-auto text-white shadow-lg">
-                <Shield size={32} />
+                <ShieldIcon size={32} />
               </div>
               <h2 className="text-2xl md:text-3xl font-black tracking-tighter text-zinc-100 uppercase italic">Configure Vault</h2>
               <p className="text-zinc-500 text-sm">Define your multi-layer signature policy.</p>
@@ -287,12 +361,55 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 </p>
              </div>
 
+             <button
+               onClick={() => {
+                  const indices = [
+                    Math.floor(Math.random() * 4),
+                    Math.floor(Math.random() * 4) + 4,
+                    Math.floor(Math.random() * 4) + 8
+                  ];
+                  setVerifyIndices(indices);
+                  setVerifyWords(['', '', '']);
+                  setStep('verify');
+               }}
+               className="w-full bg-zinc-100 hover:bg-white text-zinc-950 font-black py-5 rounded-3xl text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3"
+             >
+                <ArrowRight size={16} /> Verify Backup
+             </button>
+          </div>
+        )}
+
+        {step === 'verify' && (
+          <div className="space-y-8 animate-in slide-in-from-right-4">
+             <div className="text-center space-y-2">
+                <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">Verify Backup</h3>
+                <p className="text-xs text-zinc-500">Confirm you've secured your recovery phrase.</p>
+             </div>
+
+             <div className="space-y-6">
+                {verifyIndices.map((idx, i) => (
+                  <div key={idx} className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-zinc-600 ml-1">Word #{idx + 1}</label>
+                    <input
+                      type="text"
+                      value={verifyWords[i]}
+                      onChange={(e) => {
+                        const next = [...verifyWords];
+                        next[i] = e.target.value.toLowerCase().trim();
+                        setVerifyWords(next);
+                      }}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 px-6 text-center text-lg font-mono text-white focus:outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+                ))}
+             </div>
+
              <button 
                onClick={handleFinalize}
-               disabled={isFinalizing}
+               disabled={isFinalizing || verifyWords.some((w, i) => w !== mnemonic[verifyIndices[i]])}
                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-5 rounded-3xl text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 disabled:opacity-50"
              >
-                {isFinalizing ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
+                {isFinalizing ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
                 {isFinalizing ? 'Deriving Roots...' : 'Initialize Enclave'}
              </button>
           </div>
