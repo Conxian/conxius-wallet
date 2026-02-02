@@ -49,7 +49,7 @@ export class IdentityService {
          } catch (e) {
              // Fallback to legacy dummy signature if native method fails (e.g. old plugin version)
              console.warn("Native getPublicKey failed, falling back to signNative", e);
-             const dummyHash = "0000000000000000000000000000000000000000000000000000000000000000";
+             const dummyHash = "IDENTITY_PUBKEY_DERIVATION_HASH";
              const res = await signNative({
                  vault: this.vaultName,
                  path,

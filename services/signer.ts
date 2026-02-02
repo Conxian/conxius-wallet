@@ -213,8 +213,7 @@ export const requestEnclaveSignature = async (
         vault,
         pin, // Can be undefined now (checking session)
         path,
-        messageHash:
-          "0000000000000000000000000000000000000000000000000000000000000000",
+        messageHash: "DUMMY_HASH_FOR_PUBKEY_DERIVATION",
         network,
       });
       const pubkey = idRes.pubkey;
