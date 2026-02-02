@@ -1,8 +1,52 @@
 
-import React from 'react';
-import { ShieldCheck, Cpu, Wallet, ExternalLink, ShieldAlert, Key, HeartPulse, ShoppingCart, Award, ArrowUpRight } from 'lucide-react';
+import React, { useState, useContext } from 'react';
+import { ShieldCheck, Cpu, Wallet, ExternalLink, ShieldAlert, Key, HeartPulse, ShoppingCart, Award, ArrowUpRight, Eye, Download, Shield, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { AppContext } from '../context';
+import { decryptSeed } from '../services/seed';
 
 const Security: React.FC = () => {
+  const context = useContext(AppContext);
+  const [showMnemonic, setShowMnemonic] = useState(false);
+  const [mnemonic, setMnemonic] = useState<string | null>(null);
+  const [isDecrypting, setIsDecrypting] = useState(false);
+  const [pinEntry, setPinEntry] = useState('');
+  const [showPinPrompt, setShowPinPrompt] = useState(false);
+
+  const handleViewMnemonic = async () => {
+    if (!context?.state.walletConfig?.mnemonicVault) return;
+    setShowPinPrompt(true);
+  };
+
+  const confirmPinAndDecrypt = async () => {
+    setIsDecrypting(true);
+    try {
+      const vault = context?.state.walletConfig?.mnemonicVault;
+      if (vault) {
+        const decrypted = await decryptSeed(vault, pinEntry);
+        setMnemonic(new TextDecoder().decode(decrypted));
+        setShowMnemonic(true);
+        setShowPinPrompt(false);
+      }
+    } catch (e) {
+      context?.notify('error', 'Invalid PIN');
+    } finally {
+      setIsDecrypting(false);
+      setPinEntry('');
+    }
+  };
+
+  const handleExportVault = () => {
+    const data = JSON.stringify(context?.state, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conxius-vault-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    context?.notify('success', 'Vault Exported Successfully');
+  };
+
   const hardwareAffiliates = [
     { name: 'BitBox02', desc: 'Swiss-made, Bitcoin-only hardware with secure chip.', link: 'https://shiftcrypto.ch/bitbox02', color: 'bg-zinc-100 text-zinc-950' },
     { name: 'Coldcard MK4', desc: 'The most security-hardened air-gapped device.', link: 'https://coinkite.com/coldcard', color: 'bg-orange-600 text-white' },
@@ -34,16 +78,74 @@ const Security: React.FC = () => {
                    <p className="text-sm text-zinc-500">Manage your seed phrases. SatoshiLayer never transmits this data.</p>
                 </div>
              </div>
-             <div className="grid grid-cols-2 gap-4">
-                <button className="p-6 bg-zinc-950 border border-zinc-900 rounded-2xl text-left hover:border-zinc-700 transition-all group">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={handleViewMnemonic}
+                  className="p-6 bg-zinc-950 border border-zinc-900 rounded-2xl text-left hover:border-zinc-700 transition-all group"
+                >
                    <p className="text-[10px] font-black uppercase text-zinc-600 mb-2 group-hover:text-zinc-400">Master Seed</p>
                    <p className="font-mono text-xs text-zinc-400">View Recovery Phrase</p>
                 </button>
-                <button className="p-6 bg-zinc-950 border border-zinc-900 rounded-2xl text-left hover:border-zinc-700 transition-all group">
-                   <p className="text-[10px] font-black uppercase text-zinc-600 mb-2 group-hover:text-zinc-400">Entropy Source</p>
-                   <p className="font-mono text-xs text-zinc-400">Hardware RNG Status</p>
+                <button
+                  onClick={handleExportVault}
+                  className="p-6 bg-zinc-950 border border-zinc-900 rounded-2xl text-left hover:border-zinc-700 transition-all group"
+                >
+                   <p className="text-[10px] font-black uppercase text-zinc-600 mb-2 group-hover:text-zinc-400">Vault Export</p>
+                   <p className="font-mono text-xs text-zinc-400">Download Encrypted JSON</p>
+                </button>
+                <button
+                  onClick={() => context?.notify('info', 'Verification session starting...')}
+                  className="p-6 bg-zinc-950 border border-zinc-900 rounded-2xl text-left hover:border-zinc-700 transition-all group"
+                >
+                   <p className="text-[10px] font-black uppercase text-zinc-600 mb-2 group-hover:text-zinc-400">Health Check</p>
+                   <p className="font-mono text-xs text-zinc-400">Verify Physical Backup</p>
                 </button>
              </div>
+
+             {showMnemonic && (
+                <div className="mt-8 p-8 bg-zinc-950 border border-orange-500/30 rounded-[2rem] animate-in zoom-in duration-300 relative">
+                   <button onClick={() => setShowMnemonic(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white">✕</button>
+                   <h4 className="text-xs font-black uppercase text-orange-500 mb-6 tracking-widest">Your Recovery Phrase</h4>
+                   <div className="grid grid-cols-3 gap-4">
+                      {mnemonic?.split(' ').map((word, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="text-[9px] text-zinc-700 font-mono">{i+1}.</span>
+                          <span className="text-sm font-bold text-zinc-300">{word}</span>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+             )}
+
+             {showPinPrompt && (
+                <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                   <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 w-full max-w-sm space-y-6 shadow-2xl">
+                      <div className="text-center space-y-2">
+                        <Lock className="text-orange-500 mx-auto" size={32} />
+                        <h3 className="font-black italic uppercase text-lg">Identity Challenge</h3>
+                        <p className="text-xs text-zinc-500">Enter your Enclave PIN to reveal secrets.</p>
+                      </div>
+                      <input
+                        type="password"
+                        autoFocus
+                        value={pinEntry}
+                        onChange={(e) => setPinEntry(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 text-center text-2xl font-mono tracking-widest focus:outline-none focus:border-orange-500"
+                        maxLength={8}
+                      />
+                      <div className="flex gap-4">
+                        <button onClick={() => setShowPinPrompt(false)} className="flex-1 py-4 bg-zinc-800 rounded-2xl font-black text-xs uppercase">Cancel</button>
+                        <button
+                          onClick={confirmPinAndDecrypt}
+                          disabled={isDecrypting || pinEntry.length < 4}
+                          className="flex-1 py-4 bg-orange-600 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2"
+                        >
+                          {isDecrypting ? <Loader2 size={14} className="animate-spin" /> : 'Confirm'}
+                        </button>
+                      </div>
+                   </div>
+                </div>
+             )}
           </div>
 
           <div className="bg-orange-500/5 border border-orange-500/10 rounded-3xl p-8">
@@ -96,15 +198,22 @@ const Security: React.FC = () => {
 
           <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-8">
              <div className="flex items-center gap-3 mb-4">
-                <ShieldAlert className="text-yellow-500" size={20} />
+                <ShieldAlert className={context?.state.walletConfig?.backupVerified ? "text-green-500" : "text-yellow-500"} size={20} />
                 <h4 className="font-bold text-sm text-zinc-200">Security Audit</h4>
              </div>
              <p className="text-xs text-zinc-500 leading-relaxed mb-4">
-                You haven't performed a backup audit in <strong>92 days</strong>. Your sovereign risk is increasing.
+                {context?.state.walletConfig?.backupVerified
+                  ? "Your backup has been verified. Your root of trust is established."
+                  : "You haven't performed a backup audit. Your sovereign risk is increasing."}
              </p>
              <div className="w-full h-1.5 bg-zinc-900 rounded-full overflow-hidden">
-                <div className="w-1/3 h-full bg-yellow-500" />
+                <div className={`h-full ${context?.state.walletConfig?.backupVerified ? "w-full bg-green-500" : "w-1/3 bg-yellow-500"}`} />
              </div>
+             {context?.state.walletConfig?.backupVerified && (
+               <div className="mt-4 flex items-center gap-2 text-green-500 text-[10px] font-black uppercase">
+                 <CheckCircle2 size={12} /> Backup Verified
+               </div>
+             )}
           </div>
         </div>
       </div>

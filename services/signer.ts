@@ -22,6 +22,7 @@ import {
 
 // Initialize BIP32
 const bip32 = BIP32Factory(ecc);
+bitcoin.initEccLib(ecc);
 
 // Polyfill Buffer for browser environment if needed (handled by Vite plugin, but good practice)
 if (typeof window !== 'undefined') {
@@ -91,6 +92,7 @@ export const deriveSovereignRoots = async (mnemonicOrVault: string, passphraseOr
           
           return {
             btc: btcAddress || '',
+            taproot: info.taprootAddress || '', // Native should return this
             stx: `SP...`, // Placeholder until we import helper
             rbtc: info.evmAddress, // Native returned address
             eth: info.evmAddress, // Ethereum shared root with RSK
@@ -120,6 +122,14 @@ export const deriveSovereignRoots = async (mnemonicOrVault: string, passphraseOr
     network: bitcoin.networks.bitcoin
   });
 
+  // 1b. Bitcoin Taproot (BIP-86)
+  // Path: m/86'/0'/0'/0/0
+  const trNode = root.derivePath("m/86'/0'/0'/0/0");
+  const { address: trAddress } = bitcoin.payments.p2tr({
+    internalPubkey: trNode.publicKey.slice(1, 33),
+    network: bitcoin.networks.bitcoin
+  });
+
   // 2. Stacks L2 (SIP-005)
   // Path: m/44'/5757'/0'/0/0
   const stxNode = root.derivePath("m/44'/5757'/0'/0/0");
@@ -138,6 +148,7 @@ export const deriveSovereignRoots = async (mnemonicOrVault: string, passphraseOr
 
   return {
     btc: btcAddress || '',
+    taproot: trAddress || '',
     stx: stxAddress,
     rbtc: rskAddress,
     eth: rskAddress, // Ethereum shared root with RSK

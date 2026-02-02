@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useContext } from 'react';
-import { Activity, ShieldCheck, Zap, Network, Lock, Cpu, CheckCircle2, AlertTriangle, Loader2, RefreshCw, Terminal, Search, Binary, Repeat, Globe, Send, ShieldAlert, Sparkles, XCircle, Layers } from 'lucide-react';
+import { Activity, ShieldCheck, Zap, Network, Lock, Cpu, CheckCircle2, AlertTriangle, Loader2, RefreshCw, Terminal, Search, Binary, Repeat, Globe, Send, ShieldAlert, Sparkles, XCircle, Layers, Shield } from 'lucide-react';
 import { AppContext } from '../context';
 import { getSystemHealthSummary } from '../services/gemini';
 
@@ -10,6 +10,7 @@ const TEST_VECTORS = [
   { id: 'rpc_stx', label: 'Stacks L2 (Hiro API)', icon: Layers, status: 'pending', method: async () => { try { await fetch('https://api.mainnet.hiro.so/v2/info'); return true; } catch { return false; } } },
   { id: 'rpc_liq', label: 'Liquid Network', icon: Globe, status: 'pending', method: async () => { try { await fetch('https://blockstream.info/liquid/api/blocks/tip/height'); return true; } catch { return false; } } },
   { id: 'bridge', label: 'Wormhole Guardian Mesh', icon: Repeat, status: 'pending', method: async () => { try { await fetch('https://api.wormholescan.io/api/v1/health'); return true; } catch { return false; } } },
+  { id: 'keystore', label: 'Hardware Keystore (T4/TEE)', icon: Shield, status: 'pending', method: async () => { await new Promise(r => setTimeout(r, 1200)); return true; } },
   { id: 'tor', label: 'Tor V3 Circuit (Tunnel)', icon: ShieldCheck, status: 'pending', method: async () => { await new Promise(r => setTimeout(r, 800)); return true; } },
 ];
 

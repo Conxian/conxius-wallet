@@ -56,9 +56,12 @@ export interface Signer {
 export interface WalletConfig {
   type: 'single' | 'multisig' | 'hot';
   seedVault?: string;
+  mnemonicVault?: string;
+  backupVerified?: boolean;
   quorum?: { m: number; n: number };
   signers?: Signer[];
   masterAddress?: string;
+  taprootAddress?: string;
   stacksAddress?: string;
 }
 

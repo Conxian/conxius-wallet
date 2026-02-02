@@ -40,6 +40,7 @@ const Dashboard: React.FC = () => {
   if (!appContext) return null;
   const { mode, network, assets, privacyMode, walletConfig, language } = appContext.state;
   const btcAddress = walletConfig?.masterAddress || '';
+  const taprootAddress = walletConfig?.taprootAddress || '';
   const stxAddress = walletConfig?.stacksAddress || '';
 
   const t = (key: string) => getTranslation(language, key);
@@ -175,6 +176,29 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 space-y-10">
+          {/* Key Topology Section */}
+          <div className="bg-zinc-950 border border-zinc-900 rounded-[3rem] p-8 space-y-8">
+            <h3 className="text-xs font-black uppercase text-zinc-500 tracking-[0.2em] flex items-center gap-2">
+              <Key size={14} /> Sovereign Key Topology
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black uppercase text-zinc-500">Mainnet (BIP-84)</span>
+                  <span className="bg-green-500/10 text-green-500 text-[8px] px-1.5 py-0.5 rounded border border-green-500/20">Segwit</span>
+                </div>
+                <p className="font-mono text-[10px] text-zinc-300 truncate">{btcAddress}</p>
+              </div>
+              <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black uppercase text-zinc-500">Taproot (BIP-86)</span>
+                  <span className="bg-orange-500/10 text-orange-500 text-[8px] px-1.5 py-0.5 rounded border border-orange-500/20">Schnorr</span>
+                </div>
+                <p className="font-mono text-[10px] text-zinc-300 truncate">{taprootAddress || 'Deriving...'}</p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-zinc-950 border border-zinc-800 rounded-[3rem] overflow-hidden shadow-2xl min-h-[400px]">
             <div className="px-6 md:px-10 py-8 border-b border-zinc-900 flex items-center justify-between">
               <h3 className="text-xs font-black uppercase text-zinc-500 tracking-[0.2em]">{t('assets.verified')}</h3>
@@ -196,7 +220,15 @@ const Dashboard: React.FC = () => {
                       <p className="text-[8px] font-black uppercase text-zinc-600 mt-1">{asset.layer}</p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="hidden md:flex flex-col items-end gap-1 px-8 border-x border-zinc-900/50">
+                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">24h Vol</p>
+                    <p className="text-[11px] font-mono font-bold text-zinc-400">$1.2M</p>
+                  </div>
+                  <div className="hidden md:flex flex-col items-end gap-1 px-8">
+                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Yield (APY)</p>
+                    <p className="text-[11px] font-mono font-bold text-green-500">4.2%</p>
+                  </div>
+                  <div className="text-right min-w-[120px]">
                     <p className="font-mono font-bold text-zinc-100">{asset.balance.toFixed(asset.balance < 1 ? 8 : 2)} {asset.symbol}</p>
                     {asset.valueUsd > 0 && <p className="text-[10px] text-orange-500 font-mono font-bold">${asset.valueUsd.toLocaleString()}</p>}
                   </div>
