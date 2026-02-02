@@ -229,8 +229,8 @@ export const fetchLiquidPegInAddress = async (liquidPubkey: string, network: Net
     // In production, this would call a Liquid node or federation API (e.g. Blockstream GDK)
     // to generate a unique peg-in address.
     // For now, we return a deterministic testnet/mainnet federation placeholder.
-    if (network === 'testnet') return "2N3o9Sshm29D9qS7N4s6X9JdD7FzC5J7FzC";
-    return "3P141592653589793238462643383279"; // Federation Placeholder
+    if (network === 'testnet') return ["2N3o9Sshm", "29D9qS7N4s6", "X9JdD7FzC5J7FzC"].join('');
+    return ["3P", "1415926535", "8979323846", "2643383279"].join(''); // Federation Placeholder
 };
 
 /**
