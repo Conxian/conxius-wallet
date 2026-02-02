@@ -9,7 +9,7 @@ const ARTIFACTS = [
     platform: 'Android (Sovereign APK)', 
     file: 'conxius-svn-0.3.apk', 
     size: '48 MB', 
-    hash: 'sha256:a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0',
+    hash: 'sha256:pending_verification_on_build',
     icon: Smartphone,
     type: 'mobile'
   },
@@ -17,7 +17,7 @@ const ARTIFACTS = [
     platform: 'Desktop (macOS/Linux)', 
     file: 'conxius-desktop-svn-0.3.tar.gz', 
     size: '156 MB', 
-    hash: 'sha256:7c8a4b2e9f1d0c5a3b9e8f7d6c5b4a3b9e8f7d6c5b4a3b9e8f7d6c5b4a3b9',
+    hash: 'sha256:pending_verification_on_build',
     icon: HardDrive,
     type: 'desktop'
   },
