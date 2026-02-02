@@ -109,13 +109,41 @@ export async function signPsbtBase64(mnemonic: string, psbtBase64: string, netwo
 
 export async function signPsbtBase64WithSeed(seed: Uint8Array, psbtBase64: string, network: Network) {
   const root = bip32.fromSeed(Buffer.from(seed));
-  const path = `m/84'/${coinType(network)}'/0'/0/0`;
-  const child = root.derivePath(path);
-  const keyPair = ECPair.fromPrivateKey(child.privateKey!, { network: networkFrom(network) });
-  const psbt = bitcoin.Psbt.fromBase64(psbtBase64, { network: networkFrom(network) });
+  const net = networkFrom(network);
+  const coin = coinType(network);
+
+  const p2wpkhPath = `m/84'/${coin}'/0'/0/0`;
+  const p2trPath = `m/86'/${coin}'/0'/0/0`;
+
+  const p2wpkhChild = root.derivePath(p2wpkhPath);
+  const p2trChild = root.derivePath(p2trPath);
+
+  const p2wpkhKeyPair = ECPair.fromPrivateKey(p2wpkhChild.privateKey!, { network: net });
+
+  // Taproot Key Tweak for Key-path signing
+  const internalPubkey = p2trChild.publicKey.slice(1, 33);
+  const p2trKeyPair = ECPair.fromPrivateKey(p2trChild.privateKey!, { network: net });
+
+  const psbt = bitcoin.Psbt.fromBase64(psbtBase64, { network: net });
+
   for (let i = 0; i < psbt.inputCount; i++) {
-    psbt.signInput(i, keyPair);
+    const input = psbt.data.inputs[i];
+
+    // Check if it's a Taproot input
+    const isTaproot = input.witnessUtxo && bitcoin.script.isTaproot(input.witnessUtxo.script);
+
+    if (isTaproot) {
+        // Tweak the key for key-path signing if not already tweaked
+        const tweakedChild = p2trChild.tweak(
+            bitcoin.crypto.taggedHash('TapTweak', internalPubkey),
+        );
+        const tweakedKeyPair = ECPair.fromPrivateKey(tweakedChild.privateKey!, { network: net });
+        psbt.signInput(i, tweakedKeyPair);
+    } else {
+        psbt.signInput(i, p2wpkhKeyPair);
+    }
   }
+
   psbt.finalizeAllInputs();
   return psbt.extractTransaction().toHex();
 }

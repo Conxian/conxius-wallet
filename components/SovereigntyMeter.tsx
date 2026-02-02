@@ -18,8 +18,11 @@ const SovereigntyMeter: React.FC = () => {
   // Dynamic quests based on wallet state
   const MOCK_QUESTS: Quest[] = [
     { id: 'wallet_setup', label: 'Initialize Wallet', points: 10, completed: true, category: 'Security' },
+    { id: 'backup_verified', label: 'Verify Master Backup', points: 40, completed: context?.state.walletConfig?.backupVerified ?? false, category: 'Security' },
+    { id: 'biometric_active', label: 'Enable Biometric Gate', points: 20, completed: context?.state.security?.biometricUnlock ?? false, category: 'Security' },
     { id: 'node', label: 'Connect Local Node', points: 30, completed: (context?.state.sovereigntyScore ?? 0) > 80, category: 'Security' },
-    { id: 'hardware', label: 'Migrate to Hardware', points: 40, completed: !isHotWallet, category: 'Security' },
+    { id: 'silent_pay', label: 'Execute Silent Payment', points: 25, completed: false, category: 'Privacy' },
+    { id: 'taproot_audit', label: 'Taproot Asset Audit', points: 15, completed: true, category: 'Privacy' },
     { id: 'citadel', label: 'Join a Citadel', points: 20, completed: !!context?.state.activeCitadel, category: 'Community' },
     { id: 'tor', label: 'Enable Tor Routing', points: 20, completed: context?.state.isTorActive ?? false, category: 'Privacy' },
   ];
@@ -53,16 +56,31 @@ const SovereigntyMeter: React.FC = () => {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="w-full h-3 bg-zinc-950 rounded-full overflow-hidden border border-zinc-900 p-0.5">
-          <div 
-            className="h-full bg-gradient-to-r from-orange-600 to-yellow-500 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(249,115,22,0.4)]"
-            style={{ width: `${(currentXP / totalXP) * 100}%` }}
-          />
+      <div className="space-y-4">
+        <div className="space-y-2">
+           <div className="flex justify-between items-end">
+              <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Sovereignty Score</span>
+              <span className="text-[10px] font-mono font-bold text-orange-500">{Math.round((currentXP/totalXP)*100)}%</span>
+           </div>
+           <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-900 p-0.5">
+              <div
+                className="h-full bg-gradient-to-r from-orange-600 to-yellow-500 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(249,115,22,0.4)]"
+                style={{ width: `${(currentXP / totalXP) * 100}%` }}
+              />
+           </div>
         </div>
-        <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-zinc-600">
-          <span>{currentXP} XP</span>
-          <span>Next Tier Upgrade: {totalXP} XP</span>
+
+        <div className="space-y-2">
+           <div className="flex justify-between items-end">
+              <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Privacy Score</span>
+              <span className="text-[10px] font-mono font-bold text-emerald-500">65%</span>
+           </div>
+           <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-900 p-0.5">
+              <div
+                className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                style={{ width: `65%` }}
+              />
+           </div>
         </div>
       </div>
 

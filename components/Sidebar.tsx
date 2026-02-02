@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Repeat, Settings, Shield, Zap, Info, UserCheck, Coins, CreditCard, Network, Lock, Crown, TrendingUp, Trophy, BarChart3, Briefcase, Terminal, FlaskConical, Medal, Gavel, Landmark, BookOpen, Package, Rocket, Layers, Castle, Binary, Palette, ShoppingBag, Activity, Globe } from 'lucide-react';
+import { LayoutDashboard, Repeat, Settings, Shield, Zap, Info, UserCheck, Coins, CreditCard, Network, Lock, Crown, TrendingUp, Trophy, BarChart3, Briefcase, Terminal, FlaskConical, Medal, Gavel, Landmark, BookOpen, Package, Rocket, Layers, Castle, Binary, Palette, ShoppingBag, Activity, Globe, Ghost } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -16,6 +16,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'studio', icon: Palette, label: 'Sovereign Studio' },
     { id: 'payments', icon: CreditCard, label: 'Payments' },
     { id: 'utxos', icon: Binary, label: 'Coin Control' },
+    { id: 'silent-payments', icon: Ghost, label: 'Silent Payments' },
     { id: 'citadel', icon: Castle, label: 'My Citadel' },
     { id: 'defi', icon: Layers, label: 'DeFi Enclave' },
     { id: 'rewards', icon: Trophy, label: 'Rewards Hub' },
