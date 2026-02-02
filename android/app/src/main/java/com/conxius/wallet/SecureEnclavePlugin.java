@@ -307,6 +307,13 @@ public class SecureEnclavePlugin extends Plugin {
   @PluginMethod
   public void clearBiometricSession(PluginCall call) {
     biometricSessionValidUntilMs = 0;
+    // Wipe and clear session cache for zero-leak security
+    if (this.cachedSessionSalt != null) {
+      Arrays.fill(this.cachedSessionSalt, (byte) 0);
+      this.cachedSessionSalt = null;
+    }
+    this.cachedSessionKey = null;
+    this.cachedSessionExpiry = 0;
     call.resolve(new JSObject());
   }
 
