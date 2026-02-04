@@ -130,6 +130,10 @@ const Security: React.FC = () => {
                         autoFocus
                         value={pinEntry}
                         onChange={(e) => setPinEntry(e.target.value)}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
                         className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 text-center text-2xl font-mono tracking-widest focus:outline-none focus:border-orange-500"
                         maxLength={8}
                       />
