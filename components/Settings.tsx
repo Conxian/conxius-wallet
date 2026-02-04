@@ -212,6 +212,10 @@ const Settings: React.FC = () => {
                     type="password"
                     value={appContext.state.security?.duressPin ?? ''}
                     onChange={(e) => appContext.setSecurity({ duressPin: e.target.value })}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-4 text-sm focus:outline-none"
                     aria-label="Duress PIN"
                     title="Duress PIN"
@@ -245,6 +249,10 @@ const Settings: React.FC = () => {
                 type="password"
                 value={appContext.state.geminiApiKey ?? ''}
                 onChange={(e) => appContext.setGeminiApiKey(e.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500/50"
                 aria-label="Gemini AI API Key"
                 title="Gemini AI API Key"

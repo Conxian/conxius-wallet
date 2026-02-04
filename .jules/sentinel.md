@@ -13,3 +13,8 @@
 **Vulnerability:** Gemini API keys were hardcoded in `vite.config.ts` and injected into the client bundle via `define`. This exposed the key to anyone with access to the build artifacts or the browser console.
 **Learning:** Build-time environment variable injection (`define` in Vite) is a common but dangerous pattern for secrets. Even if the source code is private, the compiled JS is often public or accessible to users.
 **Prevention:** Use a "Bring Your Own Key" (BYOK) model for sensitive third-party services. Store keys in encrypted application state rather than environment variables or build configs. Synchronize the key to the service layer at runtime.
+
+## 2025-05-20 - Keyboard Caching and Sensitive Input Leakage
+**Vulnerability:** Sensitive input fields—including BIP-39 mnemonic phrases, Enclave PINs, and Gemini AI API keys—lacked attributes to disable browser and mobile keyboard features like autocorrect, suggestions, and caching.
+**Learning:** On mobile devices, third-party keyboards (Gboard, SwiftKey) often cache and sync text entered into standard `input` and `textarea` fields to the cloud for "personalization." If these fields are not explicitly hardened, a user's master seed or PIN can be leaked to the keyboard provider's servers. Even with `type="password"`, explicitly setting security attributes is necessary to ensure consistent behavior across different browsers and platforms.
+**Prevention:** Always apply `autoComplete="off"`, `autoCorrect="off"`, `autoCapitalize="off"`, and `spellCheck="false"` to any UI element that handles secrets, recovery phrases, or authentication material.

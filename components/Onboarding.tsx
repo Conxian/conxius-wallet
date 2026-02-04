@@ -163,6 +163,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
                 placeholder="abandon ability able..."
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
                 className="w-full h-40 bg-zinc-950 border border-zinc-800 rounded-2xl p-6 text-sm font-mono text-white focus:outline-none focus:border-orange-500/50 resize-none"
               />
               <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl flex gap-3">
@@ -288,6 +292,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       onChange={(e) => setPin(e.target.value)}
                       placeholder="PIN"
                       aria-label="Enclave PIN"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 px-6 text-center text-2xl font-mono text-white tracking-widest focus:outline-none focus:border-orange-500/50"
                       maxLength={8}
                    />
@@ -300,6 +308,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       onChange={(e) => setConfirmPin(e.target.value)}
                       placeholder="Confirm"
                       aria-label="Confirm Enclave PIN"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 px-6 text-center text-2xl font-mono text-white tracking-widest focus:outline-none focus:border-orange-500/50"
                       maxLength={8}
                    />
@@ -312,6 +324,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                       onChange={(e) => setPassphrase(e.target.value)}
                       placeholder="Optional passphrase"
                       aria-label="BIP-39 Passphrase"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 px-6 text-center text-sm font-mono text-white tracking-widest focus:outline-none focus:border-orange-500/50"
                    />
                 </div>
@@ -398,6 +414,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                         next[i] = e.target.value.toLowerCase().trim();
                         setVerifyWords(next);
                       }}
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 px-6 text-center text-lg font-mono text-white focus:outline-none focus:border-orange-500/50"
                     />
                   </div>
