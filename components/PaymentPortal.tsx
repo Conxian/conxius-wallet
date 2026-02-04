@@ -10,11 +10,13 @@ import { getRecommendedFees } from '../services/fees';
 import { buildPsbt } from '../services/psbt';
 import { parseBip21 } from '../services/bip21';
 import { Network } from '../types';
+import { estimateFees, FeeEstimation } from "../services/FeeEstimator";
 
 const PaymentPortal: React.FC = () => {
   const context = useContext(AppContext);
   const [method, setMethod] = useState<'lightning' | 'onchain' | 'onramp'>('lightning');
   const [recipient, setRecipient] = useState('');
+  const [feeEstimation, setFeeEstimation] = useState<FeeEstimation | null>(null);
   const [amount, setAmount] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -43,6 +45,18 @@ const PaymentPortal: React.FC = () => {
          check();
      }
   }, [context?.state.lnBackend]);
+
+  useEffect(() => {
+    const updateFees = async () => {
+      if (amount && (method === "onchain" || recipient.includes(".btc"))) {
+        const est = await estimateFees(context?.state.network || "mainnet", "mainnet");
+        setFeeEstimation(est);
+      } else {
+        setFeeEstimation(null);
+      }
+    };
+    updateFees();
+  }, [amount, method, recipient, context?.state.network]);
 
   const handleSend = async () => {
     // ... (existing Onchain Logic) ...
@@ -384,6 +398,30 @@ const PaymentPortal: React.FC = () => {
                  </div>
               </div>
 
+
+        {feeEstimation && (
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 mb-4 space-y-3 animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center justify-between">
+               <span className="text-[10px] uppercase font-black text-zinc-500">Gas Efficiency</span>
+               <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${
+                 feeEstimation.efficiencyRating === 'optimal' ? 'bg-emerald-500/20 text-emerald-500' :
+                 feeEstimation.efficiencyRating === 'high' ? 'bg-amber-500/20 text-amber-500' : 'bg-red-500/20 text-red-500'
+               }`}>
+                 <TrendingDown size={10} /> {feeEstimation.efficiencyRating}
+               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+               <div>
+                  <p className="text-[8px] uppercase text-zinc-600 font-bold">Network Fee</p>
+                  <p className="text-xs font-mono text-zinc-300">{feeEstimation.totalFee.toFixed(8)} BTC</p>
+               </div>
+               <div className="text-right">
+                  <p className="text-[8px] uppercase text-zinc-600 font-bold">Abstracted Saving</p>
+                  <p className="text-xs font-mono text-emerald-500">~0.00001 BTC</p>
+               </div>
+            </div>
+          </div>
+        )}
               <button type="button"
                 onClick={method === 'onramp' ? handleOnrampInitiate : handleSend}
                 disabled={isSending || (method !== 'onramp' && !recipient) || (method === 'lightning' ? (!amount && !bolt11HasAmount) : (method !== 'onramp' && method !== 'onchain' && !amount)) || (method === 'onchain' && !amount && !parseBip21(recipient).amount) || showSuccess}

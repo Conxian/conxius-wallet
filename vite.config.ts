@@ -48,7 +48,7 @@ export default defineConfig(({ mode }) => {
         pool: "forks", // More stable for native modules
       },
       define: {
-        "process.version": JSON.stringify("v18.0.0"),
+        "process.env": {}, "process.version": JSON.stringify("v18.0.0"),
       },
       resolve: {
         alias: {

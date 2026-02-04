@@ -126,6 +126,7 @@ Conxius aims to exceed the "Cold Storage" utility of **Ledger/Trezor/Foundation*
 - **FR-TX-02**: Must parse and validate BIP-21 URIs.
 - **FR-TX-03**: Must prevent dust outputs during coin selection.
 - **FR-TX-04**: Support atomic swaps and peg-ins/peg-outs where applicable.
+- **FR-TX-05 (Fee Optimization)**: Real-time fee estimation across all supported layers and support for RBF/CPFP.
 
 ### 4.2.1. Wormhole NTT (Native Token Transfers)
 
@@ -165,6 +166,7 @@ Conxius aims to exceed the "Cold Storage" utility of **Ledger/Trezor/Foundation*
 - **FR-PRIV-03**: Private sending capability to sp1 addresses using sender's UTXO set.
 - **FR-PRIV-04 (Taproot Assets)**: Infrastructure readiness for Taproot Assets (BIP-341/342).
 - **FR-PRIV-05 (Privacy Score)**: Implementation of a Privacy Metric that weighs usage of Silent Payments, Confidential Transactions, and UTXO hygiene.
+- **FR-PRIV-06 (AI Privacy Scout)**: Proactive UTXO management and privacy recommendations via Satoshi AI.
 
 ## 5. Non-Functional Requirements
 

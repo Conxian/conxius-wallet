@@ -65,7 +65,7 @@
 **Scope**
 
 - Persisted tx history and confirmation tracking; failure recovery.
-- Fee management: RBF (BIP-125) and safe defaults.
+- Fee management: Real-time multi-layer fee estimation, RBF (BIP-125), and safe defaults.
 **Acceptance Criteria**
 - Pending txs persist across app restarts; confirmations update deterministically.
 - RBF bumps produce valid transactions and do not break history.
@@ -128,6 +128,7 @@
 **Acceptance Criteria**
 - Privacy score reflects usage of BIP-352 and Confidential Transactions.
 - Health Check confirms user still possesses the correct recovery phrase.
+- **Satoshi AI Privacy Scout** provides proactive UTXO consolidation and privacy advice.
 
 ### M9 — The Great Unification (Phase 1: Artifacts & Experimental)
 
