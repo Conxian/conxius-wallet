@@ -23,4 +23,5 @@ export const AppContext = createContext<{
   setMode: (mode: AppMode) => void;
   setLnBackend: (cfg: LnBackendConfig) => void;
   setSecurity: (s: Partial<AppState['security']>) => void;
+  setGeminiApiKey: (key: string) => void;
 } | null>(null);

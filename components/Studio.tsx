@@ -1,9 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { AppContext } from '../context';
 import { Palette, Hammer, Zap, Image, FileText, CheckCircle2, Loader2, Sparkles, AlertCircle, Upload, Eye, EyeOff, Bot, Lock, Code, Coins, ArrowRight, Share2, Layers } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
 const Studio: React.FC = () => {
+  const appContext = useContext(AppContext);
   const [activeTab, setActiveTab] = useState<'inscribe' | 'runes' | 'zaps'>('inscribe');
   const [isProcessing, setIsProcessing] = useState(false);
   
@@ -26,7 +28,8 @@ const Studio: React.FC = () => {
   const analyzeFees = async () => {
     setIsAnalyzing(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      if (!appContext?.state.geminiApiKey) throw new Error("API Key not configured");
+      const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
       const result = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: "Analyze the current Bitcoin mempool state (simulate real-time data). Advise on the optimal fee rate for inscribing a 15KB image to ensure it confirms within 3 blocks but doesn't overpay. Suggest a specific sat/vB rate and explain why. Use a technical, 'Economic Scribe' persona.",

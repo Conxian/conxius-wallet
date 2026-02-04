@@ -46,6 +46,7 @@ import { decryptSeed } from './services/seed';
 import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
 import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
 import { notificationService } from './services/notifications';
+import { setGeminiApiKey as setGeminiServiceKey } from './services/gemini';
 
 const STORAGE_KEY = 'conxius_enclave_v3_encrypted';
 
@@ -79,7 +80,8 @@ const DEFAULT_STATE: AppState & { language: Language } = {
   },
   security: {
     autoLockMinutes: 5
-  }
+  },
+  geminiApiKey: undefined
 };
 
 const App: React.FC = () => {
@@ -153,6 +155,10 @@ const App: React.FC = () => {
       }
     }
   };
+
+  useEffect(() => {
+    setGeminiServiceKey(state.geminiApiKey || '');
+  }, [state.geminiApiKey]);
 
   useEffect(() => {
     if (state.walletConfig && currentPinRef.current) {
@@ -291,6 +297,7 @@ const App: React.FC = () => {
   }));
   const setLnBackend = (cfg: LnBackendConfig) => setState(prev => ({ ...prev, lnBackend: cfg }));
   const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } as any }));
+  const setGeminiApiKey = (key: string) => setState(prev => ({ ...prev, geminiApiKey: key }));
   const lockWallet = () => {
      currentPinRef.current = null;
      clearEnclaveBiometricSession();
@@ -461,7 +468,7 @@ const App: React.FC = () => {
       );
     }
     return (
-      <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity }}>
+      <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setGeminiApiKey }}>
         <Onboarding onComplete={(config, pin) => { if (config) setWalletConfig(config as any, pin); }} />
         <ToastContainer toasts={toasts} removeToast={removeToast} />
       </AppContext.Provider>
@@ -469,7 +476,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity }}>
+    <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setGeminiApiKey }}>
       <div className={`flex bg-[var(--bg)] text-[var(--text)] min-h-screen selection:bg-[rgba(247,147,26,0.35)] overflow-hidden`}>
         <div className="hidden md:block">
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />

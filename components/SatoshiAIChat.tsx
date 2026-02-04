@@ -1,9 +1,11 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Terminal, Send, Bot, Loader2, X, Sparkles, ChevronRight } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import { AppContext } from '../context';
 
 const SatoshiAIChat: React.FC = () => {
+  const appContext = useContext(AppContext);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([
     { role: 'ai', content: "I am Satoshi AI. Ask me about your sovereign risk, L2 alpha, or the genesis block secrets." }
@@ -26,7 +28,12 @@ const SatoshiAIChat: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      if (!appContext?.state.geminiApiKey) {
+        setMessages(prev => [...prev, { role: 'ai', content: "Gemini API Key not configured in Enclave Settings." }]);
+        setIsLoading(false);
+        return;
+      }
+      const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: userMessage,

@@ -25,7 +25,8 @@ const DeFiDashboard: React.FC = () => {
   const analyzeProtocol = async (protocol: string) => {
     setAnalyzingRisk(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      if (!appContext?.state.geminiApiKey) throw new Error("API Key not configured");
+      const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Analyze the sovereign risk for the Bitcoin DeFi protocol: "${protocol}". 

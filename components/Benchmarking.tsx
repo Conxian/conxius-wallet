@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { AppContext } from '../context';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
 import { Trophy, Target, ShieldAlert, Cpu, BarChart3, Bot, Loader2, Sparkles, Zap, Globe, TrendingUp, AlertCircle, ChevronRight, Scale } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
@@ -20,13 +21,15 @@ const COMPARISON_METRICS = [
 ];
 
 const Benchmarking: React.FC = () => {
+  const appContext = useContext(AppContext);
   const [advice, setAdvice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const getStrategicAdvice = async () => {
     setIsLoading(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      if (!appContext?.state.geminiApiKey) throw new Error("API Key not configured");
+      const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
       const result = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: "Benchmark Conxius Wallet (Sovereign, Multi-layer, Local-first) against the current wallet industry. Advise on how to stay ahead regarding upcoming Bitcoin tech like BitVM, OP_CAT, and expansion into the Nostr ecosystem.",
