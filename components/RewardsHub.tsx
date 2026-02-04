@@ -24,7 +24,8 @@ const RewardsHub: React.FC = () => {
   const runSovereignAudit = async () => {
     setIsAuditing(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      if (!appContext?.state.geminiApiKey) throw new Error("API Key not configured");
+      const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
       const result = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: "Perform an economic audit for a Conxius Wallet user. Explain how the 0.05% integrator fee supports Conxius Labs R&D. Compare this to CEX spreads (1-2%). Highlight that this fee builds a whole ecosystem of sovereign tools. Use technical institutional tone.",
@@ -141,10 +142,27 @@ const RewardsHub: React.FC = () => {
             </div>
             <h4 className="text-2xl font-black tracking-tighter mb-2 italic">Sovereign Discovery</h4>
             <p className="text-sm opacity-90 mb-8 italic">Your contributions fuel the next generation of Bitcoin L2 tooling.</p>
-            <button className="w-full bg-white text-orange-600 font-black py-4 rounded-3xl text-xs uppercase tracking-widest hover:bg-zinc-100 transition-all shadow-2xl">
-              Audit R&D Roadmap
+            <button
+              onClick={runSovereignAudit}
+              disabled={isAuditing}
+              className="w-full bg-white text-orange-600 font-black py-4 rounded-3xl text-xs uppercase tracking-widest hover:bg-zinc-100 transition-all shadow-2xl flex items-center justify-center gap-2"
+            >
+              {isAuditing ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+              {isAuditing ? 'Generating Report...' : 'Audit R&D Roadmap'}
             </button>
           </div>
+
+          {auditReport && (
+            <div className="bg-zinc-950 border border-zinc-800 rounded-[2.5rem] p-8 animate-in zoom-in duration-300">
+               <div className="flex items-center gap-2 mb-4 text-orange-500">
+                  <Info size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Economic Audit v1.0</span>
+               </div>
+               <p className="text-xs text-zinc-400 leading-relaxed font-serif whitespace-pre-wrap italic">
+                  {auditReport}
+               </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

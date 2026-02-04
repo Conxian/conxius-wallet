@@ -5,9 +5,18 @@ import { Asset } from "../types";
 // Note: Moving GoogleGenAI instantiation inside functions to follow best practices 
 // of creating a new instance right before making an API call.
 
+// SECURITY: API key is held in memory and synchronized from encrypted Enclave state.
+// No hardcoded keys are present in the source or build artifacts.
+let _apiKey: string | undefined;
+
+export const setGeminiApiKey = (key: string) => {
+  _apiKey = key;
+};
+
 export const getBountyAudit = async (bountyTitle: string, description: string) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `Perform a technical audit of the following development bounty:
@@ -32,7 +41,8 @@ export const getBountyAudit = async (bountyTitle: string, description: string) =
 
 export const generateReleaseNotes = async (version: string) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `Generate a high-density, professional 'Cypherpunk' style release report for Conxius Wallet SVN ${version}. 
@@ -56,7 +66,8 @@ export const generateReleaseNotes = async (version: string) => {
 
 export const getSystemHealthSummary = async (testResults: any[]) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const resultsStr = testResults.map(r => `${r.label}: ${r.status}`).join(', ');
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -74,7 +85,8 @@ export const getSystemHealthSummary = async (testResults: any[]) => {
 
 export const getNetworkRPCResearch = async (layer: string) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Research into RPC infrastructure for: "${layer}". Identify top 3 providers and one Tor endpoint.`,
@@ -90,7 +102,8 @@ export const getNetworkRPCResearch = async (layer: string) => {
 
 export const getFinalSystemHardeningChecklist = async () => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: "Provide a 5-point 'Hardened Mainnet' checklist for a Bitcoin multi-layer wallet. Focus on cold storage, Tor V3, ZK identity, NTT immutability, and fallback.",
@@ -107,7 +120,8 @@ export const getFinalSystemHardeningChecklist = async () => {
 
 export const getDeploymentReadinessAudit = async (state: any) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `Final Go/No-Go audit. Node Sync: ${state.nodeSyncProgress}%, Sovereignty Score: ${state.sovereigntyScore}. Evaluate readiness for mainnet.`,
@@ -124,7 +138,8 @@ export const getDeploymentReadinessAudit = async (state: any) => {
 
 export const getNodeEthosAdvice = async (path: string) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Advise on the 'Sovereign Ethos' of: "${path}". Compare with custodial wallets.`,
@@ -141,7 +156,8 @@ export const getNodeEthosAdvice = async (path: string) => {
 export const getRiskProfileAudit = async (assets: Asset[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `Risk audit for: ${assetsSummary}. Evaluate counterparty, liquidity, regulatory, and technical risks.`,
@@ -158,7 +174,8 @@ export const getRiskProfileAudit = async (assets: Asset[]) => {
 
 export const getAssetInsight = async (asset: Asset) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Technical analysis for ${asset.name} (${asset.symbol}) on ${asset.layer}.`,
@@ -175,7 +192,8 @@ export const getAssetInsight = async (asset: Asset) => {
 export const performDeepScan = async (assets: any[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `Deep Scan: ${assetsSummary}. Provide risk scores, tax opportunities, and alpha.`,
@@ -192,7 +210,8 @@ export const performDeepScan = async (assets: any[]) => {
 
 export const getDIDInsight = async (did: string) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `Audit Bitcoin DID: "${did}". Explain DPKI shift, PoW immutability, and sovereignty implications.`,
@@ -210,7 +229,8 @@ export const getDIDInsight = async (did: string) => {
 export const analyzePortfolio = async (assets: any[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!_apiKey) throw new Error("API Key not configured");
+    const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Analyze portfolio: ${assetsSummary}.`,
