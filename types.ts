@@ -160,7 +160,8 @@ export interface AppState {
     autoLockMinutes: number;
     duressPin?: string;
     biometricUnlock?: boolean;
-  }
+  };
+  geminiApiKey?: string;
 }
 
 export interface DIDProfile {

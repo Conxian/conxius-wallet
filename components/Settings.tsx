@@ -236,6 +236,22 @@ const Settings: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            <div className="space-y-4 border-t border-zinc-800 pt-6">
+              <label className="text-[10px] font-black uppercase text-zinc-600 flex items-center gap-2">
+                Gemini AI API Key
+              </label>
+              <input
+                type="password"
+                value={appContext.state.geminiApiKey ?? ''}
+                onChange={(e) => appContext.setGeminiApiKey(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500/50"
+                aria-label="Gemini AI API Key"
+                title="Gemini AI API Key"
+                placeholder="Enter Gemini API Key"
+              />
+              <p className="text-[10px] text-zinc-500 italic mt-1">Enclave-encrypted. Required for Satoshi AI, Labs Explorer, and DeFi Audits.</p>
+            </div>
           </div>
         </section>
       </div>

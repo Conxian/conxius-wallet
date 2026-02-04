@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { AppContext } from '../context';
 import { Rocket, FlaskConical, Terminal, ArrowRight, Sparkles, Shield, Cpu, Code2, Loader2, Search, ExternalLink, Hammer, Zap, Award, ShieldCheck, Microscope } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -10,6 +11,7 @@ const UPCOMING_PROJECTS = [
 ];
 
 const LabsExplorer: React.FC = () => {
+  const appContext = useContext(AppContext);
   const [activeSubTab, setActiveSubTab] = useState<'incubator' | 'forge'>('incubator');
   const [blueprint, setBlueprint] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -19,7 +21,8 @@ const LabsExplorer: React.FC = () => {
     setIsGenerating(true);
     setActiveProject(project);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      if (!appContext?.state.geminiApiKey) throw new Error("API Key not configured");
+      const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
       const result = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Provide a high-level technical blueprint for a new Conxius Labs project: "${project}". 
