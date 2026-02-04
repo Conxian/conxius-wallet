@@ -25,6 +25,7 @@ const SovereigntyMeter: React.FC = () => {
     { id: 'taproot_audit', label: 'Taproot Asset Audit', points: 15, completed: true, category: 'Privacy' },
     { id: 'citadel', label: 'Join a Citadel', points: 20, completed: !!context?.state.activeCitadel, category: 'Community' },
     { id: 'tor', label: 'Enable Tor Routing', points: 20, completed: context?.state.isTorActive ?? false, category: 'Privacy' },
+    { id: 'fee_opt', label: 'Optimize Network Fees', points: 15, completed: false, category: 'Security' },
   ];
 
   const currentXP = MOCK_QUESTS.reduce((acc, q) => q.completed ? acc + q.points : acc, 0);
