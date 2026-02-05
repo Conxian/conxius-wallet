@@ -1,4 +1,6 @@
 package com.conxius.wallet;
+import android.content.pm.PackageManager;
+import android.security.keystore.KeyInfo;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -19,7 +21,6 @@ import org.bitcoinj.crypto.DeterministicHierarchy;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.HDKeyDerivation;
 import org.bitcoinj.params.MainNetParams;
-import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.wallet.DeterministicSeed;
 import org.json.JSONArray;
@@ -53,6 +54,14 @@ import android.security.keystore.UserNotAuthenticatedException;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
+// Instant
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Coin;
+// Psbt
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.SegwitAddress;
 
 @CapacitorPlugin(name = "SecureEnclave")
 public class SecureEnclavePlugin extends Plugin {
@@ -101,6 +110,13 @@ public class SecureEnclavePlugin extends Plugin {
         );
       } else {
         builder.setUserAuthenticationValidityDurationSeconds(300);
+      }
+    }
+
+    // Layer 1: StrongBox Enforcement
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+      if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)) {
+        builder.setIsStrongBoxBacked(true);
       }
     }
     
@@ -183,10 +199,43 @@ public class SecureEnclavePlugin extends Plugin {
     }
   }
 
+
+  private String getKeySecurityLevel(String alias) {
+    try {
+      java.security.KeyStore keyStore = java.security.KeyStore.getInstance("AndroidKeyStore");
+      keyStore.load(null);
+      if (!keyStore.containsAlias(alias)) return "NOT_FOUND";
+
+      javax.crypto.SecretKey key = (javax.crypto.SecretKey) keyStore.getKey(alias, null);
+      javax.crypto.SecretKeyFactory factory = javax.crypto.SecretKeyFactory.getInstance(key.getAlgorithm(), "AndroidKeyStore");
+      android.security.keystore.KeyInfo keyInfo = (android.security.keystore.KeyInfo) factory.getKeySpec(key, android.security.keystore.KeyInfo.class);
+
+      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+        int level = keyInfo.getSecurityLevel();
+        if (level == android.security.keystore.KeyProperties.SECURITY_LEVEL_STRONGBOX) return "STRONGBOX";
+        if (level == android.security.keystore.KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT) return "TEE";
+      } else {
+        if (keyInfo.isInsideSecureHardware()) return "TEE_OR_STRONGBOX";
+      }
+      return "SOFTWARE";
+    } catch (Exception e) {
+      return "UNKNOWN";
+    }
+  }
+
+  @PluginMethod
+  public void getSecurityLevel(PluginCall call) {
+    JSObject ret = new JSObject();
+    ret.put("level", getKeySecurityLevel(KEY_ALIAS_AUTH));
+    ret.put("isStrongBox", getKeySecurityLevel(KEY_ALIAS_AUTH).equals("STRONGBOX"));
+    call.resolve(ret);
+  }
+
   @PluginMethod
   public void isAvailable(PluginCall call) {
     JSObject ret = new JSObject();
     ret.put("available", true);
+    ret.put("securityLevel", getKeySecurityLevel(KEY_ALIAS_AUTH));
     call.resolve(ret);
   }
 
@@ -532,7 +581,7 @@ public class SecureEnclavePlugin extends Plugin {
       byte[] seed = cipher.doFinal(data);
       
       try {
-        DeterministicSeed detSeed = new DeterministicSeed(seed, (List<String>) null, 0L);
+        DeterministicSeed detSeed = new DeterministicSeed(seed, (java.util.List<String>) null, 0L);
         DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(detSeed.getSeedBytes());
         
         DeterministicHierarchy hierarchy = new DeterministicHierarchy(rootKey);
@@ -606,7 +655,7 @@ public class SecureEnclavePlugin extends Plugin {
           byte[] seed = cipher.doFinal(data);
 
           try {
-              DeterministicSeed detSeed = new DeterministicSeed(seed, (List<String>) null, 0L);
+              DeterministicSeed detSeed = new DeterministicSeed(seed, (java.util.List<String>) null, 0L);
               DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(detSeed.getSeedBytes());
               
               DeterministicHierarchy hierarchy = new DeterministicHierarchy(rootKey);
@@ -680,7 +729,7 @@ public class SecureEnclavePlugin extends Plugin {
           byte[] seed = cipher.doFinal(data);
 
           try {
-              DeterministicSeed detSeed = new DeterministicSeed(seed, (List<String>) null, 0L);
+              DeterministicSeed detSeed = new DeterministicSeed(seed, (java.util.List<String>) null, 0L);
               DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(detSeed.getSeedBytes());
               DeterministicHierarchy hierarchy = new DeterministicHierarchy(rootKey);
 
@@ -756,39 +805,126 @@ public class SecureEnclavePlugin extends Plugin {
       }
   }
 
+
+  private static class TransactionInfo {
+      String action = "Unknown";
+      String amount = "Unknown";
+      String recipient = "Unknown";
+      boolean warning = false;
+      String warningMessage = "";
+  }
+
+  private TransactionInfo parsePayload(String payloadHex, String networkStr) {
+      TransactionInfo info = new TransactionInfo();
+      info.action = "Sign Hash";
+      info.amount = "Unknown";
+      info.recipient = "Unknown";
+
+      if (payloadHex == null || payloadHex.isEmpty()) return info;
+
+      try {
+          if ("stacks".equals(networkStr)) {
+              byte[] data = org.bouncycastle.util.encoders.Hex.decode(payloadHex);
+              if (data.length > 2) {
+                  // Layer 3.3.1: Stacks Post-Condition Checks
+                  int postConditionMode = data[1] & 0xFF;
+                  if (postConditionMode == 0x02) { // ALLOW
+                      info.warning = true;
+                      info.warningMessage = "REJECTED: Stacks PostConditionMode.ALLOW is not permitted for security reasons.";
+                  }
+                  info.action = "Stacks Transaction";
+              }
+          } else if ("mainnet".equals(networkStr) || "testnet".equals(networkStr)) {
+              NetworkParameters params = "testnet".equals(networkStr) ? org.bitcoinj.params.TestNet3Params.get() : org.bitcoinj.params.MainNetParams.get();
+              try {
+                  byte[] txBytes = org.bouncycastle.util.encoders.Hex.decode(payloadHex);
+                  org.bitcoinj.core.Transaction tx = new org.bitcoinj.core.Transaction(params, txBytes);
+                  info.action = "Bitcoin (Raw)";
+                  long totalOut = 0;
+                  StringBuilder recipients = new StringBuilder();
+                  for (org.bitcoinj.core.TransactionOutput out : tx.getOutputs()) {
+                      totalOut += out.getValue().getValue();
+                      try {
+                          org.bitcoinj.core.Address addr = out.getScriptPubKey().getToAddress(params);
+                          // addr already retrieved
+                          if (addr != null) recipients.append(addr.toString()).append(" ");
+                      } catch (Exception e) {}
+                  }
+                  info.amount = org.bitcoinj.core.Coin.valueOf(totalOut).toFriendlyString();
+                  info.recipient = recipients.toString().trim();
+              } catch (Exception e2) {}
+          }
+      } catch (Exception e) {
+          Log.e("SecureEnclave", "Parsing failed", e);
+      }
+      return info;
+  }
+
+
   @PluginMethod
   public void signTransaction(PluginCall call) {
     String vaultJson = call.getString("vault");
-    String pin = call.getString("pin"); // Optional if session active
+    String pin = call.getString("pin");
     String path = call.getString("path");
     String messageHashHex = call.getString("messageHash");
     String networkStr = call.getString("network", "mainnet");
+    String payload = call.getString("payload");
 
     if (vaultJson == null || path == null || messageHashHex == null) {
       call.reject("Missing required parameters");
       return;
     }
 
+    if (messageHashHex.contains("PUBKEY_DERIVATION")) {
+        new Thread(() -> {
+            executeSigning(call, vaultJson, pin, path, messageHashHex, networkStr);
+        }).start();
+        return;
+    }
+
+    TransactionInfo info = parsePayload(payload, networkStr);
+    if (info.warning) {
+        call.reject(info.warningMessage);
+        return;
+    }
+
+    getActivity().runOnUiThread(() -> {
+        try {
+            new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Confirm Signing")
+                .setMessage("Action: " + info.action + "\nAmount: " + info.amount + "\nRecipient: " + info.recipient)
+                .setPositiveButton("Confirm", (dialog, which) -> {
+                    new Thread(() -> {
+                        executeSigning(call, vaultJson, pin, path, messageHashHex, networkStr);
+                    }).start();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    call.reject("User cancelled signing");
+                })
+                .setCancelable(false)
+                .show();
+        } catch (Exception e) {
+            call.reject("Failed to show confirmation dialog: " + e.getMessage());
+        }
+    });
+  }
+
+  private void executeSigning(PluginCall call, String vaultJson, String pin, String path, String messageHashHex, String networkStr) {
     try {
       SecretKey keyToUse = null;
       JSONObject envelope = new JSONObject(vaultJson);
       JSONArray ivJson = envelope.getJSONArray("iv");
       JSONArray dataJson = envelope.getJSONArray("data");
-      
-      // We always need salt to verify/derive
       JSONArray saltJson = envelope.getJSONArray("salt");
       byte[] salt = new byte[saltJson.length()];
       for(int i=0; i<saltJson.length(); i++) salt[i] = (byte)saltJson.getInt(i);
 
       if (pin != null) {
-          // Slow Path: Explicit PIN
           keyToUse = deriveKeyForVault(pin, salt);
       } else {
-          // Fast Path: Session Cache
           if (cachedSessionKey != null && System.currentTimeMillis() < cachedSessionExpiry) {
               if (Arrays.equals(this.cachedSessionSalt, salt)) {
                   keyToUse = cachedSessionKey;
-                  // Extend session? maybe not, keep strict 5 min
               } else {
                  call.reject("Session valid but wallet mismatch (salt). Unlock required.");
                  return;
@@ -799,74 +935,58 @@ public class SecureEnclavePlugin extends Plugin {
           }
       }
 
-      // Decrypt using keyToUse
       byte[] iv = new byte[ivJson.length()];
       for(int i=0; i<ivJson.length(); i++) iv[i] = (byte)ivJson.getInt(i);
       byte[] data = new byte[dataJson.length()];
       for(int i=0; i<dataJson.length(); i++) data[i] = (byte)dataJson.getInt(i);
 
       Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-      cipher.init(Cipher.DECRYPT_MODE, keyToUse, new GCMParameterSpec(GCM_TAG_BITS, iv));
+      cipher.init(Cipher.DECRYPT_MODE, keyToUse, new javax.crypto.spec.GCMParameterSpec(128, iv));
       byte[] seed = cipher.doFinal(data);
       
       try {
-
-        // 2. Derive Key
-        NetworkParameters params = networkStr.equals("testnet") ? TestNet3Params.get() : MainNetParams.get();
-        DeterministicSeed detSeed = new DeterministicSeed(seed, (String) null, 0L);
-        DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(detSeed.getSeedBytes());
+        org.bitcoinj.core.NetworkParameters params = networkStr.equals("testnet") ? org.bitcoinj.params.TestNet3Params.get() : org.bitcoinj.params.MainNetParams.get();
+        org.bitcoinj.wallet.DeterministicSeed detSeed = new org.bitcoinj.wallet.DeterministicSeed(seed, (java.util.List<String>) null, 0L);
+        org.bitcoinj.crypto.DeterministicKey rootKey = org.bitcoinj.crypto.HDKeyDerivation.createMasterPrivateKey(detSeed.getSeedBytes());
         
-        // Parse path (e.g. m/84'/0'/0'/0/0)
-        // bitcoinj doesn't have a simple path string parser publically? We can roll one or match hierarchy
-        // The path from signer.ts is usually "m/84'/0'/0'/0/0"
-        
-        DeterministicHierarchy hierarchy = new DeterministicHierarchy(rootKey);
-        // We need to traverse the path manually or split string
+        org.bitcoinj.crypto.DeterministicHierarchy hierarchy = new org.bitcoinj.crypto.DeterministicHierarchy(rootKey);
         String[] parts = path.split("/");
-        DeterministicKey child = rootKey;
+        org.bitcoinj.crypto.DeterministicKey child = rootKey;
         
         for (String part : parts) {
-            if (part.equals("m")) continue; // Root
+            if (part.equals("m")) continue;
             boolean hardened = part.endsWith("'") || part.endsWith("h");
             String numStr = part.replace("'", "").replace("h", "");
             int index = Integer.parseInt(numStr);
-            child = HDKeyDerivation.deriveChildKey(child, new org.bitcoinj.crypto.ChildNumber(index, hardened));
+            child = org.bitcoinj.crypto.HDKeyDerivation.deriveChildKey(child, new org.bitcoinj.crypto.ChildNumber(index, hardened));
         }
 
         if (networkStr.equals("rsk") || networkStr.equals("ethereum") || networkStr.equals("evm") || networkStr.equals("stacks")) {
-            // RSK / EVM / Stacks Signing (Secp256k1 + Keccak256 usually handled by caller or we sign hash directly)
-            // Web3j Helper
-            ECKeyPair keyPair = ECKeyPair.create(child.getPrivKeyBytes());
-            // Sign.signMessage takes a byte array. We have a hex hash.
-            // When signing a transaction hash in ETH/RSK, we usually sign the raw bytes of the hash.
+             org.web3j.crypto.ECKeyPair keyPair = org.web3j.crypto.ECKeyPair.create(child.getPrivKeyBytes());
              byte[] msgHash = org.bouncycastle.util.encoders.Hex.decode(messageHashHex);
-             Sign.SignatureData signature = Sign.signMessage(msgHash, keyPair, false);
+             org.web3j.crypto.Sign.SignatureData signature = org.web3j.crypto.Sign.signMessage(msgHash, keyPair, false);
              
-             // Construct R,S,V into 65 byte array or hex string
              byte[] retval = new byte[65];
              System.arraycopy(signature.getR(), 0, retval, 0, 32);
              System.arraycopy(signature.getS(), 0, retval, 32, 32);
              
-             // Normalize V (Web3j returns 27/28, we might want 0/1 for compact/stacks depending on lib, but standard eth is 27/28 for legacy or EIP155)
-             // Stacks usually expects 0/1. Let's normalize to 0/1 if 'stacks'
              byte v = signature.getV()[0];
              if (networkStr.equals("stacks") && v >= 27) {
                  v -= 27;
              }
              retval[64] = v;
              
-             String sigHex = Numeric.toHexString(retval);
+             String sigHex = org.web3j.utils.Numeric.toHexString(retval);
              
              JSObject ret = new JSObject();
              ret.put("signature", sigHex);
-             ret.put("pubkey", Numeric.toHexString(keyPair.getPublicKey().toByteArray())); // Usually address is derived from clean pubkey
-             ret.put("recId", signature.getV()[0] - 27); // Normalized recovery ID
+             ret.put("pubkey", org.web3j.utils.Numeric.toHexString(keyPair.getPublicKey().toByteArray()));
+             ret.put("recId", signature.getV()[0] - 27);
              
              call.resolve(ret);
         } else {
-            // Bitcoin / Stacks (DER)
-            Sha256Hash hash = Sha256Hash.wrap(messageHashHex);
-            ECKey.ECDSASignature sig = child.sign(hash);
+            org.bitcoinj.core.Sha256Hash hash = org.bitcoinj.core.Sha256Hash.wrap(messageHashHex);
+            org.bitcoinj.core.ECKey.ECDSASignature sig = child.sign(hash);
             
             String sigHex = org.bouncycastle.util.encoders.Hex.toHexString(sig.encodeToDER());
             
@@ -876,14 +996,12 @@ public class SecureEnclavePlugin extends Plugin {
             
             call.resolve(ret);
         }
-
       } finally {
-        // 4. Wipe Seed
-        Arrays.fill(seed, (byte)0);
+        java.util.Arrays.fill(seed, (byte)0);
       }
-
     } catch (Exception e) {
       call.reject("Signing failed: " + e.getMessage());
     }
   }
+
 }
