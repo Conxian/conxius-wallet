@@ -121,6 +121,10 @@ const SilentPayments: React.FC = () => {
                             type="text"
                             value={sendTo}
                             onChange={(e) => setSendTo(e.target.value)}
+                            autoComplete="off"
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                            spellCheck="false"
                             placeholder="sp1q..."
                             className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 px-4 font-mono text-xs text-zinc-200 focus:outline-none focus:border-purple-500/50"
                         />

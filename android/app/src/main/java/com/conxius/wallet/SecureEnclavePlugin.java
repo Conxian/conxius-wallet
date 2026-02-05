@@ -425,9 +425,19 @@ public class SecureEnclavePlugin extends Plugin {
   // Helper to derive key only (refactored for cache usage)
   private SecretKey deriveKeyForVault(String pin, byte[] salt) throws Exception {
      SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-     PBEKeySpec spec = new PBEKeySpec(pin.toCharArray(), salt, 200000, 256);
+     char[] pinChars = pin.toCharArray();
+     PBEKeySpec spec = new PBEKeySpec(pinChars, salt, 200000, 256);
      SecretKey tmp = factory.generateSecret(spec);
-     return new SecretKeySpec(tmp.getEncoded(), "AES");
+
+     // Zero-out sensitive material immediately after use
+     Arrays.fill(pinChars, ' ');
+     spec.clearPassword();
+
+     byte[] encoded = tmp.getEncoded();
+     SecretKeySpec secret = new SecretKeySpec(encoded, "AES");
+     Arrays.fill(encoded, (byte) 0);
+
+     return secret;
   }
 
   @PluginMethod

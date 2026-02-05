@@ -78,6 +78,10 @@ const UTXOManager: React.FC = () => {
                type="text" 
                value={filter}
                onChange={(e) => setFilter(e.target.value)}
+               autoComplete="off"
+               autoCorrect="off"
+               autoCapitalize="off"
+               spellCheck="false"
                placeholder="Search by TXID or Address..."
                className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 pl-12 pr-4 font-mono text-sm text-zinc-200 focus:outline-none"
             />
