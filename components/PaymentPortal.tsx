@@ -329,7 +329,7 @@ const PaymentPortal: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 flex justify-between">Recipient <button type="button" onClick={() => setShowScanner(true)} className="text-orange-500 hover:text-orange-400 flex items-center gap-1 font-black" aria-label="Scan QR" title="Scan QR"><QrCode size={12} /> Scan QR</button></label>
                     <div className="relative">
-                      <input type="text" value={recipient} onChange={(e) => { setRecipient(e.target.value); handleRecipientChange(e.target.value); }} placeholder={method === 'lightning' ? 'Invoice or lnurl...' : 'bc1q... or handle.btc'} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-5 pl-5 pr-12 font-mono text-sm text-zinc-200 focus:outline-none focus:border-orange-500/50 transition-all" />
+                      <input type="text" value={recipient} onChange={(e) => { setRecipient(e.target.value); handleRecipientChange(e.target.value); }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" placeholder={method === 'lightning' ? 'Invoice or lnurl...' : 'bc1q... or handle.btc'} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-5 pl-5 pr-12 font-mono text-sm text-zinc-200 focus:outline-none focus:border-orange-500/50 transition-all" />
                       <Search className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-700" size={18} />
                     </div>
                   </div>
