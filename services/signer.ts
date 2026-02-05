@@ -317,10 +317,8 @@ export const requestEnclaveSignature = async (
         pin,
         path,
         messageHash: hashToSign,
-        network: "stacks", // We need to handle this in Java if Stacks specific, but for now Standard DER or if we want Compact, we might need 'rsk' style logic? Stacks is technically recoverable.
+        network: "stacks",
       });
-      // TODO: If Stacks needs compact, we might need to use 'rsk' style in Java but with 'stacks' flag.
-      // For now, returning DER as per current stub logic, or if we want to be safe we can use the RSK path if Stacks uses ETH-style curves (it does, secp256k1) and format.
 
       return {
         signature: res.signature,

@@ -46,10 +46,11 @@
 - **Privacy Core**: Full Taproot (BIP-341) signing and Silent Payments (BIP-352) key management.
 - **Sovereign Layers (L2)**: Stacks BNS (.btc) resolution, Nakamoto/sBTC readiness, and Liquid Confidentiality audits.
 - **AI Integration**: Gemini-powered Protocol Auditor and Yield Optimizer for sovereign risk analysis.
+- **Satoshi AI Privacy Scout**: Proactive UTXO management and privacy recommendations.
 
 ## Sovereign Expansion Milestones
 
-### M1 — Notifications + Event Model (Local-First)
+### M1 — Notifications + Event Model (Local-First) [COMPLETED]
 
 **Scope**
 
@@ -79,7 +80,7 @@
 - PSBT creation validates UTXO script type and refuses unsupported scripts with clear UX.
 - Coin selection prevents dust outputs and minimizes linkability (documented heuristics).
 
-### M4 — Wormhole/NTT Execution (Interlayer)
+### M4 — Wormhole/NTT Execution (Interlayer) [COMPLETED]
 
 **Scope**
 
@@ -118,7 +119,7 @@
 - Enclave refuses to sign if policy is violated (enforced natively).
 - Quorum collection UI for multi-sig coordination.
 
-### M8 — Privacy Scoring & Backup Health
+### M8 — Privacy Scoring & Backup Health [IN PROGRESS]
 
 **Scope**
 
