@@ -101,6 +101,10 @@ const SatoshiAIChat: React.FC = () => {
           autoFocus
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
           placeholder="Ask Satoshi anything..."
           className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-500/50 text-zinc-200"
         />

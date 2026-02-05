@@ -220,6 +220,9 @@ const App: React.FC = () => {
       if (state.security?.duressPin && pin === state.security.duressPin) {
         // Duress Mode: Immediately wipe the persistent enclave data and revert to decoy state.
         await removeEnclaveBlob(STORAGE_KEY);
+        localStorage.clear();
+        sessionStorage.clear();
+        clearEnclaveBiometricSession();
         setState({ ...DEFAULT_STATE, assets: [], walletConfig: undefined });
         currentPinRef.current = null;
         setEnclaveExists(false);

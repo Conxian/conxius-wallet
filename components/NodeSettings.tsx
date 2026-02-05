@@ -253,11 +253,11 @@ const NodeSettings: React.FC = () => {
                         <>
                            <div>
                              <label className="text-[10px] font-black uppercase text-zinc-600">Endpoint</label>
-                             <input value={lnBackend.endpoint} onChange={(e) => setLnBackend(prev => ({ ...prev, endpoint: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" placeholder="https://host:port" />
+                             <input value={lnBackend.endpoint} onChange={(e) => setLnBackend(prev => ({ ...prev, endpoint: e.target.value }))} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" placeholder="https://host:port" />
                            </div>
                            <div>
                              <label className="text-[10px] font-black uppercase text-zinc-600">API Key</label>
-                             <input value={lnBackend.apiKey} onChange={(e) => setLnBackend(prev => ({ ...prev, apiKey: e.target.value }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" placeholder="Macaroon hex or token" />
+                             <input value={lnBackend.apiKey} onChange={(e) => setLnBackend(prev => ({ ...prev, apiKey: e.target.value }))} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" placeholder="Macaroon hex or token" />
                            </div>
                         </>
                      )}
@@ -380,6 +380,10 @@ const NodeSettings: React.FC = () => {
                      <input 
                         value={newNode.endpoint}
                         onChange={e => setNewNode({ ...newNode, endpoint: e.target.value })}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
                         placeholder="http://127.0.0.1:8332 or .onion"
                         className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 px-5 font-mono text-sm text-zinc-200 focus:outline-none focus:border-orange-500/50"
                      />
