@@ -9,9 +9,10 @@
 - **Privacy Core**: Complete (Full Taproot BIP-341 signing, Silent Payments BIP-352).
 - **Interlayer Interop**: Complete (NTT tracking, Protocol Auditor).
 - **DeFi Enclave**: Complete (AI Risk Auditor, Yield Optimizer).
+- **Satoshi AI Privacy Scout**: Complete (Proactive UTXO management and privacy recommendations).
 - **Wallet Mobility**: Complete (Encrypted JSON Export).
-- **Privacy Scoring**: Initial implementation in Sovereign Meter.
-- **Backup Health**: Core logic defined in PRD for M8.
+- **Privacy Scoring**: Complete (Implementation in Sovereign Meter).
+- **Backup Health**: Implementation in progress (Target: M8).
 - **Expansion Architecture**: Matrix defined in PRD Section 8.
 - **Artifact Protection**: M9 (Ordinals/Runes) logic drafted in Roadmap.
 - **Verifier Core**: M10 (BitVM/ZK) requirements established.
