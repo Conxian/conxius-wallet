@@ -56,6 +56,9 @@ When updating the repo, ensure the following files are synchronized:
 -   `Business_State.md`: Tracks business architecture status.
 -   `CHANGELOG.md`: Documents all notable changes.
 -   `ROADMAP.md`: Aligns technical milestones with business goals.
+-   `RISK_REGISTRY.md`: Core legal defense and risk assessment.
+-   `MONETIZATION.md`: Revenue strategy (SaaS & Affiliates).
+-   `PARTNERS_AND_COMPLIANCE.md`: Approved third-party vendor stack.
 
 ## 🤝 Pre-Commit Hook
 
