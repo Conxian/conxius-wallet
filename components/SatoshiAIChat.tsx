@@ -1,8 +1,8 @@
-
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Terminal, Send, Bot, Loader2, X, Sparkles, ChevronRight } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { AppContext } from '../context';
+import { calculatePrivacyScore } from '../services/privacy';
 
 const SatoshiAIChat: React.FC = () => {
   const appContext = useContext(AppContext);
@@ -33,17 +33,29 @@ const SatoshiAIChat: React.FC = () => {
         setIsLoading(false);
         return;
       }
+
+      const privacyResults = calculatePrivacyScore(appContext.state.utxos || []);
+      const systemContext = `You are Satoshi AI, a master of Bitcoin technology and sovereign finance.
+You are concise, technical, and prioritize user privacy.
+You help users understand Bitcoin layers and risk.
+Current Wallet Context:
+- Privacy Score: ${privacyResults.score}/100
+- Privacy Recommendations: ${privacyResults.recommendations.join(', ')}
+- Tor Routing: ${appContext.state.isTorEnabled ? 'ENABLED' : 'DISABLED'}
+Use a terminal-style tone.`;
+
       const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-1.5-flash',
         contents: userMessage,
         config: {
-          systemInstruction: "You are Satoshi AI, a master of Bitcoin technology and sovereign finance. You are concise, technical, and prioritize user privacy. You help users understand Bitcoin layers and risk. Use a terminal-style tone.",
+          systemInstruction: systemContext,
         }
       });
 
       setMessages(prev => [...prev, { role: 'ai', content: response.text || "Connection to the network lost." }]);
     } catch (error) {
+      console.error("AI Error:", error);
       setMessages(prev => [...prev, { role: 'ai', content: "An error occurred in the mempool. Try again later." }]);
     } finally {
       setIsLoading(false);

@@ -8,22 +8,15 @@ The format is based on Keep a Changelog, and this project aims to follow Semanti
 
 ### Added
 
-- **Privacy Core**: Full Taproot (BIP-341) signing and Silent Payments (BIP-352) integration.
-- **Sovereign Layers**: Support for Stacks BNS (.btc) resolution, Nakamoto/sBTC readiness, and Liquid Confidentiality audits.
-- **Interlayer Interop**: Wormhole/NTT tracking and real-time protocol diagnostics.
-- **DeFi Enclave**: AI-powered Risk Auditor and Yield Optimizer for sovereign risk analysis.
-- **Satoshi AI Privacy Scout**: Proactive UTXO management and privacy recommendations.
-- **Wallet Mobility**: Encrypted JSON vault export for sovereign backups.
-- Implementation-grade roadmap with standards adherence and acceptance criteria.
-- Whitepaper and PRD documents (see README for links).
+- **Privacy Scoring Engine**: Dynamic privacy risk assessment based on script types (Taproot), network status (Tor), and UTXO analysis.
+- **Physical Backup Audit**: PIN-gated manual verification flow for mnemonic backups against the Secure Enclave.
+- **Satoshi AI Privacy Scout**: Context-aware AI assistant that provides proactive privacy and UTXO management advice.
+- **Privacy Enclave UI**: Real-time visualization of sovereignty metrics and security recommendations.
 
-### Changed
+### Fixed
 
-- Documentation alignment: repository docs now reflect actual wallet lifecycle and security boundary.
-
-### Security
-
-- Documented security requirements and quality gates for future changes.
+- Improved Satoshi AI system prompt for better integration with on-device wallet state.
+- Resolved mock logic in Sovereignty Meter quests.
 
 ## [0.3.0] - 2026-01-22
 

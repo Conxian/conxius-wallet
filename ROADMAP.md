@@ -119,7 +119,7 @@
 - Enclave refuses to sign if policy is violated (enforced natively).
 - Quorum collection UI for multi-sig coordination.
 
-### M8 — Privacy Scoring & Backup Health [IN PROGRESS]
+### M8 — Privacy Scoring & Backup Health [COMPLETED]
 
 **Scope**
 

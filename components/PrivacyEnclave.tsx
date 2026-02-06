@@ -1,41 +1,45 @@
-
-import React, { useState, useContext } from 'react';
-import { Lock, EyeOff, ShieldAlert, Cpu, Share2, ToggleLeft as Toggle, Ghost, Zap, Bot, Loader2, Coins, Network, Database } from 'lucide-react';
+import React, { useState, useContext, useMemo } from 'react';
+import { Shield, ShieldAlert, Ghost, Cpu, Network, Bot, Share2, ArrowRight, Zap, Info } from 'lucide-react';
 import { AppContext } from '../context';
+import { calculatePrivacyScore } from '../services/privacy';
 
 const PrivacyEnclave: React.FC = () => {
-  const context = useContext(AppContext);
-  const [torEnabled, setTorEnabled] = useState(true);
+  const appContext = useContext(AppContext);
+  const [isDataUnionActive, setIsDataUnionActive] = useState(appContext?.state.dataSharing.enabled ?? false);
+  const [askPrice, setAskPrice] = useState(appContext?.state.dataSharing.minAskPrice ?? 100);
   const [localOnly, setLocalOnly] = useState(true);
   const [nostrMetadata, setNostrMetadata] = useState(true);
-  
-  // Data Monetization State
-  const [isDataUnionActive, setIsDataUnionActive] = useState(context?.state.dataSharing.enabled || false);
-  const [askPrice, setAskPrice] = useState(context?.state.dataSharing.minAskPrice || 50);
+  const [torEnabled, setTorEnabled] = useState(appContext?.state.isTorActive ?? false);
+
+  const privacyResult = useMemo(() => {
+    if (!appContext?.state) return { score: 0, recommendations: [] };
+    return calculatePrivacyScore(appContext.state);
+  }, [appContext?.state]);
 
   const toggleDataUnion = () => {
-     setIsDataUnionActive(!isDataUnionActive);
-     // In a real app, this would update the context/global state
+    const newState = !isDataUnionActive;
+    setIsDataUnionActive(newState);
+    // Persist if needed
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
-      <header>
-        <div className="flex items-center gap-4 mb-2">
-          <div className="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center">
-            <Lock className="text-orange-500" size={24} />
-          </div>
-          <h2 className="text-3xl font-bold tracking-tight">Privacy Enclave</h2>
+    <div className="p-8 space-y-10 max-w-5xl mx-auto pb-32">
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+           <div className="w-12 h-12 bg-purple-600/10 rounded-2xl flex items-center justify-center text-purple-500 border border-purple-500/20 shadow-lg shadow-purple-500/10">
+              <Shield size={28} />
+           </div>
+           <div>
+              <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">Privacy Enclave</h2>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Zero-Knowledge Sovereignty Management</p>
+           </div>
         </div>
-        <p className="text-zinc-500 text-sm">Fine-tune your digital footprint. SatoshiLayer is built on the principle of Zero Knowledge.</p>
-      </header>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        {/* Sovereign Data Union Module */}
-        <div className="md:col-span-2 bg-gradient-to-r from-zinc-900 to-purple-900/10 border border-purple-500/30 rounded-[2.5rem] p-8 relative overflow-hidden group shadow-2xl">
-           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-              <Database size={100} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 border border-zinc-800 rounded-[2.5rem] p-8 relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-8 opacity-10">
+              <Network size={120} className="text-purple-500" />
            </div>
            
            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -57,7 +61,6 @@ const PrivacyEnclave: React.FC = () => {
                     <button 
                       onClick={toggleDataUnion}
                       aria-label="Toggle sovereign data union"
-                      title="Toggle sovereign data union"
                       className={`relative w-14 h-7 rounded-full transition-colors ${isDataUnionActive ? 'bg-purple-600' : 'bg-zinc-800'}`}
                     >
                        <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow-md ${isDataUnionActive ? 'left-8' : 'left-1'}`} />
@@ -88,8 +91,6 @@ const PrivacyEnclave: React.FC = () => {
                           value={askPrice} 
                           onChange={(e) => setAskPrice(parseInt(e.target.value))}
                           disabled={!isDataUnionActive}
-                          aria-label="Minimum ask price"
-                          title="Minimum ask price"
                           className="flex-1 accent-purple-500"
                        />
                        <span className="text-lg font-mono font-bold text-white">{askPrice} <span className="text-xs text-zinc-500">SATS</span></span>
@@ -118,8 +119,6 @@ const PrivacyEnclave: React.FC = () => {
                 </div>
                 <button 
                   onClick={() => setLocalOnly(!localOnly)}
-                  aria-label="Toggle local-only key generation"
-                  title="Toggle local-only key generation"
                   className={`relative w-12 h-6 rounded-full transition-colors ${localOnly ? 'bg-orange-600' : 'bg-zinc-800'}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${localOnly ? 'left-7' : 'left-1'}`} />
@@ -133,8 +132,6 @@ const PrivacyEnclave: React.FC = () => {
                 </div>
                 <button 
                   onClick={() => setNostrMetadata(!nostrMetadata)}
-                  aria-label="Toggle Nostr metadata storage"
-                  title="Toggle Nostr metadata storage"
                   className={`relative w-12 h-6 rounded-full transition-colors ${nostrMetadata ? 'bg-orange-600' : 'bg-zinc-800'}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${nostrMetadata ? 'left-7' : 'left-1'}`} />
@@ -153,12 +150,14 @@ const PrivacyEnclave: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <p className="font-bold text-zinc-200">Always Route through Tor</p>
-                  <p className="text-xs text-zinc-500 max-w-[240px]">Obfuscate your IP address for all RPC and API calls. Increases latency but maximizes privacy.</p>
+                  <p className="text-xs text-zinc-500 max-w-[240px]">Obfuscate your IP address for all RPC and API calls.</p>
                 </div>
                 <button 
-                  onClick={() => setTorEnabled(!torEnabled)}
-                  aria-label="Toggle Tor routing"
-                  title="Toggle Tor routing"
+                  onClick={() => {
+                    const next = !torEnabled;
+                    setTorEnabled(next);
+                    appContext?.toggleGateway(next);
+                  }}
                   className={`relative w-12 h-6 rounded-full transition-colors ${torEnabled ? 'bg-orange-600' : 'bg-zinc-800'}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${torEnabled ? 'left-7' : 'left-1'}`} />
@@ -184,14 +183,28 @@ const PrivacyEnclave: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-zinc-300">Privacy Score</span>
-                <span className="text-lg font-bold text-green-500">98/100</span>
+                <span className={`text-lg font-bold ${privacyResult.score > 80 ? 'text-green-500' : 'text-orange-500'}`}>{privacyResult.score}/100</span>
               </div>
               <div className="w-full h-2 bg-zinc-900 rounded-full overflow-hidden">
-                <div className="w-[98%] h-full bg-gradient-to-r from-orange-600 to-green-500 rounded-full" />
+                <div
+                  className="h-full bg-gradient-to-r from-orange-600 to-green-500 rounded-full transition-all duration-1000"
+                  style={{ width: `${privacyResult.score}%` }}
+                />
               </div>
-              <p className="text-xs text-zinc-500 leading-relaxed">
-                "Excellent work. By utilizing local-only key generation and Nostr for metadata, you have effectively removed SatoshiLayer as a potential point of failure or surveillance. Your digital sovereignity is currently high."
-              </p>
+              <div className="space-y-2">
+                {privacyResult.recommendations.length > 0 ? (
+                  privacyResult.recommendations.map((rec, i) => (
+                    <p key={i} className="text-[10px] text-zinc-400 leading-relaxed flex items-start gap-2">
+                      <Info size={10} className="mt-0.5 text-orange-500 shrink-0" />
+                      {rec}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-xs text-zinc-500 leading-relaxed italic">
+                    "Excellent work. Your digital sovereignty is currently high. Continue utilizing local-only key generation and Tor routing."
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -203,7 +216,7 @@ const PrivacyEnclave: React.FC = () => {
             <p className="text-xs text-zinc-500 leading-relaxed">
               We are working on integrating <strong>ZK-Rollup</strong> metadata. Soon, you'll be able to prove you own a specific amount of BTC or a D.i.D credential without revealing your actual addresses.
             </p>
-            <button className="w-full py-2 bg-zinc-800 rounded-xl text-[10px] font-bold text-zinc-400 uppercase tracking-widest hover:bg-zinc-700 transition-colors" aria-label="Request early access" title="Request early access">
+            <button className="w-full py-2 bg-zinc-800 rounded-xl text-[10px] font-bold text-zinc-400 uppercase tracking-widest hover:bg-zinc-700 transition-colors">
               Request Early Access
             </button>
           </div>

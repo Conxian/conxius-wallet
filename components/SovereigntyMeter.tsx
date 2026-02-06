@@ -1,7 +1,8 @@
-
-import React, { useContext } from 'react';
+import React, { useContext, useState, useMemo } from 'react';
 import { Shield, CheckCircle2, Circle, Trophy, ArrowRight, Zap, Crown, Star, Medal, AlertTriangle, Castle } from 'lucide-react';
 import { AppContext } from '../context';
+import { calculatePrivacyScore } from '../services/privacy';
+import BackupAuditModal from './BackupAuditModal';
 
 interface Quest {
   id: string;
@@ -13,7 +14,14 @@ interface Quest {
 
 const SovereigntyMeter: React.FC = () => {
   const context = useContext(AppContext);
+  const [showBackupAudit, setShowBackupAudit] = useState(false);
+
   const isHotWallet = context?.state.walletConfig?.type === 'hot';
+
+  const privacyResult = useMemo(() => {
+    if (!context?.state) return { score: 0, breakdown: { network: 0, scriptTypes: 0, utxoHealth: 0 }, recommendations: [] };
+    return calculatePrivacyScore(context.state);
+  }, [context?.state]);
 
   // Dynamic quests based on wallet state
   const MOCK_QUESTS: Quest[] = [
@@ -74,12 +82,12 @@ const SovereigntyMeter: React.FC = () => {
         <div className="space-y-2">
            <div className="flex justify-between items-end">
               <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Privacy Score</span>
-              <span className="text-[10px] font-mono font-bold text-emerald-500">65%</span>
+              <span className="text-[10px] font-mono font-bold text-emerald-500">{privacyResult.score}%</span>
            </div>
            <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-900 p-0.5">
               <div
                 className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
-                style={{ width: `65%` }}
+                style={{ width: `${privacyResult.score}%` }}
               />
            </div>
         </div>
@@ -101,7 +109,13 @@ const SovereigntyMeter: React.FC = () => {
       <div className="space-y-3">
         <p className="text-[10px] font-black uppercase text-zinc-600 tracking-widest border-b border-zinc-900 pb-2">Active Quests</p>
         {MOCK_QUESTS.filter(q => !q.completed).slice(0, 3).map((quest) => (
-          <div key={quest.id} className="flex items-center justify-between group cursor-pointer p-3 hover:bg-zinc-800/50 rounded-xl transition-all border border-transparent hover:border-zinc-800">
+          <div
+            key={quest.id}
+            onClick={() => {
+               if (quest.id === 'backup_verified') setShowBackupAudit(true);
+            }}
+            className="flex items-center justify-between group cursor-pointer p-3 hover:bg-zinc-800/50 rounded-xl transition-all border border-transparent hover:border-zinc-800"
+          >
             <div className="flex items-center gap-3">
               <Star size={14} className="text-zinc-700 group-hover:text-orange-500 transition-colors" />
               <div>
@@ -120,6 +134,8 @@ const SovereigntyMeter: React.FC = () => {
       <button className="w-full py-3 bg-zinc-800 hover:bg-orange-600 text-zinc-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95">
         Upgrade My Pass <ArrowRight size={14} />
       </button>
+
+      {showBackupAudit && <BackupAuditModal onClose={() => setShowBackupAudit(false)} />}
     </div>
   );
 };
