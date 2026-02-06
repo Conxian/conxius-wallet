@@ -1,4 +1,3 @@
-
 import React, { useState, useContext } from 'react';
 import { Settings as SettingsIcon, Globe, Moon, Sun, DollarSign, Bell, Shield, Info, Database, Eye, Crown, Zap, CheckCircle2, RotateCcw, Languages, MapPin, Lock, Briefcase } from 'lucide-react';
 import { AppContext } from '../context';
@@ -8,89 +7,56 @@ import { Network } from '../types';
 const Settings: React.FC = () => {
   const appContext = useContext(AppContext);
   const [currency, setCurrency] = useState('USD');
-  const [unit, setUnit] = useState('BTC');
+  const [activeTab, setActiveTab] = useState('general');
 
   if (!appContext) return null;
-  const { language, mode, network } = appContext.state;
+  const { mode, network, theme, language } = appContext.state;
+
+  const languages: Language[] = ['English', 'Spanish', 'French', 'German', 'Portuguese', 'Afrikaans', 'Zulu'];
+  const currencies = ['USD', 'EUR', 'GBP', 'ZAR', 'BTC', 'SATS'];
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
-      <header className="flex justify-between items-end">
-        <div>
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center">
-              <SettingsIcon className="text-zinc-400" size={24} />
-            </div>
-            <h2 className="text-3xl font-black tracking-tighter uppercase italic">Enclave Config</h2>
-          </div>
-          <p className="text-zinc-500 text-sm italic">Localize your sovereign experience and refine node parameters.</p>
-        </div>
+    <div className="p-8 max-w-5xl mx-auto space-y-12 animate-in fade-in duration-700 pb-32">
+      <header className="space-y-2">
+        <h2 className="text-4xl font-black italic uppercase tracking-tighter text-white">System Configuration</h2>
+        <p className="text-zinc-500 text-sm font-medium">Manage your sovereign environment and enclave persistence.</p>
       </header>
 
-      <div className="grid grid-cols-1 gap-6">
-        
-        {/* Localization Matrix */}
-        <section className="bg-zinc-900/40 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
+      <div className="space-y-10">
+        {/* Localization */}
+        <section className="bg-zinc-900/40 border border-zinc-800 rounded-3xl overflow-hidden">
           <div className="p-6 border-b border-zinc-800 bg-zinc-900/20">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-              <Languages size={16} className="text-orange-500" /> Localization & Region
+              <Globe size={16} className="text-amber-500" /> Regional & Display
             </h3>
           </div>
           <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-4">
               <label className="text-[10px] font-black uppercase text-zinc-600 flex items-center gap-2">
-                <Globe size={12} /> Interface Language
+                <DollarSign size={12} /> Base Currency
               </label>
-              <select 
-                value={language}
-                onChange={(e) => appContext.setLanguage(e.target.value as Language)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500/50"
-                aria-label="Interface Language"
-                title="Interface Language"
-              >
-                <option value="en">English (Global)</option>
-                <option value="ar">العربية (Arabic)</option>
-                <option value="fr">Français (Afrique)</option>
-                <option value="zh">中文 (Chinese)</option>
-                <option value="ru">Русский (Russian)</option>
-                <option value="pt">Português (Brasil)</option>
-                <option value="hi">हिन्दी (Hindi)</option>
-                <option value="fa">فارسی (Persian)</option>
-                <option value="id">Bahasa Indonesia</option>
-                <option value="tr">Türkçe (Turkish)</option>
-                <option value="sw">Kiswahili (Swahili)</option>
-                <option value="es">Español (LatAm)</option>
-                <option value="de">Deutsch (German)</option>
-                <option value="cypher">Cypherpunk (Standard)</option>
-              </select>
+              <div className="grid grid-cols-3 gap-2">
+                 {currencies.map(c => (
+                   <button
+                    key={c}
+                    onClick={() => setCurrency(c)}
+                    className={`py-3 rounded-xl text-[10px] font-black transition-all border ${currency === c ? 'bg-amber-600 border-amber-500 text-white' : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700'}`}
+                   >
+                     {c}
+                   </button>
+                 ))}
+              </div>
             </div>
             <div className="space-y-4">
               <label className="text-[10px] font-black uppercase text-zinc-600 flex items-center gap-2">
-                <DollarSign size={12} /> Valuation Fiat
+                <Languages size={12} /> Interface Language
               </label>
-              <select 
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-4 text-sm focus:outline-none"
-                aria-label="Valuation Fiat"
-                title="Valuation Fiat"
-              >
-                <option value="USD">US Dollar ($)</option>
-                <option value="EUR">Euro (€)</option>
-                <option value="BRL">Brazilian Real (R$)</option>
-                <option value="JPY">Japanese Yen (¥)</option>
-              </select>
-            </div>
-            <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase text-zinc-600 flex items-center gap-2">
-                <Zap size={12} /> Native Unit
-              </label>
-              <div className="flex bg-zinc-950 border border-zinc-800 p-1 rounded-2xl">
-                 {['BTC', 'SATS', 'BITS'].map(u => (
+              <div className="flex flex-wrap gap-2">
+                 {languages.map(u => (
                    <button 
                     key={u}
-                    onClick={() => setUnit(u)}
-                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${unit === u ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600 hover:text-zinc-400'}`}
+                    onClick={() => appContext.setLanguage(u)}
+                    className={`px-4 py-2 rounded-lg text-[10px] font-bold transition-all ${language === u ? 'bg-zinc-100 text-zinc-950' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}
                    >
                      {u}
                    </button>
@@ -174,6 +140,22 @@ const Settings: React.FC = () => {
                 <option value="devnet">Devnet (Experimental)</option>
               </select>
               <p className="text-[10px] text-zinc-500 italic">Applies to BTC, Stacks, Liquid, and Rootstock endpoints.</p>
+            </div>
+
+            {/* Financial Bridges */}
+            <div className="space-y-4 md:col-span-2 border-t border-zinc-800 pt-6 mt-2">
+               <label className="text-[10px] font-black uppercase text-zinc-600 flex items-center gap-2">
+                 <Briefcase size={12} /> Financial Bridges (South Africa)
+               </label>
+               <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-4">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-zinc-100">Connect VALR Account</span>
+                    <p className="text-[10px] text-zinc-500 italic mt-1">Direct link for ZAR/BTC bridge via VALR Pay (Licensed FSP).</p>
+                  </div>
+                  <button className="px-6 py-2 bg-zinc-100 hover:bg-white text-zinc-950 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                     Connect
+                  </button>
+               </div>
             </div>
 
             {/* Corporate Profile (Sovereign Entity) */}

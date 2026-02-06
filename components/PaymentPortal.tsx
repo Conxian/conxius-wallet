@@ -365,8 +365,8 @@ const PaymentPortal: React.FC = () => {
                         <CreditCard className="text-zinc-950" size={32} />
                      </div>
                      <div>
-                        <h4 className="text-xl font-bold text-zinc-100">Google Pay Gateway</h4>
-                        <p className="text-xs text-zinc-500 mt-1 italic leading-relaxed">Fast BTC on-ramping via your linked accounts. Note: Breaks Tor-Routing privacy.</p>
+                        <h4 className="text-xl font-bold text-zinc-100">Transak Gateway</h4>
+                        <p className="text-xs text-zinc-500 mt-1 italic leading-relaxed">Powered by Transak. Fast BTC on-ramping via card or bank transfer.</p>
                      </div>
                      <div className="relative">
                         <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-5 px-6 text-2xl font-black text-white focus:outline-none text-center" />
@@ -432,7 +432,7 @@ const PaymentPortal: React.FC = () => {
                 title="Execute Transfer"
               >
                 {isSending ? <Loader2 size={20} className="animate-spin" /> : showSuccess ? <CheckCircle2 size={20} /> : <Send size={20} />}
-                {isSending ? 'Routing...' : showSuccess ? 'Success' : method === 'onramp' ? 'Buy via Google Pay' : 'Execute Transfer'}
+                {isSending ? 'Routing...' : showSuccess ? 'Success' : method === 'onramp' ? 'Buy via Transak' : 'Execute Transfer'}
               </button>
               {method === 'onchain' && onchainError && (
                 <div className="text-[10px] text-red-500 font-black uppercase tracking-widest">{onchainError}</div>
@@ -511,7 +511,7 @@ const PaymentPortal: React.FC = () => {
              </div>
              <p className="text-[10px] text-zinc-500 leading-relaxed italic">
                 {method === 'onramp' 
-                  ? "Integrating with Google Pay sends your PII and financial metadata to Google's centralized servers. This action is recorded off-chain."
+                  ? "Integrating with Transak sends your PII and financial metadata to their centralized servers for KYC/FICA compliance."
                   : "Sending via Lightning or Rootstock maintains end-to-end encryption and Tor-level network obfuscation."}
              </p>
              {method !== 'onramp' && (
@@ -534,7 +534,7 @@ const PaymentPortal: React.FC = () => {
                  </div>
                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">Sovereignty Risk Detected</h3>
                  <p className="text-xs text-zinc-400 leading-relaxed italic">
-                    By enabling the **Google Pay Gateway**, you are bridging your sovereign enclave to the legacy financial system. 
+                    By enabling the **Transak Gateway**, you are bridging your sovereign enclave to the legacy financial system.
                  </p>
               </div>
 
@@ -544,7 +544,7 @@ const PaymentPortal: React.FC = () => {
                     <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Privacy Penalty: -15 Points</span>
                  </div>
                  <p className="text-[10px] text-zinc-600 italic">
-                    Google will receive your wallet metadata, transaction amounts, and IP signature during the checkout process.
+                    Transak will act as the Merchant of Record. You are entering a regulated financial flow.
                  </p>
               </div>
 

@@ -3,7 +3,7 @@
 /**
  * Simulates the execution of a gas abstraction swap.
  *
- * In a production environment, this function would interact with a real swapping service or DEX.
+ * In a production environment, this function would interact with a real swapping service like Changelly or a DEX.
  * It would take the source asset, amount, and desired destination asset as input,
  * and return the result of the swap operation.
  *
