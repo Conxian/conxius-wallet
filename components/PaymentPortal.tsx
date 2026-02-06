@@ -337,7 +337,7 @@ const PaymentPortal: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 ml-1">Amount (BTC)</label>
                     <div className="relative">
-                      <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-6 px-6 text-4xl font-black text-zinc-100 focus:outline-none focus:border-orange-500/50 transition-all font-mono tracking-tighter" />
+                      <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" placeholder="0.00" className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-6 px-6 text-4xl font-black text-zinc-100 focus:outline-none focus:border-orange-500/50 transition-all font-mono tracking-tighter" />
                     </div>
                   </div>
                   {method === 'lightning' && (
@@ -369,7 +369,7 @@ const PaymentPortal: React.FC = () => {
                         <p className="text-xs text-zinc-500 mt-1 italic leading-relaxed">Powered by Transak. Fast BTC on-ramping via card or bank transfer.</p>
                      </div>
                      <div className="relative">
-                        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-5 px-6 text-2xl font-black text-white focus:outline-none text-center" />
+                        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" placeholder="0.00" className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-5 px-6 text-2xl font-black text-white focus:outline-none text-center" />
                         <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-700 uppercase">USD</span>
                      </div>
                   </div>
