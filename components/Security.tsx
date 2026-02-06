@@ -104,7 +104,7 @@ const Security: React.FC = () => {
 
              {showMnemonic && (
                 <div className="mt-8 p-8 bg-zinc-950 border border-orange-500/30 rounded-[2rem] animate-in zoom-in duration-300 relative">
-                   <button onClick={() => setShowMnemonic(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white">✕</button>
+                   <button onClick={() => { setShowMnemonic(false); setMnemonic(null); }} className="absolute top-4 right-4 text-zinc-500 hover:text-white">✕</button>
                    <h4 className="text-xs font-black uppercase text-orange-500 mb-6 tracking-widest">Your Recovery Phrase</h4>
                    <div className="grid grid-cols-3 gap-4">
                       {mnemonic?.split(' ').map((word, i) => (
