@@ -18,3 +18,8 @@
 **Vulnerability:** Sensitive input fields—including BIP-39 mnemonic phrases, Enclave PINs, and Gemini AI API keys—lacked attributes to disable browser and mobile keyboard features like autocorrect, suggestions, and caching.
 **Learning:** On mobile devices, third-party keyboards (Gboard, SwiftKey) often cache and sync text entered into standard `input` and `textarea` fields to the cloud for "personalization." If these fields are not explicitly hardened, a user's master seed or PIN can be leaked to the keyboard provider's servers. Even with `type="password"`, explicitly setting security attributes is necessary to ensure consistent behavior across different browsers and platforms.
 **Prevention:** Always apply `autoComplete="off"`, `autoCorrect="off"`, `autoCapitalize="off"`, and `spellCheck="false"` to any UI element that handles secrets, recovery phrases, or authentication material.
+
+## 2026-02-06 - [Zero-Memory Hardening and State Purging]
+**Vulnerability:** Sensitive application state (including Gemini API keys, UTXO lists, and asset balances) persisted in React memory even when the wallet was in a "Locked" state. Additionally, recovery phrases remained in component state after being hidden from the UI.
+**Learning:** High-level UI lock states are often insufficient if the underlying application state is not explicitly purged. An attacker with access to a running process or a memory dump could extract sensitive data from a locked wallet.
+**Prevention:** Centralize locking logic into a "Zero-Memory" function that explicitly resets sensitive state variables to their defaults (while preserving non-sensitive user preferences). Always nullify secret strings (like mnemonics) in component state as soon as they are no longer actively displayed.

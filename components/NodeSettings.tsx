@@ -393,6 +393,10 @@ const NodeSettings: React.FC = () => {
                      <input 
                         value={newNode.provider}
                         onChange={e => setNewNode({ ...newNode, provider: e.target.value })}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
                         placeholder="e.g. Satoshi Home Node"
                         className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 px-5 text-sm text-zinc-200 focus:outline-none focus:border-orange-500/50"
                      />

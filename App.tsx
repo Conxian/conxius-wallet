@@ -105,8 +105,7 @@ const App: React.FC = () => {
       if (timer) clearTimeout(timer);
       const minutes = state.security?.autoLockMinutes ?? 5;
       timer = setTimeout(() => {
-        clearEnclaveBiometricSession();
-        setIsLocked(true);
+        performLock();
         notify('warning', 'Session expired for your security.', 'Vault Auto-Locked');
       }, minutes * 60 * 1000);
     };
@@ -301,10 +300,22 @@ const App: React.FC = () => {
   const setLnBackend = (cfg: LnBackendConfig) => setState(prev => ({ ...prev, lnBackend: cfg }));
   const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } as any }));
   const setGeminiApiKey = (key: string) => setState(prev => ({ ...prev, geminiApiKey: key }));
-  const lockWallet = () => {
+
+  const performLock = () => {
      currentPinRef.current = null;
      clearEnclaveBiometricSession();
      setIsLocked(true);
+     // Memory Hardening: Reset state to defaults on lock to purge sensitive material (Gemini keys, assets) from RAM.
+     setState(prev => ({
+       ...DEFAULT_STATE,
+       language: prev.language,
+       network: prev.network,
+       mode: prev.mode,
+     }));
+  };
+
+  const lockWallet = () => {
+     performLock();
   };
 
   const authorizeSignature = async (request: SignRequest): Promise<SignResult> => {
