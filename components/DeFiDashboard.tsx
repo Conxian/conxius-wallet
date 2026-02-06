@@ -244,6 +244,7 @@ const DeFiDashboard: React.FC = () => {
               </div>
               <div className="relative z-10">
                  <h4 className="font-black text-xl italic uppercase tracking-tighter mb-2">Sovereign Zap</h4>
+                 <p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-2">Powered by Changelly & Breez</p>
                  <p className="text-xs font-medium opacity-90 leading-relaxed mb-6">
                     Bundle Swap + Bridge + Staking into one atomic transaction. 
                  </p>
