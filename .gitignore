@@ -29,3 +29,19 @@ android/.gradle
 android/local.properties
 android/captures
 .gradle
+
+# Security - API Keys and Secrets
+.env*.local
+.env.development
+.env.production
+*.keystore
+*.jks
+service-account*.json
+*.key
+*.pem
+*.p12
+*.mobileprovision
+
+# Capacitor - Generated web assets
+android/app/src/main/assets/public/
+ios/App/public/
