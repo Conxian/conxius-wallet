@@ -58,7 +58,7 @@ export const decodeSilentPaymentAddress = (address: string) => {
     const data = bech32m.fromWords(decoded.words.slice(1));
 
     return {
-        hrp: decoded.hrp,
+        hrp: (decoded as any).hrp,
         version,
         scanPub: Buffer.from(data.slice(0, 33)),
         spendPub: Buffer.from(data.slice(33, 66))

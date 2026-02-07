@@ -48,6 +48,7 @@ import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnc
 import { notificationService } from './services/notifications';
 import { setGeminiApiKey as setGeminiServiceKey } from './services/gemini';
 
+
 const STORAGE_KEY = 'conxius_enclave_v3_encrypted';
 
 const INITIAL_BOUNTIES: Bounty[] = [
@@ -70,7 +71,9 @@ const DEFAULT_STATE: AppState & { language: Language } = {
   externalGatewaysActive: false,
   isMainnetLive: false,
   walletConfig: undefined,
-  assets: [], // Default to empty, load mocks only if explicit simulation
+  assets: [],
+  utxos: [],
+  theme: "dark",
   bounties: INITIAL_BOUNTIES,
   dataSharing: {
     enabled: false,
@@ -89,7 +92,6 @@ const App: React.FC = () => {
   const [bootStep, setBootStep] = useState(0);
   const [isBooting, setIsBooting] = useState(true);
   const [state, setState] = useState<AppState & { language: Language }>(DEFAULT_STATE);
-  
   // Security & UX State
   const [isLocked, setIsLocked] = useState(false);
   const [lockError, setLockError] = useState(false);
@@ -223,7 +225,6 @@ const App: React.FC = () => {
         sessionStorage.clear();
         clearEnclaveBiometricSession();
         setState({ ...DEFAULT_STATE, assets: [], walletConfig: undefined });
-        currentPinRef.current = null;
         setEnclaveExists(false);
         setIsLocked(false);
         setLockError(false);

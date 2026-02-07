@@ -45,7 +45,7 @@ type SecureEnclavePlugin = {
   getWalletInfo(options: {
     vault: string;
     pin?: string;
-  }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string }>;
+  }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -184,7 +184,7 @@ export async function getDerivedSecretNative(options: {
 export async function getWalletInfoNative(options: {
   vault: string;
   pin?: string;
-}): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string }> {
+}): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.getWalletInfo(options);
   }

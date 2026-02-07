@@ -12,7 +12,15 @@ const Settings: React.FC = () => {
   if (!appContext) return null;
   const { mode, network, theme, language } = appContext.state;
 
-  const languages: Language[] = ['English', 'Spanish', 'French', 'German', 'Portuguese', 'Afrikaans', 'Zulu'];
+  const languages: { code: Language; label: string }[] = [
+    { code: 'en', label: 'English' },
+    { code: 'es', label: 'Spanish' },
+    { code: 'fr', label: 'French' },
+    { code: 'de', label: 'German' },
+    { code: 'pt', label: 'Portuguese' },
+    { code: 'sw', label: 'Swahili' },
+    { code: 'cypher', label: 'Cypher' }
+  ];
   const currencies = ['USD', 'EUR', 'GBP', 'ZAR', 'BTC', 'SATS'];
 
   return (
@@ -49,35 +57,27 @@ const Settings: React.FC = () => {
             </div>
             <div className="space-y-4">
               <label className="text-[10px] font-black uppercase text-zinc-600 flex items-center gap-2">
-                <Languages size={12} /> Interface Language
+                <Languages size={12} /> System Language
               </label>
-              <div className="flex flex-wrap gap-2">
-                 {languages.map(u => (
-                   <button 
-                    key={u}
-                    onClick={() => appContext.setLanguage(u)}
-                    className={`px-4 py-2 rounded-lg text-[10px] font-bold transition-all ${language === u ? 'bg-zinc-100 text-zinc-950' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}
+              <div className="grid grid-cols-2 gap-2">
+                 {languages.map(lang => (
+                   <button
+                    key={lang.code}
+                    onClick={() => appContext.setLanguage(lang.code)}
+                    className={`py-3 rounded-xl text-[10px] font-black transition-all border ${language === lang.code ? 'bg-zinc-100 border-white text-zinc-950 shadow-lg' : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700'}`}
                    >
-                     {u}
+                     {lang.label}
                    </button>
                  ))}
               </div>
             </div>
-            <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase text-zinc-600 flex items-center gap-2">
-                <MapPin size={12} /> Region Logic
-              </label>
-              <p className="text-[10px] text-zinc-500 italic leading-relaxed">
-                 Adjusts fee estimators and gateway priority based on local chain density. Currently optimized for <strong>Global Relay</strong>.
-              </p>
-            </div>
           </div>
         </section>
 
-        {/* System Persistence */}
-        <section className="bg-zinc-900/40 border border-zinc-800 rounded-3xl overflow-hidden">
-          <div className="p-6 border-b border-zinc-800 bg-zinc-900/20">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+        {/* Security / Purge */}
+        <section className="bg-red-500/5 border border-red-500/10 rounded-3xl overflow-hidden">
+          <div className="p-6 border-b border-red-500/10 bg-red-500/5">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-red-500 flex items-center gap-2">
               <RotateCcw size={16} className="text-red-500" /> Final Protocol Reset
             </h3>
           </div>

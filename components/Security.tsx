@@ -1,6 +1,6 @@
 
 import React, { useState, useContext } from 'react';
-import { ShieldCheck, Cpu, Wallet, ExternalLink, ShieldAlert, Key, HeartPulse, ShoppingCart, Award, ArrowUpRight, Eye, Download, Shield, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Lock, ShieldCheck, Cpu, Wallet, ExternalLink, ShieldAlert, Key, HeartPulse, ShoppingCart, Award, ArrowUpRight, Eye, Download, Shield, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { AppContext } from '../context';
 import { decryptSeed } from '../services/seed';
 

@@ -40,7 +40,7 @@ const SilentPayments: React.FC = () => {
             date: 'Just now',
             status: 'Confirmed'
         }]);
-        context?.notify('success', 'Silent Payment Discovered', 'Privacy Enclave Alert');
+        context?.notify('success', 'Silent Payment Discovered');
     }, 3000);
   };
 

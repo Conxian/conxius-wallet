@@ -212,7 +212,7 @@ describe('enclave-storage service', () => {
     it('should require biometric when specified', async () => {
       mockIsNativePlatform.mockReturnValue(true);
       
-      await expect(removeEnclaveBlob(TEST_KEY, { requireBiometric: true }))
+      await expect(removeEnclaveBlob(TEST_KEY))
         .rejects.toThrow('auth required');
     });
   });

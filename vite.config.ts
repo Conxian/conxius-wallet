@@ -37,9 +37,12 @@ export default defineConfig(({ mode }) => {
             ]
           : []),
       ],
+      optimizeDeps: {
+        include: ['@google/genai']
+      },
       test: {
         globals: true,
-        environment: "node", // Changed from jsdom to node for crypto/buffer support
+        environment: "node",
         setupFiles: "./tests/setup.ts",
         server: {
           deps: {
@@ -52,7 +55,7 @@ export default defineConfig(({ mode }) => {
             ],
           },
         },
-        pool: "forks", // More stable for native modules
+        pool: "forks",
       },
       define: {
         "process.env": {}, "process.version": JSON.stringify("v18.0.0"),

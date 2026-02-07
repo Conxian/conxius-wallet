@@ -34,14 +34,14 @@ const SatoshiAIChat: React.FC = () => {
         return;
       }
 
-      const privacyResults = calculatePrivacyScore(appContext.state.utxos || []);
+      const privacyResults = calculatePrivacyScore(appContext.state);
       const systemContext = `You are Satoshi AI, a master of Bitcoin technology and sovereign finance.
 You are concise, technical, and prioritize user privacy.
 You help users understand Bitcoin layers and risk.
 Current Wallet Context:
 - Privacy Score: ${privacyResults.score}/100
 - Privacy Recommendations: ${privacyResults.recommendations.join(', ')}
-- Tor Routing: ${appContext.state.isTorEnabled ? 'ENABLED' : 'DISABLED'}
+- Tor Routing: ${appContext.state.isTorActive ? 'ENABLED' : 'DISABLED'}
 Use a terminal-style tone.`;
 
       const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });

@@ -2,7 +2,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import ECPairFactory from 'ecpair';
-import { UTXO, Network } from '../types';
+import { UTXO, Network, Signer as AppSigner } from '../types';
 
 const bip32 = BIP32Factory(ecc);
 const ECPair = ECPairFactory(ecc);
@@ -130,13 +130,13 @@ export async function signPsbtBase64WithSeed(seed: Uint8Array, psbtBase64: strin
     const input = psbt.data.inputs[i];
 
     // Check if it's a Taproot input
-    const isTaproot = input.witnessUtxo && bitcoin.script.isTaproot(input.witnessUtxo.script);
+    const isTaproot = input.witnessUtxo && input.witnessUtxo.script.length === 34 && input.witnessUtxo.script[0] === 0x51;
 
     if (isTaproot) {
         // Tweak the key for key-path signing if not already tweaked
-        const tweakedChild = p2trChild.tweak(
-            bitcoin.crypto.taggedHash('TapTweak', internalPubkey),
-        );
+        // Manual tweak for BIP32 node in version 4.x
+        const tweak = bitcoin.crypto.taggedHash('TapTweak', Buffer.from(internalPubkey));
+        const tweakedChild = (p2trChild as any).tweak(tweak);
         const tweakedKeyPair = ECPair.fromPrivateKey(tweakedChild.privateKey!, { network: net });
         psbt.signInput(i, tweakedKeyPair);
     } else {

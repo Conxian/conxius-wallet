@@ -146,6 +146,7 @@ graph TD
 | **Stacks (Clarity 4)** | Capacitor (Stacks.js) | PRODUCTION |
 | **Liquid** | GDK Integration | PRODUCTION |
 | **Rootstock** | Web3 / Ethers.js | PRODUCTION |
+| **Web5 (TBD)** | DIDs and DWN storage | PRODUCTION |
 | **BitVM** | Fraud Proof Verifier | RESEARCH |
 | **Citrea** | ZK-STARK Verifier | RESEARCH |
 

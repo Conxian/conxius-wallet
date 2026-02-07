@@ -1,4 +1,3 @@
-
 export type BitcoinLayer = 'Mainnet' | 'Stacks' | 'Rootstock' | 'Ethereum' | 'Lightning' | 'Liquid' | 'Runes' | 'Ordinals';
 export type AppMode = 'sovereign' | 'simulation';
 export type Network = 'mainnet' | 'testnet' | 'regtest' | 'devnet';
@@ -147,6 +146,8 @@ export interface AppState {
   isMainnetLive: boolean;
   walletConfig?: WalletConfig;
   assets: Asset[];
+  utxos: UTXO[];
+  theme: 'light' | 'dark' | 'cyber';
   bounties: Bounty[];
   activeCitadel?: Citadel;
   dataSharing: {
