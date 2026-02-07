@@ -1,3 +1,9 @@
+---
+title: Competitive Analysis
+layout: page
+permalink: /docs/competitive-analysis
+---
+
 # Competitive Landscape Analysis: Conxius/Conclave
 
 This document provides a comprehensive review of the current crypto wallet market, analyzing key competitors against Conxius (Conclave) across security, sovereign features, fees, and user experience.
