@@ -1,3 +1,9 @@
+---
+title: Monetization Strategy
+layout: page
+permalink: /monetization
+---
+
 # Conxius Monetization Strategy
 
 **Philosophy:** Revenue is generated through **Software Services** and **Affiliate Referrals**, not through management fees or custody of funds.

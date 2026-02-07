@@ -1,3 +1,9 @@
+---
+title: AI Agent Guide
+layout: page
+permalink: /agents
+---
+
 # Conxius Wallet: AI Agent Guide
 
 Welcome, Sovereign Agent. This document provides instructions and context for working with the Conxius Wallet codebase.

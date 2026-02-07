@@ -1,3 +1,9 @@
+---
+title: Conxius Wallet
+layout: page
+permalink: /
+---
+
 # Conxius Wallet
 
 ## The Sovereign Wallet for the Bitcoin Ecosystem
@@ -55,6 +61,17 @@ Conxius is a "Bitcoin-First" mobile wallet that offers hardware-level security w
 **Run Unit Tests**
 
 - `cd android && ./gradlew :app:testDebugUnitTest`
+
+## 📊 Benchmarks (Vitest 4.0)
+
+| Metric | Result |
+| :--- | :--- |
+| **Total Tests** | 27 |
+| **Passed** | 27 |
+| **Failed** | 0 |
+| **Duration** | 2.73s |
+| **Environment** | Node.js / JSDOM |
+| **Version** | Vitest 4.0.17 |
 
 ## Key Architecture
 

@@ -1,3 +1,9 @@
+---
+title: Project Roadmap
+layout: page
+permalink: /roadmap
+---
+
 # Conxius Wallet Roadmap (Implementation-Grade)
 
 ## North Star
