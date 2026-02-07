@@ -53,12 +53,12 @@ export const encodeSilentPaymentAddress = (scanPub: Buffer, spendPub: Buffer, ne
  * Decodes a Silent Payment address
  */
 export const decodeSilentPaymentAddress = (address: string) => {
-    const decoded = bech32m.decode(address, 1024);
+    const decoded: any = bech32m.decode(address, 1024);
     const version = decoded.words[0];
     const data = bech32m.fromWords(decoded.words.slice(1));
 
     return {
-        hrp: decoded.hrp,
+        hrp: decoded.prefix || decoded.hrp,
         version,
         scanPub: Buffer.from(data.slice(0, 33)),
         spendPub: Buffer.from(data.slice(33, 66))

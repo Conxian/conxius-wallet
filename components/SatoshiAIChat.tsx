@@ -34,7 +34,7 @@ const SatoshiAIChat: React.FC = () => {
         return;
       }
 
-      const privacyResults = calculatePrivacyScore(appContext.state.utxos || []);
+      const privacyResults = calculatePrivacyScore(appContext.state);
       const systemContext = `You are Satoshi AI, a master of Bitcoin technology and sovereign finance.
 You are concise, technical, and prioritize user privacy.
 You help users understand Bitcoin layers and risk.

@@ -81,7 +81,10 @@ const DEFAULT_STATE: AppState & { language: Language } = {
   security: {
     autoLockMinutes: 5
   },
-  geminiApiKey: undefined
+  geminiApiKey: undefined,
+  utxos: [],
+  isTorEnabled: true,
+  theme: 'dark'
 };
 
 const App: React.FC = () => {

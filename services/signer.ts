@@ -112,7 +112,15 @@ export const deriveSovereignRoots = async (mnemonicOrVault: string, passphraseOr
   }
 
   const seed = await bip39.mnemonicToSeed(mnemonicOrVault, passphraseOrPin);
-  const root = bip32.fromSeed(Buffer.from(new Uint8Array(seed)));
+  let root;
+  try {
+    root = bip32.fromSeed(seed);
+  } finally {
+    // Memory Hardening: Zero-fill original seed buffer immediately after root derivation in setup mode
+    if (seed instanceof Uint8Array) {
+      seed.fill(0);
+    }
+  }
 
   // 1. Bitcoin Mainnet (Native Segwit - BIP84)
   // Path: m/84'/0'/0'/0/0
@@ -170,10 +178,17 @@ export const signBip322Message = async (message: string, mnemonic: string) => {
     
     // For now, we simulate with a deterministic hash of the real key
     const seed = await bip39.mnemonicToSeed(mnemonic);
-    const root = bip32.fromSeed(Buffer.from(new Uint8Array(seed)));
-    const child = root.derivePath("m/84'/0'/0'/0/0");
-    const sig = child.sign(Buffer.from(message)); // Raw ECDSA
-    return `BIP322-SIG-${Buffer.from(sig).toString('hex')}`;
+    const seedBytes = new Uint8Array(seed);
+    try {
+      const root = bip32.fromSeed(Buffer.from(seedBytes));
+      const child = root.derivePath("m/84'/0'/0'/0/0");
+      // SECURITY: Ensure message is hashed before signing to prevent side-channel or signature reuse attacks.
+      const hash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(message)));
+      const sig = child.sign(hash); // Raw ECDSA
+      return `BIP322-SIG-${Buffer.from(sig).toString('hex')}`;
+    } finally {
+      seedBytes.fill(0);
+    }
 };
 
 /**
@@ -389,51 +404,62 @@ export const requestEnclaveSignature = async (
   // --- WEB / LEGACY PATH ---
   const seedBytes =
     typeof seedOrVault === "string"
-      ? new Uint8Array(await bip39.mnemonicToSeed(seedOrVault)) // Fallback if string passed but no PIN/Native (Should not happen flow-wise) or if passing mnemonic directly
+      ? await bip39.mnemonicToSeed(seedOrVault) // Fallback if string passed but no PIN/Native (Should not happen flow-wise) or if passing mnemonic directly
       : (seedOrVault as Uint8Array);
 
-  const root = bip32.fromSeed(Buffer.from(seedBytes));
+  try {
+    let root;
+    if (seedBytes) {
+      root = bip32.fromSeed(Buffer.from(seedBytes));
+    }
 
-  let signature = "";
-  let pubkey = "";
-  let broadcastHex = "";
+    let signature = "";
+    let pubkey = "";
+    let broadcastHex = "";
 
-  if (request.layer === "Mainnet") {
-    const coin = request.payload?.network === "mainnet" ? 0 : 1;
-    const child = root.derivePath(`m/84'/${coin}'/0'/0/0`);
-    pubkey = Buffer.from(child.publicKey).toString("hex");
-    if (request.payload && request.payload.psbt && request.payload.network) {
-      // Use imported helper
-      broadcastHex = await signPsbtBase64WithSeed(
-        seedBytes,
-        request.payload.psbt,
-        request.payload.network,
-      );
-      signature = Buffer.from(
-        bitcoin.crypto.sha256(Buffer.from(broadcastHex, "hex")),
-      ).toString("hex");
-    } else {
-      const payloadHash = bitcoin.crypto.sha256(
-        Buffer.from(JSON.stringify(request.payload)),
-      );
-      signature = Buffer.from(child.sign(Buffer.from(payloadHash))).toString(
+    if (request.layer === "Mainnet" && root) {
+      const coin = request.payload?.network === "mainnet" ? 0 : 1;
+      const child = root.derivePath(`m/84'/${coin}'/0'/0/0`);
+      pubkey = Buffer.from(child.publicKey).toString("hex");
+      if (request.payload && request.payload.psbt && request.payload.network) {
+        // Use imported helper
+        broadcastHex = await signPsbtBase64WithSeed(
+          seedBytes!,
+          request.payload.psbt,
+          request.payload.network,
+        );
+        signature = Buffer.from(
+          bitcoin.crypto.sha256(Buffer.from(broadcastHex, "hex")),
+        ).toString("hex");
+      } else {
+        const payloadHash = bitcoin.crypto.sha256(
+          Buffer.from(JSON.stringify(request.payload)),
+        );
+        signature = Buffer.from(child.sign(Buffer.from(payloadHash))).toString(
+          "hex",
+        );
+        broadcastHex = "";
+      }
+    } else if (request.layer === "Stacks" && root) {
+      const child = root.derivePath("m/44'/5757'/0'/0/0");
+      pubkey = Buffer.from(child.publicKey).toString("hex");
+      // Stacks signing logic
+      const stacksHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from("stacks-sig")));
+      signature = Buffer.from(child.sign(stacksHash)).toString(
         "hex",
       );
-      broadcastHex = "";
     }
-  } else if (request.layer === "Stacks") {
-    const child = root.derivePath("m/44'/5757'/0'/0/0");
-    pubkey = Buffer.from(child.publicKey).toString("hex");
-    // Stacks signing logic
-    signature = Buffer.from(child.sign(Buffer.from("stacks-sig"))).toString(
-      "hex",
-    );
-  }
 
-  return {
-    signature,
-    pubkey,
-    broadcastReadyHex: broadcastHex,
-    timestamp: Date.now(),
-  };
+    return {
+      signature,
+      pubkey,
+      broadcastReadyHex: broadcastHex,
+      timestamp: Date.now(),
+    };
+  } finally {
+    // Memory Hardening: Wiping seed bytes from RAM after usage.
+    if (seedBytes instanceof Uint8Array) {
+      seedBytes.fill(0);
+    }
+  }
 };
