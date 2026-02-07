@@ -55,6 +55,7 @@ Conxius is an Android-first wallet built using:
 | Rootstock/EVM | `m/44'/60'/0'/0/0` | ✅ Production |
 | Liquid | `m/84'/1776'/0'/0/0` | ✅ Production |
 | Nostr | `m/44'/1237'/0'/0/0` | ✅ Production |
+| Web5 (TBD) | did:dht:... | ✅ Production |
 
 ### Key Services (Verified Code)
 

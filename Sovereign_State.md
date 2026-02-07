@@ -22,3 +22,4 @@ permalink: /state
 - **Expansion Architecture**: Matrix defined in PRD Section 8.
 - **Artifact Protection**: M9 (Ordinals/Runes) logic drafted in Roadmap.
 - **Verifier Core**: M10 (BitVM/ZK) requirements established.
+- **Web5 Integration**: Complete (TBD Web5 DIDs and DWN sovereign storage implemented).

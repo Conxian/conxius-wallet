@@ -76,6 +76,8 @@ Conxius-Wallet/
 - Rootstock/EVM: `m/44'/60'/0'/0/0`
 - Liquid: `m/84'/1776'/0'/0/0`
 - Nostr: `m/44'/1237'/0'/0/0`
+- Web5 (TBD): m/44'/927'/0'/0/0
+- Web5 (TBD): m/44/927/0/0/0
 
 ---
 
@@ -138,6 +140,7 @@ User → Conxius UI → Partner API → Blockchain
 | Dashboard | ✅ | 488 lines, multi-asset display |
 | Payment Portal | ✅ | 1,071 lines, send/receive flows |
 | NTT Bridge | ✅ | 568 lines, cross-chain transfers |
+| Web5 Service | ✅ | TBD DIDs and DWN storage |
 | Protocol service | ✅ | 245 lines, 5+ blockchain APIs |
 
 ### ⚠️ MISSING / GAPS
