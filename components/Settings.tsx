@@ -12,7 +12,15 @@ const Settings: React.FC = () => {
   if (!appContext) return null;
   const { mode, network, theme, language } = appContext.state;
 
-  const languages: Language[] = ['English', 'Spanish', 'French', 'German', 'Portuguese', 'Afrikaans', 'Zulu'];
+  const languages: { code: Language; name: string }[] = [
+    { code: 'en', name: 'English' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'fr', name: 'French' },
+    { code: 'de', name: 'German' },
+    { code: 'pt', name: 'Portuguese' },
+    { code: 'sw', name: 'Swahili' },
+    { code: 'zh', name: 'Mandarin' }
+  ];
   const currencies = ['USD', 'EUR', 'GBP', 'ZAR', 'BTC', 'SATS'];
 
   return (
@@ -54,11 +62,11 @@ const Settings: React.FC = () => {
               <div className="flex flex-wrap gap-2">
                  {languages.map(u => (
                    <button 
-                    key={u}
-                    onClick={() => appContext.setLanguage(u)}
-                    className={`px-4 py-2 rounded-lg text-[10px] font-bold transition-all ${language === u ? 'bg-zinc-100 text-zinc-950' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}
+                    key={u.code}
+                    onClick={() => appContext.setLanguage(u.code)}
+                    className={`px-4 py-2 rounded-lg text-[10px] font-bold transition-all ${language === u.code ? 'bg-zinc-100 text-zinc-950' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}
                    >
-                     {u}
+                     {u.name}
                    </button>
                  ))}
               </div>

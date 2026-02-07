@@ -1,6 +1,6 @@
 
 import React, { useState, useContext } from 'react';
-import { ShieldCheck, Cpu, Wallet, ExternalLink, ShieldAlert, Key, HeartPulse, ShoppingCart, Award, ArrowUpRight, Eye, Download, Shield, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { ShieldCheck, Cpu, Wallet, ExternalLink, ShieldAlert, Key, HeartPulse, ShoppingCart, Award, ArrowUpRight, Eye, Download, Shield, CheckCircle2, XCircle, Loader2, Lock } from 'lucide-react';
 import { AppContext } from '../context';
 import { decryptSeed } from '../services/seed';
 
@@ -138,7 +138,7 @@ const Security: React.FC = () => {
                         maxLength={8}
                       />
                       <div className="flex gap-4">
-                        <button onClick={() => setShowPinPrompt(false)} className="flex-1 py-4 bg-zinc-800 rounded-2xl font-black text-xs uppercase">Cancel</button>
+                        <button onClick={() => { setShowPinPrompt(false); setPinEntry(''); }} className="flex-1 py-4 bg-zinc-800 rounded-2xl font-black text-xs uppercase">Cancel</button>
                         <button
                           onClick={confirmPinAndDecrypt}
                           disabled={isDecrypting || pinEntry.length < 4}

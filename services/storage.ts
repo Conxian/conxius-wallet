@@ -10,13 +10,18 @@ const CURRENT_VERSION = 2;
 
 async function getKeyMaterial(password: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
-  return globalThis.crypto.subtle.importKey(
-    "raw",
-    enc.encode(password),
-    { name: "PBKDF2" },
-    false,
-    ["deriveBits", "deriveKey"]
-  );
+  const encoded = enc.encode(password);
+  try {
+    return await globalThis.crypto.subtle.importKey(
+      "raw",
+      encoded,
+      { name: "PBKDF2" },
+      false,
+      ["deriveBits", "deriveKey"]
+    );
+  } finally {
+    encoded.fill(0);
+  }
 }
 
 async function getKey(keyMaterial: CryptoKey, salt: Uint8Array): Promise<CryptoKey> {
