@@ -1,3 +1,9 @@
+---
+title: Product Strategy
+layout: page
+permalink: /docs/product-strategy
+---
+
 # docs/PRODUCT_STRATEGY.md
 
 ## 1. Competitive Landscape

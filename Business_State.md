@@ -1,3 +1,9 @@
+---
+title: Business State
+layout: page
+permalink: /business
+---
+
 [MARKET_FIT]
 [COMPLETED]
 

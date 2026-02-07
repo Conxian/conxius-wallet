@@ -1,3 +1,9 @@
+---
+title: Risk Registry
+layout: page
+permalink: /risk
+---
+
 # Conxius Wallet Risk & Compliance Registry
 
 **Last Updated:** 2026-02-06

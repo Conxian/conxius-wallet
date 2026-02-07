@@ -1,3 +1,9 @@
+---
+title: License
+layout: page
+permalink: /license
+---
+
 
 # Conxius Business Source License 1.1
 

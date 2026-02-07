@@ -1,3 +1,9 @@
+---
+title: Sovereign State
+layout: page
+permalink: /state
+---
+
 [PRODUCTION_READY]
 
 ## Current Implementation Status

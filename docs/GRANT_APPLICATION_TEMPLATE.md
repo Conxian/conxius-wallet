@@ -1,3 +1,9 @@
+---
+title: Grant Template
+layout: page
+permalink: /docs/grant-template
+---
+
 # Grant Application Template
 
 ## Project Overview

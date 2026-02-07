@@ -1,3 +1,9 @@
+---
+title: Technical Whitepaper
+layout: page
+permalink: /whitepaper
+---
+
 # Conxius Wallet Whitepaper (Android-First)
 
 ## Abstract

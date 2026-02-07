@@ -1,3 +1,9 @@
+---
+title: UX Flow Final
+layout: page
+permalink: /docs/ux-flow
+---
+
 # UX Flow Finalization: Sovereign Handshake for NTT Transfers
 
 This document outlines the definitive user experience for Native Token Transfers (NTT) within the Conxius Wallet. The primary goal is to achieve a "Sovereign Handshake," where a complex cross-chain operation is reduced to a single, authoritative user action (biometric/PIN authentication), followed by a clear, informative waiting period.

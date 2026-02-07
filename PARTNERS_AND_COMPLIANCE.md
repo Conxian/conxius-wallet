@@ -1,3 +1,9 @@
+---
+title: Partners & Compliance
+layout: page
+permalink: /partners
+---
+
 # Approved Partners & Compliance Stack
 
 **Objective:** Enable financial features by integrating regulated third-party APIs.
