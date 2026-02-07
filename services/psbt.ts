@@ -2,7 +2,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import ECPairFactory from 'ecpair';
-import { UTXO, Network } from '../types';
+import { UTXO, Network, Signer as LocalSigner } from '../types';
 
 const bip32 = BIP32Factory(ecc);
 const ECPair = ECPairFactory(ecc);
@@ -104,7 +104,13 @@ export function buildSbtcPegInPsbt(params: {
 
 export async function signPsbtBase64(mnemonic: string, psbtBase64: string, network: Network) {
   const seed = await (await import('bip39')).mnemonicToSeed(mnemonic);
-  return signPsbtBase64WithSeed(new Uint8Array(seed), psbtBase64, network);
+  try {
+    return await signPsbtBase64WithSeed(seed, psbtBase64, network);
+  } finally {
+    if (seed instanceof Uint8Array) {
+      seed.fill(0);
+    }
+  }
 }
 
 export async function signPsbtBase64WithSeed(seed: Uint8Array, psbtBase64: string, network: Network) {
@@ -118,29 +124,33 @@ export async function signPsbtBase64WithSeed(seed: Uint8Array, psbtBase64: strin
   const p2wpkhChild = root.derivePath(p2wpkhPath);
   const p2trChild = root.derivePath(p2trPath);
 
-  const p2wpkhKeyPair = ECPair.fromPrivateKey(p2wpkhChild.privateKey!, { network: net });
+  const p2wpkhKeyPair: any = ECPair.fromPrivateKey(Buffer.from(p2wpkhChild.privateKey!), { network: net });
 
   // Taproot Key Tweak for Key-path signing
-  const internalPubkey = p2trChild.publicKey.slice(1, 33);
-  const p2trKeyPair = ECPair.fromPrivateKey(p2trChild.privateKey!, { network: net });
+  const internalPubkey = Buffer.from(p2trChild.publicKey.slice(1, 33));
+  const p2trKeyPair: any = ECPair.fromPrivateKey(Buffer.from(p2trChild.privateKey!), { network: net });
 
   const psbt = bitcoin.Psbt.fromBase64(psbtBase64, { network: net });
 
   for (let i = 0; i < psbt.inputCount; i++) {
     const input = psbt.data.inputs[i];
 
-    // Check if it's a Taproot input
-    const isTaproot = input.witnessUtxo && bitcoin.script.isTaproot(input.witnessUtxo.script);
+    // Check if it's a Taproot input (v1 witness program: 0x51 + length 0x20)
+    const isTaproot = input.witnessUtxo &&
+                      input.witnessUtxo.script.length === 34 &&
+                      input.witnessUtxo.script[0] === 0x51 &&
+                      input.witnessUtxo.script[1] === 0x20;
 
     if (isTaproot) {
         // Tweak the key for key-path signing if not already tweaked
-        const tweakedChild = p2trChild.tweak(
-            bitcoin.crypto.taggedHash('TapTweak', internalPubkey),
+        const tweakedChild: any = (p2trChild as any).tweak(
+            Buffer.from(bitcoin.crypto.taggedHash('TapTweak', internalPubkey)),
         );
-        const tweakedKeyPair = ECPair.fromPrivateKey(tweakedChild.privateKey!, { network: net });
+        if (!tweakedChild.privateKey) throw new Error('Failed to derive tweaked private key');
+        const tweakedKeyPair: any = ECPair.fromPrivateKey(Buffer.from(tweakedChild.privateKey), { network: net });
         psbt.signInput(i, tweakedKeyPair);
     } else {
-        psbt.signInput(i, p2wpkhKeyPair);
+        psbt.signInput(i, p2wpkhKeyPair as any);
     }
   }
 

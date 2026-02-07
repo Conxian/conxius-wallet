@@ -162,6 +162,9 @@ export interface AppState {
     biometricUnlock?: boolean;
   };
   geminiApiKey?: string;
+  utxos: UTXO[];
+  isTorEnabled: boolean;
+  theme: 'light' | 'dark';
 }
 
 export interface DIDProfile {

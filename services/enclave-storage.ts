@@ -45,7 +45,7 @@ type SecureEnclavePlugin = {
   getWalletInfo(options: {
     vault: string;
     pin?: string;
-  }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string }>;
+  }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -125,11 +125,15 @@ export async function setEnclaveBlob(key: string, value: string, opts?: { requir
   localStorage.removeItem(key);
 }
 
-export async function removeEnclaveBlob(key: string): Promise<void> {
+export async function removeEnclaveBlob(key: string, opts?: { requireBiometric?: boolean }): Promise<void> {
   if (await hasNativeSecureEnclave()) {
     try {
-      await SecureEnclave.removeItem({ key });
-    } catch {
+      await SecureEnclave.removeItem({ key, requireBiometric: opts?.requireBiometric ?? false });
+    } catch (e: any) {
+      const msg = typeof e?.message === 'string' ? e.message : '';
+      if ((opts?.requireBiometric ?? false) && msg.toLowerCase().includes('auth required')) {
+        throw new Error('auth required');
+      }
     }
   }
   sessionStorage.removeItem(key);
@@ -184,7 +188,7 @@ export async function getDerivedSecretNative(options: {
 export async function getWalletInfoNative(options: {
   vault: string;
   pin?: string;
-}): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string }> {
+}): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.getWalletInfo(options);
   }

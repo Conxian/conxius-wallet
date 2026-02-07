@@ -15,7 +15,18 @@ function getCrypto() {
 
 async function getKeyMaterial(pin: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
-  return getCrypto().subtle.importKey('raw', enc.encode(pin), { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']);
+  const encoded = enc.encode(pin);
+  try {
+    return await getCrypto().subtle.importKey(
+      'raw',
+      encoded,
+      { name: 'PBKDF2' },
+      false,
+      ['deriveBits', 'deriveKey']
+    );
+  } finally {
+    encoded.fill(0);
+  }
 }
 
 async function deriveAesKey(keyMaterial: CryptoKey, salt: Uint8Array): Promise<CryptoKey> {
