@@ -34,9 +34,17 @@ public class NativeCrypto {
 
         // Derive Key: PBKDF2WithHmacSHA256, 200000 iterations
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        PBEKeySpec spec = new PBEKeySpec(pin.toCharArray(), salt, 200000, 256);
+        char[] pinChars = pin.toCharArray();
+        PBEKeySpec spec = new PBEKeySpec(pinChars, salt, 200000, 256);
         SecretKey tmp = factory.generateSecret(spec);
-        SecretKeySpec secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+
+        // Zero-out PIN array immediately
+        java.util.Arrays.fill(pinChars, '\0');
+        spec.clearPassword();
+
+        byte[] encodedKey = tmp.getEncoded();
+        SecretKeySpec secret = new SecretKeySpec(encodedKey, "AES");
+        java.util.Arrays.fill(encodedKey, (byte) 0);
 
         // Decrypt: AES/GCM/NoPadding
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
