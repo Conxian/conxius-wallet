@@ -111,6 +111,15 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       taprootAddress: roots.taproot,
       stacksAddress: roots.stx
     }, pin);
+
+    // SECURITY: Clear sensitive material from component state immediately after use
+    setMnemonic([]);
+    setPin('');
+    setConfirmPin('');
+    setPassphrase('');
+    setImportText('');
+    setVerifyWords([]);
+
     setIsFinalizing(false);
   };
 
