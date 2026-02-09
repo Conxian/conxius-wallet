@@ -13,7 +13,7 @@ import { getAddressFromPrivateKey } from '@stacks/transactions';
 import { Buffer } from 'buffer';
 import { publicKeyToEvmAddress } from './evm';
 import { Capacitor } from "@capacitor/core";
-import { signNative, getWalletInfoNative } from "./enclave-storage";
+import { signNative, getWalletInfoNative, signBatchNative } from "./enclave-storage";
 import {
   getPsbtSighashes,
   finalizePsbtWithSigs,
@@ -187,7 +187,7 @@ export const signBip322Message = async (message: string, mnemonic: string) => {
       const sig = child.sign(hash); // Raw ECDSA
       return `BIP322-SIG-${Buffer.from(sig).toString('hex')}`;
     } finally {
-      seedBytes.fill(0);
+      seedBytes.fill(0); if ((seed as any).fill) (seed as any).fill(0);
     }
 };
 
@@ -243,21 +243,23 @@ export const requestEnclaveSignature = async (
           pubkeyBuf,
           network,
         );
-        const signatures = [];
 
-        for (const item of hashes) {
-          const res = await signNative({
-            vault,
-            pin,
-            path,
-            messageHash: item.hash.toString("hex"),
-            network,
-          });
-          signatures.push({
-            index: item.index,
-            signature: Buffer.from(res.signature, "hex"),
-          });
-        }
+        const { getUnsignedTxHex } = await import("./psbt");
+        const unsignedTx = getUnsignedTxHex(request.payload.psbt, network);
+
+        const batchRes = await signBatchNative({
+          vault,
+          pin,
+          path,
+          hashes: hashes.map(h => h.hash.toString("hex")),
+          network,
+          payload: unsignedTx
+        });
+
+        const signatures = batchRes.signatures.map((res: any, i: number) => ({
+          index: hashes[i].index,
+          signature: Buffer.from(res.signature, "hex"),
+        }));
 
         broadcastHex = finalizePsbtWithSigs(
           request.payload.psbt,
@@ -459,7 +461,7 @@ export const requestEnclaveSignature = async (
   } finally {
     // Memory Hardening: Wiping seed bytes from RAM after usage.
     if (seedBytes instanceof Uint8Array) {
-      seedBytes.fill(0);
+      seedBytes.fill(0); if ((seed as any).fill) (seed as any).fill(0);
     }
   }
 };

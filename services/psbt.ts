@@ -232,3 +232,8 @@ export function finalizePsbtWithSigsReturnBase64(
   psbt.finalizeAllInputs();
   return psbt.toBase64();
 }
+
+export function getUnsignedTxHex(psbtBase64: string, network: Network) {
+  const psbt = bitcoin.Psbt.fromBase64(psbtBase64, { network: networkFrom(network) });
+  return psbt.data.globalMap.unsignedTx.toHex();
+}
