@@ -51,23 +51,28 @@ export function isSeedEnvelope(value: unknown): value is SeedEnvelopeV1 {
 }
 
 export async function encryptSeed(seed: Uint8Array, pin: string): Promise<string> {
-  const cryptoObj = getCrypto();
-  const salt = cryptoObj.getRandomValues(new Uint8Array(16));
-  const iv = cryptoObj.getRandomValues(new Uint8Array(12));
-  const keyMaterial = await getKeyMaterial(pin);
-  const key = await deriveAesKey(keyMaterial, salt);
-  const ciphertext = await cryptoObj.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    seed as unknown as ArrayBuffer,
-  );
-  const envelope: SeedEnvelopeV1 = {
-    v: 1,
-    salt: Array.from(salt),
-    iv: Array.from(iv),
-    data: Array.from(new Uint8Array(ciphertext))
-  };
-  return JSON.stringify(envelope);
+  try {
+    const cryptoObj = getCrypto();
+    const salt = cryptoObj.getRandomValues(new Uint8Array(16));
+    const iv = cryptoObj.getRandomValues(new Uint8Array(12));
+    const keyMaterial = await getKeyMaterial(pin);
+    const key = await deriveAesKey(keyMaterial, salt);
+    const ciphertext = await cryptoObj.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      seed as unknown as ArrayBuffer,
+    );
+    const envelope: SeedEnvelopeV1 = {
+      v: 1,
+      salt: Array.from(salt),
+      iv: Array.from(iv),
+      data: Array.from(new Uint8Array(ciphertext))
+    };
+    return JSON.stringify(envelope);
+  } finally {
+    // Zero-Leak Memory Hardening: Scrubbing sensitive seed buffer from RAM after encryption
+    seed.fill(0);
+  }
 }
 
 export async function decryptSeed(envelopeStr: string, pin: string): Promise<Uint8Array> {
