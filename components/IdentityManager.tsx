@@ -75,9 +75,9 @@ const IdentityManager: React.FC = () => {
                 }));
             }
             
-            // Check cache for insight
+            // Check cache for insight (SECURITY: use sessionStorage to prevent privacy leaks on shared devices)
             const cacheKey = `did_insight_${identity.did}`;
-            const cachedInsight = localStorage.getItem(cacheKey);
+            const cachedInsight = sessionStorage.getItem(cacheKey);
             
             if (cachedInsight) {
                 setInsight(cachedInsight);
@@ -87,7 +87,7 @@ const IdentityManager: React.FC = () => {
                     const res = await getDIDInsight(identity.did);
                     const insightStr = res || "Insight unavailable.";
                     setInsight(insightStr);
-                    localStorage.setItem(cacheKey, insightStr);
+                    sessionStorage.setItem(cacheKey, insightStr);
                 } catch (err) {
                     console.error("Insight fetch failed", err);
                 } finally {
