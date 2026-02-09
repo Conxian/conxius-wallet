@@ -422,7 +422,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   <div key={idx} className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-zinc-600 ml-1">Word #{idx + 1}</label>
                     <input
-                      type="text"
+                      type="password"
                       value={verifyWords[i]}
                       onChange={(e) => {
                         const next = [...verifyWords];

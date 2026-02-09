@@ -70,7 +70,7 @@ public class SecureEnclavePlugin extends Plugin {
   private static final String KEY_ALIAS_AUTH = "com.conxius.wallet.enclave.aes.v2.auth";
   private static final int GCM_TAG_BITS = 128;
   private long biometricSessionValidUntilMs = 0;
-  
+
   // Session Cache for Performance (Approved by Architecture Review)
   private SecretKey cachedSessionKey = null;
   private byte[] cachedSessionSalt = null;
@@ -119,7 +119,7 @@ public class SecureEnclavePlugin extends Plugin {
         builder.setIsStrongBoxBacked(true);
       }
     }
-    
+
     keyGenerator.init(builder.build());
     return keyGenerator.generateKey();
   }
@@ -475,7 +475,7 @@ public class SecureEnclavePlugin extends Plugin {
     // Decrypt: AES/GCM/NoPadding
     Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
     cipher.init(Cipher.DECRYPT_MODE, secret, new GCMParameterSpec(GCM_TAG_BITS, iv));
-    
+
     return cipher.doFinal(data);
   }
 
@@ -515,7 +515,7 @@ public class SecureEnclavePlugin extends Plugin {
 
           // 1. Derive
           SecretKey key = deriveKeyForVault(pin, salt);
-          
+
           // 2. Validate (Try to decrypt)
           // We need the IV and Data to test
           JSONArray ivJson = envelope.getJSONArray("iv");
@@ -558,7 +558,7 @@ public class SecureEnclavePlugin extends Plugin {
       JSONObject envelope = new JSONObject(vaultJson);
       JSONArray ivJson = envelope.getJSONArray("iv");
       JSONArray dataJson = envelope.getJSONArray("data");
-      
+
       JSONArray saltJson = envelope.getJSONArray("salt");
       byte[] salt = new byte[saltJson.length()];
       for(int i=0; i<saltJson.length(); i++) salt[i] = (byte)saltJson.getInt(i);
@@ -587,15 +587,15 @@ public class SecureEnclavePlugin extends Plugin {
       Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
       cipher.init(Cipher.DECRYPT_MODE, keyToUse, new GCMParameterSpec(GCM_TAG_BITS, iv));
       byte[] seed = cipher.doFinal(data);
-      
+
       try {
         DeterministicSeed detSeed = new DeterministicSeed(seed, (java.util.List<String>) null, 0L);
         byte[] seedBytes = detSeed.getSeedBytes(); DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(seedBytes); if (seedBytes != null) java.util.Arrays.fill(seedBytes, (byte) 0);
-        
+
         DeterministicHierarchy hierarchy = new DeterministicHierarchy(rootKey);
         String[] parts = path.split("/");
         DeterministicKey child = rootKey;
-        
+
         for (String part : parts) {
             if (part.equals("m")) continue;
             boolean hardened = part.endsWith("'") || part.endsWith("h");
@@ -665,11 +665,11 @@ public class SecureEnclavePlugin extends Plugin {
           try {
               DeterministicSeed detSeed = new DeterministicSeed(seed, (java.util.List<String>) null, 0L);
               byte[] seedBytes = detSeed.getSeedBytes(); DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(seedBytes); if (seedBytes != null) java.util.Arrays.fill(seedBytes, (byte) 0);
-              
+
               DeterministicHierarchy hierarchy = new DeterministicHierarchy(rootKey);
               String[] parts = path.split("/");
               DeterministicKey child = rootKey;
-              
+
               for (String part : parts) {
                   if (part.equals("m")) continue;
                   boolean hardened = part.endsWith("'") || part.endsWith("h");
@@ -677,7 +677,7 @@ public class SecureEnclavePlugin extends Plugin {
                   int index = Integer.parseInt(numStr);
                   child = HDKeyDerivation.deriveChildKey(child, new org.bitcoinj.crypto.ChildNumber(index, hardened));
               }
-              
+
               JSObject ret = new JSObject();
               ret.put("secret", child.getPrivateKeyAsHex());
               ret.put("pubkey", child.getPublicKeyAsHex());
@@ -754,10 +754,10 @@ public class SecureEnclavePlugin extends Plugin {
               );
               // Address derivation (Bech32)
               // BitcoinJ SegwitAddress not always straightforward in older versions, using script hash
-              // Actually, simpler to return pubkey and let JS do address if complex, 
+              // Actually, simpler to return pubkey and let JS do address if complex,
               // BUT user asked for native handling.
               // Let's return pubkey for consistency with Stacks
-              
+
               // 2. Stacks (m/44'/5757'/0'/0/0)
               DeterministicKey stxKey = hierarchy.deriveChild(
                   Arrays.asList(
@@ -798,11 +798,11 @@ public class SecureEnclavePlugin extends Plugin {
               ret.put("btcPubkey", btcKey.getPublicKeyAsHex());
               ret.put("stxPubkey", stxKey.getPublicKeyAsHex());
               ret.put("liquidPubkey", liquidKey.getPublicKeyAsHex());
-              
+
               // For EVM, we can easily get address
               byte[] evmPrivKey = evmKey.getPrivKeyBytes(); ECKeyPair evmPair = ECKeyPair.create(evmPrivKey); if (evmPrivKey != null) java.util.Arrays.fill(evmPrivKey, (byte) 0);
               ret.put("evmAddress", "0x" + org.web3j.crypto.Keys.getAddress(evmPair));
-              
+
               call.resolve(ret);
 
           } finally {
@@ -869,61 +869,6 @@ public class SecureEnclavePlugin extends Plugin {
   }
 
 
-
-  @PluginMethod
-  public void signBatch(PluginCall call) {
-    String vaultJson = call.getString("vault");
-    String pin = call.getString("pin");
-    String path = call.getString("path");
-    com.getcapacitor.JSArray hashes = call.getArray("hashes");
-    String networkStr = call.getString("network", "mainnet");
-    String payload = call.getString("payload");
-
-    if (vaultJson == null || path == null || hashes == null) {
-      call.reject("Missing required parameters");
-      return;
-    }
-
-    TransactionInfo info = parsePayload(payload, networkStr);
-    if (info.warning) {
-        call.reject(info.warningMessage);
-        return;
-    }
-
-    getActivity().runOnUiThread(() -> {
-        try {
-            new android.app.AlertDialog.Builder(getContext())
-                .setTitle(info.amount.equals("Unknown") ? "⚠️ Confirm UNKNOWN Batch" : "Confirm Batch Signing")
-                .setMessage("Action: " + info.action + "\nAmount: " + info.amount + "\nRecipient: " + info.recipient + "\nTotal Inputs: " + hashes.length() +
-                            (info.amount.equals("Unknown") ? "\n\nWARNING: Transaction details could not be verified!" : ""))
-                .setPositiveButton("Confirm", (dialog, which) -> {
-                    new Thread(() -> {
-                        try {
-                            com.getcapacitor.JSArray signatures = new com.getcapacitor.JSArray();
-                            for (int i = 0; i < hashes.length(); i++) {
-                                String hashHex = hashes.getString(i);
-                                JSObject res = executeSigningInternal(vaultJson, pin, path, hashHex, networkStr);
-                                signatures.put(res);
-                            }
-                            JSObject ret = new JSObject();
-                            ret.put("signatures", signatures);
-                            call.resolve(ret);
-                        } catch (Exception e) {
-                            call.reject("Batch signing failed: " + e.getMessage());
-                        }
-                    }).start();
-                })
-                .setNegativeButton("Cancel", (dialog, which) -> {
-                    call.reject("User cancelled signing");
-                })
-                .setCancelable(false)
-                .show();
-        } catch (Exception e) {
-            call.reject("Failed to show confirmation dialog: " + e.getMessage());
-        }
-    });
-  }
-
   @PluginMethod
   public void signTransaction(PluginCall call) {
     String vaultJson = call.getString("vault");
@@ -954,8 +899,8 @@ public class SecureEnclavePlugin extends Plugin {
     getActivity().runOnUiThread(() -> {
         try {
             new android.app.AlertDialog.Builder(getContext())
-                .setTitle(info.amount.equals("Unknown") ? "⚠️ Confirm UNKNOWN Transaction" : "Confirm Signing")
-                .setMessage("Action: " + info.action + "\nAmount: " + info.amount + "\nRecipient: " + info.recipient + (info.amount.equals("Unknown") ? "\n\nWARNING: Transaction details could not be verified!" : ""))
+                .setTitle("Confirm Signing")
+                .setMessage("Action: " + info.action + "\nAmount: " + info.amount + "\nRecipient: " + info.recipient)
                 .setPositiveButton("Confirm", (dialog, which) -> {
                     new Thread(() -> {
                         executeSigning(call, vaultJson, pin, path, messageHashHex, networkStr);
@@ -972,7 +917,7 @@ public class SecureEnclavePlugin extends Plugin {
     });
   }
 
-    private JSObject executeSigningInternal(String vaultJson, String pin, String path, String messageHashHex, String networkStr) throws Exception {
+  private void executeSigning(PluginCall call, String vaultJson, String pin, String path, String messageHashHex, String networkStr) {
     try {
       SecretKey keyToUse = null;
       JSONObject envelope = new JSONObject(vaultJson);
@@ -989,11 +934,11 @@ public class SecureEnclavePlugin extends Plugin {
               if (Arrays.equals(this.cachedSessionSalt, salt)) {
                   keyToUse = cachedSessionKey;
               } else {
-                 throw new Exception("Session valid but wallet mismatch (salt). Unlock required.");
+                 call.reject("Session valid but wallet mismatch (salt). Unlock required.");
                  return;
               }
           } else {
-              throw new Exception("Session expired or invalid. Unlock required.");
+              call.reject("Session expired or invalid. Unlock required.");
               return;
           }
       }
@@ -1006,16 +951,16 @@ public class SecureEnclavePlugin extends Plugin {
       Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
       cipher.init(Cipher.DECRYPT_MODE, keyToUse, new javax.crypto.spec.GCMParameterSpec(128, iv));
       byte[] seed = cipher.doFinal(data);
-      
+
       try {
         org.bitcoinj.core.NetworkParameters params = networkStr.equals("testnet") ? org.bitcoinj.params.TestNet3Params.get() : org.bitcoinj.params.MainNetParams.get();
         org.bitcoinj.wallet.DeterministicSeed detSeed = new org.bitcoinj.wallet.DeterministicSeed(seed, (java.util.List<String>) null, 0L);
         byte[] seedBytes = detSeed.getSeedBytes(); org.bitcoinj.crypto.DeterministicKey rootKey = org.bitcoinj.crypto.HDKeyDerivation.createMasterPrivateKey(seedBytes); if (seedBytes != null) java.util.Arrays.fill(seedBytes, (byte) 0);
-        
+
         org.bitcoinj.crypto.DeterministicHierarchy hierarchy = new org.bitcoinj.crypto.DeterministicHierarchy(rootKey);
         String[] parts = path.split("/");
         org.bitcoinj.crypto.DeterministicKey child = rootKey;
-        
+
         for (String part : parts) {
             if (part.equals("m")) continue;
             boolean hardened = part.endsWith("'") || part.endsWith("h");
@@ -1028,53 +973,43 @@ public class SecureEnclavePlugin extends Plugin {
              byte[] privKey = child.getPrivKeyBytes(); org.web3j.crypto.ECKeyPair keyPair = org.web3j.crypto.ECKeyPair.create(privKey); if (privKey != null) java.util.Arrays.fill(privKey, (byte) 0);
              byte[] msgHash = org.bouncycastle.util.encoders.Hex.decode(messageHashHex);
              org.web3j.crypto.Sign.SignatureData signature = org.web3j.crypto.Sign.signMessage(msgHash, keyPair, false);
-             
+
              byte[] retval = new byte[65];
              System.arraycopy(signature.getR(), 0, retval, 0, 32);
              System.arraycopy(signature.getS(), 0, retval, 32, 32);
-             
+
              byte v = signature.getV()[0];
              if (networkStr.equals("stacks") && v >= 27) {
                  v -= 27;
              }
              retval[64] = v;
-             
+
              String sigHex = org.web3j.utils.Numeric.toHexString(retval);
-             
+
              JSObject ret = new JSObject();
              ret.put("signature", sigHex);
              ret.put("pubkey", org.web3j.utils.Numeric.toHexString(keyPair.getPublicKey().toByteArray()));
              ret.put("recId", signature.getV()[0] - 27);
-             
-             return ret;
+
+             call.resolve(ret);
         } else {
             org.bitcoinj.core.Sha256Hash hash = org.bitcoinj.core.Sha256Hash.wrap(messageHashHex);
             org.bitcoinj.core.ECKey.ECDSASignature sig = child.sign(hash);
-            
+
             String sigHex = org.bouncycastle.util.encoders.Hex.toHexString(sig.encodeToDER());
-            
+
             JSObject ret = new JSObject();
             ret.put("signature", sigHex);
             ret.put("pubkey", child.getPublicKeyAsHex());
-            
-            return ret;
+
+            call.resolve(ret);
         }
       } finally {
         java.util.Arrays.fill(seed, (byte)0);
       }
     } catch (Exception e) {
-      throw new Exception("Signing failed: " + e.getMessage());
-    }
-  }
-
-  private void executeSigning(PluginCall call, String vaultJson, String pin, String path, String messageHashHex, String networkStr) {
-    try {
-      JSObject res = executeSigningInternal(vaultJson, pin, path, messageHashHex, networkStr);
-      call.resolve(res);
-    } catch (Exception e) {
       call.reject("Signing failed: " + e.getMessage());
     }
   }
-
 
 }

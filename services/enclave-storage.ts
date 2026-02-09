@@ -20,7 +20,7 @@ type SecureEnclavePlugin = {
     durationSeconds?: number;
   }): Promise<{ authenticated: boolean; validUntilMs?: number }>;
   clearBiometricSession(): Promise<void>;
-  signTransaction(options: {
+  signBatch(options: { vault: string; pin?: string; path: string; hashes: string[]; network?: string; payload?: string; }): Promise<{ signatures: { signature: string; pubkey: string }[] }>; signTransaction(options: {
     vault: string;
     pin?: string; // Made optional as per instruction
     path: string;
@@ -191,6 +191,20 @@ export async function getWalletInfoNative(options: {
 }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.getWalletInfo(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+export async function signBatchNative(options: {
+  vault: string;
+  pin?: string;
+  path: string;
+  hashes: string[];
+  network?: string;
+  payload?: string;
+}): Promise<{ signatures: { signature: string; pubkey: string }[] }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.signBatch(options);
   }
   throw new Error("Native Enclave not available");
 }
