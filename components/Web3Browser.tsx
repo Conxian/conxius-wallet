@@ -24,8 +24,8 @@ const Web3Browser: React.FC = () => {
     try {
       await Browser.open({ url: finalUrl, presentationStyle: 'popover' });
     } catch (e) {
-      // Fallback for web
-      window.open(finalUrl, '_blank');
+      // Fallback for web (SECURITY: use noopener,noreferrer to prevent tab-nabbing)
+      window.open(finalUrl, '_blank', 'noopener,noreferrer');
     }
   };
 

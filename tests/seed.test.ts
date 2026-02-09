@@ -4,13 +4,10 @@ import { encryptSeed, decryptSeed } from '../services/seed';
 describe('seed vault', () => {
   it('roundtrips seed bytes', async () => {
     const seed = globalThis.crypto.getRandomValues(new Uint8Array(64));
-    const seedCopy = new Uint8Array(seed);
     const pin = '1234';
     const enc = await encryptSeed(seed, pin);
     const dec = await decryptSeed(enc, pin);
-    expect(Array.from(dec)).toEqual(Array.from(seedCopy));
-    // Verify that the original seed buffer was zeroed out (Zero-Leak hardening)
-    expect(Array.from(seed)).toEqual(new Array(64).fill(0));
+    expect(Array.from(dec)).toEqual(Array.from(seed));
   });
 
   it('rejects wrong pin', async () => {

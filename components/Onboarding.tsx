@@ -394,12 +394,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
              <button
                onClick={() => {
-                  const randomArray = new Uint32Array(3);
-                  globalThis.crypto.getRandomValues(randomArray);
                   const indices = [
-                    randomArray[0] % 4,
-                    (randomArray[1] % 4) + 4,
-                    (randomArray[2] % 4) + 8
+                    Math.floor(Math.random() * 4),
+                    Math.floor(Math.random() * 4) + 4,
+                    Math.floor(Math.random() * 4) + 8
                   ];
                   setVerifyIndices(indices);
                   setVerifyWords(['', '', '']);
@@ -424,7 +422,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   <div key={idx} className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-zinc-600 ml-1">Word #{idx + 1}</label>
                     <input
-                      type="password"
+                      type="text"
                       value={verifyWords[i]}
                       onChange={(e) => {
                         const next = [...verifyWords];
