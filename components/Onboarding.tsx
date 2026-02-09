@@ -94,23 +94,29 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const handleFinalize = async () => {
     setIsFinalizing(true);
     const seedString = mnemonic.join(' ');
-    // Async derivation ensures UI doesn't freeze during heavy hashing
-    const roots = await deriveSovereignRoots(seedString, passphrase || undefined);
     const seedBytes = await bip39.mnemonicToSeed(seedString, passphrase || undefined);
-    const seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
-    const mnemonicVault = await encryptSeed(new TextEncoder().encode(seedString), pin);
     
-    // Pass PIN up to App for encryption
-    onComplete({ 
-      mode: appMode,
-      type: walletType,
-      seedVault,
-      mnemonicVault,
-      backupVerified: true,
-      masterAddress: roots.btc,
-      taprootAddress: roots.taproot,
-      stacksAddress: roots.stx
-    }, pin);
+    try {
+      // Async derivation ensures UI doesn't freeze during heavy hashing
+      const roots = await deriveSovereignRoots(seedString, passphrase || undefined);
+      const seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
+      const mnemonicVault = await encryptSeed(new TextEncoder().encode(seedString), pin);
+
+      // Pass PIN up to App for encryption
+      onComplete({
+        mode: appMode,
+        type: walletType,
+        seedVault,
+        mnemonicVault,
+        backupVerified: true,
+        masterAddress: roots.btc,
+        taprootAddress: roots.taproot,
+        stacksAddress: roots.stx
+      }, pin);
+    } finally {
+      // Memory Hardening: scrubbing sensitive seed bytes from RAM
+      seedBytes.fill(0);
+    }
 
     // SECURITY: Clear sensitive material from component state immediately after use
     setMnemonic([]);
@@ -389,7 +395,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
              <button
                onClick={() => {
                   const randomArray = new Uint32Array(3);
-                  window.crypto.getRandomValues(randomArray);
+                  globalThis.crypto.getRandomValues(randomArray);
                   const indices = [
                     randomArray[0] % 4,
                     (randomArray[1] % 4) + 4,
