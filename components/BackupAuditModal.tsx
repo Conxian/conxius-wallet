@@ -8,6 +8,13 @@ interface BackupAuditModalProps {
 }
 
 const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
+  const handleClose = () => {
+    // SECURITY: Clear sensitive material before closing
+    setPin('');
+    setMnemonicInput('');
+    onClose();
+  };
+
   const appContext = useContext(AppContext);
   const [step, setStep] = useState<'pin' | 'mnemonic' | 'success' | 'failure'>('pin');
   const [pin, setPin] = useState('');
@@ -47,6 +54,11 @@ const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
 
       if (decryptedMnemonic === inputMnemonic) {
         setStep('success');
+
+        // SECURITY: Clear sensitive material from memory immediately after verification
+        setPin('');
+        setMnemonicInput('');
+
         appContext?.setSecurity({ ...appContext.state.security, ...{ backupVerified: true } } as any);
         // We also want to update the walletConfig itself
         if (appContext?.state.walletConfig) {
@@ -68,7 +80,7 @@ const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-in fade-in duration-300">
       <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[3rem] p-8 space-y-6 relative shadow-2xl">
-        <button onClick={onClose} className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors">
+        <button onClick={handleClose} className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors">
           <X size={24} />
         </button>
 
@@ -139,7 +151,7 @@ const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
               <p className="text-xs text-zinc-400">Your physical backup is healthy and matches the enclave's root.</p>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="w-full bg-zinc-100 text-black font-black py-4 rounded-2xl uppercase tracking-widest hover:bg-white transition-all"
             >
               Done
@@ -161,7 +173,7 @@ const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
                 <RefreshCcw size={16} /> Retry
               </button>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="flex-1 bg-white text-black font-black py-4 rounded-2xl uppercase tracking-widest hover:bg-zinc-200 transition-all"
               >
                 Abort

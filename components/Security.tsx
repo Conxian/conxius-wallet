@@ -36,7 +36,17 @@ const Security: React.FC = () => {
   };
 
   const handleExportVault = () => {
-    const data = JSON.stringify(context?.state, null, 2);
+    if (!context?.state) return;
+
+    // SECURITY: Sanitize state to prevent leaking sensitive API keys and secrets in plain text
+    const sanitizedState = JSON.parse(JSON.stringify(context.state));
+
+    // Remove sensitive fields if they exist
+    if (sanitizedState.geminiApiKey) delete sanitizedState.geminiApiKey;
+    if (sanitizedState.security?.duressPin) delete sanitizedState.security.duressPin;
+    if (sanitizedState.lnBackend?.apiKey) delete sanitizedState.lnBackend.apiKey;
+
+    const data = JSON.stringify(sanitizedState, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

@@ -460,9 +460,17 @@ public class SecureEnclavePlugin extends Plugin {
     // Derive Key: PBKDF2WithHmacSHA256, 200000 iterations
     SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
     // seed.ts uses 256 bits (32 bytes) for AES key
-    PBEKeySpec spec = new PBEKeySpec(pin.toCharArray(), salt, 200000, 256);
+    char[] pinChars = pin.toCharArray();
+    PBEKeySpec spec = new PBEKeySpec(pinChars, salt, 200000, 256);
     SecretKey tmp = factory.generateSecret(spec);
-    SecretKeySpec secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+
+    // Zero-out PIN array immediately
+    Arrays.fill(pinChars, '\0');
+    spec.clearPassword();
+
+    byte[] encodedKey = tmp.getEncoded();
+    SecretKeySpec secret = new SecretKeySpec(encodedKey, "AES");
+    Arrays.fill(encodedKey, (byte) 0);
 
     // Decrypt: AES/GCM/NoPadding
     Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
@@ -479,7 +487,7 @@ public class SecureEnclavePlugin extends Plugin {
      SecretKey tmp = factory.generateSecret(spec);
 
      // Zero-out sensitive material immediately after use
-     Arrays.fill(pinChars, ' ');
+     Arrays.fill(pinChars, '\0');
      spec.clearPassword();
 
      byte[] encoded = tmp.getEncoded();
