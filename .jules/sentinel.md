@@ -23,3 +23,8 @@
 **Vulnerability:** Sensitive application state (including Gemini API keys, UTXO lists, and asset balances) persisted in React memory even when the wallet was in a "Locked" state. Additionally, recovery phrases remained in component state after being hidden from the UI.
 **Learning:** High-level UI lock states are often insufficient if the underlying application state is not explicitly purged. An attacker with access to a running process or a memory dump could extract sensitive data from a locked wallet.
 **Prevention:** Centralize locking logic into a "Zero-Memory" function that explicitly resets sensitive state variables to their defaults (while preserving non-sensitive user preferences). Always nullify secret strings (like mnemonics) in component state as soon as they are no longer actively displayed.
+
+## 2026-03-10 - [Export Sanitization and CI Resource Optimization]
+**Vulnerability:** The "Export Vault JSON" feature leaked plain-text secrets (Gemini API keys, LND keys, Duress PINs) by serializing the entire application state. Additionally, the CI pipeline used unverified security scanning flags and fragmented jobs, increasing resource overhead and external hit risks.
+**Learning:** Application exports intended for backup often bundle more than the user expects. If the export is not explicitly sanitized, it can transform a secure enclave into a plaintext leak. In CI, using high-overhead security tools with external verification can trigger billing or rate-limit locks if not optimized.
+**Prevention:** Always implement a dedicated sanitization pass before serializing state for export. Consolidate CI jobs and optimize security scan flags (e.g., removing --only-verified) to balance security depth with resource availability.

@@ -257,7 +257,7 @@ const NodeSettings: React.FC = () => {
                            </div>
                            <div>
                              <label className="text-[10px] font-black uppercase text-zinc-600">API Key</label>
-                             <input value={lnBackend.apiKey} onChange={(e) => setLnBackend(prev => ({ ...prev, apiKey: e.target.value }))} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" placeholder="Macaroon hex or token" />
+                             <input type="password" value={lnBackend.apiKey} onChange={(e) => setLnBackend(prev => ({ ...prev, apiKey: e.target.value }))} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" placeholder="Macaroon hex or token" />
                            </div>
                         </>
                      )}
