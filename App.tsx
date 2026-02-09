@@ -224,7 +224,7 @@ const App: React.FC = () => {
         await removeEnclaveBlob(STORAGE_KEY);
         localStorage.clear();
         sessionStorage.clear();
-        clearEnclaveBiometricSession();
+        clearEnclaveBiometricSession(); setGeminiServiceKey('');
         setState({ ...DEFAULT_STATE, assets: [], walletConfig: undefined });
         currentPinRef.current = null;
         setEnclaveExists(false);
@@ -302,11 +302,11 @@ const App: React.FC = () => {
   }));
   const setLnBackend = (cfg: LnBackendConfig) => setState(prev => ({ ...prev, lnBackend: cfg }));
   const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } as any }));
-  const setGeminiApiKey = (key: string) => setState(prev => ({ ...prev, geminiApiKey: key }));
+  const setGeminiApiKey = (key: string) => { setGeminiServiceKey(key); setState(prev => ({ ...prev, geminiApiKey: key })); };
 
   const performLock = () => {
      currentPinRef.current = null;
-     clearEnclaveBiometricSession();
+     clearEnclaveBiometricSession(); setGeminiServiceKey('');
      setIsLocked(true);
      // Memory Hardening: Reset state to defaults on lock to purge sensitive material (Gemini keys, assets) from RAM.
      setState(prev => ({

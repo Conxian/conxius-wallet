@@ -172,9 +172,9 @@ const Settings: React.FC = () => {
                  <Briefcase size={12} /> Corporate Entity (Encrypted)
                </label>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input placeholder="Legal Entity Name" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:outline-none" />
-                  <input placeholder="Tax / VAT ID (Optional)" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:outline-none" />
-                  <input placeholder="Registered Address" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="md:col-span-2 bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:outline-none" />
+                  <input type="password" placeholder="Legal Entity Name" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:outline-none" />
+                  <input type="password" placeholder="Tax / VAT ID (Optional)" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:outline-none" />
+                  <input type="password" placeholder="Registered Address" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="md:col-span-2 bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:outline-none" />
                </div>
                <p className="text-[10px] text-zinc-500 italic">These details are signed by your DID and included in PayJoin invoices.</p>
             </div>

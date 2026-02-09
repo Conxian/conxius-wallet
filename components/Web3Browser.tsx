@@ -15,7 +15,7 @@ const Web3Browser: React.FC = () => {
   const [url, setUrl] = useState('');
   
   const handleOpen = async (targetUrl: string) => {
-    let finalUrl = targetUrl;
+    let finalUrl = targetUrl.trim(); if (finalUrl.toLowerCase().startsWith('javascript:')) return;
     if (!finalUrl.startsWith('http')) {
        finalUrl = 'https://' + finalUrl;
     }
