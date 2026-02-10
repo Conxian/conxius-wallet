@@ -18,7 +18,7 @@ export const getBountyAudit = async (bountyTitle: string, description: string) =
     if (!_apiKey) throw new Error("API Key not configured");
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `Perform a technical audit of the following development bounty:
       Title: "${bountyTitle}"
       Description: "${description}"
@@ -44,7 +44,7 @@ export const generateReleaseNotes = async (version: string) => {
     if (!_apiKey) throw new Error("API Key not configured");
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `Generate a high-density, professional 'Cypherpunk' style release report for Conxius Wallet SVN ${version}. 
       Highlight:
       - The transition to BSL 1.1 Licensing.
@@ -70,7 +70,7 @@ export const getSystemHealthSummary = async (testResults: any[]) => {
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const resultsStr = testResults.map(r => `${r.label}: ${r.status}`).join(', ');
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Provide a clinical, high-density system health summary for the Conxius Sovereign Enclave based on these diagnostic results: ${resultsStr}. 
       Evaluate the risk level (Low/Medium/High) and provide a "Protocol Directive".`,
       config: {
@@ -88,7 +88,7 @@ export const getNetworkRPCResearch = async (layer: string) => {
     if (!_apiKey) throw new Error("API Key not configured");
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Research into RPC infrastructure for: "${layer}". Identify top 3 providers and one Tor endpoint.`,
       config: {
         systemInstruction: "You are the Conxius Infrastructure Lead.",
@@ -105,7 +105,7 @@ export const getFinalSystemHardeningChecklist = async () => {
     if (!_apiKey) throw new Error("API Key not configured");
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: "Provide a 5-point 'Hardened Mainnet' checklist for a Bitcoin multi-layer wallet. Focus on cold storage, Tor V3, ZK identity, NTT immutability, and fallback.",
       config: {
         systemInstruction: "You are a cyber-security expert.",
@@ -123,7 +123,7 @@ export const getDeploymentReadinessAudit = async (state: any) => {
     if (!_apiKey) throw new Error("API Key not configured");
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `Final Go/No-Go audit. Node Sync: ${state.nodeSyncProgress}%, Sovereignty Score: ${state.sovereigntyScore}. Evaluate readiness for mainnet.`,
       config: {
         systemInstruction: "You are the Release Manager.",
@@ -141,7 +141,7 @@ export const getNodeEthosAdvice = async (path: string) => {
     if (!_apiKey) throw new Error("API Key not configured");
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Advise on the 'Sovereign Ethos' of: "${path}". Compare with custodial wallets.`,
       config: {
         systemInstruction: "You are the Satoshi Sovereign Researcher.",
@@ -159,7 +159,7 @@ export const getRiskProfileAudit = async (assets: Asset[]) => {
     if (!_apiKey) throw new Error("API Key not configured");
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `Risk audit for: ${assetsSummary}. Evaluate counterparty, liquidity, regulatory, and technical risks.`,
       config: {
         systemInstruction: "You are the Chief Risk Officer.",
@@ -177,7 +177,7 @@ export const getAssetInsight = async (asset: Asset) => {
     if (!_apiKey) throw new Error("API Key not configured");
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Technical analysis for ${asset.name} (${asset.symbol}) on ${asset.layer}.`,
       config: {
         systemInstruction: "You are Satoshi Pro AI.",
@@ -195,7 +195,7 @@ export const performDeepScan = async (assets: any[]) => {
     if (!_apiKey) throw new Error("API Key not configured");
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `Deep Scan: ${assetsSummary}. Provide risk scores, tax opportunities, and alpha.`,
       config: {
         systemInstruction: "You are Satoshi Pro AI.",
@@ -213,7 +213,7 @@ export const getDIDInsight = async (did: string) => {
     if (!_apiKey) throw new Error("API Key not configured");
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `Audit Bitcoin DID: "${did}". Explain DPKI shift, PoW immutability, and sovereignty implications.`,
       config: {
         systemInstruction: "You are Satoshi AI.",
@@ -232,7 +232,7 @@ export const analyzePortfolio = async (assets: any[]) => {
     if (!_apiKey) throw new Error("API Key not configured");
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Analyze portfolio: ${assetsSummary}.`,
     });
     return response.text;

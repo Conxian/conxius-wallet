@@ -162,11 +162,17 @@ User → Conxius UI → Partner API → Blockchain
 
 | Feature | Issue |
 |---------|-------|
-| NTT Bridge | Returns mock tx hash — Wormhole SDK integration required |
-| Changelly Swaps | Mock quotes + fake payinAddress |
-| Liquid Peg-in | Gated with explicit error (previously returned fake address) |
-| Gas Abstraction | Uses mocked executeGasSwap |
 | Runes Balance | Always returns empty array |
+
+### 🛑 Blocked (Waiting for Infrastructure)
+
+| Feature | Missing Dependency | Action Required |
+|---------|-------------------|-----------------|
+| **NTT Bridge** | Deployed Wormhole Contracts | Deploy TokenManager/Transceiver on Mainnet |
+| **Changelly Swaps** | Backend Proxy | Deploy `VITE_CHANGELLY_PROXY_URL` service |
+| **Bisq DEX** | Bisq Daemon + Proxy | Deploy `VITE_BISQ_PROXY_URL` service |
+| **Marketplace** | API Keys | Acquire keys for Bitrefill/Silent.Link |
+| **Liquid Peg-in** | Federation Script | Configure `LIQUID_FEDERATION_SCRIPT` |
 
 ### ❌ Missing
 

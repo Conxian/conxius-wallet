@@ -990,11 +990,9 @@ public class SecureEnclavePlugin extends Plugin {
                   keyToUse = cachedSessionKey;
               } else {
                  throw new Exception("Session valid but wallet mismatch (salt). Unlock required.");
-                 return;
               }
           } else {
               throw new Exception("Session expired or invalid. Unlock required.");
-              return;
           }
       }
 

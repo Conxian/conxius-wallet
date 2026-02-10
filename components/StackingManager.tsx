@@ -1,35 +1,59 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Coins, TrendingUp, Clock, Info, ArrowUpRight, Lock, Unlock, Bot, Loader2, ChevronRight, CheckCircle2, Calendar } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getAssetInsight } from '../services/gemini';
-// Added Asset import to satisfy type requirements for getAssetInsight
+import { fetchPoxInfo, fetchRewardHistory, estimateStackingApy, fetchStackerInfo, type PoxCycleInfo, type RewardEntry } from '../services/stacking';
 import { Asset } from '../types';
-
-const MOCK_HISTORICAL_REWARDS = [
-  { cycle: '#90', btc: 0.0011, date: 'Aug 12' },
-  { cycle: '#91', btc: 0.0013, date: 'Aug 26' },
-  { cycle: '#92', btc: 0.0012, date: 'Sep 09' },
-  { cycle: '#93', btc: 0.0015, date: 'Sep 23' },
-  { cycle: '#94', btc: 0.0014, date: 'Oct 07' },
-  { cycle: '#95', btc: 0.0016, date: 'Oct 21' },
-  { cycle: '#96', btc: 0.0014, date: 'Nov 04' },
-  { cycle: '#97', btc: 0.0018, date: 'Nov 18' },
-];
+import { AppContext } from '../context';
+import { MOCK_HISTORICAL_REWARDS } from '../constants';
 
 const StackingManager: React.FC = () => {
+  const { state, notify } = useContext(AppContext) || {};
   const [isStacking, setIsStacking] = useState(false);
   const [stackAmount, setStackAmount] = useState('5000');
   const [duration, setDuration] = useState(12);
   const [isProcessing, setIsProcessing] = useState(false);
   const [insight, setInsight] = useState<string | null>(null);
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
+  const [poxInfo, setPoxInfo] = useState<PoxCycleInfo | null>(null);
+  const [rewardHistory, setRewardHistory] = useState<RewardEntry[]>([]);
+  const [apy, setApy] = useState<number>(0);
+
+  // Get addresses from wallet config if available
+  const stxAddress = state?.walletConfig?.stacksAddress || '';
+  const btcAddress = state?.walletConfig?.taprootAddress || state?.walletConfig?.masterAddress || '';
+
+  useEffect(() => {
+    const loadPoxData = async () => {
+      // Prepare promises
+      const network = state?.network || 'mainnet';
+      const promises: [Promise<PoxCycleInfo>, Promise<RewardEntry[]>, Promise<number>, Promise<any>] = [
+        fetchPoxInfo(network),
+        fetchRewardHistory(btcAddress, network), 
+        estimateStackingApy(network),
+        stxAddress ? fetchStackerInfo(stxAddress, network) : Promise.resolve(null)
+      ];
+
+      const [pox, rewards, estimatedApy, stackerInfo] = await Promise.all(promises);
+      
+      setPoxInfo(pox);
+      if (rewards.length > 0) setRewardHistory(rewards);
+      setApy(estimatedApy);
+
+      // If we found real on-chain stacking status, sync it (unless we just toggled it locally in simulation)
+      if (stackerInfo && stackerInfo.isStacking) {
+        setIsStacking(true);
+        // Could also update amountStacked here if we wanted to be precise
+      }
+    };
+    loadPoxData();
+  }, [stxAddress, btcAddress, state?.network]);
 
   useEffect(() => {
     const fetchInsight = async () => {
       setIsLoadingInsight(true);
       try {
-        // Fix: Passing a mock Asset object to match the expected signature of getAssetInsight (expects 1 argument of type Asset)
         const res = await getAssetInsight({
           id: 'pox-protocol',
           name: 'Proof of Transfer (PoX)',
@@ -67,7 +91,7 @@ const StackingManager: React.FC = () => {
         <div className="flex gap-3">
           <div className="bg-zinc-900/50 border border-zinc-800 px-4 py-2 rounded-xl">
             <p className="text-[10px] text-zinc-600 font-bold uppercase">Estimated APY</p>
-            <p className="text-lg font-bold text-green-500">~9.4% <span className="text-[10px] text-zinc-500">in BTC</span></p>
+            <p className="text-lg font-bold text-green-500">~{apy > 0 ? apy.toFixed(1) : '—'}% <span className="text-[10px] text-zinc-500">in BTC</span></p>
           </div>
         </div>
       </header>
@@ -83,10 +107,10 @@ const StackingManager: React.FC = () => {
             <div className="relative z-10 space-y-8">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="text-xl font-bold mb-1">Stacking Cycle #98</h3>
+                  <h3 className="text-xl font-bold mb-1">Stacking Cycle #{poxInfo?.currentCycle || '—'}</h3>
                   <div className="flex items-center gap-2 text-zinc-500 text-sm">
                     <Clock size={14} />
-                    <span>Next cycle starts in 482 blocks (~3.5 days)</span>
+                    <span>Next cycle starts in {poxInfo?.nextCycleIn?.toLocaleString() || '—'} blocks (~{poxInfo ? (poxInfo.nextCycleIn * 10 / 60 / 24).toFixed(1) : '—'} days)</span>
                   </div>
                 </div>
                 {isStacking && (
@@ -117,6 +141,9 @@ const StackingManager: React.FC = () => {
                         value={stackAmount}
                         onChange={(e) => setStackAmount(e.target.value)}
                         className="bg-transparent text-4xl font-bold text-white focus:outline-none w-full"
+                        aria-label="Amount to Lock"
+                        title="Amount to Lock"
+                        placeholder="0"
                       />
                       <button className="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-lg text-zinc-400">MAX</button>
                     </div>
@@ -134,6 +161,8 @@ const StackingManager: React.FC = () => {
                       value={duration}
                       onChange={(e) => setDuration(parseInt(e.target.value))}
                       className="w-full accent-orange-500"
+                      aria-label="Stacking Duration in Cycles"
+                      title="Stacking Duration in Cycles"
                     />
                     <div className="flex justify-between text-[10px] font-bold text-zinc-700 uppercase">
                       <span>1 Cycle</span>
@@ -181,7 +210,7 @@ const StackingManager: React.FC = () => {
             
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={MOCK_HISTORICAL_REWARDS}>
+                <AreaChart data={rewardHistory.length > 0 ? rewardHistory : [{cycle: '—', btc: 0, date: ''}]}>
                   <defs>
                     <linearGradient id="colorBtc" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>

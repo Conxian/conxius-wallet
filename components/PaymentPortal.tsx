@@ -212,17 +212,50 @@ const PaymentPortal: React.FC = () => {
       return;
     }
 
-    // ... Onramp logic ...
-    setIsSending(true);
-    setTimeout(() => {
-      setIsSending(false);
-      setShowSuccess(true);
+    if (method === 'onramp') {
+      setIsSending(true);
+      
+      const apiKey = import.meta.env.VITE_TRANSAK_API_KEY || '4b97b059-3663-42e6-b619-3ffa7f883259'; // Fallback to a demo key if missing
+      const environment = (context?.state.network === 'mainnet' && context?.state.isMainnetLive) ? 'PRODUCTION' : 'STAGING';
+      const baseUrl = environment === 'PRODUCTION' ? 'https://global.transak.com' : 'https://global-stg.transak.com';
+      const walletAddress = context?.state.walletConfig?.masterAddress;
+
+      if (!walletAddress) {
+          context?.notify('error', 'Wallet address not found.');
+          setIsSending(false);
+          return;
+      }
+
+      const params = new URLSearchParams({
+          apiKey,
+          cryptoCurrencyCode: 'BTC',
+          walletAddress,
+          disableWalletAddressForm: 'true',
+          redirectURL: window.location.href,
+          themeColor: 'F97316' // Orange-500
+      });
+
+      const url = `${baseUrl}?${params.toString()}`;
+      
+      // Give UI a moment to show loading state before redirect
       setTimeout(() => {
-        setShowSuccess(false);
-        setRecipient('');
-        setAmount('');
-      }, 3000);
-    }, 2000);
+          window.open(url, '_blank');
+          context?.notify('info', 'Redirecting to Transak Gateway...');
+          setIsSending(false);
+          setShowSuccess(true); // Optimistically show success state in UI
+          
+          setTimeout(() => {
+            setShowSuccess(false);
+            setRecipient('');
+            setAmount('');
+          }, 3000);
+      }, 1000);
+      
+      return;
+    }
+
+    // Fallback if method is unknown (should not happen)
+    setIsSending(false);
   };
 
 
