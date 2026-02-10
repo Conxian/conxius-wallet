@@ -47,6 +47,7 @@ import { encryptSeed } from './services/seed';
 import * as bip39 from 'bip39';
 import { decryptSeed } from './services/seed';
 import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
+import { ConxiusWormholeSigner } from './services/wormhole-signer';
 import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
 import { notificationService } from './services/notifications';
 import { setGeminiApiKey as setGeminiServiceKey } from './services/gemini';
@@ -360,6 +361,16 @@ const App: React.FC = () => {
     }
   };
   
+  const getWormholeSigner = (chain: any) => {
+    // Assuming 'chain' is compatible or we map it. 
+    // The signer needs the auth callback which we already have: authorizeSignature
+    // We use a placeholder address because the actual address is derived/verified by the enclave during signing
+    // or expected to be known by the caller. 
+    // In a real implementation, we might want to pass the derived address here if known.
+    const address = state.walletConfig?.masterAddress || '0xPlaceholder'; 
+    return new ConxiusWormholeSigner(chain, address, authorizeSignature);
+  };
+  
   const setWalletConfig = (config: WalletConfig & { mode?: AppMode }, pin?: string) => {
      const effectiveMode: AppMode = config.mode ?? 'sovereign';
      const initialAssets = effectiveMode === 'sovereign' ? [] : MOCK_ASSETS;
@@ -488,7 +499,7 @@ const App: React.FC = () => {
       );
     }
     return (
-      <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setGeminiApiKey }}>
+      <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setGeminiApiKey, getWormholeSigner }}>
         <Onboarding onComplete={(config, pin) => { if (config) setWalletConfig(config as any, pin); }} />
         <ToastContainer toasts={toasts} removeToast={removeToast} />
       </AppContext.Provider>
@@ -496,7 +507,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setGeminiApiKey }}>
+    <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setGeminiApiKey, getWormholeSigner }}>
       <div className={`flex bg-[var(--bg)] text-[var(--text)] min-h-screen selection:bg-[rgba(247,147,26,0.35)] overflow-hidden`}>
         <div className="hidden md:block">
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />

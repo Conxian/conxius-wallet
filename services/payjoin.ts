@@ -42,10 +42,9 @@ export class PayJoinService {
       walletPsbt,
       payjoinParameters: {
          payjoinUrl: parsed.options.pj,
-         // Pass other optional params if they exist in the URI
          ...parsed.options
       }
-    } as any) as any;
+    });
 
     try {
       // 1. Get the PayJoin PSBT from the receiver

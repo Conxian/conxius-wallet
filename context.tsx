@@ -24,4 +24,5 @@ export const AppContext = createContext<{
   setLnBackend: (cfg: LnBackendConfig) => void;
   setSecurity: (s: Partial<AppState['security']>) => void;
   setGeminiApiKey: (key: string) => void;
+  getWormholeSigner: (chain: any) => any; // Typed as any to avoid circular deps in context, or import types
 } | null>(null);
