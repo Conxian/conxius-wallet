@@ -14,44 +14,46 @@ permalink: /monetization
 
 We earn a referral fee for connecting users to regulated financial services.
 
-#### Fiat On-Ramp
+#### "Sovereign Shield" Shop (Hardware Affiliates) 🛡️
 
-* **Partner:** Transak
-* **Mechanism:** User buys BTC via the Transak widget.
-* **Revenue:** ~0.5% - 1% of transaction volume (Paid by Transak).
+**Verdict:** **Lowest Effort / High Trust**
+Curated security recommendation list. We do not sell hardware; we recommend the best tools for sovereignty.
 
-#### Token Swaps (Enhanced Revenue Share)
+* **BitBox02 (Best Fit):**
+  * **Why:** Swiss-made, open-source firmware, Bitcoin-only friendly.
+  * **Revenue:** **12% commission** (Paid in Bitcoin).
+  * **Integration:** Direct "Buy BitBox02" link in Security section.
+* **Trezor:**
+  * **Why:** The OG hardware wallet. High brand recognition.
+  * **Revenue:** **12-15% commission**.
+* **Ledger:**
+  * **Why:** Market volume leader.
+  * **Revenue:** **10% commission**.
 
-* **Partner:** Changelly / THORChain
-* **Mechanism:** User swaps BTC for STX via integrated swap interface.
-* **Revenue:**
-  * **Changelly:** 50/50 revenue share on all swap fees (0.25-0.5% split)
-  * **THORChain:** Affiliate fee basis points on every swap
-  * **Duration:** 90-day cookie window for Changelly
-* **Why it scales:** Every swap user makes generates recurring passive income.
+#### "Live on Crypto" Mode (Bitrefill Integration) 🛒
 
-#### "Sovereign Shield" Shop - Hardware Wallet Affiliate 🛡️
+**Verdict:** **High Utility / Recurring Revenue**
+Turns Conxius into a daily driver for South African users.
 
-* **Partners:** Ledger, Trezor, BitBox
-* **Mechanism:** Recommended hardware wallets section in app settings
-* **Commission Structure:**
-  * Ledger: 10-12% commission
-  * Trezor: Up to 15% commission (tiered structure)
-  * BitBox: Competitive hardware wallet rates
-* **Alignment:** Perfectly aligns with "Sovereign by Design" philosophy
-* **User Journey:** Users value security → upgrade to hardware → you earn commission
+* **The Hook:** Buy Checkers, Takealot, Mr D, Uber, and Airtime with Bitcoin/Lightning.
+* **Revenue:** **1% of total volume** forever (Passive).
+* **Integration:** "Spend" tab/button in Dashboard opening `bitrefill.com/?ref=[YourID]`.
 
-#### "Live on Crypto" Mode - Bitrefill Integration 🛒
+#### Sovereign Swaps (Changelly & THORChain) 🔄
 
-* **Partner:** Bitrefill (Global gift card & voucher platform)
-* **Mechanism:**
-  * In-app "Spend" section linking to Bitrefill catalog
-  * Widget integration for seamless experience
-  * Support for Checkers, Takealot, airtime (South Africa focus)
-* **Revenue:** 1% commission on every purchase, instantly
-* **Catalog:** 7,000+ products across 186 countries
-* **Payment Methods:** BTC, Lightning, USDT, ETH, LTC, DOGE, DASH
-* **Why it fits:** Transforms Conxius from "holding" wallet to "living" wallet
+**Verdict:** **Highest Potential / Native Feel**
+
+* **Option A: Changelly (The Easy Route)**
+  * **How:** API integration.
+  * **Revenue:** 50% revenue share of their 0.5% fee (0.25% total).
+  * **Pros:** Broad token support.
+  * **Cons:** Potential KYC.
+
+* **Option B: THORChain (The Sovereign Route - Priority)**
+  * **How:** Native L1 swaps (BTC -> ETH/Stables).
+  * **The "Memo" Trick:** Append `:conxius:50` to the swap memo.
+  * **Revenue:** **50 basis points (0.5%)** programmatic on-chain revenue.
+  * **Requirement:** Register "conxius" name on THORChain.
 
 ### 1.2 Premium Software Features & Services
 
@@ -62,6 +64,26 @@ We earn a referral fee for connecting users to regulated financial services.
   * *Note: This is a software license fee, not a financial management fee.*
 * **Gas Abstraction Service:**
   * **Mechanism:** A "convenience fee" for simplifying cross-chain transactions.
+
+### 1.3 The Sovereign Bridge (Revenue Option 3) 🌉
+
+**Concept:** A "Hidden Rail" that allows users to exit the altcoin casino and enter Bitcoin sovereignty without leaving the app.
+**Mechanism:** Users deposit ETH/EVM assets into a generated "Bridge Portal" address. The system offers an immediate "Purify" option to swap to BTC or STX.
+
+#### Vampire Incentives (The "Purification" Strategy) 🧛
+How we naturally incentivize users to move assets to Conxius:
+
+1.  **The "Purification" Score:**
+    *   **Hook:** "Your portfolio is 40% unsecured (ETH). Purify it to boost your Sovereign Score."
+    *   **Reward:** +50 Sovereignty Points for every 0.1 BTC swapped from Alts.
+2.  **The Yield Flip (Greed + Ethos):**
+    *   **Hook:** Show a live comparison: "ETH Staking (3%) vs Stacks PoX (8% + BTC Appreciation)."
+    *   **Action:** One-click "Zap" from ETH Wallet -> Stacking Pool.
+3.  **The "Dust Sweeper":**
+    *   **Hook:** "You have $14 in scattered shitcoins. Sweep to Sats?"
+    *   **Revenue:** We take a slightly higher spread on dust sweeps due to complexity, user gets clean sats.
+
+## 2. Implementation Roadmap
   * **Implementation:** A 0.1% convenience fee is charged on Wormhole NTT transfers to cover the costs of the Wormhole Relayer and the gas abstraction logic.
   * **User Value:** Pay for cross-chain transactions in a single asset (e.g., sBTC) while the software handles background gas token swaps.
 

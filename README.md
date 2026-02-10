@@ -32,7 +32,7 @@ Conxius is a "Bitcoin-First" mobile wallet that offers hardware-level security w
 
 **Prerequisites**
 
-- Node.js (v18+)
+- Node.js (v20+)
 - Android Studio + Android SDK (for device installs)
 - Java 17+
 
@@ -66,7 +66,7 @@ Conxius is a "Bitcoin-First" mobile wallet that offers hardware-level security w
 
 | Metric | Result |
 | :--- | :--- |
-| **Total Tests** | 27 |
+| **Total Tests** | 27+ (expanding) |
 | **Passed** | 27 |
 | **Failed** | 0 |
 | **Duration** | 2.73s |
@@ -87,4 +87,6 @@ Conxius is a "Bitcoin-First" mobile wallet that offers hardware-level security w
 
 - [WHITEPAPER.md](WHITEPAPER.md)
 - [PRD.md](PRD.md) - **Source of Truth**
+- [IMPLEMENTATION_REGISTRY.md](IMPLEMENTATION_REGISTRY.md) - **Real vs Mocked vs Missing**
 - [CHANGELOG.md](CHANGELOG.md)
+- [GAPS_AND_RECOMMENDATIONS.md](GAPS_AND_RECOMMENDATIONS.md)

@@ -8,8 +8,9 @@ permalink: /agents
 
 Welcome, Sovereign Agent. This document provides instructions and context for working with the Conxius Wallet codebase.
 
-**Last Updated:** 2026-02-07  
-**Session Context:** See `PROJECT_CONTEXT.md` for current state
+**Last Updated:** 2026-02-10  
+**Session Context:** See `PROJECT_CONTEXT.md` for current state  
+**Feature Status:** See `IMPLEMENTATION_REGISTRY.md` for real vs mocked vs missing
 
 ---
 
@@ -36,7 +37,7 @@ Conxius is an Android-first wallet built using:
 
 ### Native Security Layer (The Conclave)
 
-- **Secure Enclave:** `SecureEnclavePlugin.java` (836 lines)
+- **Secure Enclave:** `SecureEnclavePlugin.java` (1,081 lines)
   - Android Keystore AES-GCM-256 encryption
   - BiometricPrompt with BIOMETRIC_STRONG + DEVICE_CREDENTIAL
   - StrongBox/TEE hardware enforcement (Android P+)
@@ -59,24 +60,30 @@ Conxius is an Android-first wallet built using:
 
 ### Key Services (Verified Code)
 
-- `/services/signer.ts` (440 lines): Multi-layer signing, PSBT support, BIP-322
-- `/services/enclave-storage.ts` (193 lines): Secure blob storage with biometric gating
+- `/services/signer.ts` (459 lines): Multi-layer signing, PSBT support, BIP-322
+- `/services/enclave-storage.ts` (211 lines): Secure blob storage with biometric gating
 - `/services/protocol.ts` (245 lines): Multi-chain balance fetching, transaction broadcast
-- `/services/psbt.ts` (223 lines): PSBT creation, signing, finalization
-- `/services/seed.ts` (114 lines): Seed encryption/decryption with PBKDF2
+- `/services/psbt.ts` (249 lines): PSBT creation, signing, finalization
+- `/services/seed.ts` (98 lines): Seed encryption/decryption with PBKDF2
+- `/services/ntt.ts` (82 lines): NTT bridge — **EXPERIMENTAL**
+- `/services/swap.ts` (107 lines): Changelly/THORChain swaps — **EXPERIMENTAL**
+- `/services/lightning.ts` (52 lines): LNURL/Bolt11 decode
+- `/services/identity.ts` (137 lines): DID:PKH + SIWx auth
 
 ---
 
 ## 📁 Key Directories
 
-- `/components`: 36 React UI components
-  - `Dashboard.tsx` (488 lines): Multi-asset portfolio view
-  - `PaymentPortal.tsx` (1,071 lines): Send/receive flows
-  - `NTTBridge.tsx` (568 lines): Cross-chain Native Token Transfers
-- `/services`: Core business logic (signing, protocol adapters, storage)
-- `/android`: Capacitor Android project with SecureEnclavePlugin
-- `/tests`: 8 test files (⚠️ needs expansion - see GAPS_AND_RECOMMENDATIONS.md)
+- `/components`: 37 React UI components
+  - `Dashboard.tsx`: Multi-asset portfolio view
+  - `PaymentPortal.tsx`: Send/receive flows
+  - `NTTBridge.tsx`: Cross-chain Native Token Transfers — **EXPERIMENTAL**
+  - `SilentPayments.tsx`: BIP-352 — **EXPERIMENTAL** (uses mock seed)
+- `/services`: Core business logic (18 modules — signing, protocol adapters, storage)
+- `/android`: Capacitor Android project (SecureEnclavePlugin, BreezPlugin, NativeCrypto)
+- `/tests`: 12 test files (signer, protocol, enclave-storage, seed, crypto, sovereignty, etc.)
 - `/docs`: Extended documentation (PRD, Whitepaper, Analysis)
+- `IMPLEMENTATION_REGISTRY.md`: **Authoritative feature status document**
 
 ---
 

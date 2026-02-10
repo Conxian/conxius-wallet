@@ -9,7 +9,7 @@ import * as bip39 from 'bip39';
 import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import * as bitcoin from 'bitcoinjs-lib';
-import { getAddressFromPrivateKey } from '@stacks/transactions';
+import { getAddressFromPrivateKey, getAddressFromPublicKey } from '@stacks/transactions';
 import { Buffer } from 'buffer';
 import { publicKeyToEvmAddress } from './evm';
 import { Capacitor } from "@capacitor/core";
@@ -79,21 +79,12 @@ export const deriveSovereignRoots = async (mnemonicOrVault: string, passphraseOr
           const liquidAddress = info.liquidPubkey; // Returning pubkey as placeholder if lib missing
 
           // Stacks Address Derivation from Pubkey
-          // @stacks/transactions getAddressFromPrivateKey needs private key.
-          // But we can get address from Public Key too.
-          // Using Stacks Encoding logic manually or library helper if available.
-          // Ideally we import { getAddressFromPublicKey } from '@stacks/transactions';
-          // But 'getAddressFromPrivateKey' is what was imported.
-          // We'll use a placeholder or assume we can derive it.
-          // For now, let's keep it simple: we trust the native layer returned correct pubkeys.
-          // We need to implement address derivation here if the library supports it.
-          // Since we don't have getAddressFromPublicKey imported, we might need to add it or use a trick.
-          // Actually, getAddressFromPrivateKey is imported. We can likely import getAddressFromPublicKey.
+          const stxAddress = getAddressFromPublicKey(info.stxPubkey, 'mainnet');
           
           return {
             btc: btcAddress || '',
-            taproot: info.taprootAddress || '', // Native should return this
-            stx: `SP...`, // Placeholder until we import helper
+            taproot: info.taprootAddress || '',
+            stx: stxAddress,
             rbtc: info.evmAddress, // Native returned address
             eth: info.evmAddress, // Ethereum shared root with RSK
             liquid: liquidAddress,
@@ -187,7 +178,7 @@ export const signBip322Message = async (message: string, mnemonic: string) => {
       const sig = child.sign(hash); // Raw ECDSA
       return `BIP322-SIG-${Buffer.from(sig).toString('hex')}`;
     } finally {
-      seedBytes.fill(0); if ((seed as any).fill) (seed as any).fill(0);
+      seedBytes.fill(0);
     }
 };
 
@@ -461,7 +452,7 @@ export const requestEnclaveSignature = async (
   } finally {
     // Memory Hardening: Wiping seed bytes from RAM after usage.
     if (seedBytes instanceof Uint8Array) {
-      seedBytes.fill(0); if ((seed as any).fill) (seed as any).fill(0);
+      seedBytes.fill(0);
     }
   }
 };

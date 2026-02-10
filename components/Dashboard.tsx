@@ -170,6 +170,9 @@ const Dashboard: React.FC = () => {
              <button type="button" onClick={() => setShowReceive(true)} className="flex-1 md:flex-none bg-green-600 hover:bg-green-500 text-white px-8 py-5 rounded-3xl transition-all font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 text-xs uppercase tracking-widest">
                <Plus size={18} /> {t('action.ingest')}
              </button>
+             <a href="https://www.bitrefill.com/?ref=CONXIUS" target="_blank" rel="noopener noreferrer" className="flex-1 md:flex-none bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-8 py-5 rounded-3xl transition-all font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 text-xs uppercase tracking-widest border border-zinc-700">
+               <ShoppingBag size={18} /> Spend
+             </a>
           </div>
         </div>
       </div>

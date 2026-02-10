@@ -17,12 +17,18 @@ export interface NttOperation {
 /**
  * NttService - Sovereign NTT Transceiver Logic
  *
+ * EXPERIMENTAL: Bridge execution is mocked. Real Wormhole NTT integration pending.
+ * DO NOT use for real cross-chain transfers until Wormhole SDK is integrated.
+ *
  * Logic Isolation: Functions as a "messenger" that prepares payloads
  * for the Conclave, rather than an independent signing entity.
  */
+export const NTT_EXPERIMENTAL = true;
+
 export class NttService {
     /**
      * Executes the bridge logic, including gas abstraction if enabled.
+     * WARNING: Returns mock transaction hash — not a real on-chain transaction.
      */
     static async executeBridge(
         amount: string,
@@ -31,6 +37,10 @@ export class NttService {
         autoSwap: boolean,
         gasFee?: number
     ): Promise<string | null> {
+        if (NTT_EXPERIMENTAL) {
+            console.warn('[NTT] EXPERIMENTAL: Bridge execution is mocked. This is NOT a real cross-chain transfer.');
+        }
+
         if (autoSwap && gasFee) {
             const swapSuccess = await executeGasSwap(
                 'BTC',
@@ -42,7 +52,7 @@ export class NttService {
 
         // Logic Isolation: Payload preparation happens here.
         // Signing is deferred to the Conclave (SecureEnclave) in the UI or lower level service.
-        // For now, we return a mock hash to simulate source confirmation.
+        // EXPERIMENTAL: Returns mock hash — real Wormhole SDK integration required.
         const mockTxHash = '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
         return mockTxHash;
     }

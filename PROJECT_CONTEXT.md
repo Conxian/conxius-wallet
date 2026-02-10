@@ -1,9 +1,8 @@
 # Conxius Wallet - Project Context
 
-**Last Updated:** 2026-02-07  
+**Last Updated:** 2026-02-10  
 **Repository:** <https://github.com/conxian/conxius-wallet>  
 **Branch:** main  
-**Commit:** 2ff2a27f  
 
 ---
 
@@ -11,8 +10,9 @@
 
 Conxius Wallet is a **Multi-Chain Sovereign Interface** - an Android-first non-custodial wallet bridging Bitcoin ecosystem (L1, Lightning, Stacks, Rootstock, Liquid, Nostr) with hardware-level security via The Conclave TEE.
 
-**Legal Classification:** Software Provider (not Financial Intermediary)
-**Architecture:** Non-custodial with regulated third-party partners
+**Legal Classification:** Software Provider (not Financial Intermediary)  
+**Architecture:** Non-custodial with regulated third-party partners  
+**Overall Status:** BETA — See `IMPLEMENTATION_REGISTRY.md` for full feature-level status
 
 ---
 
@@ -22,28 +22,43 @@ Conxius Wallet is a **Multi-Chain Sovereign Interface** - an Android-first non-c
 Conxius-Wallet/
 ├── android/                    # Capacitor Android project
 │   └── app/src/main/java/com/conxius/wallet/
-│       └── SecureEnclavePlugin.java   (836 lines - TEE implementation)
-├── components/                 # 36 React components
-│   ├── Dashboard.tsx          (488 lines)
-│   ├── PaymentPortal.tsx      (1,071 lines)
-│   ├── NTTBridge.tsx          (568 lines)
+│       ├── SecureEnclavePlugin.java   (1,081 lines - TEE implementation)
+│       ├── BreezPlugin.java           (297 lines - Lightning SDK)
+│       └── NativeCrypto.java          (56 lines - Vault decryption)
+├── components/                 # 37 React components
+│   ├── Dashboard.tsx           (Multi-asset portfolio view)
+│   ├── PaymentPortal.tsx       (Send/receive flows)
+│   ├── NTTBridge.tsx           (Cross-chain bridge — EXPERIMENTAL)
 │   └── ...
-├── services/                   # Core business logic
-│   ├── signer.ts              (440 lines - Multi-layer signing)
-│   ├── enclave-storage.ts     (193 lines - Secure storage)
+├── services/                   # Core business logic (18 modules)
+│   ├── signer.ts              (459 lines - Multi-layer signing)
+│   ├── enclave-storage.ts     (211 lines - Secure storage)
 │   ├── protocol.ts            (245 lines - Blockchain APIs)
-│   ├── psbt.ts                (223 lines - PSBT handling)
-│   ├── seed.ts                (114 lines - Seed encryption)
-│   └── ...
-├── tests/                      # Test suite (8 files)
-│   ├── setup.ts
-│   ├── crypto.test.ts
-│   ├── seed.test.ts
+│   ├── psbt.ts                (249 lines - PSBT handling)
+│   ├── seed.ts                (98 lines - Seed encryption)
+│   ├── ntt.ts                 (82 lines - NTT bridge — EXPERIMENTAL)
+│   ├── swap.ts                (107 lines - Swaps — EXPERIMENTAL)
+│   ├── lightning.ts           (52 lines - LNURL/Bolt11)
+│   ├── nostr.ts               (100 lines - NIP-01 Nostr events)
+│   ├── evm.ts                 (130 lines - Keccak256 + EIP-55)
+│   ├── web5.ts                (149 lines - DID + DWN)
+│   ├── identity.ts            (137 lines - DID:PKH + SIWx)
+│   ├── silent-payments.ts     (96 lines - BIP-352)
+│   ├── payjoin.ts             (81 lines - BIP-78)
+│   ├── privacy.ts             (54 lines - Privacy scoring)
+│   ├── gemini.ts              (243 lines - AI features)
+│   ├── governance.ts          (99 lines - Ops personas)
+│   └── FeeEstimator.ts        (98 lines - Fee estimation)
+├── tests/                      # Test suite (12 files)
+│   ├── setup.ts               (Test environment polyfills)
+│   ├── signer.test.ts         (230 lines - Key derivation + signing)
+│   ├── protocol.test.ts       (515 lines - Balance/broadcast/price)
+│   ├── enclave-storage.test.ts (311 lines - Storage + native mocks)
 │   └── ...
 ├── docs/                       # Extended documentation
-├── .github/                    # (MISSING - needs workflows)
-├── package.json               # Dependencies
-├── vite.config.ts             # Build configuration
+├── .github/workflows/ci.yml   # CI pipeline (lint, tsc, test, build, audit, TruffleHog)
+├── package.json               # Dependencies (pinned versions)
+├── vite.config.ts             # Build config (CSP headers, localhost)
 └── tsconfig.json              # TypeScript config
 ```
 
@@ -129,37 +144,54 @@ User → Conxius UI → Partner API → Blockchain
 
 ## 📊 Implementation Status
 
-### ✅ COMPLETED
+> **Full feature-level detail:** See `IMPLEMENTATION_REGISTRY.md`
 
-| Feature | Status | Evidence |
-|---------|--------|----------|
-| SecureEnclavePlugin | ✅ | 836 lines, AES-GCM, Biometric, StrongBox |
-| Multi-chain derivation | ✅ | BTC, STX, RBTC, Liquid, Nostr paths |
-| PSBT signing | ✅ | Full implementation in signer.ts |
-| Biometric gating | ✅ | 5-min session, re-auth required |
-| Dashboard | ✅ | 488 lines, multi-asset display |
-| Payment Portal | ✅ | 1,071 lines, send/receive flows |
-| NTT Bridge | ✅ | 568 lines, cross-chain transfers |
-| Web5 Service | ✅ | TBD DIDs and DWN storage |
-| Protocol service | ✅ | 245 lines, 5+ blockchain APIs |
+### ✅ Production-Ready
 
-### ⚠️ MISSING / GAPS
+| Feature | Evidence |
+|---------|----------|
+| SecureEnclavePlugin | 1,081 lines, AES-GCM-256, Biometric, StrongBox, session cache |
+| Multi-chain derivation | BTC, Taproot, STX, RBTC, Liquid, Nostr — JS + native Android |
+| PSBT signing | Standard BTC + sBTC peg-in + Taproot tweak |
+| Biometric gating | 5-min session, duress PIN, re-auth required |
+| Lightning (Breez SDK) | Native plugin: invoice, pay, LNURL-Auth |
+| CI/CD pipeline | GitHub Actions: lint, tsc, test, build, audit, TruffleHog |
+| Core service tests | signer.test.ts (230 lines), protocol.test.ts (515 lines), enclave-storage.test.ts (311 lines) |
 
-See `GAPS_AND_RECOMMENDATIONS.md` for full list of 30 identified gaps.
+### ⚠️ Experimental (Mocked — Not Safe for Real Funds)
 
-**Critical (P0):**
+| Feature | Issue |
+|---------|-------|
+| NTT Bridge | Returns mock tx hash — Wormhole SDK integration required |
+| Changelly Swaps | Mock quotes + fake payinAddress |
+| Liquid Peg-in | Gated with explicit error (previously returned fake address) |
+| Gas Abstraction | Uses mocked executeGasSwap |
+| Runes Balance | Always returns empty array |
 
-- No tests for signer.ts (440 lines, 0 tests)
-- No tests for enclave-storage.ts (193 lines, 0 tests)
-- No CI/CD pipeline
-- `.gitignore` missing `.env*.local`
+### ❌ Missing
 
-**High (P1):**
+| Feature | PRD Reference |
+|---------|--------------|
+| Root/jailbreak detection | NFR-SEC-03 |
+| Offline fonts (Google CDN dependency) | NFR-REL-01 |
+| Code splitting | P1 Gap #8 |
+| Error boundaries | P1 Gap #11 |
+| E2E tests | P1 Gap #6 |
 
-- No GitHub Actions
-- No E2E tests
-- No code splitting
-- Vite security headers missing
+### 🔄 Recently Resolved (2026-02-10)
+
+- ~~No tests for core services~~ → signer, protocol, enclave-storage tests exist
+- ~~No CI/CD pipeline~~ → `.github/workflows/ci.yml` operational
+- ~~`.gitignore` missing `.env*.local`~~ → `*.local` covered
+- ~~Wildcard `@google/genai: "*"`~~ → Pinned to `^1.40.0`
+- ~~Vite host `0.0.0.0`~~ → Changed to `127.0.0.1`
+- ~~No CSP headers~~ → Added to vite.config.ts
+- ~~Wrong CoinGecko ID for STX~~ → Fixed to 'stacks'
+- ~~Hardcoded STX price~~ → Now fetches dynamically
+- ~~Dead `seed` reference in signer.ts~~ → Removed
+- ~~STX address placeholder on native~~ → Derives from getAddressFromPublicKey
+- ~~Fake Liquid peg-in address~~ → Now throws explicit experimental error
+- ~~Double plugin registration in biometric.ts~~ → Uses shared SecureEnclave export
 
 ---
 
@@ -196,23 +228,41 @@ See `GAPS_AND_RECOMMENDATIONS.md` for full list of 30 identified gaps.
 
 ## 🔄 Session Continuity Notes
 
-### For Next Session
+### Session 2026-02-10 — Full Repo Review & Remediation
 
-1. **Repository is clean** at `main` branch, commit `2ff2a27f`
-2. **Remote correctly set** to `conxian/conxius-wallet`
-3. **30 gaps identified** - see GAPS_AND_RECOMMENDATIONS.md
-4. **Priority order established:**
-   - P0: .gitignore fix, CI/CD, dependency pinning
-   - P1: Core service tests, E2E setup
-   - P2: Code splitting, security headers
-   - P3: Streaming fees, partner redundancy
+**Code Bugs Fixed:**
 
-### Key Decisions Made
+- Dead `seed` reference in `signer.ts` finally blocks (compile error)
+- STX address placeholder on native path → uses `getAddressFromPublicKey`
+- Hardcoded STX price → fetches dynamically via `fetchStxPrice()`
+- CoinGecko ID `blockstack` → `stacks`
+- Fake Liquid peg-in addresses → throws explicit experimental error
+- Double plugin registration in `biometric.ts` → imports shared instance
 
-- ✅ Conclave architecture approved - STRONG ENHANCEMENT
-- ✅ Partner model approved - compliance offloading
-- ✅ Repository fixed - clean state achieved
-- ✅ 30 gaps catalogued - ready for systematic fixes
+**Features Gated as Experimental:**
+
+- NTT bridge (`ntt.ts`) — `NTT_EXPERIMENTAL` flag + console warnings
+- Changelly swaps (`swap.ts`) — `SWAP_EXPERIMENTAL` flag + console warnings
+- Liquid peg-in (`protocol.ts`) — throws Error on call
+
+**Documentation Created/Updated:**
+
+- Created `IMPLEMENTATION_REGISTRY.md` — full real vs mocked vs missing registry
+- Updated `Sovereign_State.md` — honest per-feature status (BETA overall)
+- Updated `Business_State.md` — substantive content replacing stub tags
+- Updated `PROJECT_CONTEXT.md` — this file
+
+### Priority Queue for Next Session
+
+1. **Self-host Google Fonts** — Download to `/public/fonts/` (offline-first requirement)
+2. **Update GAPS_AND_RECOMMENDATIONS.md** — Mark 5 P0s as resolved, add new findings
+3. **Update AGENTS.md** — Sync file counts, test status, architecture notes
+4. **Update CHANGELOG.md** — Add [Unreleased] entries
+5. **Silent Payments mock seed fix** — `SilentPayments.tsx` uses `Buffer.alloc(64,0)`
+6. **Changelly fake payinAddress** — Must block UI or integrate real API
+7. **Root detection** — Integrate SafetyNet/Play Integrity
+8. **Code splitting** — React.lazy() for all routes
+9. **Error boundaries** — Wrap component tree
 
 ---
 
@@ -220,15 +270,20 @@ See `GAPS_AND_RECOMMENDATIONS.md` for full list of 30 identified gaps.
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `PROJECT_CONTEXT.md` | This file - session continuity | ✅ Current |
-| `AGENTS.md` | AI agent guide | Needs update |
-| `GAPS_AND_RECOMMENDATIONS.md` | 30 gaps with priorities | Needs creation |
+| `PROJECT_CONTEXT.md` | This file — session continuity | ✅ Updated 2026-02-10 |
+| `IMPLEMENTATION_REGISTRY.md` | Real vs mocked vs missing per PRD | ✅ Created 2026-02-10 |
+| `AGENTS.md` | AI agent guide | ⚠️ Needs update (file counts stale) |
+| `GAPS_AND_RECOMMENDATIONS.md` | 30 gaps with priorities | ⚠️ Needs update (5 P0s resolved) |
 | `PRD.md` | Product requirements | ✅ Current |
 | `RISK_REGISTRY.md` | Legal defense document | ✅ Current |
 | `MONETIZATION.md` | Revenue strategy | ✅ Current |
 | `PARTNERS_AND_COMPLIANCE.md` | Approved vendors | ✅ Current |
-| `Sovereign_State.md` | Implementation status | Needs update |
-| `Business_State.md` | Business tracking | Needs update |
+| `Sovereign_State.md` | Implementation status | ✅ Updated 2026-02-10 |
+| `Business_State.md` | Business tracking | ✅ Updated 2026-02-10 |
+| `ROADMAP.md` | Technical milestones | ✅ Current |
+| `WHITEPAPER.md` | Security architecture | ✅ Current |
+| `README.md` | Getting started | ⚠️ Needs update (Node 20+) |
+| `CHANGELOG.md` | Version history | ⚠️ Needs [Unreleased] entries |
 
 ---
 

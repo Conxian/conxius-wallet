@@ -1,11 +1,5 @@
-import { Capacitor, registerPlugin } from '@capacitor/core';
-
-type SecureEnclaveBiometricPlugin = {
-  authenticate(options?: { durationSeconds?: number }): Promise<{ authenticated: boolean; validUntilMs?: number }>;
-  clearBiometricSession(): Promise<void>;
-};
-
-const SecureEnclave = registerPlugin<SecureEnclaveBiometricPlugin>('SecureEnclave');
+import { Capacitor } from '@capacitor/core';
+import { SecureEnclave } from './enclave-storage';
 
 export async function authenticateBiometric(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
