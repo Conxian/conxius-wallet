@@ -120,7 +120,9 @@ export class NttService {
                 'This is NOT a real cross-chain transfer. ' +
                 'Install platform packages and configure NTT contracts to enable real transfers.'
             );
-            const mockTxHash = '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+            const arr = new Uint8Array(32);
+            globalThis.crypto.getRandomValues(arr);
+            const mockTxHash = '0x' + Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
             return mockTxHash;
         }
 
