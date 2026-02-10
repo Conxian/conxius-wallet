@@ -27,6 +27,7 @@ export function buildPsbt(params: {
   feeRate: number;
   rbf?: boolean;
   network: Network;
+  memo?: string;
 }) {
   const net = networkFrom(params.network);
   const psbt = new bitcoin.Psbt({ network: net });
@@ -43,7 +44,15 @@ export function buildPsbt(params: {
       }
     });
   });
-  const vbytes = estimateVbytes(params.utxos.length, 2);
+
+  // OP_RETURN Memo (THORChain / Notes)
+  if (params.memo) {
+    const data = Buffer.from(params.memo, 'utf8');
+    const embed = bitcoin.payments.embed({ data: [data] });
+    psbt.addOutput({ script: embed.output!, value: 0n });
+  }
+
+  const vbytes = estimateVbytes(params.utxos.length, 2 + (params.memo ? 1 : 0));
   const fee = Math.floor(vbytes * params.feeRate);
   const change = totalIn - params.amountSats - fee;
   if (change < 0) {

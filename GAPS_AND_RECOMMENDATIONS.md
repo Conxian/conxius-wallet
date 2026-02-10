@@ -1,29 +1,32 @@
 # Conxius Wallet: Gaps & Recommendations
 
-**Last Updated:** 2026-02-07  
-**Total Gaps Identified:** 30  
+**Last Updated:** 2026-02-10  
+**Total Gaps Identified:** 30 (original) + 7 (newly discovered)  
+**Resolved:** 5 P0s + 1 P1  
 **Repository:** <https://github.com/conxian/conxius-wallet>  
+**Cross-Reference:** See `IMPLEMENTATION_REGISTRY.md` for full feature-level status
 
 ---
 
 ## 🚨 PRIORITY CLASSIFICATION
 
-| Priority | Count | Action Timeline |
-|----------|-------|-----------------|
-| 🔴 **P0 - Critical** | 5 | Immediate (Today) |
-| 🟠 **P1 - High** | 8 | This Week |
-| 🟡 **P2 - Medium** | 12 | Next 2 Weeks |
-| 🟢 **P3 - Low** | 5 | Next Month |
+| Priority | Original | Resolved | Remaining | Action Timeline |
+|----------|----------|----------|-----------|-----------------|
+| 🔴 **P0 - Critical** | 5 | **5** | 0 | ✅ All resolved |
+| 🟠 **P1 - High** | 8 | **1** | 7 + 3 new | This Week |
+| 🟡 **P2 - Medium** | 12 | 0 | 12 + 4 new | Next 2 Weeks |
+| 🟢 **P3 - Low** | 5 | 0 | 5 | Next Month |
 
 ---
 
-## 🔴 P0 - CRITICAL GAPS (Do Now)
+## 🔴 P0 - CRITICAL GAPS (All Resolved ✅)
 
-### 1. **No Tests for Core Services**
+### 1. ~~No Tests for Core Services~~ ✅ RESOLVED
 
-**Location:** `services/signer.ts` (440 lines), `services/enclave-storage.ts` (193 lines), `services/protocol.ts` (245 lines)  
+**Location:** `services/signer.ts`, `services/enclave-storage.ts`, `services/protocol.ts`  
 **Severity:** 🔴 Critical  
-**Issue:** Zero unit tests for critical security and business logic.  
+**Status:** ✅ Resolved — `signer.test.ts` (230 lines), `protocol.test.ts` (515 lines), `enclave-storage.test.ts` (311 lines) now exist.  
+**Issue:** ~~Zero unit tests for critical security and business logic.~~  
 **Impact:** Regressions undetected, security vulnerabilities may be introduced.  
 **Recommendation:**
 
@@ -35,11 +38,12 @@
 
 ---
 
-### 2. **API Key Exposure Risk**
+### 2. ~~API Key Exposure Risk~~ ✅ RESOLVED
 
 **Location:** `.env.local`  
 **Severity:** 🔴 Critical  
-**Issue:** Placeholder pattern suggests real keys might be committed. File is not in `.gitignore`.  
+**Status:** ✅ Resolved — `.gitignore` line 13 has `*.local` and line 34 has `.env*.local`. Both patterns cover `.env.local`.  
+**Issue:** ~~Placeholder pattern suggests real keys might be committed. File is not in `.gitignore`.~~  
 **Impact:** Accidental credential exposure in git history.  
 **Recommendation:**
 
@@ -56,11 +60,12 @@ service-account*.json
 
 ---
 
-### 3. **No CI/CD Pipeline**
+### 3. ~~No CI/CD Pipeline~~ ✅ RESOLVED
 
-**Location:** `.github/workflows/` (missing)  
+**Location:** `.github/workflows/ci.yml`  
 **Severity:** 🔴 Critical  
-**Issue:** No automated testing, security scanning, or deployment verification.  
+**Status:** ✅ Resolved — Full CI pipeline: lint, tsc, test, build, pnpm audit, TruffleHog secret scanning, artifact upload.  
+**Issue:** ~~No automated testing, security scanning, or deployment verification.~~  
 **Impact:** Manual errors, undetected regressions, no deployment safety net.  
 **Recommendation:**
 
@@ -86,11 +91,12 @@ jobs:
 
 ---
 
-### 4. **Wildcard Dependency Risk**
+### 4. ~~Wildcard Dependency Risk~~ ✅ RESOLVED
 
-**Location:** `package.json` line 19  
+**Location:** `package.json`  
 **Severity:** 🔴 Critical  
-**Issue:** `"@google/genai": "*"` - unversioned major dependency.  
+**Status:** ✅ Resolved — `@google/genai` now pinned to `^1.40.0`.  
+**Issue:** ~~`"@google/genai": "*"` - unversioned major dependency.~~  
 **Impact:** Breaking changes from future updates, non-reproducible builds.  
 **Recommendation:**
 
@@ -103,11 +109,12 @@ jobs:
 
 ---
 
-### 5. **Vite Dev Server Exposed**
+### 5. ~~Vite Dev Server Exposed~~ ✅ RESOLVED
 
-**Location:** `vite.config.ts` line 14  
+**Location:** `vite.config.ts`  
 **Severity:** 🔴 Critical  
-**Issue:** `host: "0.0.0.0"` exposes dev server to network.  
+**Status:** ✅ Resolved — Host changed to `127.0.0.1` (localhost only). CSP headers also added.  
+**Issue:** ~~`host: "0.0.0.0"` exposes dev server to network.~~  
 **Impact:** Potential unauthorized access during development.  
 **Recommendation:**
 
@@ -488,11 +495,90 @@ environment: "jsdom"  // not "node"
 
 ---
 
+## 🆕 NEWLY DISCOVERED GAPS (2026-02-10 Code Review)
+
+### 31. **NTT Bridge Execution is Mocked**
+
+**Location:** `services/ntt.ts:33-57`  
+**Severity:** 🟠 High (P1)  
+**Issue:** `executeBridge()` returns a random mock tx hash. No real Wormhole SDK signing, VAA retrieval, or destination redemption.  
+**Impact:** Users cannot perform real cross-chain transfers. PRD FR-NTT-01 not met.  
+**Status:** Gated with `NTT_EXPERIMENTAL` flag and console warnings (2026-02-10).  
+**Recommendation:** Integrate Wormhole NTT SDK for real source signing + VAA polling + destination redemption.  
+**Effort:** 40 hours
+
+---
+
+### 32. **Changelly Swap Returns Fake PayinAddress**
+
+**Location:** `services/swap.ts:76-95`  
+**Severity:** 🟠 High (P1)  
+**Issue:** `createChangellyTransaction()` returns `bc1qchangellymockpayinaddress...`. If UI doesn't block, users could send funds to non-existent address.  
+**Impact:** Potential fund loss if experimental guard fails.  
+**Status:** Gated with `SWAP_EXPERIMENTAL` flag and console warnings (2026-02-10).  
+**Recommendation:** Integrate Changelly API v2 or block the transaction creation UI entirely until real API is connected.  
+**Effort:** 16 hours
+
+---
+
+### 33. **Silent Payments UI Uses Mock Seed**
+
+**Location:** `components/SilentPayments.tsx:23`  
+**Severity:** 🟠 High (P1)  
+**Issue:** `Buffer.alloc(64, 0)` used instead of real seed from vault. Silent Payment addresses derived from zero-seed are deterministic and insecure.  
+**Impact:** Any SP address displayed is useless/insecure.  
+**Recommendation:** Decrypt actual seed from vault via PIN and derive real SP keys.  
+**Effort:** 4 hours
+
+---
+
+### 34. **Google Fonts CDN Breaks Offline-First**
+
+**Location:** `index.html:11-13`  
+**Severity:** 🟡 Medium (P2)  
+**Issue:** Inter and JetBrains Mono loaded from `fonts.googleapis.com`. Breaks NFR-REL-01 (offline capability) and leaks IP to Google on every launch.  
+**Recommendation:** Download font files to `/public/fonts/` and update CSS references.  
+**Effort:** 1 hour
+
+---
+
+### 35. **Root/Jailbreak Detection Missing**
+
+**Location:** N/A (not implemented)  
+**Severity:** 🟡 Medium (P2)  
+**Issue:** PRD NFR-SEC-03 requires root detection. No SafetyNet/Play Integrity API integration exists.  
+**Impact:** Rooted devices can access Keystore keys outside the TEE boundary.  
+**Recommendation:** Integrate Play Integrity API for device attestation.  
+**Effort:** 8 hours
+
+---
+
+### 36. **Non-BTC Fee Estimation Uses Hardcoded Mocks**
+
+**Location:** `services/FeeEstimator.ts:14-22`  
+**Severity:** 🟡 Medium (P2)  
+**Issue:** `MOCK_FEES` object has hardcoded fee rates for Stacks, RSK, Liquid, Wormhole, and swap. Only BTC fetches real-time from mempool.space.  
+**Recommendation:** Fetch real fee rates from each chain's API (Hiro for STX, RSK node for gas, etc.).  
+**Effort:** 8 hours
+
+---
+
+### 37. **Runes Balance Always Returns Empty**
+
+**Location:** `services/protocol.ts:83-88`  
+**Severity:** 🟡 Medium (P2)  
+**Issue:** `fetchRunesBalances()` always returns `[]`. No API integration for Runes data.  
+**Recommendation:** Integrate Unisat or MagicEden API for Runes balance data.  
+**Effort:** 8 hours
+
+---
+
 ## 📝 NOTES
 
-- All gaps verified through code review (2026-02-07)
-- Repository state: clean at commit `2ff2a27f`
-- Remote: `conxian/conxius-wallet` (correct)
+- Original 30 gaps verified through code review (2026-02-07)
+- Gaps 31-37 discovered during full repo review (2026-02-10)
+- All 5 P0 gaps resolved as of 2026-02-10
+- See `IMPLEMENTATION_REGISTRY.md` for comprehensive real vs mocked vs missing feature status
 - Architecture: Conclave TEE + Partner model (approved)
 
 **Maintained by:** Cascade AI Agent  

@@ -4,6 +4,8 @@ import { ShieldCheck, Cpu, Wallet, ExternalLink, ShieldAlert, Key, HeartPulse, S
 import { AppContext } from '../context';
 import { decryptSeed } from '../services/seed';
 
+import RecommendedHardware from './RecommendedHardware';
+
 const Security: React.FC = () => {
   const context = useContext(AppContext);
   const [showMnemonic, setShowMnemonic] = useState(false);
@@ -56,12 +58,6 @@ const Security: React.FC = () => {
     URL.revokeObjectURL(url);
     context?.notify('success', 'Vault Exported Successfully');
   };
-
-  const hardwareAffiliates = [
-    { name: 'BitBox02', desc: 'Swiss-made, Bitcoin-only hardware with secure chip.', link: 'https://shiftcrypto.ch/bitbox02', color: 'bg-zinc-100 text-zinc-950' },
-    { name: 'Coldcard MK4', desc: 'The most security-hardened air-gapped device.', link: 'https://coinkite.com/coldcard', color: 'bg-orange-600 text-white' },
-    { name: 'Blockstream Jade', desc: 'Open-source, Liquid-ready, QR-based security.', link: 'https://blockstream.com/jade', color: 'bg-emerald-600 text-white' },
-  ];
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -146,6 +142,8 @@ const Security: React.FC = () => {
                         spellCheck="false"
                         className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 text-center text-2xl font-mono tracking-widest focus:outline-none focus:border-orange-500"
                         maxLength={8}
+                        placeholder="••••••••"
+                        aria-label="Enter PIN"
                       />
                       <div className="flex gap-4">
                         <button onClick={() => { setShowPinPrompt(false); setPinEntry(''); }} className="flex-1 py-4 bg-zinc-800 rounded-2xl font-black text-xs uppercase">Cancel</button>
@@ -162,38 +160,7 @@ const Security: React.FC = () => {
              )}
           </div>
 
-          <div className="bg-orange-500/5 border border-orange-500/10 rounded-3xl p-8">
-             <div className="flex items-center justify-between mb-8">
-                <h3 className="font-bold flex items-center gap-2 uppercase tracking-widest text-orange-500 text-xs">
-                   <ShoppingCart size={16} />
-                   Hardware Shop (Affiliate)
-                </h3>
-                <span className="text-[10px] font-bold text-zinc-600 uppercase">Trusted Partners</span>
-             </div>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {hardwareAffiliates.map((device, i) => (
-                   <a 
-                    key={i}
-                    href={device.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-2xl flex flex-col justify-between hover:border-orange-500/50 transition-all group"
-                   >
-                      <div className="space-y-3">
-                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${device.color}`}>
-                            {device.name[0]}
-                         </div>
-                         <h4 className="font-bold text-sm text-zinc-200">{device.name}</h4>
-                         <p className="text-[10px] text-zinc-500 leading-relaxed">{device.desc}</p>
-                      </div>
-                      <div className="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
-                         <span className="text-[10px] font-bold text-orange-500 uppercase">Buy Now</span>
-                         <ExternalLink size={12} className="text-zinc-700 group-hover:text-orange-500" />
-                      </div>
-                   </a>
-                ))}
-             </div>
-          </div>
+          <RecommendedHardware />
         </div>
 
         <div className="space-y-6">

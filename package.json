@@ -16,6 +16,8 @@
     "@capacitor/browser": "^8.0.0",
     "@capacitor/core": "^8.0.1",
     "@capacitor/local-notifications": "^8.0.0",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@google/genai": "^1.40.0",
     "@stacks/auth": "^7.3.1",
     "@stacks/common": "^7.3.1",

@@ -94,7 +94,7 @@ export const fetchStacksBalances = async (address: string, network: Network = 'm
     const response = await fetchWithRetry(`${STX_API}/extended/v1/address/${address}/balances`);
     if (!response.ok) return [];
     const data = await response.json();
-    const stxPrice = 2.45; // Ideal: Fetch this dynamically
+    const stxPrice = await fetchStxPrice();
     
     const assets: Asset[] = [{
         id: 'stx-native',
@@ -208,9 +208,9 @@ export const fetchBtcPrice = async (): Promise<number> => {
 
 export const fetchStxPrice = async (): Promise<number> => {
   try {
-    const response = await fetchWithRetry('https://api.coingecko.com/api/v3/simple/price?ids=blockstack&vs_currencies=usd');
+    const response = await fetchWithRetry('https://api.coingecko.com/api/v3/simple/price?ids=stacks&vs_currencies=usd');
     const data = await response.json();
-    return data.blockstack.usd;
+    return data.stacks.usd;
   } catch { return 2.45; }
 };
 
@@ -226,11 +226,10 @@ export const trackNttBridge = async (txid: string) => {
  * Fetches the federation peg-in address for the user's Liquid pubkey.
  */
 export const fetchLiquidPegInAddress = async (liquidPubkey: string, network: Network = 'mainnet'): Promise<string> => {
-    // In production, this would call a Liquid node or federation API (e.g. Blockstream GDK)
-    // to generate a unique peg-in address.
-    // For now, we return a deterministic testnet/mainnet federation placeholder.
-    if (network === 'testnet') return ["2N3o9Sshm", "29D9qS7N4s6", "X9JdD7FzC5J7FzC"].join('');
-    return ["3P", "1415926535", "8979323846", "2643383279"].join(''); // Federation Placeholder
+    // EXPERIMENTAL: Real implementation requires Blockstream GDK or Liquid federation API.
+    // Returning empty string to prevent fund loss from fake addresses.
+    console.warn('[Liquid] Peg-in address generation is EXPERIMENTAL — federation API integration pending.');
+    throw new Error('Liquid peg-in is experimental. Federation API integration is required before use.');
 };
 
 /**

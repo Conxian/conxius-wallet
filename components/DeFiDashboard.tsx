@@ -1,10 +1,11 @@
 
 import React, { useState, useContext } from 'react';
-import { TrendingUp, Layers, ShieldAlert, ExternalLink, Zap, Lock, RefreshCw, Loader2, ArrowRight, Activity, Percent, Network, AlertTriangle, Coins } from 'lucide-react';
+import { TrendingUp, Layers, ShieldAlert, ExternalLink, Zap, Lock, RefreshCw, Loader2, ArrowRight, Activity, Percent, Network, AlertTriangle, Coins, Ban } from 'lucide-react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { MOCK_DEFI_POSITIONS, MOCK_YIELD_DATA, LAYER_COLORS } from '../constants';
 import { GoogleGenAI } from "@google/genai";
 import { AppContext } from '../context';
+import { isChangellyReady, SWAP_EXPERIMENTAL } from '../services/swap';
 
 const DeFiDashboard: React.FC = () => {
   const appContext = useContext(AppContext);
@@ -238,20 +239,26 @@ const DeFiDashboard: React.FC = () => {
            </div>
 
            {/* Sovereign Yield Zap */}
-           <div className="bg-gradient-to-br from-orange-600 to-red-600 text-white border border-orange-500 rounded-[2.5rem] p-8 space-y-6 shadow-xl relative overflow-hidden group">
+           <div className={`bg-gradient-to-br ${SWAP_EXPERIMENTAL ? 'from-zinc-700 to-zinc-800 border-zinc-700' : 'from-orange-600 to-red-600 border-orange-500'} text-white border rounded-[2.5rem] p-8 space-y-6 shadow-xl relative overflow-hidden group`}>
               <div className="absolute -top-4 -right-4 opacity-20 group-hover:scale-110 transition-transform">
                  <Zap size={100} />
               </div>
               <div className="relative z-10">
                  <h4 className="font-black text-xl italic uppercase tracking-tighter mb-2">Sovereign Zap</h4>
                  <p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-2">Powered by Changelly & Breez</p>
+                 {SWAP_EXPERIMENTAL && (
+                   <div className="bg-amber-500/20 border border-amber-500/30 rounded-xl p-3 mb-4 flex items-start gap-2">
+                     <AlertTriangle size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                     <p className="text-[10px] text-amber-200">Changelly API not connected. Swap functionality is disabled until backend proxy is deployed.</p>
+                   </div>
+                 )}
                  <p className="text-xs font-medium opacity-90 leading-relaxed mb-6">
                     Bundle Swap + Bridge + Staking into one atomic transaction. 
                  </p>
                  <div className="bg-white/10 p-4 rounded-2xl mb-6 backdrop-blur-sm border border-white/20">
                     <div className="flex justify-between items-center text-[10px] font-black uppercase mb-1">
                        <span>Yield Route</span>
-                       <span className="text-green-300">Target: 14% APY</span>
+                       <span className={SWAP_EXPERIMENTAL ? 'text-zinc-400' : 'text-green-300'}>Target: 14% APY</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs font-bold">
                        <span>BTC</span> <ArrowRight size={12} /> <span>sBTC</span> <ArrowRight size={12} /> <Coins size={14} />
@@ -259,11 +266,10 @@ const DeFiDashboard: React.FC = () => {
                  </div>
                  <button type="button"
                   onClick={handleZap}
-                  disabled={isZapping}
-                  className="w-full py-4 bg-amber-600 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2"
+                  disabled={isZapping || SWAP_EXPERIMENTAL}
+                  className="w-full py-4 bg-amber-600 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2"
                  >
-                    {isZapping ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
-                    {isZapping ? 'Bundling Tx...' : 'One-Click Yield'}
+                    {SWAP_EXPERIMENTAL ? <><Ban size={16} /> Swap Unavailable</> : isZapping ? <><Loader2 size={16} className="animate-spin" /> Bundling Tx...</> : <><Zap size={16} /> One-Click Yield</>}
                  </button>
               </div>
            </div>

@@ -1,9 +1,10 @@
 
-import React, { useState, useContext, useEffect } from 'react';
-import { Shield, Eye, EyeOff, Copy, QrCode, Send, RefreshCw, Loader2, Info, CheckCircle2, Search, ExternalLink, Ghost, Wallet } from 'lucide-react';
+import React, { useState, useContext, useCallback } from 'react';
+import { Shield, Eye, EyeOff, Copy, QrCode, Send, RefreshCw, Loader2, Info, CheckCircle2, Search, ExternalLink, Ghost, Wallet, AlertTriangle, KeyRound } from 'lucide-react';
 import { AppContext } from '../context';
 import { deriveSilentPaymentKeys, encodeSilentPaymentAddress } from '../services/silent-payments';
-import * as bip39 from 'bip39';
+import { decryptSeed } from '../services/seed';
+import { Buffer } from 'buffer';
 
 const SilentPayments: React.FC = () => {
   const context = useContext(AppContext);
@@ -13,21 +14,39 @@ const SilentPayments: React.FC = () => {
   const [sendTo, setSendTo] = useState('');
   const [amount, setAmount] = useState('');
   const [scanResults, setScanResults] = useState<any[]>([]);
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [isDecrypting, setIsDecrypting] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
-  useEffect(() => {
-    const initKeys = async () => {
-      if (context?.state.walletConfig?.mnemonicVault) {
-          // In a real app, we'd use the PIN to decrypt, but for the UI demo/simulation:
-          // We'll use a placeholder or the decrypted seed if available in session.
-          // Since we are simulating, let's derive it from a mock seed if sovereign mode.
-          const mockSeed = Buffer.alloc(64, 0);
-          const keys = deriveSilentPaymentKeys(mockSeed);
-          const addr = encodeSilentPaymentAddress(keys.scanPub, keys.spendPub);
-          setSpAddress(addr);
-      }
-    };
-    initKeys();
-  }, [context?.state.walletConfig]);
+  const handleUnlock = useCallback(async () => {
+    if (!context?.state.walletConfig?.seedVault && !context?.state.walletConfig?.mnemonicVault) {
+      setPinError('No wallet vault found.');
+      return;
+    }
+    setIsDecrypting(true);
+    setPinError(null);
+    let seedBytes: Uint8Array | null = null;
+    try {
+      const vault = context.state.walletConfig.seedVault || context.state.walletConfig.mnemonicVault!;
+      seedBytes = await decryptSeed(vault, pin);
+      const seedBuffer = Buffer.from(seedBytes);
+      const keys = deriveSilentPaymentKeys(seedBuffer);
+      const addr = encodeSilentPaymentAddress(keys.scanPub, keys.spendPub);
+      setSpAddress(addr);
+      setIsUnlocked(true);
+      setPin('');
+      // Memory Hardening: Wipe key material
+      seedBuffer.fill(0);
+      keys.scanKey.fill(0);
+      keys.spendKey.fill(0);
+    } catch {
+      setPinError('Invalid Enclave PIN. Please try again.');
+    } finally {
+      if (seedBytes) seedBytes.fill(0);
+      setIsDecrypting(false);
+    }
+  }, [context, pin]);
 
   const handleScan = () => {
     setIsScanning(true);
@@ -46,6 +65,15 @@ const SilentPayments: React.FC = () => {
 
   return (
     <div className="bg-zinc-950 border border-zinc-800 rounded-[3rem] p-8 shadow-2xl space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+      {/* Experimental Banner */}
+      <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-start gap-3">
+        <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={18} />
+        <div>
+          <p className="text-xs font-bold text-amber-200">EXPERIMENTAL — BIP-352 Sending Logic Incomplete</p>
+          <p className="text-[10px] text-zinc-500 mt-1">Address derivation uses your real vault seed. Sending is not yet functional — UTXO scanning and output tweaking are placeholders.</p>
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-zinc-900 pb-8">
         <div>
           <h2 className="text-3xl font-black tracking-tighter text-zinc-100 flex items-center gap-3 italic uppercase">
@@ -56,16 +84,52 @@ const SilentPayments: React.FC = () => {
              Privacy-preserving Bitcoin transfers without address reuse.
           </p>
         </div>
-        <div className="bg-purple-500/10 border border-purple-500/20 px-6 py-4 rounded-2xl flex items-center gap-4">
-            <Shield className="text-purple-500" size={24} />
+        <div className={`${isUnlocked ? 'bg-purple-500/10 border-purple-500/20' : 'bg-zinc-900/50 border-zinc-800'} border px-6 py-4 rounded-2xl flex items-center gap-4`}>
+            {isUnlocked ? <Shield className="text-purple-500" size={24} /> : <KeyRound className="text-zinc-600" size={24} />}
             <div>
                 <p className="text-[10px] font-black uppercase text-zinc-500">Enclave Status</p>
-                <p className="text-sm font-bold text-zinc-200">Scanning Enabled</p>
+                <p className="text-sm font-bold text-zinc-200">{isUnlocked ? 'Keys Derived' : 'Locked'}</p>
             </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+      {/* PIN Unlock Gate */}
+      {!isUnlocked && (
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 space-y-6 max-w-md mx-auto">
+          <div className="text-center space-y-2">
+            <KeyRound className="mx-auto text-purple-500" size={32} />
+            <h3 className="text-lg font-bold text-zinc-200">Unlock Silent Payment Keys</h3>
+            <p className="text-xs text-zinc-500">Enter your Enclave PIN to derive BIP-352 keys from your vault seed.</p>
+          </div>
+          <div className="space-y-3">
+            <input
+              type="password"
+              value={pin}
+              onChange={(e) => { setPin(e.target.value); setPinError(null); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && pin.length > 0) handleUnlock(); }}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              placeholder="Enclave PIN"
+              className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 px-4 font-mono text-sm text-zinc-200 focus:outline-none focus:border-purple-500/50 text-center tracking-[0.5em]"
+            />
+            {pinError && (
+              <p className="text-xs text-red-400 text-center">{pinError}</p>
+            )}
+            <button
+              onClick={handleUnlock}
+              disabled={isDecrypting || pin.length === 0}
+              className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all"
+            >
+              {isDecrypting ? <Loader2 size={16} className="animate-spin" /> : <Shield size={16} />}
+              {isDecrypting ? 'Decrypting Vault...' : 'Derive SP Keys'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isUnlocked && <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* Receiving Section */}
         <div className="space-y-6">
             <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 space-y-6">
@@ -180,7 +244,7 @@ const SilentPayments: React.FC = () => {
                 </div>
             </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 };
