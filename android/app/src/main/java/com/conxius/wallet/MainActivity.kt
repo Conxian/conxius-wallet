@@ -13,5 +13,6 @@ class MainActivity : BridgeActivity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         registerPlugin(SecureEnclavePlugin::class.java)
+        registerPlugin(DeviceIntegrityPlugin::class.java)
     }
 }

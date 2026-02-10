@@ -21,6 +21,13 @@ The format is based on Keep a Changelog, and this project aims to follow Semanti
 - **Physical Backup Audit**: PIN-gated manual verification flow for mnemonic backups against the Secure Enclave.
 - **Satoshi AI Privacy Scout**: Context-aware AI assistant that provides proactive privacy and UTXO management advice.
 - **Privacy Enclave UI**: Real-time visualization of sovereignty metrics and security recommendations.
+- **Wormhole SDK Integration** (`ntt.ts`): Scaffolded real Wormhole NTT bridge with SDK initialization, chain config, and transfer flow. Experimental mock path retained until NTT contracts deployed.
+- **liquidjs-lib Integration** (`services/liquid.ts`): New Liquid service with proper P2WPKH address derivation, confidential address support, and peg-in/peg-out scaffolding via `liquidjs-lib`.
+- **Device Integrity Plugin** (`DeviceIntegrityPlugin.java`, `services/device-integrity.ts`): Multi-layered Android root detection (su binary, root apps, system props, test-keys, emulator) with Capacitor TypeScript bridge. Registered in `MainActivity.kt`.
+- **Error Boundaries** (`components/ErrorBoundary.tsx`): Scoped error boundary component with retry button, error details, and enclave integrity assurance. Wraps all route content in `App.tsx` keyed by `activeTab`.
+- **Code Splitting**: 25 secondary route components converted to `React.lazy` with `Suspense` fallback for reduced initial bundle size.
+- **Playwright E2E Tests** (`e2e/app.spec.ts`, `playwright.config.ts`): E2E test infrastructure with boot sequence, secret leakage, navigation, error boundary, and console security tests. Scripts: `npm run test:e2e`, `npm run test:e2e:ui`.
+- **Changelly API v2 Scaffolding** (`swap.ts`): Real JSON-RPC 2.0 proxy architecture with `changellyRpc()`, `VITE_CHANGELLY_PROXY_URL` env var, and hard-blocked `createChangellyTransaction` to prevent fund loss from mock addresses.
 
 ### Fixed
 
@@ -28,8 +35,9 @@ The format is based on Keep a Changelog, and this project aims to follow Semanti
 - **signer.ts**: Fixed STX address derivation on native path — now uses `getAddressFromPublicKey` instead of returning placeholder `"SP..."`.
 - **protocol.ts**: `fetchStacksBalances` now fetches real-time STX price via `fetchStxPrice()` instead of hardcoded `$2.45`.
 - **protocol.ts**: Fixed CoinGecko API ID from `blockstack` (deprecated) to `stacks` in `fetchStxPrice()`.
-- **protocol.ts**: Liquid peg-in address now throws explicit experimental error instead of returning fake pi-digit address (fund loss prevention).
+- **protocol.ts**: Liquid peg-in address now delegates to `services/liquid.ts` with proper `liquidjs-lib` integration.
 - **biometric.ts**: Eliminated double `registerPlugin('SecureEnclave')` — now imports shared instance from `enclave-storage.ts`.
+- **SilentPayments.tsx**: Replaced mock seed `Buffer.alloc(64,0)` with real vault seed decryption via PIN prompt. Added memory hardening (seed/key wiping), experimental banner, and unlock gate UI.
 - Improved Satoshi AI system prompt for better integration with on-device wallet state.
 - Resolved mock logic in Sovereignty Meter quests.
 
@@ -41,9 +49,15 @@ The format is based on Keep a Changelog, and this project aims to follow Semanti
 - **GAPS_AND_RECOMMENDATIONS.md**: Marked 5 P0 gaps as resolved; added 7 newly discovered gaps (#31-#37).
 - **AGENTS.md**: Updated service line counts, component counts, test file counts.
 - **README.md**: Updated Node.js requirement to v20+, added `IMPLEMENTATION_REGISTRY.md` to project docs.
+- **DeFiDashboard.tsx**: Sovereign Zap section now shows experimental warning and disabled button when `SWAP_EXPERIMENTAL` is true.
+- **swap.ts**: Rewrote with Changelly API v2 architecture (JSON-RPC 2.0 via backend proxy), `isChangellyReady()` helper, and zero-value mock quotes.
+- **App.tsx**: Refactored to use `React.lazy` for 25 components, wrapped route content in `ErrorBoundary` + `Suspense`.
 
 ### Security
 
+- **SilentPayments**: Real vault seed with PIN authentication, memory-hardened key wiping after derivation.
+- **Changelly**: Hard-blocked `createChangellyTransaction` — throws instead of returning mock `payinAddress`.
+- **Root Detection**: Android native plugin checks su binary, root management apps, dangerous system props, test-keys builds, and emulator.
 - Gated Liquid peg-in (`fetchLiquidPegInAddress`) to throw instead of returning fake addresses.
 - Gated NTT bridge and swap services with explicit experimental warnings.
 - Removed Google Fonts CDN dependency (IP leakage prevention, offline-first).
