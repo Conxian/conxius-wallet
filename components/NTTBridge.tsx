@@ -48,31 +48,45 @@ const NTTBridge: React.FC = () => {
   }, [isBridgeInProgress, txHash]);
 
   const handleBridge = async () => {
+    if (!context) return;
     setIsBridging(true);
 
-    const hash = await NttService.executeBridge(
-      amount,
-      sourceLayer,
-      targetLayer,
-      autoSwap,
-      feeEstimation?.gasAbstractionSwapFee
-    );
+    try {
+        // Map UI Source Layer to Wormhole Chain
+        let chainName = sourceLayer;
+        if (sourceLayer === 'Mainnet') chainName = 'Bitcoin';
+        
+        const signer = context.getWormholeSigner(chainName);
 
-    if (!hash) {
-      context?.notify('error', 'Bridge execution failed (Gas Swap or Enclave error).');
-      setIsBridging(false);
-      return;
+        const hash = await NttService.executeBridge(
+          amount,
+          sourceLayer,
+          targetLayer,
+          autoSwap,
+          signer,
+          context.state.network,
+          feeEstimation?.gasAbstractionSwapFee
+        );
+
+        if (!hash) {
+          context.notify('error', 'Bridge execution failed (Gas Swap or Enclave error).');
+          setIsBridging(false);
+          return;
+        }
+
+        setTxHash(hash);
+
+        // Simulate API call and then start the progress view
+        setTimeout(() => {
+          setIsBridging(false);
+          setIsBridgeInProgress(true); // Start the new in-progress view
+          setStep(4); // Move to a new step that shows the progress
+          context.notify('info', 'Bridge process initiated. You can track the progress here.');
+        }, 1500);
+    } catch (e: any) {
+        context.notify('error', e.message || 'Bridge Failed');
+        setIsBridging(false);
     }
-
-    setTxHash(hash);
-
-    // Simulate API call and then start the progress view
-    setTimeout(() => {
-      setIsBridging(false);
-      setIsBridgeInProgress(true); // Start the new in-progress view
-      setStep(4); // Move to a new step that shows the progress
-      context?.notify('info', 'Bridge process initiated. You can track the progress here.');
-    }, 1500);
   };
 
   const handleTrack = async () => {
@@ -248,6 +262,8 @@ const NTTBridge: React.FC = () => {
                 <button
                     onClick={() => setAutoSwap(!autoSwap)}
                     className={`w-12 h-6 rounded-full flex items-center transition-colors ${autoSwap ? 'bg-orange-600 justify-end' : 'bg-zinc-800 justify-start'}`}
+                    aria-label="Toggle Gas Abstraction"
+                    title="Toggle Gas Abstraction"
                 >
                     <span className="w-5 h-5 bg-white rounded-full block mx-0.5" />
                 </button>

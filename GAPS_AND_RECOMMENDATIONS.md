@@ -481,14 +481,14 @@ environment: "jsdom"  // not "node"
 
 ### Week 2-3
 
-6. Add pre-commit hooks (P1 #7)
+1. Add pre-commit hooks (P1 #7)
 2. Implement code splitting (P1 #8)
 3. Add TypeScript strictness (P1 #9)
 4. Add CSP headers (P1 #10)
 
 ### Month 2
 
-10. E2E testing setup (P1 #6)
+1. E2E testing setup (P1 #6)
 2. Error boundaries (P1 #11)
 3. Request deduplication (P1 #12)
 4. Input validation (P1 #13)
@@ -521,22 +521,24 @@ environment: "jsdom"  // not "node"
 
 ---
 
-### 33. **Silent Payments UI Uses Mock Seed**
+### 33. ~~Silent Payments UI Uses Mock Seed~~ ✅ RESOLVED
 
 **Location:** `components/SilentPayments.tsx:23`  
 **Severity:** 🟠 High (P1)  
-**Issue:** `Buffer.alloc(64, 0)` used instead of real seed from vault. Silent Payment addresses derived from zero-seed are deterministic and insecure.  
-**Impact:** Any SP address displayed is useless/insecure.  
+**Status:** ✅ Resolved — Uses `decryptSeed` with real PIN-gated vault access.  
+**Issue:** ~~`Buffer.alloc(64, 0)` used instead of real seed from vault.~~  
+**Impact:** ~~Any SP address displayed is useless/insecure.~~  
 **Recommendation:** Decrypt actual seed from vault via PIN and derive real SP keys.  
 **Effort:** 4 hours
 
 ---
 
-### 34. **Google Fonts CDN Breaks Offline-First**
+### 34. ~~Google Fonts CDN Breaks Offline-First~~ ✅ RESOLVED
 
 **Location:** `index.html:11-13`  
 **Severity:** 🟡 Medium (P2)  
-**Issue:** Inter and JetBrains Mono loaded from `fonts.googleapis.com`. Breaks NFR-REL-01 (offline capability) and leaks IP to Google on every launch.  
+**Status:** ✅ Resolved — Replaced with `@fontsource` npm packages.  
+**Issue:** ~~Inter and JetBrains Mono loaded from `fonts.googleapis.com`.~~  
 **Recommendation:** Download font files to `/public/fonts/` and update CSS references.  
 **Effort:** 1 hour
 
@@ -553,23 +555,63 @@ environment: "jsdom"  // not "node"
 
 ---
 
-### 36. **Non-BTC Fee Estimation Uses Hardcoded Mocks**
+### 36. ~~Non-BTC Fee Estimation Uses Hardcoded Mocks~~ ✅ RESOLVED
 
 **Location:** `services/FeeEstimator.ts:14-22`  
 **Severity:** 🟡 Medium (P2)  
-**Issue:** `MOCK_FEES` object has hardcoded fee rates for Stacks, RSK, Liquid, Wormhole, and swap. Only BTC fetches real-time from mempool.space.  
+**Status:** ✅ Resolved — Fetches real fee rates from Hiro (Stacks), Blockstream (Liquid), and RSK public node.  
+**Issue:** ~~`MOCK_FEES` object has hardcoded fee rates for Stacks, RSK, Liquid, Wormhole, and swap.~~  
 **Recommendation:** Fetch real fee rates from each chain's API (Hiro for STX, RSK node for gas, etc.).  
 **Effort:** 8 hours
 
 ---
 
-### 37. **Runes Balance Always Returns Empty**
+### 37. ~~Runes Balance Always Returns Empty~~ ✅ RESOLVED
 
 **Location:** `services/protocol.ts:83-88`  
 **Severity:** 🟡 Medium (P2)  
-**Issue:** `fetchRunesBalances()` always returns `[]`. No API integration for Runes data.  
+**Status:** ✅ Resolved — Uses Hiro Ordinals API as primary, with ordinals.com fallback.  
+**Issue:** ~~`fetchRunesBalances()` always returns `[]`. No API integration for Runes data.~~  
 **Recommendation:** Integrate Unisat or MagicEden API for Runes balance data.  
 **Effort:** 8 hours
+
+---
+
+## 🏗️ INFRASTRUCTURE DEPLOYMENT (REQUIRED FOR NO-MOCK)
+
+> **Documentation:** See `docs/GCP_INFRASTRUCTURE.md` for deployment instructions.
+> **Target Project:** `gen-lang-client-0264096458`
+
+### 38. **Deploy Changelly Backend Proxy**
+**Severity:** 🔴 Critical (Blocks Swaps)
+**Status:** 🏗️ SCAFFOLDED (Ready for Deployment)
+**Action:** Deploy `infrastructure/gcp/changelly-proxy` to Cloud Run.
+**Config:** Set `VITE_CHANGELLY_PROXY_URL` in app.
+**Effort:** 30 minutes (Deployment)
+
+### 39. **Deploy Bisq gRPC Proxy**
+**Severity:** 🟠 High (Blocks DEX)
+**Status:** 🏗️ SCAFFOLDED (Ready for Deployment)
+**Action:** Create GCE instance using `infrastructure/gcp/bisq-node/startup-script.sh`.
+**Config:** Set `VITE_BISQ_PROXY_URL` in app.
+**Effort:** 1 hour (Deployment)
+
+### 40. **Deploy Wormhole NTT Contracts**
+
+**Severity:** 🔴 Critical (Blocks Bridge)
+**Action:** Deploy Wormhole NTT TokenManager and Transceiver contracts to Mainnet, Arbitrum, Base, etc.
+**Config:** Update `NTT_CONFIGS` in `services/ntt.ts` with addresses.
+**Effort:** 40 hours
+
+### 41. **Integrate Marketplace API**
+**Severity:** 🟡 Medium (Blocks Marketplace)
+**Action:** Store keys in GCP Secret Manager (`marketplace-api-keys`) and update `Marketplace.tsx` to fetch inventory.
+**Effort:** 8 hours
+
+### 42. **Enable Play Integrity API**
+**Severity:** 🟡 Medium (Security)
+**Action:** Enable API in GCP Console and link to Play Console.
+**Effort:** 15 minutes
 
 ---
 

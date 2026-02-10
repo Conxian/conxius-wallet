@@ -65,8 +65,8 @@ Conxius is an Android-first wallet built using:
 - `/services/protocol.ts` (245 lines): Multi-chain balance fetching, transaction broadcast
 - `/services/psbt.ts` (249 lines): PSBT creation, signing, finalization
 - `/services/seed.ts` (98 lines): Seed encryption/decryption with PBKDF2
-- `/services/ntt.ts` (82 lines): NTT bridge — **EXPERIMENTAL**
-- `/services/swap.ts` (107 lines): Changelly/THORChain swaps — **EXPERIMENTAL**
+- `/services/ntt.ts` (82 lines): NTT bridge — **BLOCKED** (Needs Contracts)
+- `/services/swap.ts` (107 lines): Changelly/THORChain swaps — **BLOCKED** (Needs Proxy)
 - `/services/lightning.ts` (52 lines): LNURL/Bolt11 decode
 - `/services/identity.ts` (137 lines): DID:PKH + SIWx auth
 
@@ -134,8 +134,8 @@ cd android && ./gradlew :app:testDebugUnitTest
 
 ### Current Test Status
 
-- **8 test files** covering crypto, storage, notifications, sovereignty
-- **⚠️ Critical Gap:** Core services (signer.ts, enclave-storage.ts, protocol.ts) have ZERO tests
+- **12 test files** covering crypto, storage, notifications, sovereignty, and core services
+- **✅ Critical Services Covered:** `signer.ts`, `enclave-storage.ts`, `protocol.ts` now have comprehensive test suites
 - See `GAPS_AND_RECOMMENDATIONS.md` for systematic test expansion plan
 
 ### Testing Standards

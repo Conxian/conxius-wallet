@@ -18,6 +18,7 @@ import {
   getPsbtSighashes,
   finalizePsbtWithSigs,
   signPsbtBase64WithSeed,
+  signPsbtBase64WithSeedReturnBase64,
 } from "./psbt";
 
 // Initialize BIP32
@@ -157,29 +158,138 @@ export const deriveSovereignRoots = async (mnemonicOrVault: string, passphraseOr
 };
 
 /**
- * BIP-322 Standard Message Signing
- * (Placeholder for actual implementation using bitcoinjs-message or similar)
+ * BIP-322 Simple Message Signing (Full Witness Structure)
+ * 
+ * Uses the Enclave to sign the message digest.
+ * 
+ * @param message The message string to sign
+ * @param vaultOrSeed Vault name (Native) or Seed bytes (JS)
+ * @param pin Enclave PIN (Native)
  */
-export const signBip322Message = async (message: string, mnemonic: string) => {
-    // Real implementation would use:
-    // const seed = bip39.mnemonicToSeedSync(mnemonic);
-    // const root = bip32.fromSeed(seed);
-    // const child = root.derivePath("m/84'/0'/0'/0/0");
-    // bitcoinMessage.sign(message, child.privateKey, child.compressed)
+export const signBip322Message = async (
+    message: string, 
+    vaultOrSeed: string | Uint8Array,
+    pin?: string
+): Promise<string> => {
+    // 1. Get Pubkey from Enclave
+    // We need the pubkey to construct the script code and P2WPKH output
+    const signReq: SignRequest = {
+        type: 'bip322',
+        layer: 'Mainnet',
+        payload: { network: 'mainnet' }, // Dummy payload to get pubkey
+        description: 'BIP-322 Authentication'
+    };
     
-    // For now, we simulate with a deterministic hash of the real key
-    const seed = await bip39.mnemonicToSeed(mnemonic);
-    const seedBytes = new Uint8Array(seed);
-    try {
-      const root = bip32.fromSeed(Buffer.from(seedBytes));
-      const child = root.derivePath("m/84'/0'/0'/0/0");
-      // SECURITY: Ensure message is hashed before signing to prevent side-channel or signature reuse attacks.
-      const hash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(message)));
-      const sig = child.sign(hash); // Raw ECDSA
-      return `BIP322-SIG-${Buffer.from(sig).toString('hex')}`;
-    } finally {
-      seedBytes.fill(0);
+    // This initial call might prompt for biometric/PIN if not cached, 
+    // but primarily we need the pubkey first.
+    // In optimized flow, we might cache pubkey in state to avoid this roundtrip.
+    const identity = await requestEnclaveSignature(signReq, vaultOrSeed, pin);
+    const pubkey = Buffer.from(identity.pubkey, 'hex');
+
+    // Step 1: Build the message hash per BIP-322
+    const tag = bitcoin.crypto.sha256(Buffer.from('BIP0322-signed-message'));
+    const msgBuf = Buffer.from(message, 'utf8');
+    const taggedHash = bitcoin.crypto.sha256(Buffer.concat([tag, tag, msgBuf]));
+
+    // Step 2: Build virtual "to_spend" transaction
+    const toSpendScriptSig = Buffer.concat([
+      Buffer.from([0x00, 0x20]),  // OP_0 PUSH32
+      taggedHash
+    ]);
+
+    const p2wpkh = bitcoin.payments.p2wpkh({ pubkey, network: bitcoin.networks.bitcoin });
+    if (!p2wpkh.output) throw new Error('BIP-322: Failed to create P2WPKH output');
+
+    const toSpendTx = new bitcoin.Transaction();
+    toSpendTx.version = 0;
+    toSpendTx.locktime = 0;
+    toSpendTx.addInput(Buffer.alloc(32, 0), 0xFFFFFFFF, 0, toSpendScriptSig);
+    toSpendTx.addOutput(p2wpkh.output, BigInt(0));
+
+    // Step 3: Build "to_sign" transaction
+    const toSignTx = new bitcoin.Transaction();
+    toSignTx.version = 0;
+    toSignTx.locktime = 0;
+    toSignTx.addInput(toSpendTx.getHash(), 0, 0);
+    toSignTx.addOutput(Buffer.from([0x6a]), BigInt(0)); // OP_RETURN
+
+    // Step 4: Calculate Sighash
+    const scriptCode = Buffer.concat([
+      Buffer.from([0x76, 0xa9, 0x14]),  // OP_DUP OP_HASH160 PUSH20
+      bitcoin.crypto.hash160(pubkey),
+      Buffer.from([0x88, 0xac])         // OP_EQUALVERIFY OP_CHECKSIG
+    ]);
+
+    const witnessHash = toSignTx.hashForWitnessV0(
+      0,
+      scriptCode,
+      BigInt(0),
+      bitcoin.Transaction.SIGHASH_ALL
+    );
+
+    // Step 5: Sign the Hash using Enclave
+    // We use generic signing capability of the Enclave
+    // For Native: We'll need to support raw hash signing or pass the hash as "payload"
+    // The requestEnclaveSignature function handles 'Mainnet' generic signing by hashing the payload.
+    // BUT we already have the hash. We shouldn't double hash.
+    // We need a way to pass "PRE_HASHED" payload.
+    
+    // HACK: For now, if we pass a Buffer/Hex as payload to our Native implementation, 
+    // it usually hashes it again (sha256). 
+    // ECDSA signing requires a 32-byte hash. 
+    // If we use `signNative` directly in `requestEnclaveSignature`, it takes `messageHash`.
+    
+    // We'll modify `requestEnclaveSignature` to accept `preHashed: true` or handle generic hex payload
+    // correctly. Looking at `requestEnclaveSignature` implementation:
+    // It does `const hash = Buffer.from(bitcoin.crypto.sha256(cx)).toString("hex");`
+    
+    // We need to bypass that hash if it's already a sighash.
+    // Let's invoke signNative directly if on Native, or use a modified request flow.
+    
+    let signatureHex: string;
+    
+    if (Capacitor.isNativePlatform()) {
+        const res = await signNative({
+            vault: vaultOrSeed as string,
+            pin,
+            path: "m/84'/0'/0'/0/0",
+            messageHash: Buffer.from(witnessHash).toString('hex'),
+            network: 'mainnet'
+        });
+        signatureHex = res.signature;
+    } else {
+        // JS Fallback (using cached seed bytes)
+        // We reuse the logic from requestEnclaveSignature but we need the root first
+        // Re-deriving root here is inefficient but safe for now.
+        // Actually, we can just call a helper or use generic sign logic.
+        
+        // Simulating access to seed (which is vaultOrSeed in JS path)
+        if (typeof vaultOrSeed === 'string') throw new Error("BIP-322 JS fallback requires seed bytes");
+        
+        const root = bip32.fromSeed(Buffer.from(vaultOrSeed));
+        const child = root.derivePath("m/84'/0'/0'/0/0");
+        signatureHex = Buffer.from(child.sign(Buffer.from(witnessHash))).toString('hex');
+        
+        // Wipe seed copy
+        // vaultOrSeed.fill(0); // Only if we own it? No, caller owns it.
     }
+
+    const signature = Buffer.from(signatureHex, 'hex');
+    const derSig = bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL);
+
+    // Step 6: Serialize witness stack [signature, pubkey]
+    const witnessStack = [derSig, pubkey];
+    const witnessItems = witnessStack.length;
+    const parts: Buffer[] = [Buffer.from([witnessItems])];
+    for (const item of witnessStack) {
+      if (item.length < 0xfd) {
+        parts.push(Buffer.from([item.length]));
+      } else {
+        parts.push(Buffer.from([0xfd, item.length & 0xff, (item.length >> 8) & 0xff]));
+      }
+      parts.push(Buffer.from(item));
+    }
+    return Buffer.concat(parts).toString('base64');
 };
 
 /**
@@ -409,6 +519,7 @@ export const requestEnclaveSignature = async (
     let signature = "";
     let pubkey = "";
     let broadcastHex = "";
+    let psbtBase64: string | undefined;
 
     if (request.layer === "Mainnet" && root) {
       const coin = request.payload?.network === "mainnet" ? 0 : 1;
@@ -420,6 +531,11 @@ export const requestEnclaveSignature = async (
           seedBytes!,
           request.payload.psbt,
           request.payload.network,
+        );
+        psbtBase64 = await signPsbtBase64WithSeedReturnBase64(
+          seedBytes!,
+          request.payload.psbt,
+          request.payload.network
         );
         signature = Buffer.from(
           bitcoin.crypto.sha256(Buffer.from(broadcastHex, "hex")),
