@@ -1,13 +1,15 @@
 import { Network } from '../types';
+import { BoltzService } from './boltz';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface SwapQuote {
-  provider: 'Changelly' | 'THORChain';
+  provider: 'Changelly' | 'THORChain' | 'Boltz';
   rate: number;
   minAmount: number;
   estimatedFee: number;
   id?: string;
+  expiry?: number; // Boltz quotes expire
 }
 
 export interface SwapRequest {
@@ -58,6 +60,58 @@ export const buildThorchainMemo = (
   }
   
   return memo;
+};
+
+// ─── Boltz Submarine Swaps (Native / Lightning) ──────────────────────────────
+
+/**
+ * Fetches a swap quote from Boltz.
+ */
+export const fetchBoltzQuote = async (
+    network: Network,
+    pair: 'BTC/L-BTC' | 'BTC/BTC', // BTC/BTC is usually for Lightning
+    amountSats: number
+): Promise<SwapQuote | null> => {
+    try {
+        const pairs = await BoltzService.getPairs(network);
+        const pairInfo = pairs[pair];
+        if (!pairInfo) return null;
+
+        // Boltz rate is usually 1:1 minus fees for these pairs
+        const rate = 1; 
+        // Fee calc: percentage + miner fee
+        const percentageFee = (amountSats * pairInfo.fees.percentage) / 100;
+        const minerFee = pairInfo.fees.minerFees.baseAsset.normal; // Approx
+        const totalFee = percentageFee + minerFee;
+
+        return {
+            provider: 'Boltz',
+            rate,
+            minAmount: pairInfo.limits.minimal,
+            estimatedFee: totalFee,
+            id: `boltz_${Date.now()}`
+        };
+    } catch (e) {
+        console.warn('Boltz quote failed', e);
+        return null;
+    }
+};
+
+/**
+ * Creates a Boltz Swap (Submarine or Reverse).
+ */
+export const createBoltzSwap = async (
+    network: Network,
+    amountSats: number,
+    toLayer: 'Liquid' | 'Lightning',
+    destination: string
+) => {
+    // If destination is LN invoice, it's a Submarine Swap (BTC -> LN)
+    // If destination is Address, it's also Submarine Swap (BTC -> Liquid/BTC)
+    // If we are paying Invoice to get BTC, it's Reverse Swap.
+    
+    // For now, assuming Forward Swap: User sends BTC -> Receives on Liquid/LN
+    return await BoltzService.createSubmarineSwap(amountSats, toLayer, destination, network);
 };
 
 // ─── Changelly API v2 (EXPERIMENTAL — JSON-RPC 2.0 via Backend Proxy) ───────

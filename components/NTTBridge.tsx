@@ -1,9 +1,10 @@
-
 import React, { useState, useContext, useEffect } from 'react';
 import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp, ShieldCheck, Zap, Globe, Search, RefreshCw, ExternalLink } from 'lucide-react';
 import { AppContext } from '../context';
 import { estimateFees, FeeEstimation } from '../services/FeeEstimator';
 import { NttService, BRIDGE_STAGES } from '../services/ntt';
+import { fetchBtcUtxos, broadcastBtcTx, getRecommendedFees, fetchSbtcWalletAddress } from '../services/protocol';
+import { buildSbtcPegInPsbt } from '../services/psbt';
 
 const NTTBridge: React.FC = () => {
   const context = useContext(AppContext);
@@ -38,6 +39,14 @@ const NTTBridge: React.FC = () => {
   useEffect(() => {
     if (isBridgeInProgress && txHash) {
       const pollProgress = async () => {
+        // If Native Peg, we just check confirmation count (simplified for now)
+        if (bridgeType === 'Native Peg') {
+             // TODO: Implement proper sBTC deposit monitoring
+             // For now, we assume it's confirming if we have a txHash
+             setCurrentStage(0); 
+             return;
+        }
+        
         const stage = await NttService.trackProgress(txHash);
         setCurrentStage(stage);
       };
@@ -45,13 +54,67 @@ const NTTBridge: React.FC = () => {
       const interval = setInterval(pollProgress, 10000); // Poll every 10 seconds
       return () => clearInterval(interval);
     }
-  }, [isBridgeInProgress, txHash]);
+  }, [isBridgeInProgress, txHash, bridgeType]);
 
   const handleBridge = async () => {
     if (!context) return;
     setIsBridging(true);
 
     try {
+        if (bridgeType === 'Native Peg') {
+            await handleNativePeg();
+        } else {
+            await handleWormholeBridge();
+        }
+    } catch (e: any) {
+        context.notify('error', e.message || 'Bridge Failed');
+        setIsBridging(false);
+    }
+  };
+
+  const handleNativePeg = async () => {
+      if (!context) return;
+      const amountSats = Math.floor(parseFloat(amount) * 100000000);
+      const utxos = await fetchBtcUtxos(context.state.walletConfig?.masterAddress || '', context.state.network);
+      const fees = await getRecommendedFees('https://mempool.space/api/v1/fees/recommended'); // Should use context network base URL
+      
+      const sbtcWalletAddress = await fetchSbtcWalletAddress(context.state.network);
+
+      // 1. Build PSBT
+      const psbtBase64 = buildSbtcPegInPsbt({
+          utxos,
+          stacksAddress: context.state.walletConfig?.stacksAddress || '',
+          amountSats,
+          changeAddress: context.state.walletConfig?.masterAddress || '',
+          feeRate: fees.halfHourFee,
+          network: context.state.network,
+          pegInAddress: sbtcWalletAddress
+      });
+
+      // 2. Authorize & Sign via Enclave Context
+      const signResult = await context.authorizeSignature({
+          type: 'transaction',
+          layer: 'Mainnet',
+          payload: { psbt: psbtBase64, network: context.state.network },
+          description: `sBTC Deposit: ${amountSats} sats`
+      });
+
+      if (!signResult.broadcastReadyHex) {
+          throw new Error('Signing failed');
+      }
+
+      // 3. Broadcast
+      const txid = await broadcastBtcTx(signResult.broadcastReadyHex, context.state.network);
+      setTxHash(txid);
+      
+      setIsBridging(false);
+      setIsBridgeInProgress(true);
+      setStep(4);
+      context.notify('success', `sBTC Deposit Broadcasted: ${txid.substring(0, 8)}...`);
+  };
+
+  const handleWormholeBridge = async () => {
+        if (!context) return;
         // Map UI Source Layer to Wormhole Chain
         let chainName = sourceLayer;
         if (sourceLayer === 'Mainnet') chainName = 'Bitcoin';
@@ -69,9 +132,7 @@ const NTTBridge: React.FC = () => {
         );
 
         if (!hash) {
-          context.notify('error', 'Bridge execution failed (Gas Swap or Enclave error).');
-          setIsBridging(false);
-          return;
+          throw new Error('Bridge execution returned no hash.');
         }
 
         setTxHash(hash);
@@ -83,10 +144,6 @@ const NTTBridge: React.FC = () => {
           setStep(4); // Move to a new step that shows the progress
           context.notify('info', 'Bridge process initiated. You can track the progress here.');
         }, 1500);
-    } catch (e: any) {
-        context.notify('error', e.message || 'Bridge Failed');
-        setIsBridging(false);
-    }
   };
 
   const handleTrack = async () => {
@@ -174,7 +231,7 @@ const NTTBridge: React.FC = () => {
       </div>
 
       <div className="flex bg-zinc-950 p-1 rounded-2xl border border-zinc-900 mx-auto max-w-xs">
-         <button onClick={() => setBridgeType('NTT')} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${bridgeType === 'NTT' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600'}`}>Wormhole NTT</button>
+         <button onClick={() => setBridgeType('NTT')} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${bridgeType === 'NTT' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600'}`}>Wormhole Portal</button>
          <button onClick={() => setBridgeType('Native Peg')} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${bridgeType === 'Native Peg' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600'}`}>Native Peg</button>
       </div>
 
@@ -288,7 +345,7 @@ const NTTBridge: React.FC = () => {
                 <div className="w-20 h-20 bg-orange-600/10 border border-orange-500/20 rounded-full flex items-center justify-center mx-auto text-orange-500">
                     <Globe size={40} className="animate-pulse" />
                 </div>
-                <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">NTT Execution</h3>
+                <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">Bridge Execution</h3>
                 <p className="text-xs text-zinc-500 max-w-xs mx-auto italic leading-relaxed">Paste a bridge transaction hash to monitor Wormhole guardian attestations.</p>
              </div>
 
@@ -344,7 +401,7 @@ const NTTBridge: React.FC = () => {
                 </div>
              </div>
 
-             <button type="button" onClick={() => context?.notify('info', 'Secure Enclave: Peg-in PSBT Generated.')} className="w-full bg-green-600 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest">Execute Native Peg</button>
+             <button type="button" onClick={handleNativePeg} className="w-full bg-green-600 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest">Execute Native Peg</button>
              <button type="button" onClick={() => setStep(1)} className="w-full py-2 text-zinc-600 text-[10px] font-black uppercase tracking-widest">Cancel</button>
            </div>
         )}

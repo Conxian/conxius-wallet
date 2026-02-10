@@ -25,7 +25,9 @@ vi.mock('../services/psbt', () => ({
   getPsbtSighashes: vi.fn(),
   finalizePsbtWithSigs: vi.fn(),
   finalizePsbtWithSigsReturnBase64: vi.fn(),
-  signPsbtBase64WithSeed: vi.fn()
+  signPsbtBase64WithSeed: vi.fn(),
+  signPsbtBase64WithSeedReturnBase64: vi.fn(),
+  buildSbtcPegInPsbt: vi.fn() // Add this
 }));
 
 describe('signer service', () => {

@@ -150,28 +150,36 @@ User → Conxius UI → Partner API → Blockchain
 
 | Feature | Evidence |
 |---------|----------|
-| SecureEnclavePlugin | 1,081 lines, AES-GCM-256, Biometric, StrongBox, session cache |
-| Multi-chain derivation | BTC, Taproot, STX, RBTC, Liquid, Nostr — JS + native Android |
+| SecureEnclavePlugin | 1,081 lines, AES-GCM-256, Biometric, StrongBox |
+| Multi-chain derivation | BTC, Taproot, STX, RBTC, Liquid, Nostr — JS + Native |
 | PSBT signing | Standard BTC + sBTC peg-in + Taproot tweak |
+| sBTC Peg-in | `createSbtcDeposit` in signer.ts (Mainnet-ready) |
+| Boltz Swaps | `services/boltz.ts` (Submarine & Reverse atomic swaps) |
 | Biometric gating | 5-min session, duress PIN, re-auth required |
 | Lightning (Breez SDK) | Native plugin: invoice, pay, LNURL-Auth |
-| CI/CD pipeline | GitHub Actions: lint, tsc, test, build, audit, TruffleHog |
-| Core service tests | signer.test.ts (230 lines), protocol.test.ts (515 lines), enclave-storage.test.ts (311 lines) |
+| CI/CD pipeline | GitHub Actions: `ci.yml`, `deploy-proxy.yml` |
+| Core service tests | signer (230), protocol (515), enclave-storage (311) |
 
 ### ⚠️ Experimental (Mocked — Not Safe for Real Funds)
 
 | Feature | Issue |
 |---------|-------|
 | Runes Balance | Always returns empty array |
+| Wormhole Bridge | Refactored to Token Bridge. Needs Mainnet testing. |
 
 ### 🛑 Blocked (Waiting for Infrastructure)
 
+| Feature | Blocker |
+|---------|---------|
+| Changelly Swaps | Proxy deployed, waiting for `CHANGELLY_API_KEY` |
+| Bisq DEX | Node deployed, waiting for gRPC connection test |
+
 | Feature | Missing Dependency | Action Required |
 |---------|-------------------|-----------------|
-| **NTT Bridge** | Deployed Wormhole Contracts | Deploy TokenManager/Transceiver on Mainnet |
-| **Changelly Swaps** | Backend Proxy | Deploy `VITE_CHANGELLY_PROXY_URL` service |
-| **Bisq DEX** | Bisq Daemon + Proxy | Deploy `VITE_BISQ_PROXY_URL` service |
-| **Marketplace** | API Keys | Acquire keys for Bitrefill/Silent.Link |
+| **NTT Bridge** | Wormhole Contracts | Deploy TokenManager on Mainnet |
+| **Changelly Swaps** | Backend Proxy | Deploy `VITE_CHANGELLY_PROXY_URL` |
+| **Bisq DEX** | Bisq Daemon + Proxy | Deploy `VITE_BISQ_PROXY_URL` |
+| **Marketplace** | API Keys | Acquire keys for Bitrefill |
 | **Liquid Peg-in** | Federation Script | Configure `LIQUID_FEDERATION_SCRIPT` |
 
 ### ❌ Missing

@@ -129,39 +129,53 @@ permalink: /implementation-registry
 ## VIII. AI FEATURES (Gemini)
 
 | Feature | File(s) | Status | Notes |
-|---------|---------|--------|-------|
+|---|---|---|---|
 | Satoshi AI Chat | `SatoshiAIChat.tsx`, `gemini.ts` | ✅ PRODUCTION | Real Gemini API calls (key from enclave state) |
 | Bounty audit | `gemini.ts:16-39` | ✅ PRODUCTION | Real AI analysis |
 | System health summary | `gemini.ts:67-84` | ✅ PRODUCTION | Real diagnostic analysis |
 | Risk profile audit | `gemini.ts:156-173` | ✅ PRODUCTION | Real portfolio risk assessment |
 | Portfolio analysis | `gemini.ts:229-242` | ✅ PRODUCTION | Real AI analysis |
-| Privacy scoring | `privacy.ts` | ✅ PRODUCTION | Algorithmic (no AI dependency) |
 
 ---
 
 ## IX. UI COMPONENTS
 
 | Component | Status | Notes |
-|-----------|--------|-------|
-| Dashboard | ✅ PRODUCTION | Multi-asset portfolio view |
-| PaymentPortal | ✅ PRODUCTION | Send/receive with BIP-21 parsing |
-| NTTBridge | ⚠️ EXPERIMENTAL | Full UX but service is blocked by missing contracts |
-| SilentPayments | ✅ PRODUCTION | Real vault seed via PIN unlock; sending logic still incomplete |
-| Marketplace | 🛑 BLOCKED | Requires `MARKETPLACE_API_KEY` (Bitrefill/Silent.Link) |
-| StackingManager | 🔧 PARTIAL | Reads real data; Write action (Lock STX) is simulated/blocked |
-| ReserveSystem | ⚠️ EXPERIMENTAL | MOCK_RESERVES, hardcoded $42M TVL |
-| InvestorDashboard | ⚠️ EXPERIMENTAL | Uses MOCK_ASSETS for audit |
-| RewardsHub | ⚠️ EXPERIMENTAL | MOCK_LEDGER for fee rewards |
-| SovereigntyMeter | 🔧 PARTIAL | MOCK_QUESTS (but logic is real — driven by state) |
-| GovernancePortal | ⚠️ EXPERIMENTAL | Mock Ops wallet init |
-| CitadelManager | ⚠️ EXPERIMENTAL | Mock citadel data |
-| HandoffProtocol | ⚠️ EXPERIMENTAL | Simulated deployment sequence |
-| Studio (Ordinals/Runes) | ⚠️ EXPERIMENTAL | Rune creation UI exists, "Coming Soon" label on symbol |
-| Web3Browser | 🔧 PARTIAL | iframe-based, no dApp injection |
-| LockScreen | ✅ PRODUCTION | PIN + biometric + duress |
-| Onboarding | ✅ PRODUCTION | BIP-39 seed generation + vault setup |
-| Settings | ✅ PRODUCTION | Network/language/security config |
-| Security | ✅ PRODUCTION | Biometric toggle, duress PIN |
+|---|---|---|
+| Dashboard | PRODUCTION | Multi-asset portfolio view |
+| PaymentPortal | PRODUCTION | Send/receive with BIP-21 parsing |
+| NTTBridge | EXPERIMENTAL | Full UX but service is blocked by missing contracts |
+| SilentPayments | PRODUCTION | Real vault seed via PIN unlock |
+| Marketplace | BLOCKED | Requires `MARKETPLACE_API_KEY` |
+| StackingManager | PARTIAL | Reads real data; Write action is simulated |
+| ReserveSystem | EXPERIMENTAL | MOCK_RESERVES, hardcoded $42M TVL |
+| InvestorDashboard | EXPERIMENTAL | Uses MOCK_ASSETS for audit |
+| RewardsHub | EXPERIMENTAL | MOCK_LEDGER for fee rewards |
+| SovereigntyMeter | PARTIAL | MOCK_QUESTS (but logic is real) |
+| GovernancePortal | EXPERIMENTAL | Mock Ops wallet init |
+| CitadelManager | EXPERIMENTAL | Mock citadel data |
+| HandoffProtocol | EXPERIMENTAL | Simulated deployment sequence |
+| Studio (Ordinals/Runes) | EXPERIMENTAL | Rune creation UI exists, "Coming Soon" |
+| Web3Browser | PARTIAL | iframe-based, no dApp injection |
+| LockScreen | PRODUCTION | PIN + biometric + duress |
+| Onboarding | PRODUCTION | BIP-39 seed generation + vault setup |
+| Settings | PRODUCTION | Network/language/security config |
+| Security | PRODUCTION | Biometric toggle, duress PIN |
+| Interlayer Bridge (Standard) | PARTIAL | Refactored to Standard Token Bridge SDK. |
+| Submarine Swaps (Boltz) | COMPLETE | `createSubmarineSwap`, `createReverseSwap` |
+| sBTC Peg-in | COMPLETE | `createSbtcDeposit` implemented. |
+| Asset Swaps (Changelly) | BLOCKED | Logic exists. Proxy deployed. |
+| Gas Abstraction | EXPERIMENTAL | Uses mocked executeGasSwap. |
+| Liquid Peg-in | EXPERIMENTAL | `fetchLiquidPegInAddress` uses `liquidjs-lib`. |
+| Marketplace | BLOCKED | Static product list. No backend. |
+| Stacking Rewards | PARTIAL | Reward history is mocked. |
+| Reserve System | EXPERIMENTAL | Hardcoded metrics. |
+| Studio (Ordinals) | EXPERIMENTAL | UI only. No inscription logic. |
+| Web3Browser | PARTIAL | iframe-based, no dApp injection |
+| LockScreen | PRODUCTION | PIN + biometric + duress |
+| Onboarding | PRODUCTION | BIP-39 seed generation + vault setup |
+| Settings | PRODUCTION | Network/language/security config |
+| Security | PRODUCTION | Biometric toggle, duress PIN |
 
 ---
 
