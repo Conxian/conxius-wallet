@@ -223,13 +223,14 @@ export const trackNttBridge = async (txid: string) => {
 
 /**
  * Liquid Peg-in Support
- * Fetches the federation peg-in address for the user's Liquid pubkey.
+ * Delegates to services/liquid.ts which uses liquidjs-lib for proper address derivation.
+ * Peg-in address generation remains EXPERIMENTAL until federation API is integrated.
  */
 export const fetchLiquidPegInAddress = async (liquidPubkey: string, network: Network = 'mainnet'): Promise<string> => {
-    // EXPERIMENTAL: Real implementation requires Blockstream GDK or Liquid federation API.
-    // Returning empty string to prevent fund loss from fake addresses.
-    console.warn('[Liquid] Peg-in address generation is EXPERIMENTAL — federation API integration pending.');
-    throw new Error('Liquid peg-in is experimental. Federation API integration is required before use.');
+    const { generatePegInAddress } = await import('./liquid');
+    const pubkeyBuf = Buffer.from(liquidPubkey, 'hex');
+    const result = await generatePegInAddress(pubkeyBuf, network);
+    return result.mainchainAddress;
 };
 
 /**

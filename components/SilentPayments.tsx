@@ -144,10 +144,10 @@ const SilentPayments: React.FC = () => {
                 <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 break-all font-mono text-xs text-zinc-400 relative group">
                     {showAddress ? (spAddress || 'sp1q...') : 'sp1q••••••••••••••••••••••••••••••••••••'}
                     <div className="absolute top-2 right-2 flex gap-2">
-                        <button onClick={() => setShowAddress(!showAddress)} className="p-2 bg-zinc-900 rounded-lg text-zinc-500 hover:text-white">
+                        <button onClick={() => setShowAddress(!showAddress)} className="p-2 bg-zinc-900 rounded-lg text-zinc-500 hover:text-white" aria-label={showAddress ? 'Hide address' : 'Show address'} title={showAddress ? 'Hide address' : 'Show address'}>
                             {showAddress ? <EyeOff size={14} /> : <Eye size={14} />}
                         </button>
-                        <button className="p-2 bg-zinc-900 rounded-lg text-zinc-500 hover:text-white">
+                        <button className="p-2 bg-zinc-900 rounded-lg text-zinc-500 hover:text-white" aria-label="Copy address" title="Copy address">
                             <Copy size={14} />
                         </button>
                     </div>

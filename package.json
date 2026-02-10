@@ -9,7 +9,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "android:build": "npm run build && npx cap sync && npx cap open android",
-    "test": "vitest"
+    "test": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.1",
@@ -24,6 +26,7 @@
     "@stacks/network": "^7.3.1",
     "@stacks/transactions": "^7.3.1",
     "@web5/api": "^0.12.0",
+    "@wormhole-foundation/sdk": "^4.10.0",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.0",
     "bech32": "^2.0.0",
@@ -35,6 +38,7 @@
     "generator-function": "^2.0.1",
     "is-generator-function": "^1.1.2",
     "light-bolt11-decoder": "^3.0.0",
+    "liquidjs-lib": "^6.0.2-liquid.37",
     "lucide-react": "^0.562.0",
     "payjoin-client": "^0.0.1",
     "qrcode": "^1.5.3",
@@ -47,6 +51,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.0.2",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

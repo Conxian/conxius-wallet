@@ -1,36 +1,39 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import Dashboard from './components/Dashboard';
-import NTTBridge from './components/NTTBridge';
-import IdentityManager from './components/IdentityManager';
-import StackingManager from './components/StackingManager';
-import PaymentPortal from './components/PaymentPortal';
-import NodeSettings from './components/NodeSettings';
-import PrivacyEnclave from './components/PrivacyEnclave';
-import Security from './components/Security';
-import Settings from './components/Settings';
-import SatoshiAIChat from './components/SatoshiAIChat';
-import RewardsHub from './components/RewardsHub';
-import Benchmarking from './components/Benchmarking';
-import InvestorDashboard from './components/InvestorDashboard';
-import ReleaseManager from './components/ReleaseManager';
-import HandoffProtocol from './components/HandoffProtocol';
-import LabsExplorer from './components/LabsExplorer';
-import GovernancePortal from './components/GovernancePortal';
-import ReserveSystem from './components/ReserveSystem';
-import Documentation from './components/Documentation';
-import MobileMenu from './components/MobileMenu';
-import DeFiDashboard from './components/DeFiDashboard';
-import CitadelManager from './components/CitadelManager';
 import Onboarding from './components/Onboarding';
-import UTXOManager from './components/UTXOManager';
-import SilentPayments from './components/SilentPayments';
-import Studio from './components/Studio';
-import Marketplace from './components/Marketplace';
-import SystemDiagnostics from './components/SystemDiagnostics';
-import Web3Browser from './components/Web3Browser';
+import SatoshiAIChat from './components/SatoshiAIChat';
+import MobileMenu from './components/MobileMenu';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Code-split secondary routes via React.lazy
+const NTTBridge = lazy(() => import('./components/NTTBridge'));
+const IdentityManager = lazy(() => import('./components/IdentityManager'));
+const StackingManager = lazy(() => import('./components/StackingManager'));
+const PaymentPortal = lazy(() => import('./components/PaymentPortal'));
+const NodeSettings = lazy(() => import('./components/NodeSettings'));
+const PrivacyEnclave = lazy(() => import('./components/PrivacyEnclave'));
+const Security = lazy(() => import('./components/Security'));
+const Settings = lazy(() => import('./components/Settings'));
+const RewardsHub = lazy(() => import('./components/RewardsHub'));
+const Benchmarking = lazy(() => import('./components/Benchmarking'));
+const InvestorDashboard = lazy(() => import('./components/InvestorDashboard'));
+const ReleaseManager = lazy(() => import('./components/ReleaseManager'));
+const HandoffProtocol = lazy(() => import('./components/HandoffProtocol'));
+const LabsExplorer = lazy(() => import('./components/LabsExplorer'));
+const GovernancePortal = lazy(() => import('./components/GovernancePortal'));
+const ReserveSystem = lazy(() => import('./components/ReserveSystem'));
+const Documentation = lazy(() => import('./components/Documentation'));
+const DeFiDashboard = lazy(() => import('./components/DeFiDashboard'));
+const CitadelManager = lazy(() => import('./components/CitadelManager'));
+const UTXOManager = lazy(() => import('./components/UTXOManager'));
+const SilentPayments = lazy(() => import('./components/SilentPayments'));
+const Studio = lazy(() => import('./components/Studio'));
+const Marketplace = lazy(() => import('./components/Marketplace'));
+const SystemDiagnostics = lazy(() => import('./components/SystemDiagnostics'));
+const Web3Browser = lazy(() => import('./components/Web3Browser'));
 import LockScreen from './components/LockScreen';
 import ToastContainer, { ToastMessage, ToastType } from './components/Toast';
 import { Shield as ShieldIcon, Loader2, Zap, FlaskConical, ShieldCheck, Lock, Terminal, Cpu, CheckCircle2, RotateCcw, Database } from 'lucide-react';
@@ -530,7 +533,15 @@ const App: React.FC = () => {
             </div>
           )}
           <div className="max-w-7xl mx-auto">
-            {renderContent()}
+            <ErrorBoundary key={activeTab} scope={activeTab}>
+              <Suspense fallback={
+                <div className="flex items-center justify-center py-32">
+                  <Loader2 size={24} className="animate-spin text-orange-500" />
+                </div>
+              }>
+                {renderContent()}
+              </Suspense>
+            </ErrorBoundary>
           </div>
           {activeTab !== 'menu' && <SatoshiAIChat />}
           <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
