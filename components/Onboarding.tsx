@@ -94,9 +94,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const handleFinalize = async () => {
     setIsFinalizing(true);
     let seedString: string | null = mnemonic.join(' ');
-    const seedBytes = await bip39.mnemonicToSeed(seedString, passphrase || undefined);
+
+    // Create a reference for seedBytes that can be accessed in finally block
+    let seedBytes: Uint8Array | null = null;
     
     try {
+      seedBytes = await bip39.mnemonicToSeed(seedString, passphrase || undefined);
+
       // Async derivation ensures UI doesn't freeze during heavy hashing
       const roots = await deriveSovereignRoots(seedString, passphrase || undefined);
       const seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
@@ -118,7 +122,9 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       }, pin);
     } finally {
       // Memory Hardening: scrubbing sensitive seed bytes from RAM
-      seedBytes.fill(0);
+      if (seedBytes) {
+        seedBytes.fill(0);
+      }
       seedString = null;
 
       // SECURITY: Clear sensitive material from component state immediately after use
