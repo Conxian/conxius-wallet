@@ -85,7 +85,8 @@ describe('protocol service', () => {
     });
 
     it('should return 0 on API error', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+      // Use mockRejectedValue to persist through retries
+      mockFetch.mockRejectedValue(new Error('Network error'));
 
       const balance = await fetchBtcBalance(TEST_BTC_ADDRESS, 'mainnet');
       
@@ -236,7 +237,7 @@ describe('protocol service', () => {
       expect(token).toBeDefined();
     });
 
-    it('should return empty array on API error', async () => {
+    it('should return empty arrayAPI error', async () => {
       mockFetch.mockRejectedValueOnce(new Error('API error'));
 
       const assets = await fetchStacksBalances(TEST_STX_ADDRESS, 'mainnet');
@@ -254,7 +255,10 @@ describe('protocol service', () => {
   });
 
   describe('fetchRunesBalances', () => {
-    it('should return empty array (placeholder implementation)', async () => {
+    it// Mock failure for primary and fallback to test robust error handling returning []
+      mockFetch.mockRejectedValue(new Error('Runes API Error'));
+      
+      ('should return empty array (placeholder implementation)', async () => {
       const balances = await fetchRunesBalances(TEST_BTC_ADDRESS);
       
       expect(balances).toEqual([]);
@@ -509,6 +513,28 @@ describe('protocol service', () => {
       
       // Should handle gracefully (NaN becomes 0 or similar)
       expect(typeof balance).toBe('number');
+    });
+  });
+
+  describe('fetchSbtcWalletAddress', () => {
+    it('should return wallet address from API if successful', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ wallet_address: 'bc1q_sbtc_wallet_real' })
+      });
+
+      const { fetchSbtcWalletAddress } = await import('../services/protocol');
+      const address = await fetchSbtcWalletAddress('mainnet');
+      expect(address).toBe('bc1q_sbtc_wallet_real');
+    });
+
+    it('should return fallback address on API failure', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('API Down'));
+
+      const { fetchSbtcWalletAddress } = await import('../services/protocol');
+      const address = await fetchSbtcWalletAddress('mainnet');
+      // Updated expectation to match the valid Bech32 fallback
+      expect(address).toBe('bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqth887');
     });
   });
 });
