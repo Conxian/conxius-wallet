@@ -1,16 +1,28 @@
 apply plugin: 'com.android.application'
+// apply plugin: 'kotlin-android'
 
 android {
     namespace "com.conxius.wallet"
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdk 36
     defaultConfig {
         applicationId "com.conxius.wallet"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdk 24
+        targetSdk 36
         versionCode 3
         versionName "0.3.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
+    }
+
+    signingConfigs {
+        release {
+            // Production Signing Config - Reads from Environment Variables
+            // CI/CD pipeline must inject these values.
+            storeFile file(System.getenv("KEYSTORE_PATH") ?: "conxius-upload.keystore")
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias System.getenv("KEY_ALIAS") ?: "conxius-upload"
+            keyPassword System.getenv("KEY_PASSWORD") ?: ""
+        }
     }
 
     compileOptions {
@@ -18,9 +30,15 @@ android {
         targetCompatibility JavaVersion.VERSION_21
     }
 
+    // kotlinOptions {
+    //    jvmTarget = '21'
+    // }
+
     buildTypes {
         release {
-            minifyEnabled false
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

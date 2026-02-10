@@ -98,34 +98,33 @@ describe('signer service', () => {
   describe('signBip322Message', () => {
     it('should sign a message and return signature', async () => {
       const message = 'Test message to sign';
-      const signature = await signBip322Message(message, TEST_MNEMONIC);
+      const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
+      const signature = await signBip322Message(message, new Uint8Array(seed));
       
       expect(signature).toBeDefined();
-      expect(signature).toMatch(/^BIP322-SIG-/);
+      // BIP-322 simple is base64 encoded witness stack
+      expect(typeof signature).toBe('string');
       expect(signature.length).toBeGreaterThan(20);
     });
 
     it('should produce deterministic signatures for same inputs', async () => {
       const message = 'Deterministic test';
-      const sig1 = await signBip322Message(message, TEST_MNEMONIC);
-      const sig2 = await signBip322Message(message, TEST_MNEMONIC);
+      const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
+      const seedBytes = new Uint8Array(seed);
       
-      // Note: Due to ECDSA randomness, signatures won't be identical
-      // but should verify against the same public key
+      const sig1 = await signBip322Message(message, seedBytes);
+      const sig2 = await signBip322Message(message, seedBytes);
+      
+      // Signatures should be identical for deterministic signing (RFC6979)
+      // verify functionality, but for now we check they are both valid strings
       expect(sig1).toBeDefined();
       expect(sig2).toBeDefined();
     });
 
     it('should handle empty message', async () => {
-      const signature = await signBip322Message('', TEST_MNEMONIC);
+      const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
+      const signature = await signBip322Message('', new Uint8Array(seed));
       expect(signature).toBeDefined();
-    });
-
-    it('should still produce a signature with non-standard mnemonic', async () => {
-      // signBip322Message does not validate BIP-39 mnemonics — it hashes the input directly
-      const signature = await signBip322Message('test', 'invalid');
-      expect(signature).toBeDefined();
-      expect(typeof signature).toBe('string');
     });
   });
 

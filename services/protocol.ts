@@ -7,7 +7,7 @@
 import { BitcoinLayer, Asset, UTXO, Network } from '../types';
 import { notificationService } from './notifications';
 
-function endpointsFor(network: Network) {
+export function endpointsFor(network: Network) {
   switch (network) {
     case 'testnet':
       return {
@@ -43,7 +43,7 @@ function endpointsFor(network: Network) {
 /**
  * Robust fetch wrapper with exponential backoff and timeout.
  */
-async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, backoff = 500): Promise<Response> {
+export async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, backoff = 500): Promise<Response> {
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), 8000); // 8s timeout
@@ -82,10 +82,55 @@ export const fetchBtcBalance = async (address: string, network: Network = 'mainn
 
 export const fetchRunesBalances = async (address: string): Promise<Asset[]> => {
     try {
-        // Runes endpoints often change, in a real app this would query Unisat or Magiceden API
-        // For now, we return empty as public mempool.space API for runes is specific
-        return []; 
-    } catch { return []; }
+        // Primary: Use Hiro Ordinals API
+        const response = await fetchWithRetry(
+            `https://api.hiro.so/ordinals/v1/addresses/${address}/runes`,
+            {},
+            2,
+            1000
+        );
+        
+        if (response.ok) {
+            const data = await response.json();
+            return (data.results || []).map((r: any) => ({
+                id: `rune-${r.rune?.id || r.id || 'unknown'}`,
+                name: r.rune?.spaced_name || r.rune?.name || 'Rune',
+                symbol: (r.rune?.symbol || r.rune?.name || 'RUNE').substring(0, 6),
+                balance: parseInt(r.balance || '0') / Math.pow(10, r.rune?.divisibility || 0),
+                valueUsd: 0,
+                layer: 'Runes' as BitcoinLayer,
+                type: 'Rune' as const,
+                address
+            }));
+        }
+
+        // Fallback: ordinals.com (if it comes back online)
+        const fallbackResp = await fetchWithRetry(
+            `https://api.ordinals.com/v1/addresses/${address}/runes`,
+            {},
+            1,
+            1000
+        );
+        
+        if (!fallbackResp.ok) return [];
+        const data = await fallbackResp.json();
+        const entries = data.runes || data.results || data || [];
+        
+        return (Array.isArray(entries) ? entries : []).map((r: any) => ({
+            id: `rune-${r.rune_id || r.id || 'unknown'}`,
+            name: r.spaced_name || r.name || 'Rune',
+            symbol: (r.symbol || r.name || 'RUNE').substring(0, 6),
+            balance: parseInt(r.balance || r.amount || '0') / Math.pow(10, r.divisibility || 0),
+            valueUsd: 0,
+            layer: 'Runes' as BitcoinLayer,
+            type: 'Rune' as const,
+            address
+        }));
+
+    } catch (e) {
+        console.warn('[Runes] Balance fetch failed:', e);
+        return [];
+    }
 };
 
 export const fetchStacksBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {

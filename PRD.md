@@ -72,12 +72,18 @@ graph TD
     G --> H
 ```
 
-### 3.4. Key User Journeys
+### 3.5. Production Infrastructure Dependencies (Crucial for "No Mock" Policy)
 
-- **Onboarding:** Secure wallet creation/import with mandatory seed backup verification (3-word random check).
-- **Daily Spend (BTC & Lightning):** Frictionless payments with biometric authentication and real-time fee estimation.
-- **Multi-Chain Bridge (NTT):** A single, unified authorization flow for complex cross-chain transfers with clear communication of wait times and fees.
-- **Gas Abstraction:** Users can opt to auto-swap a portion of their source asset to cover gas fees on the destination chain.
+To achieve full production functionality without mocks, the following external infrastructure MUST be provisioned and configured. The Android app cannot function in "Sovereign Mode" without these components.
+
+| Component | Requirement | Purpose | Config Variable |
+| :--- | :--- | :--- | :--- |
+| **Changelly Proxy** | Self-hosted Middleware (Node.js/Go) | Protects API keys; proxies JSON-RPC 2.0 requests to `api.changelly.com`. | `VITE_CHANGELLY_PROXY_URL` |
+| **Bisq gRPC Proxy** | Middleware + Bisq Daemon | Translates REST/WS → gRPC to a running Bisq node. | `VITE_BISQ_PROXY_URL` |
+| **Wormhole NTT Contracts** | Deployed Smart Contracts | Source/Dest Token Managers and Transceivers on ETH/ARB/BASE/SOL. | `NTT_CONFIGS` (in `ntt.ts`) |
+| **Liquid Federation Script** | JSON Config / Endpoint | Federation Redeem Script required for Peg-in address generation. | `LIQUID_FEDERATION_SCRIPT` |
+| **Marketplace API** | Bitrefill / Silent.Link Keys | Real inventory and purchase execution for eSims/Airtime. | `MARKETPLACE_API_KEY` |
+| **Play Integrity API** | Google Cloud Project | Device attestation (Root/Emulator detection). | `PLAY_INTEGRITY_PROJECT_NUMBER` |
 
 ---
 
@@ -102,12 +108,15 @@ graph TD
 - **FR-TX-01**: Must support BIP-84 (Native Segwit) derivation.
 - **FR-TX-02**: Must parse and validate BIP-21 URIs.
 - **FR-TX-03**: Must prevent dust outputs during coin selection.
-- **FR-TX-04**: Support atomic swaps and peg-ins/peg-outs where applicable.
+- **FR-TX-04**: Support atomic swaps via **Changelly API v2** (proxied) and **THORChain** (native).
+  - *Requirement:* Changelly execution must use `createTransaction` via proxy.
+  - *Requirement:* THORChain execution must use `SWAP:` memos.
 - **FR-TX-05 (Fee Optimization)**: Real-time fee estimation across all supported layers and support for RBF/CPFP.
 
 #### 4.2.1. Wormhole NTT (Native Token Transfers)
 
 - **FR-NTT-01**: Full execution lifecycle: Source signing → VAA Retrieval → Destination redemption. [ACTIVE]
+  - *Requirement:* Integration with `@wormhole-foundation/sdk` using real deployed contract addresses.
 - **FR-NTT-02**: No NTT "VAA" (Verified Action Approval) can be broadcast without a local Conclave-generated proof. [ACTIVE]
 - **FR-NTT-03**: Support for Multi-Asset tracking and redemption (sBTC, USDC, etc.). [ACTIVE]
 

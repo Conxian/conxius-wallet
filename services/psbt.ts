@@ -2,6 +2,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import ECPairFactory from 'ecpair';
+import { Buffer } from 'buffer';
 import { UTXO, Network, Signer as LocalSigner } from '../types';
 
 const bip32 = BIP32Factory(ecc);
@@ -164,7 +165,52 @@ export async function signPsbtBase64WithSeed(seed: Uint8Array, psbtBase64: strin
   }
 
   psbt.finalizeAllInputs();
-  return psbt.extractTransaction().toHex();
+  return Buffer.from(psbt.extractTransaction().toBuffer()).toString('hex');
+}
+
+export async function signPsbtBase64WithSeedReturnBase64(seed: Uint8Array, psbtBase64: string, network: Network) {
+  const root = bip32.fromSeed(Buffer.from(seed));
+  const net = networkFrom(network);
+  const coin = coinType(network);
+
+  const p2wpkhPath = `m/84'/${coin}'/0'/0/0`;
+  const p2trPath = `m/86'/${coin}'/0'/0/0`;
+
+  const p2wpkhChild = root.derivePath(p2wpkhPath);
+  const p2trChild = root.derivePath(p2trPath);
+
+  const p2wpkhKeyPair: any = ECPair.fromPrivateKey(Buffer.from(p2wpkhChild.privateKey!), { network: net });
+
+  // Taproot Key Tweak for Key-path signing
+  const internalPubkey = Buffer.from(p2trChild.publicKey.slice(1, 33));
+  const p2trKeyPair: any = ECPair.fromPrivateKey(Buffer.from(p2trChild.privateKey!), { network: net });
+
+  const psbt = bitcoin.Psbt.fromBase64(psbtBase64, { network: net });
+
+  for (let i = 0; i < psbt.inputCount; i++) {
+    const input = psbt.data.inputs[i];
+
+    // Check if it's a Taproot input (v1 witness program: 0x51 + length 0x20)
+    const isTaproot = input.witnessUtxo &&
+                      input.witnessUtxo.script.length === 34 &&
+                      input.witnessUtxo.script[0] === 0x51 &&
+                      input.witnessUtxo.script[1] === 0x20;
+
+    if (isTaproot) {
+        // Tweak the key for key-path signing if not already tweaked
+        const tweakedChild: any = (p2trChild as any).tweak(
+            Buffer.from(bitcoin.crypto.taggedHash('TapTweak', internalPubkey)),
+        );
+        if (!tweakedChild.privateKey) throw new Error('Failed to derive tweaked private key');
+        const tweakedKeyPair: any = ECPair.fromPrivateKey(Buffer.from(tweakedChild.privateKey), { network: net });
+        psbt.signInput(i, tweakedKeyPair);
+    } else {
+        psbt.signInput(i, p2wpkhKeyPair as any);
+    }
+  }
+
+  psbt.finalizeAllInputs();
+  return psbt.toBase64();
 }
 
 export function getPsbtSighashes(
@@ -217,7 +263,7 @@ export function finalizePsbtWithSigs(
   });
 
   psbt.finalizeAllInputs();
-  return psbt.extractTransaction().toHex();
+  return Buffer.from(psbt.extractTransaction().toBuffer()).toString('hex');
 }
 
 export function finalizePsbtWithSigsReturnBase64(
@@ -244,5 +290,7 @@ export function finalizePsbtWithSigsReturnBase64(
 
 export function getUnsignedTxHex(psbtBase64: string, network: Network) {
   const psbt = bitcoin.Psbt.fromBase64(psbtBase64, { network: networkFrom(network) });
-  return psbt.data.globalMap.unsignedTx.toHex();
+  // unsignedTx is technically an internal property, cast to any to avoid TS issues
+  const tx = (psbt.data.globalMap.unsignedTx as any).tx;
+  return Buffer.from(tx.toBuffer()).toString('hex');
 }

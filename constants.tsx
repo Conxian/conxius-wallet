@@ -43,6 +43,14 @@ export const MOCK_YIELD_DATA = [
   { month: 'Jun', yield: 7.4 },
 ];
 
+export const MOCK_HISTORICAL_REWARDS = [
+  { cycle: '74', btc: 0.0021, date: 'Oct 12' },
+  { cycle: '75', btc: 0.0019, date: 'Oct 26' },
+  { cycle: '76', btc: 0.0022, date: 'Nov 09' },
+  { cycle: '77', btc: 0.0020, date: 'Nov 23' },
+  { cycle: '78', btc: 0.0021, date: 'Dec 07' },
+];
+
 export const LAYER_COLORS: Record<BitcoinLayer, string> = {
   'Mainnet': 'bg-orange-500',
   'Stacks': 'bg-purple-600',

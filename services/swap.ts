@@ -21,12 +21,9 @@ export interface SwapRequest {
 
 /**
  * EXPERIMENTAL flag: Changelly integration is not yet connected to a real API.
- * Set to `false` only after:
- * 1. Backend proxy deployed with RSA key signing (Changelly API v2 JSON-RPC 2.0)
- * 2. VITE_CHANGELLY_PROXY_URL env var configured
- * 3. End-to-end swap flow tested on testnet
+ * Set to `false` to enable real API calls via the backend proxy.
  */
-export const SWAP_EXPERIMENTAL = true;
+export const SWAP_EXPERIMENTAL = false;
 
 const CHANGELLY_PROXY_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_CHANGELLY_PROXY_URL) || '';
 

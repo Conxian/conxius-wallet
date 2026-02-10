@@ -31,6 +31,11 @@ The format is based on Keep a Changelog, and this project aims to follow Semanti
 
 ### Fixed
 
+- **signer.ts**: Refactored BIP-322 signing to use Secure Enclave pattern (`requestEnclaveSignature`) instead of direct mnemonic access. Securely constructs virtual transaction in JS and signs sighash in TEE.
+- **FeeEstimator.ts**: Replaced hardcoded fallback fees with real-time API fetches for Stacks (Hiro), Liquid (Blockstream), and RSK (Public Node).
+- **protocol.ts**: Fixed Runes balance fetch by prioritizing Hiro Ordinals API (reliable) over ordinals.com (DNS failure).
+- **Android Build**: Fixed `MainActivity.kt` crash by removing bogus `System.loadLibrary("conxius_core")` call.
+- **Android Build**: Resolved Gradle 9.0 plugin conflicts (`kotlin-android` duplicate extension) and `compileSdk` configuration errors.
 - **signer.ts**: Removed dead `seed` variable reference in two `finally` blocks that would cause `ReferenceError` at runtime.
 - **signer.ts**: Fixed STX address derivation on native path — now uses `getAddressFromPublicKey` instead of returning placeholder `"SP..."`.
 - **protocol.ts**: `fetchStacksBalances` now fetches real-time STX price via `fetchStxPrice()` instead of hardcoded `$2.45`.
