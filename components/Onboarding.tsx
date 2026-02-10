@@ -93,7 +93,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
   const handleFinalize = async () => {
     setIsFinalizing(true);
-    const seedString = mnemonic.join(' ');
+    let seedString: string | null = mnemonic.join(' ');
     const seedBytes = await bip39.mnemonicToSeed(seedString, passphrase || undefined);
     
     try {
@@ -101,6 +101,9 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       const roots = await deriveSovereignRoots(seedString, passphrase || undefined);
       const seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
       const mnemonicVault = await encryptSeed(new TextEncoder().encode(seedString), pin);
+
+      // SECURITY: Nullify local reference to seedString after its last cryptographic use
+      seedString = null;
 
       // Pass PIN up to App for encryption
       onComplete({
@@ -116,15 +119,17 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     } finally {
       // Memory Hardening: scrubbing sensitive seed bytes from RAM
       seedBytes.fill(0);
-    }
+      seedString = null;
 
-    // SECURITY: Clear sensitive material from component state immediately after use
-    setMnemonic([]);
-    setPin('');
-    setConfirmPin('');
-    setPassphrase('');
-    setImportText('');
-    setVerifyWords([]);
+      // SECURITY: Clear sensitive material from component state immediately after use
+      // This is now in the finally block to ensure it runs even if an error occurs.
+      setMnemonic([]);
+      setPin('');
+      setConfirmPin('');
+      setPassphrase('');
+      setImportText('');
+      setVerifyWords([]);
+    }
 
     setIsFinalizing(false);
   };
@@ -394,10 +399,12 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
              <button
                onClick={() => {
+                  const array = new Uint32Array(3);
+                  globalThis.crypto.getRandomValues(array);
                   const indices = [
-                    Math.floor(Math.random() * 4),
-                    Math.floor(Math.random() * 4) + 4,
-                    Math.floor(Math.random() * 4) + 8
+                    array[0] % 4,
+                    (array[1] % 4) + 4,
+                    (array[2] % 4) + 8
                   ];
                   setVerifyIndices(indices);
                   setVerifyWords(['', '', '']);
