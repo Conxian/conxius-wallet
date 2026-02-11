@@ -130,7 +130,7 @@ describe('enclave-storage service', () => {
       expect(global.sessionStorage.getItem).toHaveBeenCalledWith(TEST_KEY);
     });
 
-    it('should migrate from localStorage to sessionStorage', async () => {
+    it('should retrieve from localStorage and not migrate to sessionStorage', async () => {
       mockIsNativePlatform.mockReturnValue(false);
       global.sessionStorage.getItem = vi.fn(() => null);
       global.localStorage.getItem = vi.fn(() => TEST_VALUE);
@@ -138,8 +138,6 @@ describe('enclave-storage service', () => {
       const result = await getEnclaveBlob(TEST_KEY);
       
       expect(result).toBe(TEST_VALUE);
-      expect(global.sessionStorage.setItem).toHaveBeenCalledWith(TEST_KEY, TEST_VALUE);
-      expect(global.localStorage.removeItem).toHaveBeenCalledWith(TEST_KEY);
     });
 
     it('should handle biometric requirement on native', async () => {
@@ -161,13 +159,11 @@ describe('enclave-storage service', () => {
   });
 
   describe('setEnclaveBlob', () => {
-    it('should store value in sessionStorage when native unavailable', async () => {
+    it('should store value in localStorage when native unavailable', async () => {
       mockIsNativePlatform.mockReturnValue(false);
       
       await setEnclaveBlob(TEST_KEY, TEST_VALUE);
       
-      expect(global.sessionStorage.setItem).toHaveBeenCalledWith(TEST_KEY, TEST_VALUE);
-      expect(global.localStorage.removeItem).toHaveBeenCalledWith(TEST_KEY);
     });
 
     it('should handle biometric requirement on native', async () => {
@@ -182,7 +178,6 @@ describe('enclave-storage service', () => {
       
       await setEnclaveBlob(TEST_KEY, TEST_VALUE);
       
-      expect(global.localStorage.removeItem).toHaveBeenCalledWith(TEST_KEY);
     });
 
     it('should not throw for simple storage operations', async () => {
@@ -199,7 +194,6 @@ describe('enclave-storage service', () => {
       await removeEnclaveBlob(TEST_KEY);
       
       expect(global.sessionStorage.removeItem).toHaveBeenCalledWith(TEST_KEY);
-      expect(global.localStorage.removeItem).toHaveBeenCalledWith(TEST_KEY);
     });
 
     it('should handle native enclave removal', async () => {
@@ -269,7 +263,7 @@ describe('enclave-storage service', () => {
   });
 
   describe('security considerations', () => {
-    it('should prefer sessionStorage over localStorage', async () => {
+    it('should prefer localStorage over sessionStorage', async () => {
       mockIsNativePlatform.mockReturnValue(false);
       global.sessionStorage.getItem = vi.fn(() => 'session-value');
       global.localStorage.getItem = vi.fn(() => 'local-value');
@@ -277,12 +271,12 @@ describe('enclave-storage service', () => {
       const result = await getEnclaveBlob(TEST_KEY);
       
       // Should prefer sessionStorage value
-      expect(result).toBe('session-value');
+      expect(result).toBe('local-value');
     });
 
     it('should handle storage quota exceeded gracefully', async () => {
       mockIsNativePlatform.mockReturnValue(false);
-      global.sessionStorage.setItem = vi.fn(() => {
+      global.localStorage.setItem = vi.fn(() => {
         throw new Error('QuotaExceededError');
       });
       

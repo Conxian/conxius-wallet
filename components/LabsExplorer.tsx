@@ -25,7 +25,7 @@ const LabsExplorer: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
       const result = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Provide a high-level technical blueprint for a new Conxius Labs project: "${project}". 
+        contents: `Provide a high-level technical blueprint for a new Conxian-Labs project: "${project}".
         Explain: 
         1. How it enhances user sovereignty.
         2. Its integration points with the existing Conxius Wallet.
@@ -46,7 +46,7 @@ const LabsExplorer: React.FC = () => {
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-zinc-100 flex items-center gap-3">
             <FlaskConical className="text-orange-500" />
-            Conxius Labs
+            Conxian-Labs
           </h2>
           <p className="text-zinc-500 text-sm italic">The production engine for sovereign multi-layer software.</p>
         </div>

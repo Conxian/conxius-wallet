@@ -98,7 +98,7 @@ const PrivacyEnclave: React.FC = () => {
                  </div>
                  
                  <p className="text-[9px] text-zinc-600 italic border-t border-zinc-900 pt-3">
-                    *Conxius Labs takes a 5% protocol fee for facilitating the P2P handshake. Data is never stored on our servers.
+                    *Conxian-Labs takes a 5% protocol fee for facilitating the P2P handshake. Data is never stored on our servers.
                  </p>
               </div>
            </div>

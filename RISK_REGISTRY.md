@@ -29,7 +29,7 @@ Conxius Wallet is a strictly non-custodial software interface ("The Tool"). It l
 * **Description:** Risk of the platform being used for illicit flows.
 * **Mitigation:**
     * **Partner Reliance:** We do not process payments. Partners (Transak/Changelly) perform all KYC/CDD checks on users before allowing value transfer.
-    * **No Fiat Touchpoints:** Conxius Labs bank accounts never touch user funds.
+    * **No Fiat Touchpoints:** Conxian-Labs bank accounts never touch user funds.
 
 ### 2.3 Risk: US Securities Laws (SEC)
 * **Description:** Risk of being deemed an unregistered Broker-Dealer for facilitating swaps.

@@ -1,6 +1,8 @@
 import React, { useContext, useState, useMemo } from 'react';
 import { Shield, CheckCircle2, Circle, Trophy, ArrowRight, Zap, Crown, Star, Medal, AlertTriangle, Castle } from 'lucide-react';
 import { AppContext } from '../context';
+import { getSecurityLevelNative } from "../services/enclave-storage";
+import { checkDeviceIntegrity } from "../services/device-integrity";
 import { calculatePrivacyScore } from '../services/privacy';
 import BackupAuditModal from './BackupAuditModal';
 
@@ -14,6 +16,12 @@ interface Quest {
 
 const SovereigntyMeter: React.FC = () => {
   const context = useContext(AppContext);
+  const [nativeSecurity, setNativeSecurity] = useState<{ level: string; isStrongBox: boolean } | null>(null);
+  const [integrity, setIntegrity] = useState<any>(null);
+  React.useEffect(() => {
+    getSecurityLevelNative().then(setNativeSecurity);
+    checkDeviceIntegrity().then(setIntegrity);
+  }, []);
   const [showBackupAudit, setShowBackupAudit] = useState(false);
 
   const isHotWallet = context?.state.walletConfig?.type === 'hot';
@@ -107,6 +115,30 @@ const SovereigntyMeter: React.FC = () => {
       )}
 
       <div className="space-y-3">
+      {nativeSecurity && (
+         <div className="bg-zinc-950/50 border border-zinc-800 p-3 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+               <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest flex items-center gap-1.5">
+                  <Shield size={10} className={nativeSecurity.level !== "SOFTWARE" ? "text-orange-500" : "text-zinc-600"} />
+                  Hardware Security
+               </span>
+               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${nativeSecurity.isStrongBox ? "bg-orange-500/20 text-orange-500" : "bg-zinc-800 text-zinc-400"}`}>
+                  {nativeSecurity.level}
+               </span>
+            </div>
+            {integrity && (
+               <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest flex items-center gap-1.5">
+                     <CheckCircle2 size={10} className={integrity.isSecure ? "text-emerald-500" : "text-red-500"} />
+                     Device Integrity
+                  </span>
+                  <span className={`text-[9px] font-bold ${integrity.isSecure ? "text-emerald-500" : "text-red-500"}`}>
+                     {integrity.isSecure ? "PASSED" : "FAILED"}
+                  </span>
+               </div>
+            )}
+         </div>
+      )}
         <p className="text-[10px] font-black uppercase text-zinc-600 tracking-widest border-b border-zinc-900 pb-2">Active Quests</p>
         {MOCK_QUESTS.filter(q => !q.completed).slice(0, 3).map((quest) => (
           <div

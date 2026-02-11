@@ -43,6 +43,7 @@ type SecureEnclavePlugin = {
     path: string;
   }): Promise<{ secret: string; pubkey: string }>;
   getWalletInfo(options: {
+  getSecurityLevel(): Promise<{ level: string; isStrongBox: boolean }>;
     vault: string;
     pin?: string;
   }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }>;
@@ -71,7 +72,7 @@ export async function hasEnclaveBlob(key: string): Promise<boolean> {
       return false;
     }
   }
-  return sessionStorage.getItem(key) != null || localStorage.getItem(key) != null;
+  return localStorage.getItem(key) != null || sessionStorage.getItem(key) != null;
 }
 
 export async function getEnclaveBlob(key: string, opts?: { requireBiometric?: boolean }): Promise<string | null> {
@@ -85,34 +86,24 @@ export async function getEnclaveBlob(key: string, opts?: { requireBiometric?: bo
         throw new Error('auth required');
       }
     }
-    const legacy = localStorage.getItem(key);
-    if (legacy != null) {
-      try {
-        await SecureEnclave.setItem({ key, value: legacy, requireBiometric: false });
-        localStorage.removeItem(key);
-      } catch {
-        return legacy;
-      }
-      return legacy;
-    }
-    return null;
+    // Fallback to localStorage if native fails or item not found (for migration)
+    return localStorage.getItem(key);
   }
-  const session = sessionStorage.getItem(key);
-  if (session != null) return session;
-  const legacy = localStorage.getItem(key);
-  if (legacy != null) {
-    sessionStorage.setItem(key, legacy);
-    localStorage.removeItem(key);
-    return legacy;
-  }
-  return null;
+
+  // Web Path: Prefer localStorage for persistence across sessions
+  const local = localStorage.getItem(key);
+  if (local != null) return local;
+
+  return sessionStorage.getItem(key);
 }
 
 export async function setEnclaveBlob(key: string, value: string, opts?: { requireBiometric?: boolean }): Promise<void> {
   if (await hasNativeSecureEnclave()) {
     try {
       await SecureEnclave.setItem({ key, value, requireBiometric: opts?.requireBiometric ?? false });
+      // Clean up web storage if we successfully saved to native
       localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
       return;
     } catch (e: any) {
       const msg = typeof e?.message === 'string' ? e.message : '';
@@ -121,8 +112,9 @@ export async function setEnclaveBlob(key: string, value: string, opts?: { requir
       }
     }
   }
-  sessionStorage.setItem(key, value);
-  localStorage.removeItem(key);
+
+  // Web Path: Save to localStorage for persistence
+  localStorage.setItem(key, value);
 }
 
 export async function removeEnclaveBlob(key: string, opts?: { requireBiometric?: boolean }): Promise<void> {
@@ -136,8 +128,8 @@ export async function removeEnclaveBlob(key: string, opts?: { requireBiometric?:
       }
     }
   }
-  sessionStorage.removeItem(key);
   localStorage.removeItem(key);
+  sessionStorage.removeItem(key);
 }
 
 export async function clearEnclaveBiometricSession(): Promise<void> {
@@ -207,4 +199,11 @@ export async function signBatchNative(options: {
     return await SecureEnclave.signBatch(options);
   }
   throw new Error("Native Enclave not available");
+}
+
+export async function getSecurityLevelNative(): Promise<{ level: string; isStrongBox: boolean }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.getSecurityLevel();
+  }
+  return { level: 'WEB', isStrongBox: false };
 }

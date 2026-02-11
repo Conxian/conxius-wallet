@@ -15,7 +15,7 @@ test.describe('App Boot & Onboarding', () => {
     await page.goto('/');
 
     // Boot sequence should show the Conxius branding
-    await expect(page.locator('text=ConxiusLabs')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('text=Conxian-Labs')).toBeVisible({ timeout: 10_000 });
 
     // Boot completes and we should see either LockScreen or Onboarding
     // For a fresh state (no enclave), Onboarding should appear
