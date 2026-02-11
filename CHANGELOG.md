@@ -12,6 +12,8 @@ The format is based on Keep a Changelog, and this project aims to follow Semanti
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-02-14
+
 ### Added
 
 - **Implementation Registry** (`IMPLEMENTATION_REGISTRY.md`): Authoritative document tracking real vs mocked vs missing features across all services, components, and PRD requirements.

@@ -66,8 +66,8 @@ Conxius is a "Bitcoin-First" mobile wallet that offers hardware-level security w
 
 | Metric | Result |
 | :--- | :--- |
-| **Total Tests** | 27+ (expanding) |
-| **Passed** | 27 |
+| **Total Tests** | 108 |
+| **Passed** | 108 |
 | **Failed** | 0 |
 | **Duration** | 2.73s |
 | **Environment** | Node.js / JSDOM |

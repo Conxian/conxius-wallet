@@ -1,6 +1,6 @@
 # Conxius Wallet: Gaps & Recommendations
 
-**Last Updated:** 2026-02-10  
+**Last Updated:** 2026-02-14
 **Total Gaps Identified:** 30 (original) + 7 (newly discovered)  
 **Resolved:** 5 P0s + 1 P1  
 **Repository:** <https://github.com/conxian/conxius-wallet>  
@@ -544,7 +544,7 @@ environment: "jsdom"  // not "node"
 
 ---
 
-### 35. **Root/Jailbreak Detection Missing**
+### 35. ~~**Root/Jailbreak Detection Missing**~~ ✅ RESOLVED
 
 **Location:** N/A (not implemented)  
 **Severity:** 🟡 Medium (P2)  

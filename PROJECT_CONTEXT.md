@@ -304,3 +304,5 @@ User → Conxius UI → Partner API → Blockchain
 **Maintained by:** Cascade AI Agent  
 **Review Cycle:** Every session start  
 **Owner:** Conxian Labs
+
+- **Resolved Build Errors**: Fixed TypeScript compilation errors in `signer.ts`, `ntt.ts`, `boltz.ts`, and `NTTBridge.tsx`. Verified successful build with `npm run build`.

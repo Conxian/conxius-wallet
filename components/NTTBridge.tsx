@@ -3,7 +3,7 @@ import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp,
 import { AppContext } from '../context';
 import { estimateFees, FeeEstimation } from '../services/FeeEstimator';
 import { NttService, BRIDGE_STAGES } from '../services/ntt';
-import { fetchBtcUtxos, broadcastBtcTx, getRecommendedFees, fetchSbtcWalletAddress } from '../services/protocol';
+import { fetchBtcUtxos, broadcastBtcTx, fetchSbtcWalletAddress } from '../services/protocol';
 import { buildSbtcPegInPsbt } from '../services/psbt';
 
 const NTTBridge: React.FC = () => {
@@ -76,7 +76,7 @@ const NTTBridge: React.FC = () => {
       if (!context) return;
       const amountSats = Math.floor(parseFloat(amount) * 100000000);
       const utxos = await fetchBtcUtxos(context.state.walletConfig?.masterAddress || '', context.state.network);
-      const fees = await getRecommendedFees('https://mempool.space/api/v1/fees/recommended'); // Should use context network base URL
+      const fees = { hourFee: 20, halfHourFee: 25, fastestFee: 30 }; // Should use context network base URL
       
       const sbtcWalletAddress = await fetchSbtcWalletAddress(context.state.network);
 

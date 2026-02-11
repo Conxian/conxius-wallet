@@ -207,11 +207,11 @@ export const signBip322Message = async (
     if (scriptType === 'P2TR') {
         const p2tr = bitcoin.payments.p2tr({ internalPubkey: pubkey.subarray(1, 33), network: bitcoin.networks.bitcoin });
         if (!p2tr.output) throw new Error('BIP-322: Failed to create P2TR output');
-        output = p2tr.output;
+        output = Buffer.from(p2tr.output);
     } else {
         const p2wpkh = bitcoin.payments.p2wpkh({ pubkey, network: bitcoin.networks.bitcoin });
         if (!p2wpkh.output) throw new Error('BIP-322: Failed to create P2WPKH output');
-        output = p2wpkh.output;
+        output = Buffer.from(p2wpkh.output);
     }
 
     const toSpendTx = new bitcoin.Transaction();
@@ -231,23 +231,24 @@ export const signBip322Message = async (
     let sighash: Buffer;
     if (scriptType === 'P2TR') {
         // Taproot sign-to-spend
-        sighash = toSignTx.hashForTaprootSignature(
+        sighash = Buffer.from(toSignTx.hashForWitnessV1(
             0,
             [output],
+            [BigInt(0)],
             bitcoin.Transaction.SIGHASH_DEFAULT
-        );
+        ));
     } else {
         const scriptCode = Buffer.concat([
             Buffer.from([0x76, 0xa9, 0x14]),  // OP_DUP OP_HASH160 PUSH20
             bitcoin.crypto.hash160(pubkey),
             Buffer.from([0x88, 0xac])         // OP_EQUALVERIFY OP_CHECKSIG
         ]);
-        sighash = toSignTx.hashForWitnessV0(
+        sighash = Buffer.from(toSignTx.hashForWitnessV0(
             0,
             scriptCode,
             BigInt(0),
             bitcoin.Transaction.SIGHASH_ALL
-        );
+        ));
     }
 
     // Step 5: Sign the Hash using Enclave
@@ -281,7 +282,7 @@ export const signBip322Message = async (
         witnessStack = [Buffer.from(signatureHex, 'hex')];
     } else {
         const signature = Buffer.from(signatureHex, 'hex');
-        const derSig = bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL);
+        const derSig = Buffer.from(bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL));
         witnessStack = [derSig, pubkey];
     }
     const witnessItems = witnessStack.length;
