@@ -96,13 +96,11 @@ export class NttService {
             // For now, assuming Native Token transfer.
             
             const xfer = await wh.tokenTransfer(
-                sourceChain,
-                'native', // Transfer native token of source chain
+                Wormhole.tokenId(sourceChain.chain, 'native'),
                 transferAmount,
-                destChain,
-                signer.address(), // Destination address (simplified, usually need to decode/encode)
-                false, // Automatic delivery (Relayer) - False for Manual (Standard)
-                undefined // Payload
+                Wormhole.chainAddress(sourceChain.chain, signer.address()),
+                Wormhole.chainAddress(destChain.chain, signer.address()),
+                'TokenBridge'
             );
 
             // Initiate Transfer

@@ -98,7 +98,7 @@ export class BoltzService {
             body: JSON.stringify({
                 from: 'BTC',
                 to: 'BTC', // For Lightning to On-Chain, it's often treated as pair
-                preimageHash: preimageHash.toString('hex'),
+                preimageHash: Buffer.from(preimageHash).toString('hex'),
                 invoiceAmount: amountSats,
                 claimAddress: toAddress
             })
