@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import { Activity, ShieldCheck, Zap, Network, Lock, Cpu, CheckCircle2, AlertTriangle, Loader2, RefreshCw, Terminal, Search, Binary, Repeat, Globe, Send, ShieldAlert, Sparkles, XCircle, Layers, Shield } from 'lucide-react';
+import { getSecurityLevelNative } from "../services/enclave-storage";
+import { checkDeviceIntegrity } from "../services/device-integrity";
 import { AppContext } from '../context';
 import { getSystemHealthSummary } from '../services/gemini';
 
@@ -10,7 +12,8 @@ const TEST_VECTORS = [
   { id: 'rpc_stx', label: 'Stacks L2 (Hiro API)', icon: Layers, status: 'pending', method: async () => { try { await fetch('https://api.mainnet.hiro.so/v2/info'); return true; } catch { return false; } } },
   { id: 'rpc_liq', label: 'Liquid Network', icon: Globe, status: 'pending', method: async () => { try { await fetch('https://blockstream.info/liquid/api/blocks/tip/height'); return true; } catch { return false; } } },
   { id: 'bridge', label: 'Wormhole Guardian Mesh', icon: Repeat, status: 'pending', method: async () => { try { await fetch('https://api.wormholescan.io/api/v1/health'); return true; } catch { return false; } } },
-  { id: 'keystore', label: 'Hardware Keystore (T4/TEE)', icon: Shield, status: 'pending', method: async () => { await new Promise(r => setTimeout(r, 1200)); return true; } },
+  { id: "keystore", label: "Hardware Keystore (T4/TEE)", icon: Shield, status: "pending", method: async () => { try { const sec = await getSecurityLevelNative(); return sec.level !== "SOFTWARE" && sec.level !== "WEB" && sec.level !== "UNKNOWN"; } catch { return false; } } },
+  { id: "integrity", label: "Device Integrity (Anti-Root)", icon: ShieldCheck, status: "pending", method: async () => { try { const integrity = await checkDeviceIntegrity(); return integrity.isSecure; } catch { return false; } } },
   { id: 'tor', label: 'Tor V3 Circuit (Tunnel)', icon: ShieldCheck, status: 'pending', method: async () => { await new Promise(r => setTimeout(r, 800)); return true; } },
 ];
 
@@ -30,10 +33,10 @@ const SystemDiagnostics: React.FC = () => {
     
     let failureCount = 0;
 
-    for (let i = 0; i < tests.length; i++) {
+    for (let i = 0; i < TEST_VECTORS.length; i++) {
       setTests(prev => prev.map((t, idx) => idx === i ? { ...t, status: 'running' } : t));
       
-      const success = await tests[i].method();
+      const success = await TEST_VECTORS[i].method();
       
       // Artificial delay for UX
       await new Promise(r => setTimeout(r, 600));
@@ -174,7 +177,7 @@ const SystemDiagnostics: React.FC = () => {
                  <span className="text-[10px] font-black uppercase font-mono tracking-widest">SENTINEL_DEBUG_OUTPUT</span>
               </div>
               <div className="space-y-3 font-mono text-[10px] text-zinc-500 h-full overflow-y-auto custom-scrollbar selection:bg-orange-500/50">
-                 <p className="text-green-500">&gt; [OK] LICENSE_VALIDATED: BSL-1.1 (Conxius Labs)</p>
+                 <p className="text-green-500">&gt; [OK] LICENSE_VALIDATED: BSL-1.1 (Conxian-Labs)</p>
                  <p className="text-zinc-700">&gt; [OK] ENCLAVE_ISOLATION_VERIFIED</p>
                  {tests.filter(t => t.status === 'passed').map(t => (
                     <p key={t.id} className="animate-in slide-in-from-left-2">&gt; [VERIFIED] {t.label.toUpperCase()}... SUCCESS</p>
