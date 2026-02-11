@@ -13,13 +13,19 @@ const FEATURED_DAPPS = [
 
 const Web3Browser: React.FC = () => {
   const [url, setUrl] = useState('');
-  
+
   const handleOpen = async (targetUrl: string) => {
-    let finalUrl = targetUrl.trim(); if (finalUrl.toLowerCase().startsWith('javascript:')) return;
-    if (!finalUrl.startsWith('http')) {
+    let finalUrl = targetUrl.trim();
+
+    // SECURITY: Block dangerous pseudo-protocols to prevent XSS and local file access
+    if (/^(javascript|data|file|vbscript):/i.test(finalUrl)) {
+      return;
+    }
+
+    if (!/^https?:\/\//i.test(finalUrl)) {
        finalUrl = 'https://' + finalUrl;
     }
-    
+
     // Use Capacitor Browser to open in-app
     try {
       await Browser.open({ url: finalUrl, presentationStyle: 'popover' });
@@ -57,8 +63,8 @@ const Web3Browser: React.FC = () => {
             <div className="p-3 text-zinc-500">
                 <Globe size={20} />
             </div>
-            <input 
-                type="text" 
+            <input
+                type="text"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="Search or enter URL (e.g. gamma.io)"
@@ -75,7 +81,7 @@ const Web3Browser: React.FC = () => {
         <h3 className="text-xs font-black uppercase tracking-widest text-zinc-600 px-2">Sovereign Verified</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {FEATURED_DAPPS.map((dapp, i) => (
-                <button 
+                <button
                     key={i}
                     onClick={() => handleOpen(dapp.url)}
                     className="flex flex-col items-center justify-center p-6 bg-zinc-900/40 border border-zinc-800 hover:border-orange-500/50 hover:bg-zinc-800/80 rounded-3xl transition-all group gap-4"
