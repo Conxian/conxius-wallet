@@ -1,6 +1,6 @@
 
 import React, { useState, useContext, useEffect } from 'react';
-import { Binary, Snowflake, Shield, Info, Tag, Edit3, Lock, Unlock, Eye, EyeOff, Search, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowRight, Binary, Zap, Snowflake, Shield, Info, Tag, Edit3, Lock, Unlock, Eye, EyeOff, Search, Loader2, RefreshCw } from 'lucide-react';
 import { AppContext } from '../context';
 import { UTXO } from '../types';
 import { fetchBtcUtxos } from '../services/protocol';
@@ -41,6 +41,17 @@ const UTXOManager: React.FC = () => {
     u.address.includes(filter)
   );
 
+
+  const dustThreshold = 5000;
+  const dustUtxos = utxos.filter(u => u.amount < dustThreshold && !u.isFrozen);
+  const canSweep = dustUtxos.length > 1;
+
+  const handleSweepDust = () => {
+    if (!canSweep) return;
+    context?.notify('info', 'Constructing consolidation transaction for ' + dustUtxos.length + ' UTXOs...');
+    // In a real app, this would open a send modal with these UTXOs pre-selected
+  };
+
   const totalSats = filteredUtxos.reduce((acc, u) => acc + u.amount, 0);
   const frozenSats = filteredUtxos.filter(u => u.isFrozen).reduce((acc, u) => acc + u.amount, 0);
 
@@ -60,6 +71,15 @@ const UTXOManager: React.FC = () => {
             <button onClick={loadUtxos} disabled={isLoading} className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-orange-500">
                 <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
             </button>
+                        {canSweep && (
+                <button
+                    onClick={handleSweepDust}
+                    className="flex items-center gap-2 bg-orange-600/10 border border-orange-500/20 px-4 py-2 rounded-xl text-orange-500 hover:bg-orange-600 hover:text-white transition-all"
+                >
+                    <Binary size={14} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Sweep Dust</span>
+                </button>
+            )}
             <div className="bg-zinc-900/50 border border-zinc-800 px-6 py-4 rounded-2xl text-right min-w-[200px]">
                 <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Aggregate Liquid Satoshis</p>
                 <div className="flex items-baseline justify-end gap-2">
@@ -126,7 +146,17 @@ const UTXOManager: React.FC = () => {
                     <div className="flex items-center gap-6">
                         <div className="text-right">
                             <p className="text-lg font-mono font-bold text-orange-500">{utxo.amount.toLocaleString()} sats</p>
-                            <p className="text-[9px] font-black uppercase text-zinc-600">{utxo.status}</p>
+                                                        <p className="text-[9px] font-black uppercase text-zinc-600">{utxo.status}</p>
+                            {utxo.status !== 'confirmed' && (
+                                <a
+                                  href={'https://mempool.space/tx/' + utxo.txid}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[8px] font-black uppercase text-orange-500 hover:text-orange-400 flex items-center justify-end gap-1 mt-1"
+                                >
+                                  <Zap size={10} /> Turbo Boost
+                                </a>
+                            )}
                         </div>
                         <button 
                             onClick={() => toggleFreeze(utxo.txid)}
