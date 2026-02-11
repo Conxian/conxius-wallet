@@ -82,25 +82,36 @@ const Settings: React.FC = () => {
           </div>
         </section>
 
-        {/* System Persistence */}
+        {/* Native Environment Status */}
         <section className="bg-zinc-900/40 border border-zinc-800 rounded-3xl overflow-hidden">
           <div className="p-6 border-b border-zinc-800 bg-zinc-900/20">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-              <RotateCcw size={16} className="text-red-500" /> Final Protocol Reset
+              <Zap size={16} className="text-orange-500" /> Native Environment
             </h3>
           </div>
-          <div className="p-8 flex items-center justify-between">
-            <div className="max-w-md">
-              <p className="font-bold text-zinc-200">Purge Sovereign State</p>
-              <p className="text-xs text-zinc-500 mt-1">Wipes all keys, BIP-39 entropy, and cached ledger data. Action is terminal.</p>
+          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="space-y-4">
+              <label className="text-[10px] font-black uppercase text-zinc-600 flex items-center gap-2">
+                <Shield size={12} /> The Conclave (Enclave)
+              </label>
+              <div className="flex items-center justify-between p-4 bg-zinc-950 rounded-2xl border border-zinc-900">
+                 <span className="text-xs text-zinc-400">Status</span>
+                 <span className="text-[10px] font-black text-green-500 uppercase">Hardware Locked</span>
+              </div>
             </div>
-            <button onClick={appContext.resetEnclave} className="px-8 py-3 bg-red-600/10 border border-red-500/20 text-red-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">
-              Execute Purge
-            </button>
+            <div className="space-y-4">
+              <label className="text-[10px] font-black uppercase text-zinc-600 flex items-center gap-2">
+                <Zap size={12} /> Breez (Lightning)
+              </label>
+              <div className="flex items-center justify-between p-4 bg-zinc-950 rounded-2xl border border-zinc-800">
+                 <span className="text-xs text-zinc-400">Mobile Node</span>
+                 <span className="text-[10px] font-black text-orange-500 uppercase">Ready</span>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Advanced */}
+        {/* Advanced Controls */}
         <section className="bg-zinc-900/40 border border-zinc-800 rounded-3xl overflow-hidden">
           <div className="p-6 border-b border-zinc-800 bg-zinc-900/20">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
@@ -250,6 +261,24 @@ const Settings: React.FC = () => {
               />
               <p className="text-[10px] text-zinc-500 italic mt-1">Enclave-encrypted. Required for Satoshi AI, Labs Explorer, and DeFi Audits.</p>
             </div>
+          </div>
+        </section>
+
+        {/* System Persistence */}
+        <section className="bg-zinc-900/40 border border-zinc-800 rounded-3xl overflow-hidden">
+          <div className="p-6 border-b border-zinc-800 bg-zinc-900/20">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+              <RotateCcw size={16} className="text-red-500" /> Final Protocol Reset
+            </h3>
+          </div>
+          <div className="p-8 flex items-center justify-between">
+            <div className="max-w-md">
+              <p className="font-bold text-zinc-200">Purge Sovereign State</p>
+              <p className="text-xs text-zinc-500 mt-1">Wipes all keys, BIP-39 entropy, and cached ledger data. Action is terminal.</p>
+            </div>
+            <button onClick={appContext.resetEnclave} className="px-8 py-3 bg-red-600/10 border border-red-500/20 text-red-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">
+              Execute Purge
+            </button>
           </div>
         </section>
       </div>

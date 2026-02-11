@@ -457,7 +457,7 @@ const App: React.FC = () => {
         <div className="space-y-6 max-w-md w-full">
            <CurrentIcon size={24} className="animate-pulse text-orange-500 mx-auto" />
            <h1 className="text-3xl font-black tracking-tighter text-zinc-100 uppercase italic">
-              Conxius<span className="text-orange-500">Labs</span>
+              Conxian<span className="text-orange-500">-Labs</span>
            </h1>
            <div className="h-1 w-full bg-zinc-900 rounded-full overflow-hidden">
               {(() => {

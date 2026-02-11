@@ -54,7 +54,7 @@ export const generateReleaseNotes = async (version: string) => {
       - DAO Bounty Integration for community devs.
       The tone should be clinical, authoritative, and visionary.`,
       config: {
-        systemInstruction: "You are the Chief Technical Evangelist at Conxius Labs.",
+        systemInstruction: "You are the Chief Technical Evangelist at Conxian-Labs.",
         thinkingConfig: { thinkingBudget: 32768 }
       }
     });

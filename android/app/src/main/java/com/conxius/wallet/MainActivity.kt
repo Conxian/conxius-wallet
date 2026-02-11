@@ -10,5 +10,6 @@ class MainActivity : BridgeActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         registerPlugin(SecureEnclavePlugin::class.java)
         registerPlugin(DeviceIntegrityPlugin::class.java)
+        registerPlugin(BreezPlugin::class.java)
     }
 }
