@@ -8,7 +8,7 @@ permalink: /agents
 
 Welcome, Sovereign Agent. This document provides instructions and context for working with the Conxius Wallet codebase.
 
-**Last Updated:** 2026-02-10  
+**Last Updated:** 2026-02-14
 **Session Context:** See `PROJECT_CONTEXT.md` for current state  
 **Feature Status:** See `IMPLEMENTATION_REGISTRY.md` for real vs mocked vs missing
 
@@ -74,14 +74,14 @@ Conxius is an Android-first wallet built using:
 
 ## 📁 Key Directories
 
-- `/components`: 37 React UI components
+- `/components`: 38 React UI components
   - `Dashboard.tsx`: Multi-asset portfolio view
   - `PaymentPortal.tsx`: Send/receive flows
   - `NTTBridge.tsx`: Cross-chain Native Token Transfers — **EXPERIMENTAL**
   - `SilentPayments.tsx`: BIP-352 — **EXPERIMENTAL** (uses mock seed)
-- `/services`: Core business logic (18 modules — signing, protocol adapters, storage)
+- `/services`: Core business logic (32 modules — signing, protocol adapters, storage)
 - `/android`: Capacitor Android project (SecureEnclavePlugin, BreezPlugin, NativeCrypto)
-- `/tests`: 12 test files (signer, protocol, enclave-storage, seed, crypto, sovereignty, etc.)
+- `/tests`: 11 test files (signer, protocol, enclave-storage, seed, crypto, sovereignty, etc.)
 - `/docs`: Extended documentation (PRD, Whitepaper, Analysis)
 - `IMPLEMENTATION_REGISTRY.md`: **Authoritative feature status document**
 
