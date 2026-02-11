@@ -1,0 +1,43 @@
+<<<<<<< SEARCH
+    } else {
+        const signature = Buffer.from(signatureHex, 'hex');
+        const derSig = bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL);
+        witnessStack = [derSig, pubkey];
+    }
+    const signature = Buffer.from(signatureHex, 'hex');
+    const derSig = bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL);
+
+    // Step 6: Serialize witness stack [signature, pubkey]
+    const witnessStack = [derSig, pubkey];
+    const witnessItems = witnessStack.length;
+    const parts: Buffer[] = [Buffer.from([witnessItems])];
+    for (const item of witnessStack) {
+      if (item.length < 0xfd) {
+        parts.push(Buffer.from([item.length]));
+      } else {
+        parts.push(Buffer.from([0xfd, item.length & 0xff, (item.length >> 8) & 0xff]));
+      }
+      parts.push(Buffer.from(item));
+    }
+    return Buffer.concat(parts).toString('base64');
+};
+=======
+    } else {
+        const signature = Buffer.from(signatureHex, 'hex');
+        const derSig = bitcoin.script.signature.encode(signature, bitcoin.Transaction.SIGHASH_ALL);
+        witnessStack = [derSig, pubkey];
+    }
+
+    const witnessItems = witnessStack.length;
+    const parts: Buffer[] = [Buffer.from([witnessItems])];
+    for (const item of witnessStack) {
+      if (item.length < 0xfd) {
+        parts.push(Buffer.from([item.length]));
+      } else {
+        parts.push(Buffer.from([0xfd, item.length & 0xff, (item.length >> 8) & 0xff]));
+      }
+      parts.push(Buffer.from(item));
+    }
+    return Buffer.concat(parts).toString('base64');
+};
+>>>>>>> REPLACE
