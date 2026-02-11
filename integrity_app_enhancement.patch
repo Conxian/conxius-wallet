@@ -1,0 +1,57 @@
+<<<<<<< SEARCH
+  const BOOT_SEQUENCE = [
+    { text: "BIP-322 Verification...", icon: Lock },
+    { text: "Tor V3 Tunnel Stable...", icon: ShieldIcon },
+    { text: "BIP-84 Roots Loaded...", icon: Cpu },
+    { text: "Sovereignty Confirmed.", icon: CheckCircle2 }
+  ];
+
+  useEffect(() => {
+    let step = 0;
+    const interval = setInterval(() => {
+      if (step < BOOT_SEQUENCE.length - 1) {
+        step++;
+        setBootStep(step);
+      } else {
+        clearInterval(interval);
+        setTimeout(() => setIsBooting(false), 800);
+      }
+    }, 350);
+    return () => clearInterval(interval);
+  }, []);
+=======
+  const BOOT_SEQUENCE = [
+    { text: "Device Integrity...", icon: ShieldIcon },
+    { text: "BIP-322 Verification...", icon: Lock },
+    { text: "Tor V3 Tunnel Stable...", icon: ShieldIcon },
+    { text: "BIP-84 Roots Loaded...", icon: Cpu },
+    { text: "Sovereignty Confirmed.", icon: CheckCircle2 }
+  ];
+
+  useEffect(() => {
+    const runBoot = async () => {
+      // Step 0: Device Integrity
+      const security = await evaluateSecurityPosture();
+      if (!security.allowed) {
+        notify('error', security.reason);
+      }
+
+      let step = 0;
+      const interval = setInterval(() => {
+        if (step < BOOT_SEQUENCE.length - 1) {
+          step++;
+          setBootStep(step);
+        } else {
+          clearInterval(interval);
+          setTimeout(() => setIsBooting(false), 800);
+        }
+      }, 350);
+      return interval;
+    };
+
+    const intervalPromise = runBoot();
+    return () => {
+      intervalPromise.then(interval => clearInterval(interval));
+    };
+  }, []);
+>>>>>>> REPLACE
