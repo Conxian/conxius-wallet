@@ -48,6 +48,7 @@ import * as bip39 from 'bip39';
 import { decryptSeed } from './services/seed';
 import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
 import { ConxiusWormholeSigner } from './services/wormhole-signer';
+import { evaluateSecurityPosture } from './services/device-integrity';
 import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
 import { notificationService } from './services/notifications';
 import { setGeminiApiKey as setGeminiServiceKey } from './services/gemini';
@@ -180,6 +181,7 @@ const App: React.FC = () => {
   }, [activeTab]);
 
   const BOOT_SEQUENCE = [
+    { text: "Device Integrity...", icon: ShieldIcon },
     { text: "BIP-322 Verification...", icon: Lock },
     { text: "Tor V3 Tunnel Stable...", icon: ShieldIcon },
     { text: "BIP-84 Roots Loaded...", icon: Cpu },
@@ -187,17 +189,30 @@ const App: React.FC = () => {
   ];
 
   useEffect(() => {
-    let step = 0;
-    const interval = setInterval(() => {
-      if (step < BOOT_SEQUENCE.length - 1) {
-        step++;
-        setBootStep(step);
-      } else {
-        clearInterval(interval);
-        setTimeout(() => setIsBooting(false), 800);
+    const runBoot = async () => {
+      // Step 0: Device Integrity
+      const security = await evaluateSecurityPosture();
+      if (!security.allowed) {
+        notify('error', security.reason);
       }
-    }, 350);
-    return () => clearInterval(interval);
+
+      let step = 0;
+      const interval = setInterval(() => {
+        if (step < BOOT_SEQUENCE.length - 1) {
+          step++;
+          setBootStep(step);
+        } else {
+          clearInterval(interval);
+          setTimeout(() => setIsBooting(false), 800);
+        }
+      }, 350);
+      return interval;
+    };
+
+    const intervalPromise = runBoot();
+    return () => {
+      intervalPromise.then(interval => clearInterval(interval));
+    };
   }, []);
 
   const notify = async (type: ToastType, message: string, title?: string) => {

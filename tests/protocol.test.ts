@@ -255,13 +255,27 @@ describe('protocol service', () => {
   });
 
   describe('fetchRunesBalances', () => {
-    it// Mock failure for primary and fallback to test robust error handling returning []
+    it('should return empty array on failure', async () => {
       mockFetch.mockRejectedValue(new Error('Runes API Error'));
-      
-      ('should return empty array (placeholder implementation)', async () => {
       const balances = await fetchRunesBalances(TEST_BTC_ADDRESS);
-      
       expect(balances).toEqual([]);
+    });
+
+    it('should fetch and parse runes correctly from Hiro API', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          results: [
+            {
+              rune: { id: '123', name: 'TEST_RUNE', symbol: 'TR', divisibility: 2 },
+              balance: '1000'
+            }
+          ]
+        })
+      });
+      const balances = await fetchRunesBalances(TEST_BTC_ADDRESS);
+      expect(balances[0].name).toBe('TEST_RUNE');
+      expect(balances[0].balance).toBe(10);
     });
   });
 
