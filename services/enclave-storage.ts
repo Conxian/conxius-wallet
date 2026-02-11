@@ -43,10 +43,10 @@ type SecureEnclavePlugin = {
     path: string;
   }): Promise<{ secret: string; pubkey: string }>;
   getWalletInfo(options: {
-  getSecurityLevel(): Promise<{ level: string; isStrongBox: boolean }>;
     vault: string;
     pin?: string;
   }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }>;
+  getSecurityLevel(): Promise<{ level: string; isStrongBox: boolean }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');

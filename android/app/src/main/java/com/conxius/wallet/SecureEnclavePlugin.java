@@ -628,65 +628,84 @@ public class SecureEnclavePlugin extends Plugin {
           return;
       }
 
-      try {
-          SecretKey keyToUse = null;
-          JSONObject envelope = new JSONObject(vaultJson);
-          JSONArray ivJson = envelope.getJSONArray("iv");
-          JSONArray dataJson = envelope.getJSONArray("data");
-          JSONArray saltJson = envelope.getJSONArray("salt");
-          byte[] salt = new byte[saltJson.length()];
-          for(int i=0; i<saltJson.length(); i++) salt[i] = (byte)saltJson.getInt(i);
-
-          if (pin != null) {
-              keyToUse = deriveKeyForVault(pin, salt);
-          } else {
-              if (cachedSessionKey != null && System.currentTimeMillis() < cachedSessionExpiry) {
-                  if (Arrays.equals(this.cachedSessionSalt, salt)) {
-                      keyToUse = cachedSessionKey;
-                  } else {
-                     call.reject("Session valid but wallet mismatch. Unlock required.");
-                     return;
-                  }
-              } else {
-                  call.reject("Session expired. Unlock required.");
-                  return;
-              }
-          }
-
-          byte[] iv = new byte[ivJson.length()];
-          for(int i=0; i<ivJson.length(); i++) iv[i] = (byte)ivJson.getInt(i);
-          byte[] data = new byte[dataJson.length()];
-          for(int i=0; i<dataJson.length(); i++) data[i] = (byte)dataJson.getInt(i);
-
-          Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-          cipher.init(Cipher.DECRYPT_MODE, keyToUse, new GCMParameterSpec(GCM_TAG_BITS, iv));
-          byte[] seed = cipher.doFinal(data);
-
+      getActivity().runOnUiThread(() -> {
           try {
-              DeterministicSeed detSeed = new DeterministicSeed(seed, (java.util.List<String>) null, 0L);
-              byte[] seedBytes = detSeed.getSeedBytes(); DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(seedBytes); if (seedBytes != null) java.util.Arrays.fill(seedBytes, (byte) 0);
-              
-              DeterministicHierarchy hierarchy = new DeterministicHierarchy(rootKey);
-              String[] parts = path.split("/");
-              DeterministicKey child = rootKey;
-              
-              for (String part : parts) {
-                  if (part.equals("m")) continue;
-                  boolean hardened = part.endsWith("'") || part.endsWith("h");
-                  String numStr = part.replace("'", "").replace("h", "");
-                  int index = Integer.parseInt(numStr);
-                  child = HDKeyDerivation.deriveChildKey(child, new org.bitcoinj.crypto.ChildNumber(index, hardened));
-              }
-              
-              JSObject ret = new JSObject();
-              ret.put("secret", child.getPrivateKeyAsHex());
-              ret.put("pubkey", child.getPublicKeyAsHex());
-              call.resolve(ret);
-          } finally {
-              Arrays.fill(seed, (byte)0);
+              new android.app.AlertDialog.Builder(getContext())
+                  .setTitle("Confirm Secret Export")
+                  .setMessage("Action: Export Private Key\nPath: " + path + "\n\nWARNING: This allows the application to access your private key material. Only confirm if you trust the requester.")
+                  .setPositiveButton("Allow", (dialog, which) -> {
+                      new Thread(() -> {
+                          try {
+                              executeDerivedSecretInternal(call, vaultJson, pin, path);
+                          } catch (Exception e) {
+                              call.reject("Derivation failed: " + e.getMessage());
+                          }
+                      }).start();
+                  })
+                  .setNegativeButton("Deny", (dialog, which) -> {
+                      call.reject("User denied secret export");
+                  })
+                  .setCancelable(false)
+                  .show();
+          } catch (Exception e) {
+              call.reject("Failed to show confirmation dialog: " + e.getMessage());
           }
-      } catch (Exception e) {
-          call.reject("Derivation failed: " + e.getMessage());
+      });
+  }
+
+  private void executeDerivedSecretInternal(PluginCall call, String vaultJson, String pin, String path) throws Exception {
+      SecretKey keyToUse = null;
+      JSONObject envelope = new JSONObject(vaultJson);
+      JSONArray ivJson = envelope.getJSONArray("iv");
+      JSONArray dataJson = envelope.getJSONArray("data");
+      JSONArray saltJson = envelope.getJSONArray("salt");
+      byte[] salt = new byte[saltJson.length()];
+      for(int i=0; i<saltJson.length(); i++) salt[i] = (byte)saltJson.getInt(i);
+
+      if (pin != null) {
+          keyToUse = deriveKeyForVault(pin, salt);
+      } else {
+          if (cachedSessionKey != null && System.currentTimeMillis() < cachedSessionExpiry) {
+              if (Arrays.equals(this.cachedSessionSalt, salt)) {
+                  keyToUse = cachedSessionKey;
+              } else {
+                  throw new Exception("Session valid but wallet mismatch. Unlock required.");
+              }
+          } else {
+              throw new Exception("Session expired. Unlock required.");
+          }
+      }
+
+      byte[] iv = new byte[ivJson.length()];
+      for(int i=0; i<ivJson.length(); i++) iv[i] = (byte)ivJson.getInt(i);
+      byte[] data = new byte[dataJson.length()];
+      for(int i=0; i<dataJson.length(); i++) data[i] = (byte)dataJson.getInt(i);
+
+      Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+      cipher.init(Cipher.DECRYPT_MODE, keyToUse, new GCMParameterSpec(GCM_TAG_BITS, iv));
+      byte[] seed = cipher.doFinal(data);
+
+      try {
+          DeterministicSeed detSeed = new DeterministicSeed(seed, (java.util.List<String>) null, 0L);
+          byte[] seedBytes = detSeed.getSeedBytes(); DeterministicKey rootKey = HDKeyDerivation.createMasterPrivateKey(seedBytes); if (seedBytes != null) java.util.Arrays.fill(seedBytes, (byte) 0);
+
+          String[] parts = path.split("/");
+          DeterministicKey child = rootKey;
+
+          for (String part : parts) {
+              if (part.equals("m")) continue;
+              boolean hardened = part.endsWith("'") || part.endsWith("h");
+              String numStr = part.replace("'", "").replace("h", "");
+              int index = Integer.parseInt(numStr);
+              child = HDKeyDerivation.deriveChildKey(child, new org.bitcoinj.crypto.ChildNumber(index, hardened));
+          }
+
+          JSObject ret = new JSObject();
+          ret.put("secret", child.getPrivateKeyAsHex());
+          ret.put("pubkey", child.getPublicKeyAsHex());
+          call.resolve(ret);
+      } finally {
+          Arrays.fill(seed, (byte)0);
       }
   }
 

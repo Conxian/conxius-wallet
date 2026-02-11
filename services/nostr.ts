@@ -29,23 +29,28 @@ export const generateNostrKeypair = async (vault: string = 'primary_vault') => {
       });
       
       const secretHex = res.secret;
-      
-      // Derive Schnorr Public Key (X-only)
       const privBuffer = Buffer.from(secretHex, 'hex');
-      
-      // Verify private key is valid
-      if (!tiny.isPrivate(privBuffer)) {
-          throw new Error("Invalid private key derived");
+      let pubKeyHex = '';
+      let npub = '';
+
+      try {
+        // Verify private key is valid
+        if (!tiny.isPrivate(privBuffer)) {
+            throw new Error("Invalid private key derived");
+        }
+
+        const pubKey = tiny.pointFromScalar(privBuffer);
+        if (!pubKey) throw new Error("Public key derivation failed");
+        const pubKeyX = pubKey.subarray(1, 33); // Drop prefix
+        pubKeyHex = Buffer.from(pubKeyX).toString('hex');
+
+        // Encode npub (bech32)
+        const words = bech32.toWords(pubKeyX);
+        npub = bech32.encode('npub', words, 1500); // 1500 is limit, standard
+      } finally {
+        // Memory Hardening: Zero-fill private key buffer after use
+        privBuffer.fill(0);
       }
-      
-      const pubKey = tiny.pointFromScalar(privBuffer);
-      if (!pubKey) throw new Error("Public key derivation failed");
-      const pubKeyX = pubKey.subarray(1, 33); // Drop prefix
-      const pubKeyHex = Buffer.from(pubKeyX).toString('hex');
-      
-      // Encode npub (bech32)
-      const words = bech32.toWords(pubKeyX);
-      const npub = bech32.encode('npub', words, 1500); // 1500 is limit, standard
       
       return {
         nsec: `ENCLAVE_SECURED_KEY`, // UI display only
@@ -90,10 +95,16 @@ export const signNostrEvent = async (event: NostrEvent, rawPrivHex: string): Pro
     
   const idBuffer = Buffer.from(id, 'hex');
   const privBuffer = Buffer.from(rawPrivHex, 'hex');
-  
-  // Sign using Schnorr
-  const sigBuffer = tiny.signSchnorr(idBuffer, privBuffer);
-  const sig = Buffer.from(sigBuffer).toString('hex');
+  let sig = '';
+
+  try {
+      // Sign using Schnorr
+      const sigBuffer = tiny.signSchnorr(idBuffer, privBuffer);
+      sig = Buffer.from(sigBuffer).toString('hex');
+  } finally {
+      // Memory Hardening: Zero-fill private key buffer after signing
+      privBuffer.fill(0);
+  }
 
   return { ...event, id, sig };
 };
