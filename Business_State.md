@@ -4,7 +4,7 @@ layout: page
 permalink: /business
 ---
 
-**Last Updated:** 2026-02-10
+**Last Updated:** 2026-02-11
 
 ## Market Fit
 
@@ -13,7 +13,7 @@ permalink: /business
 - **Target Persona:** Security-conscious Bitcoin enthusiasts and power users seeking multi-layer sovereignty.
 - **Conclave Gap:** Hardware-level security (TEE) without a physical dongle — unique position between hardware wallets (Ledger/Trezor) and software wallets (MetaMask/Xverse).
 - **Differentiators:** Multi-chain Bitcoin L1/L2 unification, gas abstraction, privacy scoring, AI-powered UTXO management.
-- **Competitive Edge:** 0.1% NTT bridge fee vs 2-5% on hardware wallet partners; native Lightning via Breez SDK.
+- **Competitive Edge:** Zero-markup bridge integration (Solver Rebates) vs 2-5% spreads on competitors; native Lightning via Breez SDK.
 
 ## Risk & Compliance
 
@@ -27,8 +27,8 @@ permalink: /business
 
 **Status:** [DEFINED] — See `MONETIZATION.md`
 
-- **Revenue Streams:** Affiliate commissions (partners), premium subscriptions (AI features), gas abstraction margin, SDK licensing.
-- **Prohibited Models:** Direct fiat custody, transaction fees on user BTC, data monetization without consent.
+- **Revenue Streams:** Affiliate commissions (partners), premium subscriptions (AI features), Network Utility Fees (LSP routing, Acceleration), Bridge Solver Rebates, SDK licensing.
+- **Prohibited Models:** Direct fiat custody, Money Transmission Fees (adding markup to transfers), data monetization without consent.
 
 ## Roadmap
 
