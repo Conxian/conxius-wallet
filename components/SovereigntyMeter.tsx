@@ -41,6 +41,7 @@ const SovereigntyMeter: React.FC = () => {
     { id: 'taproot_audit', label: 'Taproot Asset Audit', points: 15, completed: context?.state.walletConfig?.taprootAddress !== undefined, category: 'Privacy' },
     { id: 'citadel', label: 'Join a Citadel', points: 20, completed: !!context?.state.activeCitadel, category: 'Community' },
     { id: 'tor', label: 'Enable Tor Routing', points: 20, completed: context?.state.isTorEnabled ?? false, category: 'Privacy' },
+    { id: 'consolidation', label: 'Sovereign Consolidation', points: 50, completed: !!(context?.state.assets && context.state.assets.length > 0 && context.state.assets.every(a => a.symbol === 'BTC' || a.balance === 0)), category: 'Security' },
     { id: 'fee_opt', label: 'Optimize Network Fees', points: 15, completed: false, category: 'Security' },
   ];
 
