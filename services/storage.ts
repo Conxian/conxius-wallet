@@ -40,12 +40,13 @@ async function getKey(keyMaterial: CryptoKey, salt: Uint8Array): Promise<CryptoK
 }
 
 export const encryptState = async (state: any, pin: string): Promise<string> => {
+  const salt = globalThis.crypto.getRandomValues(new Uint8Array(16));
+  const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
+  const encoded = new TextEncoder().encode(JSON.stringify(state));
+
   try {
-    const salt = globalThis.crypto.getRandomValues(new Uint8Array(16));
     const keyMaterial = await getKeyMaterial(pin);
     const key = await getKey(keyMaterial, salt);
-    const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
-    const encoded = new TextEncoder().encode(JSON.stringify(state));
     
     const ciphertext = await globalThis.crypto.subtle.encrypt(
       { name: "AES-GCM", iv },
@@ -61,10 +62,14 @@ export const encryptState = async (state: any, pin: string): Promise<string> => 
   } catch (e) {
     console.error("Encryption Failed:", e);
     throw new Error("Enclave Encryption Failure");
+  } finally {
+    // Memory Hardening: Clear plaintext state buffer from RAM
+    encoded.fill(0);
   }
 };
 
 export const decryptState = async (stored: string, pin: string): Promise<any> => {
+  let decrypted: ArrayBuffer | null = null;
   try {
     const parsed = JSON.parse(stored);
     const iv = parsed?.iv;
@@ -75,7 +80,7 @@ export const decryptState = async (stored: string, pin: string): Promise<any> =>
     const keyMaterial = await getKeyMaterial(pin);
     const key = await getKey(keyMaterial, salt);
     
-    const decrypted = await globalThis.crypto.subtle.decrypt(
+    decrypted = await globalThis.crypto.subtle.decrypt(
       { name: "AES-GCM", iv: new Uint8Array(iv) },
       key,
       new Uint8Array(data)
@@ -84,6 +89,11 @@ export const decryptState = async (stored: string, pin: string): Promise<any> =>
     return JSON.parse(new TextDecoder().decode(decrypted));
   } catch (e) {
     throw new Error("Invalid Credentials");
+  } finally {
+    // Memory Hardening: Zero-fill the decrypted state buffer
+    if (decrypted) {
+      new Uint8Array(decrypted).fill(0);
+    }
   }
 };
 

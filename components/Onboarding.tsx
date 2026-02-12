@@ -207,6 +207,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   disabled={!bip39.validateMnemonic(importText.trim())}
                   onClick={() => {
                     setMnemonic(importText.trim().split(/\s+/));
+                    setImportText('');
                     setStep('security');
                   }}
                   className="flex-[2] py-4 bg-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest disabled:opacity-50"

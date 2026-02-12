@@ -44,11 +44,12 @@ const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
     setIsLoading(true);
     setError('');
 
+    let decryptedBytes: Uint8Array | null = null;
     try {
       const vault = appContext?.state.walletConfig?.mnemonicVault;
       if (!vault) throw new Error("Vault missing");
 
-      const decryptedBytes = await decryptSeed(vault, pin);
+      decryptedBytes = await decryptSeed(vault, pin);
       const decryptedMnemonic = new TextDecoder().decode(decryptedBytes).trim().toLowerCase();
       const inputMnemonic = mnemonicInput.trim().toLowerCase();
 
@@ -73,6 +74,10 @@ const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
     } catch (err) {
       setError("Verification failed. Ensure your phrase is correct.");
     } finally {
+      // Memory Hardening: scrubbing sensitive seed bytes from RAM
+      if (decryptedBytes) {
+        decryptedBytes.fill(0);
+      }
       setIsLoading(false);
     }
   };
