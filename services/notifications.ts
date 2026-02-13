@@ -41,7 +41,7 @@ class NotificationService {
   }
 
   async notify(event: Omit<WalletEvent, 'id' | 'timestamp'>) {
-    const id = Math.floor(Math.random() * 1000000);
+    const id = globalThis.crypto.getRandomValues(new Uint32Array(1))[0] % 1000000;
     const timestamp = Date.now();
 
     // OS-level notification

@@ -21,10 +21,11 @@ const Security: React.FC = () => {
 
   const confirmPinAndDecrypt = async () => {
     setIsDecrypting(true);
+    let decrypted: Uint8Array | null = null;
     try {
       const vault = context?.state.walletConfig?.mnemonicVault;
       if (vault) {
-        const decrypted = await decryptSeed(vault, pinEntry);
+        decrypted = await decryptSeed(vault, pinEntry);
         setMnemonic(new TextDecoder().decode(decrypted));
         setShowMnemonic(true);
         setShowPinPrompt(false);
@@ -32,6 +33,10 @@ const Security: React.FC = () => {
     } catch (e) {
       context?.notify('error', 'Invalid PIN');
     } finally {
+      // Memory Hardening: Scrub sensitive seed bytes from RAM immediately after use
+      if (decrypted) {
+        decrypted.fill(0);
+      }
       setIsDecrypting(false);
       setPinEntry('');
     }
