@@ -27,14 +27,19 @@ const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
     setIsLoading(true);
     setError('');
 
+    let testDecrypt: Uint8Array | null = null;
     try {
       if (!appContext?.state.walletConfig?.mnemonicVault) throw new Error("No vault found");
       // Test PIN by attempting to decrypt
-      await decryptSeed(appContext.state.walletConfig.mnemonicVault, pin);
+      testDecrypt = await decryptSeed(appContext.state.walletConfig.mnemonicVault, pin);
       setStep('mnemonic');
     } catch (err) {
       setError("Invalid Enclave PIN");
     } finally {
+      // Memory Hardening: Clear test decryption buffer
+      if (testDecrypt) {
+        testDecrypt.fill(0);
+      }
       setIsLoading(false);
     }
   };
