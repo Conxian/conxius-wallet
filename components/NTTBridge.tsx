@@ -153,7 +153,7 @@ const NTTBridge: React.FC = () => {
     }
     setIsTracking(true);
     try {
-        const data = await NttService.getTrackingDetails(txHash);
+        const results = await NttService.getTrackingDetails([txHash]); const data = results[0];
         if (data) {
             setTrackingData(data);
             context?.notify('success', 'Wormhole Attestation Found');

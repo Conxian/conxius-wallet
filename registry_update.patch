@@ -1,0 +1,18 @@
+<<<<<<< SEARCH
+| NTT bridge execution | `ntt.ts` (Wormhole SDK) | 🔧 PARTIAL | Real Wormhole SDK integrated; requires `NTT_CONFIGS` contract addresses |
+| NTT progress tracking | `ntt.ts:63-73` | 🔧 PARTIAL | Calls real Wormhole API but bridge is mocked |
+| NTT UI (Sovereign Handshake) | `NTTBridge.tsx` | ⚠️ EXPERIMENTAL | Full UX flow but backed by blocked service |
+=======
+| NTT bridge execution | `ntt.ts` (Wormhole SDK) | ✅ PRODUCTION | Real Wormhole SDK integrated with `NTT_CONFIGS` contract addresses |
+| NTT progress tracking | `ntt.ts` | ✅ PRODUCTION | Parallelized tracking via Wormhole API and VAA retrieval |
+| NTT UI (Sovereign Handshake) | `NTTBridge.tsx` | ✅ PRODUCTION | Full UX flow backed by production-grade `NttService` |
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+| CI/CD pipeline | ✅ PRODUCTION | GitHub Actions: lint, tsc, test, build, audit, TruffleHog |
+| CSP headers | 🔧 PARTIAL | Present but uses unsafe-inline + unsafe-eval |
+=======
+| CI/CD pipeline | ✅ PRODUCTION | GitHub Actions: lint, tsc, test, build, audit, TruffleHog |
+| Persistent Crypto Worker | ✅ PRODUCTION | Singleton worker with session-level caching for PBKDF2/BIP32 |
+| ECC Engine Fusion | ✅ PRODUCTION | @noble/curves for high-speed point arithmetic and Taproot tweaking |
+| CSP headers | 🔧 PARTIAL | Present but uses unsafe-inline + unsafe-eval |
+>>>>>>> REPLACE

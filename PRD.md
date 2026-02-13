@@ -57,6 +57,9 @@ Where $n$ is the number of UTXOs in the user's set.
 Cross-chain execution costs are calculated using the following model to ensure transparency during the "Sovereign Handshake":
 $$ TotalFee = (Size_{tx} \times Rate_{gas}) + Fee_{relayer} + Fee_{convenience} $$
 
+**Performance Hardening (Persistence & Fusion):**
+To target a >90% reduction in address derivation latency, the architecture employs a singleton **Persistent Crypto Worker** with session-level caching for PBKDF2 (200k+ iterations). Additionally, **ECC Engine Fusion** integrates `@noble/curves` for high-speed point arithmetic, specifically for Taproot tweaking using BigInt-level coordinate access (`P.hasEvenY()`).
+
 ### 3.3. Visual Logic: The Operational Handshake
 
 ```mermaid

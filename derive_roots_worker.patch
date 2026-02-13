@@ -1,0 +1,86 @@
+<<<<<<< SEARCH
+  // LEGACY / SETUP MODE (JS BIP39)
+  if (!bip39.validateMnemonic(mnemonicOrVault)) {
+    throw new Error('Invalid Mnemonic Phrase');
+  }
+
+  const seed = await bip39.mnemonicToSeed(mnemonicOrVault, passphraseOrPin);
+  const root = bip32.fromSeed(Buffer.from(seed));
+=======
+  // LEGACY / SETUP MODE (JS BIP39)
+  if (!bip39.validateMnemonic(mnemonicOrVault)) {
+    throw new Error('Invalid Mnemonic Phrase');
+  }
+
+  const seed = await workerManager.deriveSeed(mnemonicOrVault, passphraseOrPin);
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+  const net = bitcoin.networks.bitcoin;
+
+  const btcPath = "m/84'/0'/0'/0/0";
+  const btcChild = root.derivePath(btcPath);
+  const { address: btcAddress } = bitcoin.payments.p2wpkh({ pubkey: btcChild.publicKey, network: net });
+
+  const taprootPath = "m/86'/0'/0'/0/0";
+  const taprootChild = root.derivePath(taprootPath);
+  // Taproot uses x-only pubkey (32 bytes)
+  const taprootInternalPubkey = Buffer.from(taprootChild.publicKey.slice(1, 33));
+  const { address: taprootAddress } = bitcoin.payments.p2tr({ internalPubkey: taprootInternalPubkey, network: net });
+
+  const stxPath = "m/44'/5757'/0'/0/0";
+  const stxChild = root.derivePath(stxPath);
+  const stxAddress = getAddressFromPublicKey(Buffer.from(stxChild.publicKey).toString('hex'), 'mainnet');
+
+  const ethPath = "m/44'/60'/0'/0/0";
+  const ethChild = root.derivePath(ethPath);
+  const ethAddress = publicKeyToEvmAddress(Buffer.from(ethChild.publicKey));
+
+  const liquidPath = "m/84'/1776'/0'/0/0";
+  const liquidChild = root.derivePath(liquidPath);
+=======
+  const net = bitcoin.networks.bitcoin;
+
+  const btcPath = "m/84'/0'/0'/0/0";
+  const btcDerived = await workerManager.derivePath(seed, btcPath);
+  const { address: btcAddress } = bitcoin.payments.p2wpkh({ pubkey: Buffer.from(btcDerived.publicKey, 'hex'), network: net });
+
+  const taprootPath = "m/86'/0'/0'/0/0";
+  const taprootDerived = await workerManager.derivePath(seed, taprootPath);
+  // Taproot uses x-only pubkey (32 bytes)
+  const taprootInternalPubkey = Buffer.from(taprootDerived.publicKey, 'hex').slice(1, 33);
+  const { address: taprootAddress } = bitcoin.payments.p2tr({ internalPubkey: taprootInternalPubkey, network: net });
+
+  const stxPath = "m/44'/5757'/0'/0/0";
+  const stxDerived = await workerManager.derivePath(seed, stxPath);
+  const stxAddress = getAddressFromPublicKey(stxDerived.publicKey, 'mainnet');
+
+  const ethPath = "m/44'/60'/0'/0/0";
+  const ethDerived = await workerManager.derivePath(seed, ethPath);
+  const ethAddress = publicKeyToEvmAddress(Buffer.from(ethDerived.publicKey, 'hex'));
+
+  const liquidPath = "m/84'/1776'/0'/0/0";
+  const liquidDerived = await workerManager.derivePath(seed, liquidPath);
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+  return {
+    btc: btcAddress || '',
+    taproot: taprootAddress || '',
+    stx: stxAddress,
+    rbtc: ethAddress,
+    eth: ethAddress,
+    liquid: Buffer.from(liquidChild.publicKey).toString('hex'),
+    derivationPath: btcPath
+  };
+};
+=======
+  return {
+    btc: btcAddress || '',
+    taproot: taprootAddress || '',
+    stx: stxAddress,
+    rbtc: ethAddress,
+    eth: ethAddress,
+    liquid: liquidDerived.publicKey,
+    derivationPath: btcPath
+  };
+};
+>>>>>>> REPLACE

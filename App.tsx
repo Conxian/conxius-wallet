@@ -47,6 +47,7 @@ import { encryptSeed } from './services/seed';
 import * as bip39 from 'bip39';
 import { decryptSeed } from './services/seed';
 import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
+import { workerManager } from './services/worker-manager';
 import { ConxiusWormholeSigner } from './services/wormhole-signer';
 import { evaluateSecurityPosture } from './services/device-integrity';
 import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
@@ -326,6 +327,7 @@ const App: React.FC = () => {
   const performLock = () => {
      currentPinRef.current = null;
      clearEnclaveBiometricSession(); setGeminiServiceKey('');
+     workerManager.clearCache();
      setIsLocked(true);
      // Memory Hardening: Reset state to defaults on lock to purge sensitive material (Gemini keys, assets) from RAM.
      setState(prev => ({
