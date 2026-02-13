@@ -1,0 +1,12 @@
+<<<<<<< SEARCH
+  const performLock = () => {
+     currentPinRef.current = null;
+     clearEnclaveBiometricSession(); setGeminiServiceKey('');
+     setIsLocked(true);
+=======
+  const performLock = () => {
+     currentPinRef.current = null;
+     clearEnclaveBiometricSession(); setGeminiServiceKey('');
+     workerManager.clearCache();
+     setIsLocked(true);
+>>>>>>> REPLACE

@@ -4,6 +4,7 @@ import * as ecc from 'tiny-secp256k1';
 import ECPairFactory from 'ecpair';
 import { Buffer } from 'buffer';
 import { UTXO, Network, Signer as LocalSigner } from '../types';
+import { hasEvenY } from './ecc';
 
 const bip32 = BIP32Factory(ecc);
 const ECPair = ECPairFactory(ecc);
@@ -152,12 +153,26 @@ export async function signPsbtBase64WithSeed(seed: Uint8Array, psbtBase64: strin
                       input.witnessUtxo.script[1] === 0x20;
 
     if (isTaproot) {
-        // Tweak the key for key-path signing if not already tweaked
-        const tweakedChild: any = (p2trChild as any).tweak(
-            Buffer.from(bitcoin.crypto.taggedHash('TapTweak', internalPubkey)),
-        );
-        if (!tweakedChild.privateKey) throw new Error('Failed to derive tweaked private key');
-        const tweakedKeyPair: any = ECPair.fromPrivateKey(Buffer.from(tweakedChild.privateKey), { network: net });
+        // Taproot Key-path signing:
+        // 1. Ensure internal pubkey has even Y (negate private key if needed)
+        // 2. Tweak private key: q = p + h
+        let privKey = p2trChild.privateKey!;
+        if (!hasEvenY(p2trChild.publicKey)) {
+            // Negate private key if pubkey has odd Y
+            const privKeyBigInt = BigInt('0x' + Buffer.from(privKey).toString('hex'));
+            const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
+            const negated = (n - privKeyBigInt) % n;
+            privKey = Buffer.from(negated.toString(16).padStart(64, '0'), 'hex');
+        }
+
+        const tweak = bitcoin.crypto.taggedHash('TapTweak', internalPubkey);
+        const tweakBigInt = BigInt('0x' + Buffer.from(tweak).toString('hex'));
+        const privKeyBigInt = BigInt('0x' + Buffer.from(privKey).toString('hex'));
+        const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
+        const tweakedPrivKeyBigInt = (privKeyBigInt + tweakBigInt) % n;
+        const tweakedPrivKey = Buffer.from(tweakedPrivKeyBigInt.toString(16).padStart(64, '0'), 'hex');
+
+        const tweakedKeyPair: any = ECPair.fromPrivateKey(tweakedPrivKey, { network: net });
         psbt.signInput(i, tweakedKeyPair);
     } else {
         psbt.signInput(i, p2wpkhKeyPair as any);
@@ -165,7 +180,14 @@ export async function signPsbtBase64WithSeed(seed: Uint8Array, psbtBase64: strin
   }
 
   psbt.finalizeAllInputs();
-  return Buffer.from(psbt.extractTransaction().toBuffer()).toString('hex');
+  try {
+    return Buffer.from(psbt.extractTransaction().toBuffer()).toString('hex');
+  } finally {
+    // Memory Hardening: Wiping derived keys
+    if (p2wpkhChild.privateKey) p2wpkhChild.privateKey.fill(0);
+    if (p2trChild.privateKey) p2trChild.privateKey.fill(0);
+    if (root.privateKey) root.privateKey.fill(0);
+  }
 }
 
 export async function signPsbtBase64WithSeedReturnBase64(seed: Uint8Array, psbtBase64: string, network: Network) {
@@ -197,12 +219,26 @@ export async function signPsbtBase64WithSeedReturnBase64(seed: Uint8Array, psbtB
                       input.witnessUtxo.script[1] === 0x20;
 
     if (isTaproot) {
-        // Tweak the key for key-path signing if not already tweaked
-        const tweakedChild: any = (p2trChild as any).tweak(
-            Buffer.from(bitcoin.crypto.taggedHash('TapTweak', internalPubkey)),
-        );
-        if (!tweakedChild.privateKey) throw new Error('Failed to derive tweaked private key');
-        const tweakedKeyPair: any = ECPair.fromPrivateKey(Buffer.from(tweakedChild.privateKey), { network: net });
+        // Taproot Key-path signing:
+        // 1. Ensure internal pubkey has even Y (negate private key if needed)
+        // 2. Tweak private key: q = p + h
+        let privKey = p2trChild.privateKey!;
+        if (!hasEvenY(p2trChild.publicKey)) {
+            // Negate private key if pubkey has odd Y
+            const privKeyBigInt = BigInt('0x' + Buffer.from(privKey).toString('hex'));
+            const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
+            const negated = (n - privKeyBigInt) % n;
+            privKey = Buffer.from(negated.toString(16).padStart(64, '0'), 'hex');
+        }
+
+        const tweak = bitcoin.crypto.taggedHash('TapTweak', internalPubkey);
+        const tweakBigInt = BigInt('0x' + Buffer.from(tweak).toString('hex'));
+        const privKeyBigInt = BigInt('0x' + Buffer.from(privKey).toString('hex'));
+        const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
+        const tweakedPrivKeyBigInt = (privKeyBigInt + tweakBigInt) % n;
+        const tweakedPrivKey = Buffer.from(tweakedPrivKeyBigInt.toString(16).padStart(64, '0'), 'hex');
+
+        const tweakedKeyPair: any = ECPair.fromPrivateKey(tweakedPrivKey, { network: net });
         psbt.signInput(i, tweakedKeyPair);
     } else {
         psbt.signInput(i, p2wpkhKeyPair as any);
@@ -210,7 +246,14 @@ export async function signPsbtBase64WithSeedReturnBase64(seed: Uint8Array, psbtB
   }
 
   psbt.finalizeAllInputs();
-  return psbt.toBase64();
+  try {
+    return psbt.toBase64();
+  } finally {
+    // Memory Hardening: Wiping derived keys
+    if (p2wpkhChild.privateKey) p2wpkhChild.privateKey.fill(0);
+    if (p2trChild.privateKey) p2trChild.privateKey.fill(0);
+    if (root.privateKey) root.privateKey.fill(0);
+  }
 }
 
 export function getPsbtSighashes(
@@ -263,7 +306,14 @@ export function finalizePsbtWithSigs(
   });
 
   psbt.finalizeAllInputs();
-  return Buffer.from(psbt.extractTransaction().toBuffer()).toString('hex');
+  try {
+    return Buffer.from(psbt.extractTransaction().toBuffer()).toString('hex');
+  } finally {
+    // Memory Hardening: Wiping derived keys
+    if (p2wpkhChild.privateKey) p2wpkhChild.privateKey.fill(0);
+    if (p2trChild.privateKey) p2trChild.privateKey.fill(0);
+    if (root.privateKey) root.privateKey.fill(0);
+  }
 }
 
 export function finalizePsbtWithSigsReturnBase64(
@@ -285,7 +335,14 @@ export function finalizePsbtWithSigsReturnBase64(
   });
 
   psbt.finalizeAllInputs();
-  return psbt.toBase64();
+  try {
+    return psbt.toBase64();
+  } finally {
+    // Memory Hardening: Wiping derived keys
+    if (p2wpkhChild.privateKey) p2wpkhChild.privateKey.fill(0);
+    if (p2trChild.privateKey) p2trChild.privateKey.fill(0);
+    if (root.privateKey) root.privateKey.fill(0);
+  }
 }
 
 export function getUnsignedTxHex(psbtBase64: string, network: Network) {

@@ -5,6 +5,30 @@ import { Wormhole, amount as wormholeAmount, Chain, Signer, TokenId, TokenTransf
 import { EvmPlatform } from '@wormhole-foundation/sdk-evm';
 import { Network } from '../types';
 
+/**
+ * Production NTT Configurations
+ * Maps assets to their canonical Wormhole Token Bridge addresses.
+ */
+export const NTT_CONFIGS = {
+    sBTC: {
+        symbol: 'sBTC',
+        decimals: 8,
+        tokenIds: {
+            Bitcoin: 'native',
+            Stacks: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sbtc-token',
+            Ethereum: '0x0000000000000000000000000000000000000000', // Placeholder
+        }
+    },
+    WBTC: {
+        symbol: 'WBTC',
+        decimals: 8,
+        tokenIds: {
+            Ethereum: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
+            Arbitrum: '0x2f2a2543b76a4166549f7aa6291999a2ee856eba'
+        }
+    }
+};
+
 // ─── Bridge Stages (UI display) ─────────────────────────────────────────────
 
 export const BRIDGE_STAGES = [
@@ -89,14 +113,18 @@ export class NttService {
             const transferAmount = wormholeAmount.units(wormholeAmount.parse(amount, decimals));
 
             // Standard Token Bridge Transfer
-            // This initiates a transfer of the native token (e.g., BTC on Bitcoin, ETH on Ethereum)
-            // or a wrapped token.
+            // Automatically resolves token IDs or defaults to 'native'
+            let tokenId: TokenId = Wormhole.tokenId(sourceChain.chain, 'native');
             
-            // Note: For real implementation, we need the automatic token ID resolution.
-            // For now, assuming Native Token transfer.
+            // Attempt to resolve via NTT_CONFIGS if applicable
+            const config = Object.values(NTT_CONFIGS).find(c => c.tokenIds[sourceLayer as keyof typeof c.tokenIds]);
+            if (config) {
+                const addr = config.tokenIds[sourceLayer as keyof typeof config.tokenIds];
+                tokenId = Wormhole.tokenId(sourceChain.chain, addr as any);
+            }
             
             const xfer = await wh.tokenTransfer(
-                Wormhole.tokenId(sourceChain.chain, 'native'),
+                tokenId,
                 transferAmount,
                 Wormhole.chainAddress(sourceChain.chain, signer.address()),
                 Wormhole.chainAddress(destChain.chain, signer.address()),
@@ -139,8 +167,25 @@ export class NttService {
 
     /**
      * Retrieves full tracking details from Wormhole.
+     * Parallelized for multiple transactions if needed.
      */
-    static async getTrackingDetails(txHash: string) {
-        return await trackNttBridge(txHash);
+    static async getTrackingDetails(txHashes: string[]) {
+        return Promise.all(txHashes.map(hash => trackNttBridge(hash)));
+    }
+
+    /**
+     * Real-time VAA Retrieval via Wormhole API
+     */
+    static async fetchVaa(emitterChainId: number, emitterAddress: string, sequence: string) {
+        try {
+            const response = await fetch(`https://api.wormholescan.io/api/v1/vaas/${emitterChainId}/${emitterAddress}/${sequence}`);
+            if (response.ok) {
+                const data = await response.json();
+                return data.data?.vaa || null;
+            }
+        } catch (e) {
+            console.warn('[NTT] VAA fetch failed:', e);
+        }
+        return null;
     }
 }

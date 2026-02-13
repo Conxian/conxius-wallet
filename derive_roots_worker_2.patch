@@ -1,0 +1,87 @@
+<<<<<<< SEARCH
+  const seed = await bip39.mnemonicToSeed(mnemonicOrVault, passphraseOrPin);
+  let root;
+  try {
+    root = bip32.fromSeed(seed);
+  } finally {
+    // Memory Hardening: Zero-fill original seed buffer immediately after root derivation in setup mode
+    if (seed instanceof Uint8Array) {
+      seed.fill(0);
+    }
+  }
+
+  // 1. Bitcoin Mainnet (Native Segwit - BIP84)
+  // Path: m/84'/0'/0'/0/0
+  const btcNode = root.derivePath("m/84'/0'/0'/0/0");
+  const { address: btcAddress } = bitcoin.payments.p2wpkh({
+    pubkey: btcNode.publicKey,
+    network: bitcoin.networks.bitcoin
+  });
+
+  // 1b. Bitcoin Taproot (BIP-86)
+  // Path: m/86'/0'/0'/0/0
+  const trNode = root.derivePath("m/86'/0'/0'/0/0");
+  const { address: trAddress } = bitcoin.payments.p2tr({
+    internalPubkey: trNode.publicKey.slice(1, 33),
+    network: bitcoin.networks.bitcoin
+  });
+
+  // 2. Stacks L2 (SIP-005)
+  // Path: m/44'/5757'/0'/0/0
+  const stxNode = root.derivePath("m/44'/5757'/0'/0/0");
+  const stxPrivateKey = Buffer.from(stxNode.privateKey!).toString('hex');
+  const stxAddress = getAddressFromPrivateKey(stxPrivateKey, 'mainnet');
+
+  // 3. Rootstock (RSK) / EVM Compatible
+  // Path: m/44'/60'/0'/0/0 (Standard ETH/RSK path)
+  const rskNode = root.derivePath("m/44'/60'/0'/0/0");
+  const rskPub = rskNode.privateKey ? ecc.pointFromScalar(rskNode.privateKey, false) : null;
+  const rskAddress = rskPub ? publicKeyToEvmAddress(new Uint8Array(rskPub)) : '';
+
+  // 4. Liquid (m/84'/1776'/0'/0/0)
+  const liquidNode = root.derivePath("m/84'/1776'/0'/0/0");
+  const liquidPub = Buffer.from(liquidNode.publicKey).toString('hex');
+
+  return {
+    btc: btcAddress || '',
+    taproot: trAddress || '',
+    stx: stxAddress,
+    rbtc: rskAddress,
+    eth: rskAddress, // Ethereum shared root with RSK
+    liquid: liquidPub,
+=======
+  const seed = await workerManager.deriveSeed(mnemonicOrVault, passphraseOrPin);
+
+  // 1. Bitcoin Mainnet (Native Segwit - BIP84)
+  const btcDerived = await workerManager.derivePath(seed, "m/84'/0'/0'/0/0");
+  const { address: btcAddress } = bitcoin.payments.p2wpkh({
+    pubkey: Buffer.from(btcDerived.publicKey, 'hex'),
+    network: bitcoin.networks.bitcoin
+  });
+
+  // 1b. Bitcoin Taproot (BIP-86)
+  const trDerived = await workerManager.derivePath(seed, "m/86'/0'/0'/0/0");
+  const { address: trAddress } = bitcoin.payments.p2tr({
+    internalPubkey: Buffer.from(trDerived.publicKey, 'hex').slice(1, 33),
+    network: bitcoin.networks.bitcoin
+  });
+
+  // 2. Stacks L2 (SIP-005)
+  const stxDerived = await workerManager.derivePath(seed, "m/44'/5757'/0'/0/0");
+  const stxAddress = getAddressFromPublicKey(stxDerived.publicKey, 'mainnet');
+
+  // 3. Rootstock (RSK) / EVM Compatible
+  const rskDerived = await workerManager.derivePath(seed, "m/44'/60'/0'/0/0");
+  const rskAddress = publicKeyToEvmAddress(Buffer.from(rskDerived.publicKey, 'hex'));
+
+  // 4. Liquid (m/84'/1776'/0'/0/0)
+  const liquidDerived = await workerManager.derivePath(seed, "m/84'/1776'/0'/0/0");
+
+  return {
+    btc: btcAddress || '',
+    taproot: trAddress || '',
+    stx: stxAddress,
+    rbtc: rskAddress,
+    eth: rskAddress,
+    liquid: liquidDerived.publicKey,
+>>>>>>> REPLACE
