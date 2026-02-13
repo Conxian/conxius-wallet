@@ -1,0 +1,27 @@
+<<<<<<< SEARCH
+  const seed = await workerManager.deriveSeed(mnemonicOrVault, passphraseOrPin);
+
+  // 1. Bitcoin Mainnet (Native Segwit - BIP84)
+  const btcDerived = await workerManager.derivePath(seed, "m/84'/0'/0'/0/0");
+=======
+  const seed = await workerManager.deriveSeed(mnemonicOrVault, passphraseOrPin);
+  try {
+  // 1. Bitcoin Mainnet (Native Segwit - BIP84)
+  const btcDerived = await workerManager.derivePath(seed, "m/84'/0'/0'/0/0");
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+    liquid: liquidDerived.publicKey,
+    derivationPath: "m/84'/0'/0'/0/0"
+  };
+};
+=======
+    liquid: liquidDerived.publicKey,
+    derivationPath: "m/84'/0'/0'/0/0"
+  };
+  } finally {
+    if (seed instanceof Uint8Array) {
+      seed.fill(0);
+    }
+  }
+};
+>>>>>>> REPLACE

@@ -69,6 +69,9 @@ Conxius is an Android-first wallet built using:
 - `/services/swap.ts` (107 lines): Changelly/THORChain swaps — **BLOCKED** (Needs Proxy)
 - `/services/lightning.ts` (52 lines): LNURL/Bolt11 decode
 - `/services/identity.ts` (137 lines): DID:PKH + SIWx auth
+- `/services/crypto.worker.ts`: Persistent singleton worker for heavy crypto
+- `/services/worker-manager.ts`: Singleton interface for the crypto worker
+- `/services/ecc.ts`: ECC Engine Fusion via @noble/curves
 
 ---
 

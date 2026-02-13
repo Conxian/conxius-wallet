@@ -23,6 +23,7 @@ import {
 
 // Initialize BIP32
 const bip32 = BIP32Factory(ecc);
+import { workerManager } from './worker-manager';
 bitcoin.initEccLib(ecc);
 
 // Polyfill Buffer for browser environment if needed (handled by Vite plugin, but good practice)
@@ -103,58 +104,47 @@ export const deriveSovereignRoots = async (mnemonicOrVault: string, passphraseOr
     throw new Error('Invalid Mnemonic Phrase');
   }
 
-  const seed = await bip39.mnemonicToSeed(mnemonicOrVault, passphraseOrPin);
-  let root;
+  const seed = await workerManager.deriveSeed(mnemonicOrVault, passphraseOrPin);
   try {
-    root = bip32.fromSeed(seed);
-  } finally {
-    // Memory Hardening: Zero-fill original seed buffer immediately after root derivation in setup mode
-    if (seed instanceof Uint8Array) {
-      seed.fill(0);
-    }
-  }
-
   // 1. Bitcoin Mainnet (Native Segwit - BIP84)
-  // Path: m/84'/0'/0'/0/0
-  const btcNode = root.derivePath("m/84'/0'/0'/0/0");
+  const btcDerived = await workerManager.derivePath(seed, "m/84'/0'/0'/0/0");
   const { address: btcAddress } = bitcoin.payments.p2wpkh({ 
-    pubkey: btcNode.publicKey,
+    pubkey: Buffer.from(btcDerived.publicKey, 'hex'),
     network: bitcoin.networks.bitcoin
   });
 
   // 1b. Bitcoin Taproot (BIP-86)
-  // Path: m/86'/0'/0'/0/0
-  const trNode = root.derivePath("m/86'/0'/0'/0/0");
+  const trDerived = await workerManager.derivePath(seed, "m/86'/0'/0'/0/0");
   const { address: trAddress } = bitcoin.payments.p2tr({
-    internalPubkey: trNode.publicKey.slice(1, 33),
+    internalPubkey: Buffer.from(trDerived.publicKey, 'hex').slice(1, 33),
     network: bitcoin.networks.bitcoin
   });
 
   // 2. Stacks L2 (SIP-005)
-  // Path: m/44'/5757'/0'/0/0
-  const stxNode = root.derivePath("m/44'/5757'/0'/0/0");
-  const stxPrivateKey = Buffer.from(stxNode.privateKey!).toString('hex');
-  const stxAddress = getAddressFromPrivateKey(stxPrivateKey, 'mainnet');
+  const stxDerived = await workerManager.derivePath(seed, "m/44'/5757'/0'/0/0");
+  const stxAddress = getAddressFromPublicKey(stxDerived.publicKey, 'mainnet');
 
   // 3. Rootstock (RSK) / EVM Compatible
-  // Path: m/44'/60'/0'/0/0 (Standard ETH/RSK path)
-  const rskNode = root.derivePath("m/44'/60'/0'/0/0");
-  const rskPub = rskNode.privateKey ? ecc.pointFromScalar(rskNode.privateKey, false) : null;
-  const rskAddress = rskPub ? publicKeyToEvmAddress(new Uint8Array(rskPub)) : '';
+  const rskDerived = await workerManager.derivePath(seed, "m/44'/60'/0'/0/0");
+  const rskAddress = publicKeyToEvmAddress(Buffer.from(rskDerived.publicKey, 'hex'));
 
   // 4. Liquid (m/84'/1776'/0'/0/0)
-  const liquidNode = root.derivePath("m/84'/1776'/0'/0/0");
-  const liquidPub = Buffer.from(liquidNode.publicKey).toString('hex');
+  const liquidDerived = await workerManager.derivePath(seed, "m/84'/1776'/0'/0/0");
 
   return {
     btc: btcAddress || '',
     taproot: trAddress || '',
     stx: stxAddress,
     rbtc: rskAddress,
-    eth: rskAddress, // Ethereum shared root with RSK
-    liquid: liquidPub,
+    eth: rskAddress,
+    liquid: liquidDerived.publicKey,
     derivationPath: "m/84'/0'/0'/0/0"
   };
+  } finally {
+    if (seed instanceof Uint8Array) {
+      seed.fill(0);
+    }
+  }
 };
 
 /**
@@ -513,24 +503,21 @@ export const requestEnclaveSignature = async (
   // --- WEB / LEGACY PATH ---
   const seedBytes =
     typeof seedOrVault === "string"
-      ? await bip39.mnemonicToSeed(seedOrVault) // Fallback if string passed but no PIN/Native (Should not happen flow-wise) or if passing mnemonic directly
+      ? await workerManager.deriveSeed(seedOrVault)
       : (seedOrVault as Uint8Array);
 
   try {
-    let root;
-    if (seedBytes) {
-      root = bip32.fromSeed(Buffer.from(seedBytes));
-    }
-
     let signature = "";
     let pubkey = "";
     let broadcastHex = "";
     let psbtBase64: string | undefined;
 
-    if (request.layer === "Mainnet" && root) {
+    if (request.layer === "Mainnet" && seedBytes) {
       const coin = request.payload?.network === "mainnet" ? 0 : 1;
-      const child = root.derivePath(`m/84'/${coin}'/0'/0/0`);
-      pubkey = Buffer.from(child.publicKey).toString("hex");
+      const path = `m/84'/${coin}'/0'/0/0`;
+      const derived = await workerManager.derivePath(seedBytes, path);
+      pubkey = derived.publicKey;
+
       if (request.payload && request.payload.psbt && request.payload.network) {
         // Use imported helper
         broadcastHex = await signPsbtBase64WithSeed(
@@ -550,19 +537,32 @@ export const requestEnclaveSignature = async (
         const payloadHash = bitcoin.crypto.sha256(
           Buffer.from(JSON.stringify(request.payload)),
         );
-        signature = Buffer.from(child.sign(Buffer.from(payloadHash))).toString(
-          "hex",
-        );
+        if (derived.privateKey) {
+          const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
+          try {
+            const child = bip32.fromPrivateKey(privKeyBuf, Buffer.alloc(32));
+            signature = Buffer.from(child.sign(Buffer.from(payloadHash))).toString("hex");
+          } finally {
+            privKeyBuf.fill(0);
+          }
+        }
         broadcastHex = "";
       }
-    } else if (request.layer === "Stacks" && root) {
-      const child = root.derivePath("m/44'/5757'/0'/0/0");
-      pubkey = Buffer.from(child.publicKey).toString("hex");
-      // Stacks signing logic
-      const stacksHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from("stacks-sig")));
-      signature = Buffer.from(child.sign(stacksHash)).toString(
-        "hex",
-      );
+    } else if (request.layer === "Stacks" && seedBytes) {
+      const path = "m/44'/5757'/0'/0/0";
+      const derived = await workerManager.derivePath(seedBytes, path);
+      pubkey = derived.publicKey;
+
+      if (derived.privateKey) {
+          const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
+          try {
+            const child = bip32.fromPrivateKey(privKeyBuf, Buffer.alloc(32));
+            const stacksHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from("stacks-sig")));
+            signature = Buffer.from(child.sign(stacksHash)).toString("hex");
+          } finally {
+            privKeyBuf.fill(0);
+          }
+      }
     }
 
     return {

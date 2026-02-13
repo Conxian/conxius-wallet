@@ -1,0 +1,35 @@
+<<<<<<< SEARCH
+            // Standard Token Bridge Transfer
+            // This initiates a transfer of the native token (e.g., BTC on Bitcoin, ETH on Ethereum)
+            // or a wrapped token.
+
+            // Note: For real implementation, we need the automatic token ID resolution.
+            // For now, assuming Native Token transfer.
+
+            const xfer = await wh.tokenTransfer(
+                Wormhole.tokenId(sourceChain.chain, 'native'),
+                transferAmount,
+                Wormhole.chainAddress(sourceChain.chain, signer.address()),
+                Wormhole.chainAddress(destChain.chain, signer.address()),
+                'TokenBridge'
+            );
+=======
+            // Standard Token Bridge Transfer
+            // Automatically resolves token IDs or defaults to 'native'
+            let tokenId: TokenId = Wormhole.tokenId(sourceChain.chain, 'native');
+
+            // Attempt to resolve via NTT_CONFIGS if applicable
+            const config = Object.values(NTT_CONFIGS).find(c => c.tokenIds[sourceLayer as keyof typeof c.tokenIds]);
+            if (config) {
+                const addr = config.tokenIds[sourceLayer as keyof typeof config.tokenIds];
+                tokenId = Wormhole.tokenId(sourceChain.chain, addr as any);
+            }
+
+            const xfer = await wh.tokenTransfer(
+                tokenId,
+                transferAmount,
+                Wormhole.chainAddress(sourceChain.chain, signer.address()),
+                Wormhole.chainAddress(destChain.chain, signer.address()),
+                'TokenBridge'
+            );
+>>>>>>> REPLACE

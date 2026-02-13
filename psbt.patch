@@ -1,0 +1,55 @@
+<<<<<<< SEARCH
+import * as bitcoin from 'bitcoinjs-lib';
+import BIP32Factory from 'bip32';
+import * as ecc from 'tiny-secp256k1';
+import ECPairFactory from 'ecpair';
+import { Buffer } from 'buffer';
+import { UTXO, Network, Signer as LocalSigner } from '../types';
+
+const bip32 = BIP32Factory(ecc);
+=======
+import * as bitcoin from 'bitcoinjs-lib';
+import BIP32Factory from 'bip32';
+import * as ecc from 'tiny-secp256k1';
+import ECPairFactory from 'ecpair';
+import { Buffer } from 'buffer';
+import { UTXO, Network, Signer as LocalSigner } from '../types';
+import { hasEvenY } from './ecc';
+
+const bip32 = BIP32Factory(ecc);
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+    if (isTaproot) {
+        // Tweak the key for key-path signing if not already tweaked
+        const tweakedChild: any = (p2trChild as any).tweak(
+            Buffer.from(bitcoin.crypto.taggedHash('TapTweak', internalPubkey)),
+        );
+        if (!tweakedChild.privateKey) throw new Error('Failed to derive tweaked private key');
+        const tweakedKeyPair: any = ECPair.fromPrivateKey(Buffer.from(tweakedChild.privateKey), { network: net });
+        psbt.signInput(i, tweakedKeyPair);
+    } else {
+=======
+    if (isTaproot) {
+        // Taproot Key-path signing:
+        // 1. Ensure internal pubkey has even Y (negate private key if needed)
+        // 2. Tweak private key: q = p + h
+        let privKey = p2trChild.privateKey!;
+        if (!hasEvenY(p2trChild.publicKey)) {
+            // Negate private key if pubkey has odd Y
+            const privKeyBigInt = BigInt('0x' + Buffer.from(privKey).toString('hex'));
+            const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
+            const negated = (n - privKeyBigInt) % n;
+            privKey = Buffer.from(negated.toString(16).padStart(64, '0'), 'hex');
+        }
+
+        const tweak = bitcoin.crypto.taggedHash('TapTweak', internalPubkey);
+        const tweakBigInt = BigInt('0x' + Buffer.from(tweak).toString('hex'));
+        const privKeyBigInt = BigInt('0x' + Buffer.from(privKey).toString('hex'));
+        const n = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
+        const tweakedPrivKeyBigInt = (privKeyBigInt + tweakBigInt) % n;
+        const tweakedPrivKey = Buffer.from(tweakedPrivKeyBigInt.toString(16).padStart(64, '0'), 'hex');
+
+        const tweakedKeyPair: any = ECPair.fromPrivateKey(tweakedPrivKey, { network: net });
+        psbt.signInput(i, tweakedKeyPair);
+    } else {
+>>>>>>> REPLACE

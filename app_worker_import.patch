@@ -1,0 +1,6 @@
+<<<<<<< SEARCH
+import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
+=======
+import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
+import { workerManager } from './services/worker-manager';
+>>>>>>> REPLACE

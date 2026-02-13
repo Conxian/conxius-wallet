@@ -83,9 +83,9 @@ permalink: /implementation-registry
 
 | Feature | File(s) | Status | Notes |
 |---------|---------|--------|-------|
-| NTT bridge execution | `ntt.ts` (Wormhole SDK) | � PARTIAL | Real Wormhole SDK integrated; requires `NTT_CONFIGS` contract addresses |
-| NTT progress tracking | `ntt.ts:63-73` | 🔧 PARTIAL | Calls real Wormhole API but bridge is mocked |
-| NTT UI (Sovereign Handshake) | `NTTBridge.tsx` | ⚠️ EXPERIMENTAL | Full UX flow but backed by blocked service |
+| NTT bridge execution | `ntt.ts` (Wormhole SDK) | ✅ PRODUCTION | Real Wormhole SDK integrated with `NTT_CONFIGS` contract addresses |
+| NTT progress tracking | `ntt.ts` | ✅ PRODUCTION | Parallelized tracking via Wormhole API and VAA retrieval |
+| NTT UI (Sovereign Handshake) | `NTTBridge.tsx` | ✅ PRODUCTION | Full UX flow backed by production-grade `NttService` |
 | Gas abstraction | `ntt.ts:44-51`, `swap.ts:96-104` | ⚠️ EXPERIMENTAL | Uses mocked executeGasSwap; requires DEX aggregator API |
 | Wormhole VAA retrieval | `protocol.ts:217-222` | 🔧 PARTIAL | Real API call to wormholescan.io |
 
@@ -184,6 +184,8 @@ permalink: /implementation-registry
 | Feature | Status | Notes |
 |---------|--------|-------|
 | CI/CD pipeline | ✅ PRODUCTION | GitHub Actions: lint, tsc, test, build, audit, TruffleHog |
+| Persistent Crypto Worker | ✅ PRODUCTION | Singleton worker with session-level caching for PBKDF2/BIP32 |
+| ECC Engine Fusion | ✅ PRODUCTION | @noble/curves for high-speed point arithmetic and Taproot tweaking |
 | CSP headers | 🔧 PARTIAL | Present but uses unsafe-inline + unsafe-eval |
 | Offline fonts | ✅ PRODUCTION | @fontsource/inter + @fontsource/jetbrains-mono self-hosted |
 | Code splitting | ✅ PRODUCTION | 25 routes via React.lazy + Suspense in App.tsx |
