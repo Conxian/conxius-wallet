@@ -93,6 +93,7 @@ export class GovernanceService {
     // Mock initialization logic
     console.log(`Initializing Ops Wallet: ${config.name}`);
     await new Promise(resolve => setTimeout(resolve, 1500));
-    return `ops_${Math.random().toString(36).substring(7)}`;
+    const randomValue = globalThis.crypto.getRandomValues(new Uint32Array(1))[0];
+    return `ops_${randomValue.toString(36)}`;
   }
 }
