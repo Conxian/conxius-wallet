@@ -1,3 +1,9 @@
+---
+title: Conxius Wallet: Gaps & Recommendations
+layout: page
+permalink: /gaps-and-recommendations
+---
+
 # Conxius Wallet: Gaps & Recommendations
 
 **Last Updated:** 2026-02-14
@@ -497,14 +503,14 @@ environment: "jsdom"  // not "node"
 
 ## 🆕 NEWLY DISCOVERED GAPS (2026-02-10 Code Review)
 
-### 31. **NTT Bridge Execution is Mocked**
+### 31. ~~**NTT Bridge Execution is Mocked**~~ ✅ RESOLVED
 
-**Location:** `services/ntt.ts:33-57`  
+**Location:** `services/ntt.ts`
 **Severity:** 🟠 High (P1)  
-**Issue:** `executeBridge()` returns a random mock tx hash. No real Wormhole SDK signing, VAA retrieval, or destination redemption.  
-**Impact:** Users cannot perform real cross-chain transfers. PRD FR-NTT-01 not met.  
-**Status:** Gated with `NTT_EXPERIMENTAL` flag and console warnings (2026-02-10).  
-**Recommendation:** Integrate Wormhole NTT SDK for real source signing + VAA polling + destination redemption.  
+**Status:** ✅ Resolved — Sovereign `NttTransceiver` implemented; `NttService` updated to support Native Token Transfers.
+**Issue:** ~~`executeBridge()` returns a random mock tx hash. No real Wormhole SDK signing, VAA retrieval, or destination redemption.~~
+**Impact:** Users can now perform real cross-chain transfers using NTT logic.
+**Recommendation:** Finalize deployment of NTT contracts to mainnet layers.
 **Effort:** 40 hours
 
 ---

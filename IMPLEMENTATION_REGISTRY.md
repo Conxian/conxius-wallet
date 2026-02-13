@@ -83,7 +83,7 @@ permalink: /implementation-registry
 
 | Feature | File(s) | Status | Notes |
 |---------|---------|--------|-------|
-| NTT bridge execution | `ntt.ts` (Wormhole SDK) | ✅ PRODUCTION | Real Wormhole SDK integrated with `NTT_CONFIGS` contract addresses |
+| NTT bridge execution | `ntt.ts` (Wormhole SDK) | ✅ PRODUCTION | Real Wormhole SDK + Sovereign NttTransceiver integrated |
 | NTT progress tracking | `ntt.ts` | ✅ PRODUCTION | Parallelized tracking via Wormhole API and VAA retrieval |
 | NTT UI (Sovereign Handshake) | `NTTBridge.tsx` | ✅ PRODUCTION | Full UX flow backed by production-grade `NttService` |
 | Gas abstraction | `ntt.ts:44-51`, `swap.ts:96-104` | ⚠️ EXPERIMENTAL | Uses mocked executeGasSwap; requires DEX aggregator API |
@@ -118,6 +118,8 @@ permalink: /implementation-registry
 
 | Feature | File(s) | Status | Notes |
 |---------|---------|--------|-------|
+| NTT Transceiver | `ntt-transceiver.ts` | ✅ PRODUCTION | Message formatting and Sovereign VAA construction |
+| ETH Satellite Support | `eth-adapter.ts` | ✅ PRODUCTION | EIP-712 hashing for Bitcoin-native control |
 | DID:PKH (Bitcoin-based DID) | `identity.ts:33-93` | ✅ PRODUCTION | Derives from enclave pubkey |
 | SIWx message signing | `identity.ts:99-121` | ✅ PRODUCTION | SHA256 hash + native sign |
 | Web5 DID (did:dht) | `web5.ts` | 🔧 PARTIAL | Uses default Web5 KeyManager, not enclave-backed |
