@@ -1,3 +1,9 @@
+---
+title: Android Release Preparation Guide
+layout: page
+permalink: /docs/android-release-prep
+---
+
 # Android Release Preparation Guide
 
 **Last Updated:** 2026-02-10

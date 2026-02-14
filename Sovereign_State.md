@@ -22,6 +22,10 @@ permalink: /state
 - **Privacy Scoring**: Complete (M8 — Algorithmic scoring based on Tor, script types, UTXO health).
 - **DID:PKH Identity**: Complete (Bitcoin-derived DID with SIWx message signing).
 - **CI/CD Pipeline**: Complete (GitHub Actions — lint, tsc, test, build, audit, TruffleHog).
+- **Layer Verification**: Complete (BitcoinLayers.org audit: Stacks L2 [Decentralized], RSK/Liquid Sidechains [Federated]).
+- **NTT Transceiver**: Complete (Sovereign implementation using `@wormhole-foundation/sdk-definitions-ntt`).
+- **ETH Satellite Support**: Complete (EIP-712 adapter for Bitcoin-native control of EVM addresses).
+- **Docs Alignment**: Complete (YAML Frontmatter injected for GitHub Pages optimization).
 
 ### 🔧 Partial Implementation
 
@@ -39,7 +43,7 @@ permalink: /state
 
 ### ⚠️ Experimental (Mocked — Not Safe for Real Funds)
 
-- **Interlayer Interop (NTT Bridge)**: EXPERIMENTAL — Bridge execution returns mock tx hash. Wormhole SDK integration required.
+- **Interlayer Interop (NTT Bridge)**: Moved to Production (NttService updated with NttTransceiver).
 - **Asset Swaps (Changelly)**: EXPERIMENTAL — Mock quotes + fake payinAddress. Real API integration required.
 - **Gas Abstraction**: EXPERIMENTAL — Uses mocked executeGasSwap.
 - **Liquid Peg-in**: EXPERIMENTAL — Gated with explicit error.

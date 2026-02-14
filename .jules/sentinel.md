@@ -1,3 +1,9 @@
+---
+title: Sentinel Journal 🛡️
+layout: page
+permalink: /sentinel
+---
+
 # Sentinel Journal 🛡️
 
 ## 2025-05-14 - Incomplete Duress Mode Protection

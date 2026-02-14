@@ -60,16 +60,19 @@ Conxius Wallet is a strictly non-custodial software interface ("The Tool"). It l
 This section outlines the risk profiles of the Bitcoin L2s and Sidechains supported by the Conxius Wallet.
 
 ### 4.1 Stacks (sBTC)
+* **Risk Level:** Low (L2) - [BitcoinLayers.org: L2]
 * **Risk Warning:** Decentralized, but Novel.
 * **Custody Model:** The sBTC peg is designed to be trust-minimized and decentralized. However, the system's security relies on a novel consensus mechanism (Proof-of-Transfer) and the economic incentives of STX miners.
 * **Key Consideration:** While not custodial in the traditional sense, users should be aware that the security of their assets is tied to the Stacks network's consensus and the correct functioning of the sBTC protocol.
 
 ### 4.2 Rootstock (RSK)
+* **Risk Level:** Medium (Sidechain) - [BitcoinLayers.org: Sidechain]
 * **Risk Warning:** Federated.
 * **Custody Model:** Rootstock uses a merge-mined model, which provides a high degree of security. However, the two-way peg (PowPeg) is managed by a federation of well-known blockchain companies.
-* **Key Consideration:** Users are trusting this federation to act honestly and competently in managing the peg.
+* **Key Consideration:** Users are trusting this federation (the PowPeg federation) to act honestly and competently in managing the peg.
 
 ### 4.3 Liquid Network (L-BTC)
+* **Risk Level:** Medium (Sidechain) - [BitcoinLayers.org: Sidechain]
 * **Risk Warning:** Federated.
 * **Custody Model:** The Liquid Network is a sidechain with a federated model. A group of "functionaries" (trusted parties) are responsible for managing the two-way peg.
 * **Key Consideration:** This is a custodial model where users are trusting the federation of functionaries to secure their assets.

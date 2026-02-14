@@ -1,3 +1,9 @@
+---
+title: Sovereign Bridge & Interoperability Strategy
+layout: page
+permalink: /docs/sovereign-bridge-strategy
+---
+
 # Sovereign Bridge & Interoperability Strategy
 
 **Date:** 2026-02-10
@@ -101,6 +107,8 @@ To solve UX without sacrificing sovereignty, we should integrate **Boltz**.
 
 **Next Step:**
 
-1.  **Refactor `ntt.ts`** to use Standard Token Bridge SDK.
-2.  **Integrate Boltz SDK** (to unlock Liquid/Lightning).
-3.  **Implement sBTC Scripting** (to unlock Stacks).
+1.  **Refactor `ntt.ts`** to use Standard Token Bridge SDK. [COMPLETED]
+2.  **Implement Native Token Transfer (NTT) Transceiver** module for sovereign bridging. [COMPLETED]
+3.  **Integrate Boltz SDK** (to unlock Liquid/Lightning). [IN PROGRESS]
+4.  **Implement sBTC Scripting** (to unlock Stacks). [IN PROGRESS]
+    - *Requirement:* Define `define-public` Clarity 4.0 functions for `deposit-sbtc` and `withdraw-sbtc` in the Stacks bridge contract.

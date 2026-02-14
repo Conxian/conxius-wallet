@@ -1,3 +1,9 @@
+---
+title: Comprehensive Strategic Advisory Report
+layout: page
+permalink: /docs/strategic-advisory-report
+---
+
 # Comprehensive Strategic Advisory Report
 
 **Date:** 2026-02-10
