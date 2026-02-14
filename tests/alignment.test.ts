@@ -38,9 +38,11 @@ describe('Alignment and Logic Fixes', () => {
   });
 
   it('should align Stacks signing logic in Web path', async () => {
-    const mockRequest = {
+    const mockRequest: any = {
+      type: 'transaction',
       layer: 'Stacks' as const,
-      payload: { hash: 'deadbeef'.repeat(8) }
+      payload: { hash: 'deadbeef'.repeat(8) },
+      description: 'Test Stacks Signing'
     };
 
     const result = await requestEnclaveSignature(mockRequest, new Uint8Array(64).fill(0));
