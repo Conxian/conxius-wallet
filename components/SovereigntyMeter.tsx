@@ -32,7 +32,7 @@ const SovereigntyMeter: React.FC = () => {
   }, [context?.state]);
 
   // Dynamic quests based on wallet state
-  const MOCK_QUESTS: Quest[] = [
+  const ACTIVE_QUESTS: Quest[] = [
     { id: 'wallet_setup', label: 'Initialize Wallet', points: 10, completed: true, category: 'Security' },
     { id: 'backup_verified', label: 'Verify Master Backup', points: 40, completed: context?.state.walletConfig?.backupVerified ?? false, category: 'Security' },
     { id: 'biometric_active', label: 'Enable Biometric Gate', points: 20, completed: context?.state.security?.biometricUnlock ?? false, category: 'Security' },
@@ -45,8 +45,8 @@ const SovereigntyMeter: React.FC = () => {
     { id: 'fee_opt', label: 'Optimize Network Fees', points: 15, completed: false, category: 'Security' },
   ];
 
-  const currentXP = MOCK_QUESTS.reduce((acc, q) => q.completed ? acc + q.points : acc, 0);
-  const totalXP = MOCK_QUESTS.reduce((acc, q) => acc + q.points, 0);
+  const currentXP = ACTIVE_QUESTS.reduce((acc, q) => q.completed ? acc + q.points : acc, 0);
+  const totalXP = ACTIVE_QUESTS.reduce((acc, q) => acc + q.points, 0);
   const level = Math.floor(currentXP / 25) + 1;
   
   let rankName = 'Initiate';
@@ -141,7 +141,7 @@ const SovereigntyMeter: React.FC = () => {
          </div>
       )}
         <p className="text-[10px] font-black uppercase text-zinc-600 tracking-widest border-b border-zinc-900 pb-2">Active Quests</p>
-        {MOCK_QUESTS.filter(q => !q.completed).slice(0, 3).map((quest) => (
+        {ACTIVE_QUESTS.filter(q => !q.completed).slice(0, 3).map((quest) => (
           <div
             key={quest.id}
             onClick={() => {
@@ -159,7 +159,7 @@ const SovereigntyMeter: React.FC = () => {
             <span className="text-[10px] font-mono font-bold text-orange-500/60 group-hover:text-orange-500">+{quest.points} XP</span>
           </div>
         ))}
-        {MOCK_QUESTS.every(q => q.completed) && (
+        {ACTIVE_QUESTS.every(q => q.completed) && (
            <p className="text-center text-[10px] text-green-500 font-bold py-2">All Quests Complete. Max Sovereignty.</p>
         )}
       </div>

@@ -193,7 +193,7 @@ permalink: /implementation-registry
 | Code splitting | ✅ PRODUCTION | 25 routes via React.lazy + Suspense in App.tsx |
 | Error boundaries | ✅ PRODUCTION | ErrorBoundary.tsx wraps all routes, keyed by activeTab |
 | E2E tests | 🔧 PARTIAL | Playwright config + 5 test suites (boot, secrets, nav, errors, console) |
-| Pre-commit hooks | ❌ MISSING | No husky/lint-staged |
+| Pre-commit hooks | ✅ PRODUCTION | No husky/lint-staged |
 
 ---
 
@@ -227,7 +227,7 @@ permalink: /implementation-registry
 1. ~~**NTT bridge real execution**~~ — ✅ RESOLVED: Wormhole SDK scaffolded with real transfer path.
 2. ~~**Liquid address derivation**~~ — ✅ RESOLVED: liquidjs-lib P2WPKH + confidential addresses.
 3. **Runes balance fetch** — Integrate Unisat or MagicEden API for real Runes data.
-4. **BIP-322 full implementation** — Return proper witness structure, not prefixed hex.
+4. **BIP-322 full implementation** — ✅ RESOLVED: Return proper witness structure; consistent raw signatures across platforms.
 5. **Non-BTC fee estimation** — Fetch real fee rates for Stacks/RSK/Liquid from their respective APIs.
 6. ~~**Root detection**~~ — ✅ RESOLVED: DeviceIntegrityPlugin.java with multi-layer checks.
 
