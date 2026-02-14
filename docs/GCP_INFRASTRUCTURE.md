@@ -1,3 +1,9 @@
+---
+title: Conxius Wallet: GCP Infrastructure Guide
+layout: page
+permalink: /docs/gcp-infrastructure
+---
+
 # Conxius Wallet: GCP Infrastructure Guide
 
 This document maps the Conxius "No Mock" production requirements to Google Cloud Platform (GCP) services.

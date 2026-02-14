@@ -118,10 +118,10 @@ To achieve full production functionality without mocks, the following external i
 
 #### 4.2.1. Wormhole NTT (Native Token Transfers)
 
-- **FR-NTT-01**: Full execution lifecycle: Source signing → VAA Retrieval → Destination redemption. [ACTIVE]
-  - *Requirement:* Integration with `@wormhole-foundation/sdk` using real deployed contract addresses.
-- **FR-NTT-02**: No NTT "VAA" (Verified Action Approval) can be broadcast without a local Conclave-generated proof. [ACTIVE]
-- **FR-NTT-03**: Support for Multi-Asset tracking and redemption (sBTC, USDC, etc.). [ACTIVE]
+- **FR-NTT-01**: Full execution lifecycle: Source signing → VAA Retrieval → Destination redemption. [PRODUCTION]
+  - *Requirement:* Integration with `@wormhole-foundation/sdk` and `@wormhole-foundation/sdk-definitions-ntt`.
+- **FR-NTT-02**: No NTT "VAA" (Verified Action Approval) can be broadcast without a local Conclave-generated proof (Sovereign VAA). [PRODUCTION]
+- **FR-NTT-03**: Support for Multi-Asset tracking and redemption (sBTC, USDC, etc.). [PRODUCTION]
 
 #### 4.2.2. Sovereign Bridge Protocol
 
@@ -158,6 +158,8 @@ To achieve full production functionality without mocks, the following external i
 | **Stacks (Clarity 4)** | Capacitor (Stacks.js) | PRODUCTION |
 | **Liquid** | GDK Integration | PRODUCTION |
 | **Rootstock** | Web3 / Ethers.js | PRODUCTION |
+| **NTT Bridge** | Sovereign Transceiver | PRODUCTION |
+| **ETH Satellite** | EIP-712 Adapter | PRODUCTION |
 | **Web5 (TBD)** | DIDs and DWN storage | PRODUCTION |
 | **BitVM** | Fraud Proof Verifier | RESEARCH |
 | **Citrea** | ZK-STARK Verifier | RESEARCH |

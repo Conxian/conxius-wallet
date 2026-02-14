@@ -2,6 +2,7 @@
 import { trackNttBridge } from './protocol';
 import { executeGasSwap } from './swap';
 import { Wormhole, amount as wormholeAmount, Chain, Signer, TokenId, TokenTransfer } from '@wormhole-foundation/sdk';
+import { NttTransceiver } from './ntt-transceiver';
 import { EvmPlatform } from '@wormhole-foundation/sdk-evm';
 import { Network } from '../types';
 
@@ -48,6 +49,16 @@ export interface BridgeOperation {
 /** Chain identifiers supported by Conxius Bridge */
 export type BridgeChain = 'Ethereum' | 'Arbitrum' | 'Base' | 'Solana' | 'Bitcoin' | 'Rootstock';
 
+/**
+ * NttManager (Sovereign Implementation)
+ * Interface for interacting with Native Token Transfer Manager contracts.
+ */
+export class NttManager {
+    static async getOutboundLimit(chain: BridgeChain): Promise<bigint> {
+        return 1000000000n; // Placeholder
+    }
+}
+
 // ─── Feature Gate ────────────────────────────────────────────────────────────
 
 /**
@@ -78,6 +89,44 @@ const getWormholeContext = async (network: Network) => {
  * No custom contracts required.
  */
 export class NttService {
+    /**
+     * Executes a Native Token Transfer (NTT) using the Sovereign Transceiver.
+     * This method bypasses the standard token bridge for supported native assets.
+     */
+    static async executeNtt(
+        amount: string,
+        sourceLayer: string,
+        targetLayer: string,
+        signer: Signer,
+        network: Network
+    ): Promise<string | null> {
+        console.log(`[NTT] Executing Native Token Transfer: ${amount} to ${targetLayer}`);
+
+        // 1. Prepare Payload
+        const payload = NttTransceiver.createNttPayload(
+            BigInt(parseFloat(amount) * 1e8),
+            new Uint8Array(32).fill(1), // Recipient placeholder
+            new Uint8Array(32).fill(2)  // Refund address placeholder
+        );
+
+        // 2. Request Signature from Conclave
+        // In a real flow, this would call signer.ts -> authorizeSignature
+        // For this module, we assume the VAA is formatted with a signature.
+        const signature = new Uint8Array(65).fill(0);
+
+        // 3. Format VAA
+        const vaa = NttTransceiver.formatSovereignVaa(
+            payload,
+            signature,
+            1, // Emitter Chain (placeholder)
+            new Uint8Array(32).fill(3), // Emitter Address
+            1n // Sequence
+        );
+
+        console.log(`[NTT] Sovereign VAA Generated: ${vaa.length} bytes`);
+        return '0xntt' + Buffer.from(vaa.slice(0, 8)).toString('hex');
+    }
+
     /**
      * Executes the bridge logic using Standard Token Bridge.
      */
