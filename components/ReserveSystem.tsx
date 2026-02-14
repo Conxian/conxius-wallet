@@ -1,31 +1,49 @@
 
-import React, { useState } from 'react';
-import { Landmark, ShieldCheck, TrendingUp, AlertCircle, RefreshCw, ExternalLink, Bot, Loader2, Sparkles, BarChart3, Activity, ShieldAlert, History } from 'lucide-react';
-import { MOCK_RESERVES } from '../constants';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import React, { useState, useEffect } from "react";
+import { Landmark, ShieldCheck, TrendingUp, AlertCircle, RefreshCw, ExternalLink, Bot, Loader2, Sparkles, BarChart3, Activity, ShieldAlert, History } from "lucide-react";
+import { fetchGlobalReserveMetrics } from "../services/protocol";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { ReserveAsset } from "../types";
+
+const INITIAL_RESERVES: ReserveAsset[] = [
+  { asset: "Liquid (L-BTC)", totalSupplied: 450, totalReserves: 520, collateralRatio: 115, status: "Audited" },
+  { asset: "Stacks (sBTC)", totalSupplied: 280, totalReserves: 350, collateralRatio: 125, status: "Audited" },
+  { asset: "Rootstock (RBTC)", totalSupplied: 120, totalReserves: 140, collateralRatio: 116, status: "Audited" },
+  { asset: "Wormhole NTT", totalSupplied: 550, totalReserves: 610, collateralRatio: 110, status: "Verified" },
+];
 
 const ReserveSystem: React.FC = () => {
+  const [reserves, setReserves] = useState<ReserveAsset[]>(INITIAL_RESERVES);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [lastAudit, setLastAudit] = useState('14m ago');
+  const [lastAudit, setLastAudit] = useState("14m ago");
 
-  const totalReservesValue = 42100000; // Mock $42M
-  const tvlValue = 40500000; // Mock $40.5M
-  const reserveRatio = (totalReservesValue / tvlValue * 100).toFixed(2);
+  const totalReservesValue = reserves.reduce((a, b) => a + b.totalReserves, 0);
+  const tvlValue = reserves.reduce((a, b) => a + b.totalSupplied, 0);
+  const reserveRatio = (totalReservesValue / (tvlValue || 1) * 100).toFixed(2);
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     setIsVerifying(true);
-    setTimeout(() => {
-      setIsVerifying(false);
-      setLastAudit('Just now');
-    }, 2500);
+    try {
+        const fresh = await fetchGlobalReserveMetrics();
+        if (fresh) {
+            setReserves(fresh);
+            setLastAudit("Just now");
+        }
+    } catch (e) {
+        console.warn("Verification failed", e);
+    } finally {
+        setIsVerifying(false);
+    }
   };
 
-  const chartData = [
-    { name: 'Liquid BTC Backing', value: 45 },
-    { name: 'Stacks PoX Yield', value: 25 },
-    { name: 'Rootstock Peg', value: 20 },
-    { name: 'NTT Liquidity Cushion', value: 10 },
-  ];
+  useEffect(() => {
+    handleVerify();
+  }, []);
+
+  const chartData = reserves.map(r => ({
+    name: r.asset,
+    value: Math.floor((r.totalSupplied / (tvlValue || 1)) * 100)
+  }));
   const COLORS = ['#f97316', '#a855f7', '#2563eb', '#10b981'];
 
   return (
@@ -58,7 +76,7 @@ const ReserveSystem: React.FC = () => {
         <div className="lg:col-span-8 space-y-10">
            {/* Main Status Grid */}
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {MOCK_RESERVES.map((res, i) => (
+              {reserves.map((res, i) => (
                  <div key={i} className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-8 space-y-6 group hover:border-orange-500/30 transition-all">
                     <div className="flex justify-between items-start">
                        <div>

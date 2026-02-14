@@ -22,6 +22,12 @@ export interface BreezPluginDef {
     bolt11: string;
   }): Promise<{ paymentHash: string; status: string; amountMsat: number }>;
   lnurlAuth(options: { lnurl: string }): Promise<void>;
+  receiveOnchain(): Promise<{ address: string }>;
+  sendOnchain(options: {
+    address: string;
+    amountSats: number;
+    feeRateSatsPerVbyte: number;
+  }): Promise<{ reverseSwapId: string }>;
   stop(): Promise<void>;
 }
 
@@ -55,4 +61,12 @@ export async function payLnInvoice(bolt11: string) {
 
 export async function performLnurlAuth(lnurl: string) {
   return Breez.lnurlAuth({ lnurl });
+}
+
+export async function getBreezOnchainAddress() {
+  return Breez.receiveOnchain();
+}
+
+export async function sendBreezOnchain(address: string, amountSats: number, feeRateSatsPerVbyte: number) {
+  return Breez.sendOnchain({ address, amountSats, feeRateSatsPerVbyte });
 }

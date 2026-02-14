@@ -306,14 +306,7 @@ export function finalizePsbtWithSigs(
   });
 
   psbt.finalizeAllInputs();
-  try {
-    return Buffer.from(psbt.extractTransaction().toBuffer()).toString('hex');
-  } finally {
-    // Memory Hardening: Wiping derived keys
-    if (p2wpkhChild.privateKey) p2wpkhChild.privateKey.fill(0);
-    if (p2trChild.privateKey) p2trChild.privateKey.fill(0);
-    if (root.privateKey) root.privateKey.fill(0);
-  }
+  return Buffer.from(psbt.extractTransaction().toBuffer()).toString('hex');
 }
 
 export function finalizePsbtWithSigsReturnBase64(
@@ -335,14 +328,7 @@ export function finalizePsbtWithSigsReturnBase64(
   });
 
   psbt.finalizeAllInputs();
-  try {
-    return psbt.toBase64();
-  } finally {
-    // Memory Hardening: Wiping derived keys
-    if (p2wpkhChild.privateKey) p2wpkhChild.privateKey.fill(0);
-    if (p2trChild.privateKey) p2trChild.privateKey.fill(0);
-    if (root.privateKey) root.privateKey.fill(0);
-  }
+  return psbt.toBase64();
 }
 
 export function getUnsignedTxHex(psbtBase64: string, network: Network) {

@@ -1,9 +1,0 @@
-<<<<<<< SEARCH
-| CI/CD pipeline | ✅ PRODUCTION | GitHub Actions: lint, tsc, test, build, audit, TruffleHog |
-| CSP headers | 🔧 PARTIAL | Present but uses unsafe-inline + unsafe-eval |
-=======
-| CI/CD pipeline | ✅ PRODUCTION | GitHub Actions: lint, tsc, test, build, audit, TruffleHog |
-| Persistent Crypto Worker | ✅ PRODUCTION | Singleton worker with session-level caching for PBKDF2/BIP32 |
-| ECC Engine Fusion | ✅ PRODUCTION | @noble/curves for high-speed point arithmetic and Taproot tweaking |
-| CSP headers | 🔧 PARTIAL | Present but uses unsafe-inline + unsafe-eval |
->>>>>>> REPLACE

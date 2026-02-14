@@ -572,6 +572,28 @@ environment: "jsdom"  // not "node"
 
 ---
 
+### 43. ~~**Reserve Metrics are Hardcoded**~~ ✅ RESOLVED
+
+**Location:** `components/ReserveSystem.tsx`
+**Severity:** 🟡 Medium (P2)
+**Status:** ✅ Resolved — Implemented `fetchGlobalReserveMetrics` in `protocol.ts` and integrated into `ReserveSystem.tsx`.
+**Issue:** ~~Reserve allocation and ratios were using static constants.~~
+**Recommendation:** Implement dynamic fetching from L2/Sidechain providers.
+**Effort:** 4 hours
+
+---
+
+### 44. ~~**Breez Plugin Missing On-Chain Support**~~ ✅ RESOLVED
+
+**Location:** `BreezPlugin.java`, `services/breez.ts`
+**Severity:** 🟡 Medium (P2)
+**Status:** ✅ Resolved — Added `receiveOnchain` and `sendOnchain` methods to both native plugin and TS service.
+**Issue:** ~~Breez integration only supported Lightning operations.~~
+**Recommendation:** Expose native Breez SDK on-chain capabilities.
+**Effort:** 4 hours
+
+---
+
 ### 37. ~~Runes Balance Always Returns Empty~~ ✅ RESOLVED
 
 **Location:** `services/protocol.ts:83-88`  
