@@ -1,9 +1,0 @@
-<<<<<<< SEARCH
-| NTT bridge execution | `ntt.ts` (Wormhole SDK) | 🔧 PARTIAL | Real Wormhole SDK integrated; requires `NTT_CONFIGS` contract addresses |
-| NTT progress tracking | `ntt.ts:63-73` | 🔧 PARTIAL | Calls real Wormhole API but bridge is mocked |
-| NTT UI (Sovereign Handshake) | `NTTBridge.tsx` | ⚠️ EXPERIMENTAL | Full UX flow but backed by blocked service |
-=======
-| NTT bridge execution | `ntt.ts` (Wormhole SDK) | ✅ PRODUCTION | Real Wormhole SDK integrated with `NTT_CONFIGS` contract addresses |
-| NTT progress tracking | `ntt.ts` | ✅ PRODUCTION | Parallelized tracking via Wormhole API and VAA retrieval |
-| NTT UI (Sovereign Handshake) | `NTTBridge.tsx` | ✅ PRODUCTION | Full UX flow backed by production-grade `NttService` |
->>>>>>> REPLACE

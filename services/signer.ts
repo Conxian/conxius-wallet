@@ -557,8 +557,16 @@ export const requestEnclaveSignature = async (
           const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
           try {
             const child = bip32.fromPrivateKey(privKeyBuf, Buffer.alloc(32));
-            const stacksHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from("stacks-sig")));
-            signature = Buffer.from(child.sign(stacksHash)).toString("hex");
+
+            let hashToSign: Buffer;
+            if (request.payload?.hash) {
+              hashToSign = Buffer.from(request.payload.hash, 'hex');
+            } else {
+              const cx = Buffer.from(JSON.stringify(request.payload));
+              hashToSign = Buffer.from(bitcoin.crypto.sha256(cx));
+            }
+
+            signature = Buffer.from(child.sign(hashToSign)).toString("hex");
           } finally {
             privKeyBuf.fill(0);
           }

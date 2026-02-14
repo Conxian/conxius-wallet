@@ -29,6 +29,8 @@ import breez_sdk.ReceivePaymentRequest;
 import breez_sdk.SendPaymentRequest;
 import breez_sdk.SendPaymentResponse;
 import breez_sdk.OpeningFeeParams;
+import breez_sdk.ReceiveOnchainRequest;
+import breez_sdk.PayOnchainRequest;
 import kotlin.UByte;
 import kotlin.UInt;
 import kotlin.ULong;
@@ -106,7 +108,7 @@ public class BreezPlugin extends Plugin {
         executor.submit(() -> {
             try {
                 String mnemoToUse = mnemonic;
-                
+
                 // Native Decryption if Vault provided
                 if (mnemoToUse == null) {
                     try {
@@ -120,11 +122,11 @@ public class BreezPlugin extends Plugin {
                         }
                         // Wipe seedBytes
                         java.util.Arrays.fill(seedBytes, (byte)0);
-                        
+
                         String safeInviteCode = inviteCode == null ? "" : inviteCode;
                         NodeConfig nodeConfig = new NodeConfig.Greenlight(new GreenlightNodeConfig(null, safeInviteCode));
                         Config config = Breez_sdkKt.defaultConfig(EnvironmentType.PRODUCTION, apiKey, nodeConfig);
-                        
+
                         ConnectRequest connectRequest = new ConnectRequest(config, seedList, false);
                         this.breezServices = Breez_sdkKt.connect(connectRequest, new EventListener() {
                              @Override
@@ -194,7 +196,7 @@ public class BreezPlugin extends Plugin {
         }
         Long amountMsat = call.getLong("amountMsat"); // can be null for any amount
         String description = call.getString("description", "");
-        
+
         executor.submit(() -> {
             try {
                 long safeAmountMsat = amountMsat == null ? 0L : amountMsat;
@@ -205,7 +207,7 @@ public class BreezPlugin extends Plugin {
                     new Object[] { safeAmountMsat, description, preimage, null, null, null, null }
                 );
                 breez_sdk.ReceivePaymentResponse response = breezServices.receivePayment(req);
-                
+
                 JSObject ret = new JSObject();
                 ret.put("bolt11", response.getLnInvoice().getBolt11());
                 ret.put("paymentHash", response.getLnInvoice().getPaymentHash());
@@ -248,7 +250,7 @@ public class BreezPlugin extends Plugin {
             }
         });
     }
-    
+
     @PluginMethod
     public void lnurlAuth(PluginCall call) {
         if (breezServices == null) {
@@ -267,7 +269,7 @@ public class BreezPlugin extends Plugin {
                 if (input instanceof breez_sdk.InputType.LnUrlAuth) {
                     breez_sdk.LnUrlAuthRequestData data = ((breez_sdk.InputType.LnUrlAuth) input).getData();
                     breez_sdk.LnUrlCallbackStatus result = breezServices.lnurlAuth(data);
-                    
+
                     if (result instanceof breez_sdk.LnUrlCallbackStatus.Ok) {
                          call.resolve();
                     } else {
@@ -279,6 +281,53 @@ public class BreezPlugin extends Plugin {
                 }
             } catch (Exception e) {
                 call.reject("LNURL Auth Error: " + e.getMessage());
+            }
+        });
+    }
+
+    @PluginMethod
+    public void receiveOnchain(PluginCall call) {
+        if (breezServices == null) {
+            call.reject("Not started");
+            return;
+        }
+        executor.submit(() -> {
+            try {
+                ReceiveOnchainRequest req = new ReceiveOnchainRequest();
+                breez_sdk.ReceiveOnchainResponse response = breezServices.receiveOnchain(req);
+                JSObject ret = new JSObject();
+                ret.put("address", response.getAddress());
+                call.resolve(ret);
+            } catch (Exception e) {
+                 call.reject("Receive onchain failed: " + e.getMessage());
+            }
+        });
+    }
+
+    @PluginMethod
+    public void sendOnchain(PluginCall call) {
+        if (breezServices == null) {
+            call.reject("Not started");
+            return;
+        }
+        String address = call.getString("address");
+        Long amountSats = call.getLong("amountSats");
+        Integer feeRate = call.getInt("feeRateSatsPerVbyte");
+
+        if (address == null || amountSats == null || feeRate == null) {
+            call.reject("Missing address, amountSats or feeRate");
+            return;
+        }
+
+        executor.submit(() -> {
+            try {
+                PayOnchainRequest req = new PayOnchainRequest(address, amountSats, feeRate);
+                breez_sdk.PayOnchainResponse response = breezServices.payOnchain(req);
+                JSObject ret = new JSObject();
+                ret.put("reverseSwapId", response.getReverseSwapId());
+                call.resolve(ret);
+            } catch (Exception e) {
+                 call.reject("Send onchain failed: " + e.getMessage());
             }
         });
     }
