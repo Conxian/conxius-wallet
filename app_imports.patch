@@ -1,8 +1,0 @@
-<<<<<<< SEARCH
-import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
-import { ConxiusWormholeSigner } from './services/wormhole-signer';
-=======
-import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
-import { ConxiusWormholeSigner } from './services/wormhole-signer';
-import { evaluateSecurityPosture } from './services/device-integrity';
->>>>>>> REPLACE

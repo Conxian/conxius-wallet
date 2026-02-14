@@ -1,6 +1,0 @@
-<<<<<<< SEARCH
-const bip32 = BIP32Factory(ecc);
-=======
-const bip32 = BIP32Factory(ecc);
-import { workerManager } from './worker-manager';
->>>>>>> REPLACE

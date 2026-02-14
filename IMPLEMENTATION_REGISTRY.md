@@ -107,7 +107,7 @@ permalink: /implementation-registry
 
 | Feature | File(s) | Status | Notes |
 |---------|---------|--------|-------|
-| Breez SDK native plugin | `BreezPlugin.java` | ✅ PRODUCTION | Full start/stop/invoice/pay/lnurlAuth |
+| Breez SDK native plugin | `BreezPlugin.java` | ✅ PRODUCTION | Full start/stop/invoice/pay/lnurlAuth/on-chain |
 | Bolt11 decode | `lightning.ts:41-51` | ✅ PRODUCTION | Uses light-bolt11-decoder |
 | LNURL decode/fetch | `lightning.ts:22-39` | ✅ PRODUCTION | bech32 decode + URL fetch |
 | LNURL-Auth login | `BreezPlugin.java:252-284` | ✅ PRODUCTION | Full parseInput + lnurlAuth |
@@ -171,7 +171,7 @@ permalink: /implementation-registry
 | Liquid Peg-in | EXPERIMENTAL | `fetchLiquidPegInAddress` uses `liquidjs-lib`. |
 | Marketplace | BLOCKED | Static product list. No backend. |
 | Stacking Rewards | PARTIAL | Reward history is mocked. |
-| Reserve System | EXPERIMENTAL | Hardcoded metrics. |
+| Reserve System | ✅ PRODUCTION | Dynamic metrics via `fetchGlobalReserveMetrics`. |
 | Studio (Ordinals) | EXPERIMENTAL | UI only. No inscription logic. |
 | Web3Browser | PARTIAL | iframe-based, no dApp injection |
 | LockScreen | PRODUCTION | PIN + biometric + duress |

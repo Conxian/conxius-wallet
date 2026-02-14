@@ -1,8 +1,0 @@
-<<<<<<< SEARCH
-import { ShoppingBag, Wifi, Gift, Zap, Globe, Smartphone, Search, Filter, Loader2, CheckCircle2, ShieldCheck, Ticket, Plane, Copy, QrCode, Tag, Lock } from 'lucide-react';
-import { AppContext } from '../context';
-=======
-import { ShoppingBag, Wifi, Gift, Zap, Globe, Smartphone, Search, Filter, Loader2, CheckCircle2, ShieldCheck, Ticket, Plane, Copy, QrCode, Tag, Lock } from 'lucide-react';
-import { AppContext } from '../context';
-import { Breez } from '../services/breez';
->>>>>>> REPLACE
