@@ -123,6 +123,17 @@ describe('signer service', () => {
       expect(sig2).toBeDefined();
     });
 
+        it('should sign a Taproot message using Schnorr in JS fallback', async () => {
+      const message = 'Taproot test message';
+      const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
+      const signature = await signBip322Message(message, new Uint8Array(seed), undefined, 'P2TR');
+
+      expect(signature).toBeDefined();
+      expect(typeof signature).toBe('string');
+      // Taproot signature is usually smaller (64 byte sig) + length prefix
+      expect(signature.length).toBeGreaterThan(20);
+    });
+
     it('should handle empty message', async () => {
       const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
       const signature = await signBip322Message('', new Uint8Array(seed));

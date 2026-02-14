@@ -6,9 +6,9 @@ permalink: /gaps-and-recommendations
 
 # Conxius Wallet: Gaps & Recommendations
 
-**Last Updated:** 2026-02-14
+**Last Updated:** 2026-02-15
 **Total Gaps Identified:** 30 (original) + 7 (newly discovered)  
-**Resolved:** 5 P0s + 1 P1  
+**Resolved:** 5 P0s + 2 P1s + 3 P2s
 **Repository:** <https://github.com/conxian/conxius-wallet>  
 **Cross-Reference:** See `IMPLEMENTATION_REGISTRY.md` for full feature-level status
 
@@ -381,31 +381,25 @@ server: {
 
 ---
 
-### 24. **Test Environment Mismatch**
+### 24. ~~**Test Environment Mismatch**~~ ✅ RESOLVED
 
 **Location:** `vite.config.ts`  
 **Severity:** 🟡 Medium  
-**Issue:** Uses Node environment instead of JSDOM for DOM tests.  
-**Recommendation:**
-
-```typescript
-// Should be:
-environment: "jsdom"  // not "node"
-```
-
-**Effort:** 30 minutes  
-**Files to Modify:** `vite.config.ts`
+**Status:** ✅ Resolved — Switched vitest environment to `jsdom`.
+**Issue:** ~~Uses Node environment instead of JSDOM for DOM tests.~~
+**Recommendation:** Use `jsdom` for React component tests.
+**Effort:** 30 minutes
 
 ---
 
-### 25. **No Lockfile Consistency Check**
+### 25. ~~**No Lockfile Consistency Check**~~ ✅ RESOLVED
 
 **Severity:** 🟡 Medium  
-**Issue:** `package-lock.json` not verified in CI.  
+**Status:** ✅ Resolved — CI now uses `--frozen-lockfile` and package-lock.json was removed.
+**Issue:** ~~`package-lock.json` not verified in CI.~~
 **Impact:** Dependency drift between environments.  
 **Recommendation:** Add lockfile verification to CI workflow.  
-**Effort:** 30 minutes  
-**Files to Modify:** `.github/workflows/ci.yml`
+**Effort:** 30 minutes
 
 ---
 
