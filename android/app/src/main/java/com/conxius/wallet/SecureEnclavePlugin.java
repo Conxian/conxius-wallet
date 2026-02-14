@@ -1068,7 +1068,17 @@ public class SecureEnclavePlugin extends Plugin {
             org.bitcoinj.core.Sha256Hash hash = org.bitcoinj.core.Sha256Hash.wrap(messageHashHex);
             org.bitcoinj.core.ECKey.ECDSASignature sig = child.sign(hash);
             
-            String sigHex = org.bouncycastle.util.encoders.Hex.toHexString(sig.encodeToDER());
+            // Return raw 64-byte signature (R | S) for consistency across platforms
+            byte[] r = sig.r.toByteArray();
+            byte[] s = sig.s.toByteArray();
+            byte[] raw = new byte[64];
+            int rOffset = (r.length > 32) ? r.length - 32 : 0;
+            int rLen = Math.min(32, r.length);
+            System.arraycopy(r, rOffset, raw, 32 - rLen, rLen);
+            int sOffset = (s.length > 32) ? s.length - 32 : 0;
+            int sLen = Math.min(32, s.length);
+            System.arraycopy(s, sOffset, raw, 64 - sLen, sLen);
+            String sigHex = org.bouncycastle.util.encoders.Hex.toHexString(raw);
             
             JSObject ret = new JSObject();
             ret.put("signature", sigHex);

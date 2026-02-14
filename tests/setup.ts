@@ -32,7 +32,6 @@ if (!globalThis.crypto) {
 // Ensure URL is globally available
 import { URL } from 'url';
 // @ts-ignore
-globalThis.URL = URL;
 
 // Mock worker-manager
 vi.mock('../services/worker-manager', () => {

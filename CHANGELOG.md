@@ -6,6 +6,23 @@ permalink: /changelog
 
 # Changelog
 
+## [0.3.1] - 2026-02-15
+
+### Fixed
+- **BIP-322 Signature Alignment**: Standardized native signing logic to return raw 64-byte signatures for Bitcoin, aligning Android with EVM/Stacks and JS fallbacks.
+- **BIP-322 Witness Structure**: Corrected witness stack serialization in `services/signer.ts`; now returns full base64-encoded witness stack instead of partial hex.
+- **Taproot Signing (JS)**: Added real Schnorr signature support to BIP-322 JS fallback using `@noble/curves`.
+- **Test Environment**: Switched Vitest to `jsdom` for better React component testing support.
+- **CI Consistency**: Enforced `--frozen-lockfile` in GitHub Actions and removed redundant `package-lock.json`.
+
+### Changed
+- **Sovereignty Meter**: Renamed `MOCK_QUESTS` to `ACTIVE_QUESTS` to reflect that logic is fully state-driven.
+
+### Security
+- **Project Cleanup**: Removed dead root files (`enclave_plugin_backup.java`, `enclave_plugin_cycle2.java`, etc.) to reduce repository attack surface.
+- **Pre-commit Hooks**: Integrated `husky` and `lint-staged` to enforce linting and testing before every commit.
+
+
 All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog, and this project aims to follow Semantic Versioning.

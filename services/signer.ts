@@ -11,6 +11,7 @@ import * as ecc from 'tiny-secp256k1';
 import * as bitcoin from 'bitcoinjs-lib';
 import { getAddressFromPrivateKey, getAddressFromPublicKey } from '@stacks/transactions';
 import { Buffer } from 'buffer';
+import { signSchnorr } from './ecc';
 import { publicKeyToEvmAddress } from './evm';
 import { Capacitor } from "@capacitor/core";
 import { signNative, getWalletInfoNative, signBatchNative } from "./enclave-storage";
@@ -259,10 +260,11 @@ export const signBip322Message = async (
         // bitcoinjs-lib's sign() for BIP32 is ECDSA.
         // If scriptType is P2TR, we need a Schnorr signer.
         if (scriptType === 'P2TR') {
-            // This is a simplified fallback; real implementation should use ecc.signSchnorr
-            throw new Error("BIP-322 Taproot signing in JS requires ecc.signSchnorr");
+            if (!child.privateKey) throw new Error('BIP-322: Missing private key for Taproot signing');
+            signatureHex = Buffer.from(signSchnorr(sighash, child.privateKey)).toString('hex');
+        } else {
+            signatureHex = Buffer.from(child.sign(sighash)).toString('hex');
         }
-        signatureHex = Buffer.from(child.sign(sighash)).toString('hex');
     }
 
     // Step 6: Serialize witness stack

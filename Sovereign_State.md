@@ -33,7 +33,7 @@ permalink: /state
 - **Runes Balance Fetch**: Complete (Hiro Ordinals API integration).
 - **Sovereign Layers — Liquid**: Partial (Balance fetch works; address derivation returns pubkey not address; peg-in gated as experimental).
 - **Silent Payments (BIP-352)**: Partial (Key derivation + address encoding real; sending logic incomplete; UI uses real vault seed).
-- **BIP-322 Message Signing**: Partial (Refactored to use Enclave signing; pending full witness validation).
+- **BIP-322 Message Signing**: ✅ COMPLETE (Consistent raw signatures + JS Schnorr fallback implemented).
 - **Web5 Integration**: Partial (DID + DWN CRUD works but uses default KeyManager, not enclave-backed).
 - **PayJoin (BIP-78)**: Partial (Real PayjoinClient integration but untested in production).
 - **CSP Headers**: Partial (Present but uses unsafe-inline + unsafe-eval).
