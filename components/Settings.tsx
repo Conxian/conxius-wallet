@@ -187,7 +187,7 @@ const Settings: React.FC = () => {
                   <input type="password" placeholder="Tax / VAT ID (Optional)" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:outline-none" />
                   <input type="password" placeholder="Registered Address" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="md:col-span-2 bg-zinc-950 border border-zinc-800 rounded-2xl px-5 py-3 text-sm focus:outline-none" />
                </div>
-               <p className="text-[10px] text-zinc-500 italic">These details are signed by your DID and included in PayJoin invoices.</p>
+               <p className="text-[10px] text-zinc-500 italic">These details are signed by your DID and compatible with B2B features in the Conxian Gateway.</p>
             </div>
             
             <div className="space-y-4">

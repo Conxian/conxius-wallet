@@ -83,6 +83,13 @@ permalink: /implementation-registry
 
 | Feature | File(s) | Status | Notes |
 |---------|---------|--------|-------|
+| Conxian Gateway (B2B) | `Web3Browser.tsx` | ✅ PRODUCTION | Integrated Stacks DeFi & B2B portal |
+
+| Feature | File(s) | Status | Notes |
+|---------|---------|--------|-------|
+
+| Feature | File(s) | Status | Notes |
+|---------|---------|--------|-------|
 | NTT bridge execution | `ntt.ts` (Wormhole SDK) | ✅ PRODUCTION | Real Wormhole SDK + Sovereign NttTransceiver integrated |
 | NTT progress tracking | `ntt.ts` | ✅ PRODUCTION | Parallelized tracking via Wormhole API and VAA retrieval |
 | NTT UI (Sovereign Handshake) | `NTTBridge.tsx` | ✅ PRODUCTION | Full UX flow backed by production-grade `NttService` |

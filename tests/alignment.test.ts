@@ -61,3 +61,23 @@ describe('Alignment and Logic Fixes', () => {
     }
   });
 });
+
+describe('B2B Gateway Alignment', () => {
+  it('should have Conxian Gateway in featured dApps', async () => {
+    // This is a unit test check for the component logic if possible,
+    // but since it's a static array in the component, we just check the file content existence
+    const fs = await import('fs');
+    const path = await import('path');
+    const content = fs.readFileSync(path.join(process.cwd(), 'components/Web3Browser.tsx'), 'utf8');
+    expect(content).toContain('Conxian Gateway');
+    expect(content).toContain('B2B Portal');
+  });
+
+  it('should have B2B institutional portal in DeFiDashboard', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const content = fs.readFileSync(path.join(process.cwd(), 'components/DeFiDashboard.tsx'), 'utf8');
+    expect(content).toContain('Institutional Liquidity');
+    expect(content).toContain('Conxian Gateway');
+  });
+});
