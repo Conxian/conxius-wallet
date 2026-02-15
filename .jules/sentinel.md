@@ -59,3 +59,8 @@ permalink: /sentinel
 **Vulnerability:** The `crypto.worker.ts` utilized plaintext mnemonics and seeds as keys in its internal `Map` caches (`pbkdf2Cache` and `nodeCache`). While the values (buffers) were zeroed on lock, the mnemonics persisted in memory as string-based keys.
 **Learning:** Security hardening must extend beyond the values being stored to the keys themselves. Using sensitive material as a lookup key effectively creates a secondary, long-lived storage of that secret in the heap.
 **Prevention:** Always hash sensitive material (SHA-256) before using it as a cache key or lookup identifier. Ensure that any intermediate plaintext strings are garbage-collected by nullifying references immediately after the hash is generated.
+
+## 2026-05-22 - [CSPRNG Uniformity and ESM Resolution in Security Modules]
+**Vulnerability:** Ark and RGB service modules utilized `Math.random()` for VTXO ID generation and asset discovery counts, violating the project's sovereign randomness policy. Additionally, `services/ecc.ts` failed to resolve `@noble/curves` sub-paths in the Vitest environment due to missing file extensions in imports.
+**Learning:** Even "simulated" or mock logic in a security-critical application must adhere to CSPRNG standards to prevent any predictability in the system's state. Furthermore, security modules using modern ESM libraries (like `@noble/curves`) must use explicit `.js` extensions in sub-path imports to ensure cross-environment compatibility between Vite, Node.js, and Vitest.
+**Prevention:** Audit all randomness usage and mandate `globalThis.crypto.getRandomValues()`. Always include `.js` extensions for sub-path imports in ESM-first security libraries to prevent resolution failures during testing and production builds.
