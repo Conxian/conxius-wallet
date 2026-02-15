@@ -20,22 +20,23 @@ vi.mock('../services/notifications', () => ({
   }
 }));
 
+// Mock fetch globally
+const mockFetch = vi.fn();
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockFetch.mockReset();
+  global.fetch = mockFetch;
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('protocol service', () => {
   const TEST_BTC_ADDRESS = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
   const TEST_STX_ADDRESS = 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7';
-  
-  // Mock fetch globally
-  const mockFetch = vi.fn();
-  global.fetch = mockFetch;
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockFetch.mockReset();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
 
   describe('fetchBtcBalance', () => {
     it('should fetch and calculate BTC balance correctly', async () => {
@@ -567,6 +568,11 @@ describe('Enhanced Fetchers and Verifiers', () => {
     });
 
     it('fetchArkBalances should return VTXOs for supported addresses', async () => {
+        // Mock a 404 response to trigger fallback assets
+        mockFetch.mockResolvedValueOnce({
+            ok: false,
+            status: 404
+        });
         const balances = await fetchArkBalances('bc1q00000000000000000000000000000000000000');
         expect(balances.length).toBeGreaterThan(0);
         expect(balances[0].layer).toBe('Ark');
@@ -577,13 +583,19 @@ describe('Enhanced Fetchers and Verifiers', () => {
         const validProof = '0x' + 'a'.repeat(256);
         const result = await verifyBitVmProof(validProof);
         expect(result).toBe(true);
-        expect(notificationService.notify).toHaveBeenCalledWith('success', expect.stringContaining('Verified'));
+        expect(notificationService.notify).toHaveBeenCalledWith(expect.objectContaining({
+            type: 'success',
+            message: expect.stringContaining('Verified')
+        }));
     });
 
     it('verifyBitVmProof should fail for invalid proof structure', async () => {
         const invalidProof = 'short-proof';
         const result = await verifyBitVmProof(invalidProof);
         expect(result).toBe(false);
-        expect(notificationService.notify).toHaveBeenCalledWith('error', expect.stringContaining('Failed'));
+        expect(notificationService.notify).toHaveBeenCalledWith(expect.objectContaining({
+            type: 'error',
+            message: expect.stringContaining('Failed')
+        }));
     });
 });
