@@ -4,125 +4,80 @@ layout: page
 permalink: /whitepaper
 ---
 
-# Conxius Wallet Whitepaper (Android-First)
+# Conxius Wallet: The Full Bitcoin Ecosystem Technical Whitepaper
 
 ## Abstract
 
-Conxius is a mobile-first wallet focused on Bitcoin L1 plus Bitcoin-adjacent layers and interlayer execution. The core design principle is an offline-first local enclave model: secrets are generated, used, and stored on-device; network calls are explicit and user-controlled.
+Conxius is the definitive sovereign interface for the entire Bitcoin ecosystem. It bridges the gap between Bitcoin L1 and the burgeoning landscape of Layer 2s, sidechains, and asset protocols. By utilizing an Android-native Secure Enclave model, Conxius provides hardware-level security for BTC, Lightning, Liquid, Stacks, RSK, BOB, RGB, Ordinals, Runes, Ark, BitVM, and State Chains—all within a single, unified mobile application.
 
-This document describes the security boundary, threat model, cryptographic architecture, and system modules required to build an implementation-grade wallet and interlayer client.
+## 1. The Full Ecosystem Vision
 
-## Goals
+Bitcoin is no longer just a store of value; it is a multi-layered programmable ecosystem. Conxius is designed to be the central hub for this "New Bitcoin City," providing:
+- **Security Sovereignty**: Keys are generated and protected by hardware-backed TEE and StrongBox.
+- **Protocol Sovereignty**: Native support for every major Bitcoin-adjacent protocol.
+- **Execution Sovereignty**: On-device signing and verification, minimizing reliance on centralized intermediaries.
 
-- Keys and high-sensitivity credentials remain on-device by default.
-- Clear recovery model: PIN vault + explicit seed backup flows.
-- Honest capability surface: features are either implemented correctly to standard or gated off.
-- Android-first hardening with an upgrade path to additional platforms.
+## 2. Cryptographic Architecture
 
-## Non-Goals
+### 2.1. Unified Multi-Path Derivation
 
-- “Custodial by default” services (server-held keys).
-- Shipping placeholder signatures or “best-effort” cryptography.
-- Silent remote telemetry that could correlate user identity and financial behavior.
+Conxius implements a sophisticated BIP-32 derivation strategy to support the diverse needs of the ecosystem:
+- **m/84'/0'/0'**: Native Segwit (L1, Liquid, Ark)
+- **m/86'/0'/0'**: Taproot (L1, RGB, Ordinals)
+- **m/44'/60'/0'**: EVM Compatibility (BOB, RSK, ETH)
+- **m/44'/5757'/0'**: Stacks Ecosystem
+- **m/84'/0'/0'/1'**: Ark VTXO Management
+- **m/84'/0'/0'/2'**: State Chain Sequential Keys
 
-## System Overview
+### 2.2. Enclave-First Signing
 
-### Components
+The **Signing Enclave** (Native Java/Kotlin) is the heart of Conxius. It handles:
+- **ECDSA (secp256k1)**: For legacy and Segwit layers.
+- **Schnorr (Taproot)**: For RGB and Ordinals (optimized via ECC Engine Fusion).
+- **Recoverable Signatures**: For EVM and Stacks compatibility.
 
-- **UI Shell**: React + Vite mobile UI rendered in a Capacitor WebView.
-- **App State Vault**: Encrypted state blob persisted on-device and decrypted only after user unlock.
-- **Signing Enclave**: In-memory seed usage for signing; seed bytes are cleared after use.
-- **Chain Clients**: Network adapters for L1 and layers (indexers, RPC, or gateways).
-- **Interlayer Execution**: State machines for bridging and cross-domain operations.
-- **Notification Service**: Local-first event system driving in-app and OS notifications.
+## 3. Layer-Specific Implementations
 
-### Trust Boundaries
+### 3.1. Lightning (Breez SDK)
+Conxius integrates the Breez SDK via a native JNI bridge, providing non-custodial Lightning payments, LNURL support, and on-chain/off-chain swaps within the enclave boundary.
 
-- **Trusted**: Android Keystore, OS user authentication, app process memory (bounded).
-- **Untrusted**: Network, third-party APIs/indexers, remote nodes, WebView runtime when compromised.
-- **Conditional**: User-provided node endpoints and credentials (treated as secrets).
+### 3.2. Liquid & Stacks (Native Pegs)
+We prioritize native 1:1 pegs over wrapped assets.
+- **Liquid**: Native P2WPKH and confidential address support with federation peg-in monitoring.
+- **Stacks (sBTC)**: Integration with Nakamoto's threshold signature scheme for trustless BTC movement to Stacks.
 
-## Threat Model
+### 3.3. BOB & RSK (EVM L2s)
+Conxius treats Bitcoin-backed EVM layers as first-class citizens, using standard EVM derivation paths while anchoring security in the Bitcoin-originated seed.
 
-### Adversaries
+### 3.4. RGB & Asset Protocols
+- **RGB**: Implements client-side validation logic and Taproot-based seals for private, scalable smart contracts.
+- **Ordinals/Runes**: Native inscription management and balance tracking integrated into the core UTXO manager.
 
-- Network adversary: MITM, DNS poisoning, malicious indexers.
-- Device adversary: malware, overlay attacks, rooted devices, compromised WebView context.
-- User error: unsafe backups, credential reuse, phishing via LNURL or URLs.
+### 3.5. Ark & State Chains
+- **Ark**: Support for shared UTXOs (VTXOs) via the Ark protocol, enabling instant payments without the liquidity constraints of Lightning.
+- **State Chains**: Sequential derivation for off-chain UTXO transfers, providing high-throughput, low-cost Bitcoin mobility.
 
-### Assets
+## 4. Security Hardening
 
-- Seed material and derived private keys.
-- Vault encryption keys and Android Keystore keys.
-- Lightning credentials (macaroons) and node endpoints.
-- Transaction intent and metadata (recipients, amounts).
+### 4.1. Android TEE & StrongBox
+Conxius leverages the highest available security level on Android. On supported devices (e.g., Google Pixel), keys are generated within the **StrongBox Keymaster**, a dedicated security chip.
 
-### Mitigations (Required)
+### 4.2. Zero-Leak Memory Management
+The "Zero-Leak" policy ensures that:
+- Sensitive buffers (seeds, private keys) are zero-filled immediately after use.
+- The UI layer never touches plaintext secret material.
+- Secure session keys are used for application state, expiring automatically upon lock.
 
-- No secrets in logs; no secrets in UI notifications.
-- Strong input validation for URIs (BIP21/LNURL) and external URLs.
-- Strict capability gating: incomplete features are hidden or labeled “experimental”.
-- Enforce lock on background and reduce leakage via screenshots/recents where possible.
+### 4.3. Device Integrity Heuristics
+A multi-layered integrity check (`DeviceIntegrityPlugin`) monitors for root/jailbreak, emulator environments, and dangerous system properties to protect the enclave from OS-level compromises.
 
-## Cryptographic Architecture
+## 5. The Conxian Gateway (B2B)
 
-### Vault Model
+The **Conxian Gateway** extends the wallet's capabilities to the enterprise:
+- **Corporate Treasury**: Managed via multi-sig quorums signed on Conxius.
+- **Institutional Launchpad**: Tools for issuing and managing assets on Bitcoin L2s.
+- **Shielded Payments**: Privacy-centric corporate settlement layers.
 
-- Wallet state is encrypted with a key derived from the user PIN (PBKDF2 or equivalent).
-- The encrypted blob is persisted via a platform secure storage provider when available.
+## 6. Conclusion
 
-### Android Secure Storage
-
-- Android Keystore AES-GCM key protects persisted data.
-- When enabled, a user-authenticated key is required for vault operations (biometric or device credential).
-- Migration strategy: legacy vault formats migrate forward with explicit versioning.
-
-### Seed Handling
-
-- Seed material is never written to disk in plaintext.
-- Signing operations decrypt the seed vault into memory only when needed and wipe bytes after use.
-
-## Bitcoin L1 Transaction Pipeline (Implementation Requirements)
-
-- PSBT construction must validate script type and refuse unsupported inputs.
-- Coin selection should minimize dust and avoid pathological address reuse.
-- Transaction lifecycle must be persisted:
-  - pending → broadcast → confirmed (with confirmations tracking)
-  - failure paths and retry/bump strategies (RBF/CPFP where applicable)
-
-## Lightning (Implementation Requirements)
-
-- Treat LND macaroons as private keys; store only in secure storage, never in logs.
-- LNURL must not treat arbitrary HTTP(S) as safe by default; enforce strict parsing and user confirmation.
-- Provide transport abstraction for Tor/proxying if “Tor routed” is a product promise.
-
-## Sovereign Interoperability (sBTC & Liquid Native Pegs)
-
-Conxius rejects "Wrapped Bitcoin" (WBTC) on centralized bridges in favor of native 1:1 sidechain pegs.
-
-- **sBTC (Stacks)**: Utilizes the Nakamoto threshold signature scheme. Peg-in is achieved via a Bitcoin L1 transaction with a specific `OP_RETURN` carrying the user's Stacks address.
-- **LBTC (Liquid)**: Utilizes the federation multisig peg-in. Peg-in requires a BTC transaction to a federation address, followed by a claim transaction on Liquid after 102 confirmations.
-
-Both mechanisms require the Signing Enclave to handle specific Bitcoin script types and proof generation (Merkle proofs for peg-in claims).
-
-## Interlayer / Wormhole Execution (Implementation Requirements)
-
-Tracking-only is not sufficient for an interlayer client. Execution requires:
-
-- Source chain transaction creation and signing.
-- Attestation/VAA retrieval and verification.
-- Destination redemption transaction creation and signing.
-- State machine with recoverability at each phase and provider redundancy (no SPOF).
-
-## Notifications
-
-- Phase 1: Local notifications driven by an internal event taxonomy.
-- Phase 2 (optional): Push notifications only with a server component and privacy review.
-
-## Release and Safety Standards
-
-- Follow Semantic Versioning and Keep a Changelog.
-- Every release documents:
-  - security-relevant changes
-  - migration behavior
-  - capability changes (new supported layers/features)
+Conxius is more than a wallet; it is a sovereign operating system for the Bitcoin ecosystem. By combining hardware-grade security with an expansive protocol matrix, we provide the foundation for the next generation of Bitcoin finance.

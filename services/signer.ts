@@ -173,7 +173,8 @@ export const signBip322Message = async (
             pin,
             path,
             messageHash: "DUMMY_HASH_FOR_PUBKEY",
-            network: 'mainnet'
+            network: 'mainnet',
+          payload: undefined
         });
         pubkey = Buffer.from(res.pubkey, 'hex');
     } else {
@@ -250,7 +251,8 @@ export const signBip322Message = async (
             pin,
             path,
             messageHash: sighash.toString('hex'),
-            network: 'mainnet'
+            network: 'mainnet',
+          payload: undefined
         });
         signatureHex = res.signature;
     } else {
@@ -329,7 +331,8 @@ export const requestEnclaveSignature = async (
         path,
         messageHash: "DUMMY_HASH_FOR_PUBKEY_DERIVATION",
         network,
-      });
+          payload: JSON.stringify(request.payload)
+        });
       const pubkey = idRes.pubkey;
 
       let signature = "";
@@ -398,6 +401,7 @@ export const requestEnclaveSignature = async (
           path,
           messageHash: hash,
           network,
+          payload: JSON.stringify(request.payload)
         });
         signature = res.signature;
       }
@@ -434,7 +438,8 @@ export const requestEnclaveSignature = async (
         path,
         messageHash: hashToSign,
         network: "stacks",
-      });
+          payload: JSON.stringify(request.payload)
+        });
 
       return {
         signature: res.signature,
@@ -462,7 +467,8 @@ export const requestEnclaveSignature = async (
             pin,
             path,
             messageHash: hashToSign,
-            network: "liquid", // Passed to native if it needs specific network handling (usually just for address fmt or magic bytes)
+            network: "liquid", // Passed to native if it needs specific network handling (usually just for address fmt or magic bytes),
+          payload: JSON.stringify(request.payload)
         });
 
         return {
@@ -470,6 +476,96 @@ export const requestEnclaveSignature = async (
             pubkey: res.pubkey,
             timestamp: Date.now(),
         };
+    } else if (request.layer === "BOB") {
+      const path = "m/44'/60'/0'/0/0"; // BOB is EVM compatible
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: (request.payload?.hash || request.payload as string).replace("0x", ""),
+        network: "bob",
+          payload: JSON.stringify(request.payload)
+        });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "RGB") {
+      const path = "m/86'/0'/0'/0/0"; // RGB uses Taproot
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: request.payload?.hash || request.payload as string,
+        network: "rgb",
+          payload: JSON.stringify(request.payload)
+        });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "Ark") {
+      const path = "m/84'/0'/0'/1/0"; // Ark VTXO path
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: request.payload?.hash || request.payload as string,
+        network: "ark",
+          payload: JSON.stringify(request.payload)
+        });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "StateChain") {
+      const index = request.payload?.index || 0; const path = `m/84'/0'/0'/2/${index}`; // State Chain path
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: request.payload?.hash || request.payload as string,
+        network: "statechain",
+          payload: JSON.stringify(request.payload)
+        });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "Maven") {
+      const path = "m/84'/0'/0'/3/0"; // Maven path
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: request.payload?.hash || request.payload as string,
+        network: "maven",
+          payload: JSON.stringify(request.payload)
+        });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "BitVM") {
+      const path = "m/84'/0'/0'/4/0"; // BitVM path
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: request.payload?.hash || request.payload as string,
+        network: "bitvm",
+          payload: JSON.stringify(request.payload)
+        });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
     } else if (request.layer === "Rootstock" || request.layer === "Ethereum") {
       // RSK / Ethereum
       const path = "m/44'/60'/0'/0/0"; // Standard RSK/ETH
@@ -490,7 +586,8 @@ export const requestEnclaveSignature = async (
         path,
         messageHash: hashToSign,
         network: request.layer === "Ethereum" ? "ethereum" : "rsk",
-      });
+          payload: JSON.stringify(request.payload)
+        });
 
       return {
         signature: res.signature, // already hex (r,s,v)

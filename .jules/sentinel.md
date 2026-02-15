@@ -54,3 +54,8 @@ permalink: /sentinel
 **Vulnerability:** Multiple services used `Math.random()` for generating IDs, and components failed to zero-fill decrypted sensitive buffers if operations occurred outside specific hardening blocks.
 **Learning:** In a security-sensitive app, inconsistent use of CSPRNG creates "soft spots" where randomness could be predicted. Furthermore, memory hardening must be comprehensive; every instance where a secret (like a decrypted seed) is materialised in RAM as a `Uint8Array` must have a corresponding `.fill(0)` in a `finally` block, even if the buffer is only used for a transient check or display.
 **Prevention:** Enforce a project-wide ban on `Math.random()` for any ID generation or logic, mandating `globalThis.crypto.getRandomValues()`. Audit all calls to decryption services (`decryptSeed`) and ensure the resulting buffers are zeroed in `finally` blocks.
+
+## 2026-05-22 - [Sensitive Material in Worker Cache Keys]
+**Vulnerability:** The `crypto.worker.ts` utilized plaintext mnemonics and seeds as keys in its internal `Map` caches (`pbkdf2Cache` and `nodeCache`). While the values (buffers) were zeroed on lock, the mnemonics persisted in memory as string-based keys.
+**Learning:** Security hardening must extend beyond the values being stored to the keys themselves. Using sensitive material as a lookup key effectively creates a secondary, long-lived storage of that secret in the heap.
+**Prevention:** Always hash sensitive material (SHA-256) before using it as a cache key or lookup identifier. Ensure that any intermediate plaintext strings are garbage-collected by nullifying references immediately after the hash is generated.

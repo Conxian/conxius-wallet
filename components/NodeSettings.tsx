@@ -78,10 +78,15 @@ const NodeSettings: React.FC = () => {
       setSyncProgress(prev => prev < 100 ? +(prev + 0.01).toFixed(2) : 100);
       
       // Simulated Latency Jitter
-      setNodes(prev => prev.map(node => ({
-        ...node,
-        latency: Math.max(2, node.latency + (Math.random() > 0.5 ? 5 : -5))
-      })));
+      setNodes(prev => prev.map(node => {
+        const randomValues = new Uint32Array(1);
+        globalThis.crypto.getRandomValues(randomValues);
+        const jitter = randomValues[0] > 0x7FFFFFFF ? 5 : -5;
+        return {
+          ...node,
+          latency: Math.max(2, node.latency + jitter)
+        };
+      }));
     }, 3000);
     return () => clearInterval(interval);
   }, [selectedPath]);

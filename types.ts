@@ -1,5 +1,5 @@
 
-export type BitcoinLayer = 'Mainnet' | 'Stacks' | 'Rootstock' | 'Ethereum' | 'Lightning' | 'Liquid' | 'Runes' | 'Ordinals';
+export type BitcoinLayer = 'Mainnet' | 'Stacks' | 'Rootstock' | 'Ethereum' | 'Lightning' | 'Liquid' | 'Runes' | 'Ordinals' | 'BOB' | 'RGB' | 'Ark' | 'BitVM' | 'StateChain' | 'Maven';
 export type AppMode = 'sovereign' | 'simulation';
 export type Network = 'mainnet' | 'testnet' | 'regtest' | 'devnet';
 export type LnBackendType = "None" | "LND" | "Breez" | "Greenlight";
@@ -16,7 +16,7 @@ export interface Asset {
   balance: number;
   valueUsd: number;
   layer: BitcoinLayer;
-  type: 'Native' | 'BRC-20' | 'Rune' | 'SIP-10' | 'Wrapped';
+  type: 'Native' | 'BRC-20' | 'Rune' | 'SIP-10' | 'Wrapped' | 'RGB' | 'Ark' | 'StateChainAsset';
   icon?: string;
   linkedDid?: string;
   address?: string;

@@ -8,7 +8,7 @@ import {
   fetchBtcPrice,
   fetchStxPrice,
   fetchLiquidBalance,
-  fetchRskBalance
+  fetchRskBalance, fetchRgbAssets, fetchArkBalances, verifyBitVmProof
 } from '../services/protocol';
 import { notificationService } from '../services/notifications';
 
@@ -551,4 +551,39 @@ describe('protocol service', () => {
       expect(address).toBe('bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqth887');
     });
   });
+});
+
+describe('Enhanced Fetchers and Verifiers', () => {
+    it('fetchRgbAssets should return assets for Taproot address', async () => {
+        const assets = await fetchRgbAssets('bc1p0000000000000000000000000000000000000000000000000000000000');
+        expect(assets.length).toBeGreaterThan(0);
+        expect(assets[0].layer).toBe('RGB');
+        expect(assets[0].symbol).toBe('SBOND');
+    });
+
+    it('fetchRgbAssets should return empty for non-Taproot address', async () => {
+        const assets = await fetchRgbAssets('bc1q00000000000000000000000000000000000000');
+        expect(assets.length).toBe(0);
+    });
+
+    it('fetchArkBalances should return VTXOs for supported addresses', async () => {
+        const balances = await fetchArkBalances('bc1q00000000000000000000000000000000000000');
+        expect(balances.length).toBeGreaterThan(0);
+        expect(balances[0].layer).toBe('Ark');
+        expect(balances[0].symbol).toBe('ARK-BTC');
+    });
+
+    it('verifyBitVmProof should validate correct proof structure', async () => {
+        const validProof = '0x' + 'a'.repeat(128);
+        const result = await verifyBitVmProof(validProof);
+        expect(result).toBe(true);
+        expect(notificationService.notify).toHaveBeenCalledWith('success', expect.stringContaining('Verified'));
+    });
+
+    it('verifyBitVmProof should fail for invalid proof structure', async () => {
+        const invalidProof = 'short-proof';
+        const result = await verifyBitVmProof(invalidProof);
+        expect(result).toBe(false);
+        expect(notificationService.notify).toHaveBeenCalledWith('error', expect.stringContaining('Failed'));
+    });
 });

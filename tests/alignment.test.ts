@@ -38,9 +38,11 @@ describe('Alignment and Logic Fixes', () => {
   });
 
   it('should align Stacks signing logic in Web path', async () => {
-    const mockRequest = {
+    const mockRequest: any = {
+      type: 'transaction',
       layer: 'Stacks' as const,
-      payload: { hash: 'deadbeef'.repeat(8) }
+      payload: { hash: 'deadbeef'.repeat(8) },
+      description: 'Test Stacks Signing'
     };
 
     const result = await requestEnclaveSignature(mockRequest, new Uint8Array(64).fill(0));
@@ -57,5 +59,25 @@ describe('Alignment and Logic Fixes', () => {
         expect(metrics[0].asset).toBeDefined();
         expect(metrics[0].collateralRatio).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('B2B Gateway Alignment', () => {
+  it('should have Conxian Gateway in featured dApps', async () => {
+    // This is a unit test check for the component logic if possible,
+    // but since it's a static array in the component, we just check the file content existence
+    const fs = await import('fs');
+    const path = await import('path');
+    const content = fs.readFileSync(path.join(process.cwd(), 'components/Web3Browser.tsx'), 'utf8');
+    expect(content).toContain('Conxian Gateway');
+    expect(content).toContain('B2B Portal');
+  });
+
+  it('should have B2B institutional portal in DeFiDashboard', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const content = fs.readFileSync(path.join(process.cwd(), 'components/DeFiDashboard.tsx'), 'utf8');
+    expect(content).toContain('Institutional Liquidity');
+    expect(content).toContain('Conxian Gateway');
   });
 });

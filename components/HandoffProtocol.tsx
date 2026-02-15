@@ -37,7 +37,9 @@ const HandoffProtocol: React.FC = () => {
     // 1. Wallet Generation
     addLog("Initializing BIP-39 Seed Entropy...");
     await new Promise(r => setTimeout(r, 800));
-    const mockWallet = "tb1q" + Math.random().toString(36).substring(2, 10) + "xp9";
+    const randomArray = new Uint32Array(1);
+    globalThis.crypto.getRandomValues(randomArray);
+    const mockWallet = "tb1q" + randomArray[0].toString(36).substring(0, 8) + "xp9";
     setGeneratedWallet(mockWallet);
     addLog(`Wallet Generated: ${mockWallet}`);
     setTestProgress(20);
