@@ -880,6 +880,16 @@ public class SecureEnclavePlugin extends Plugin {
                   info.amount = org.bitcoinj.core.Coin.valueOf(totalOut).toFriendlyString();
                   info.recipient = recipients.toString().trim();
               } catch (Exception e2) {}
+          } else if ("ark".equals(networkStr)) {
+              info.action = "Ark (VTXO)";
+          } else if ("rgb".equals(networkStr)) {
+              info.action = "RGB (Asset)";
+          } else if ("statechain".equals(networkStr)) {
+              info.action = "State Chain";
+          } else if ("maven".equals(networkStr)) {
+              info.action = "Maven Protocol";
+          } else if ("bitvm".equals(networkStr)) {
+              info.action = "BitVM Proof";
           }
       } catch (Exception e) {
           Log.e("SecureEnclave", "Parsing failed", e);
