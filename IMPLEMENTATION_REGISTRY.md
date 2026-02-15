@@ -12,7 +12,7 @@ This document tracks the ground-truth implementation status of every major featu
 
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
-| **Android Enclave (StrongBox)** | ✅ PRODUCTION | Real TEE/StrongBox key generation & signing. |
+| **Android Enclave (StrongBox)** | ✅ PRODUCTION | Real TEE/StrongBox key generation, ECDSA & Schnorr signing. |
 | **Persistent Crypto Worker** | ✅ PRODUCTION | Singleton worker with session-level secret retention. |
 | **ECC Engine Fusion** | ✅ PRODUCTION | Hybrid @noble/curves + tiny-secp256k1. |
 | **Zero-Leak Memory** | ✅ PRODUCTION | Strict .fill(0) and try...finally enforcement. |
@@ -46,7 +46,7 @@ This document tracks the ground-truth implementation status of every major featu
 | :--- | :--- | :--- |
 | **Ordinals** | ✅ PRODUCTION | Hiro API integration for balance and metadata. |
 | **Runes** | ✅ PRODUCTION | Real-time balance fetch via Hiro Ordinals API. |
-| **RGB** | ✅ PRODUCTION-READY SCAFFOLDING | Taproot signer path m/86'/0'/0' ready. |
+| **RGB | 🏗️ IN PROGRESS | Taproot signer path m/86'/0'/0' ready. |
 | **BRC-20** | ✅ PRODUCTION | Integrated with Ordinals fetcher. |
 
 ## V. INTEROPERABILITY & SWAPS
