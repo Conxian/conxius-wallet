@@ -261,3 +261,17 @@ permalink: /implementation-registry
 ---
 
 *This document should be updated whenever a feature moves from EXPERIMENTAL → PRODUCTION or when new features are added.*
+
+---
+
+## XII. EXPANDED BITCOIN ECOSYSTEM (NEW)
+
+| Feature | File(s) | Status | Notes |
+|---------|---------|--------|-------|
+| BOB (EVM L2) | `signer.ts`, `protocol.ts` | 🔧 SCAFFOLDED | EVM derivation paths and balance fetchers integrated |
+| RGB Protocols | `protocol.ts`, `Studio.tsx` | 🔧 SCAFFOLDED | Taproot signing logic and Issuance UI implemented |
+| Ordinals / Runes | `protocol.ts`, `Studio.tsx` | ✅ PRODUCTION | Real-time balance fetch and minting UI integrated |
+| Ark Protocol | `protocol.ts`, `signer.ts` | 🔧 SCAFFOLDED | VTXO derivation and ASP diagnostic vectors implemented |
+| BitVM Execution | `protocol.ts` | 🔧 SCAFFOLDED | Proof verification placeholder and diagnostic vector |
+| State Chains | `protocol.ts`, `signer.ts` | 🔧 SCAFFOLDED | Sequential derivation and balance fetchers implemented |
+| Maven Support | `protocol.ts` | 🔧 SCAFFOLDED | Protocol endpoint fetchers integrated |

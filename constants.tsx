@@ -2,7 +2,7 @@
 import React from 'react';
 import { Asset, BitcoinLayer, Transaction, ReserveAsset } from './types';
 
-export const LAYERS: BitcoinLayer[] = ['Mainnet', 'Stacks', 'Rootstock', 'Ethereum', 'Lightning', 'Liquid', 'Runes', 'Ordinals'];
+export const LAYERS: BitcoinLayer[] = ['Mainnet', 'Stacks', 'Rootstock', 'Ethereum', 'Lightning', 'Liquid', 'Runes', 'Ordinals', 'BOB', 'RGB', 'Ark', 'BitVM', 'StateChain', 'Maven'];
 
 export const MOCK_ASSETS: Asset[] = [
   { id: 'btc-main', name: 'Bitcoin', symbol: 'BTC', balance: 1.42, valueUsd: 92300, layer: 'Mainnet', type: 'Native' },
@@ -12,6 +12,7 @@ export const MOCK_ASSETS: Asset[] = [
   { id: 'l-btc', name: 'Liquid BTC', symbol: 'L-BTC', balance: 0.05, valueUsd: 3250, layer: 'Liquid', type: 'Wrapped' },
   { id: 'rbtc', name: 'Smart BTC', symbol: 'RBTC', balance: 0.12, valueUsd: 7800, layer: 'Rootstock', type: 'Native' },
   { id: 'welsh-stx', name: 'Welshcorgicoin', symbol: 'WELSH', balance: 500000, valueUsd: 450, layer: 'Stacks', type: 'SIP-10' },
+  { id: 'bob-native', name: 'BOB BTC', symbol: 'BOB-BTC', balance: 0.12, valueUsd: 7800, layer: 'BOB', type: 'Native' },  { id: 'rgb-usd', name: 'Sovereign Dollar', symbol: 'USDS', balance: 1000, valueUsd: 1000, layer: 'RGB', type: 'RGB' },  { id: 'ark-vtxo', name: 'Ark VTXO', symbol: 'aBTC', balance: 0.05, valueUsd: 3250, layer: 'Ark', type: 'Ark' },
 ];
 
 export const MOCK_RESERVES: ReserveAsset[] = [
@@ -60,4 +61,5 @@ export const LAYER_COLORS: Record<BitcoinLayer, string> = {
   'Liquid': 'bg-emerald-500',
   'Runes': 'bg-pink-600',
   'Ordinals': 'bg-gray-400',
+  'BOB': 'bg-indigo-600',  'RGB': 'bg-blue-500',  'Ark': 'bg-red-400',  'BitVM': 'bg-green-600',  'StateChain': 'bg-zinc-400',  'Maven': 'bg-cyan-500',
 };

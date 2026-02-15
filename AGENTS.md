@@ -28,7 +28,7 @@ Welcome, Sovereign Agent. This document provides instructions and context for wo
 ### Conxius Wallet (The Citadel)
 - **Role**: Mobile core, TEE-backed private key management.
 - **Security**: Android Keystore AES-GCM-256, BiometricPrompt, StrongBox.
-- **Protocol Support**: BTC, STX, RBTC, Liquid, Nostr, Web5.
+- **Protocol Support**: BTC, STX, RBTC, Liquid, Nostr, Web5, BOB, RGB, Ordinals, Runes, Ark, BitVM.
 
 ### Conxian Gateway (B2B Enhancement)
 - **Role**: Institutional portal for corporate treasury, launches, and shielded payments.

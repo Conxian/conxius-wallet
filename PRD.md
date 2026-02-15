@@ -8,7 +8,7 @@ permalink: /prd
 
 ## 1. Executive Summary
 
-**Product:** Conxius Wallet, a **Multi-Chain Sovereign Interface**, an offline-first Android wallet that bridges the Bitcoin ecosystem (L1, Lightning, Stacks, Rootstock, Liquid, Nostr) with interlayer execution capabilities, including Wormhole-based Native Token Transfers (NTT).
+**Product:** Conxius Wallet, a **Multi-Chain Sovereign Interface**, an offline-first Android wallet that bridges the Bitcoin ecosystem (L1, Lightning, Stacks, Rootstock, Liquid, Nostr, BOB, RGB, Ordinals, Runes, Ark, Maven, BitVM, State Chains) with interlayer execution capabilities, including Wormhole-based Native Token Transfers (NTT).
 
 **Mission:** Deliver hardware-level security on a mobile device, enabling sovereign management of Bitcoin L1 and L2 assets.
 
@@ -112,6 +112,12 @@ To target a >90% reduction in address derivation latency, the architecture emplo
 | **Rootstock** | Web3 / Ethers.js | PRODUCTION |
 | **NTT Bridge** | Sovereign Transceiver | PRODUCTION |
 | **Web5 (TBD)** | DIDs and DWN storage | PRODUCTION |
+| **BOB (EVM L2)** | Web3 / Ethers.js | RESEARCH |
+| **RGB** | Client-side Validation (RGB-lib) | RESEARCH |
+| **Ordinals/Runes** | Hiro API / ordinals.com | PARTIAL |
+| **Ark** | Ark SDK (Native/JNI) | RESEARCH |
+| **BitVM** | ZK-STARK Verifier | RESEARCH |
+| **State Chains** | Generic Protocol Fetchers | RESEARCH |
 
 ---
 

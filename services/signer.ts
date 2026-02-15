@@ -470,6 +470,34 @@ export const requestEnclaveSignature = async (
             pubkey: res.pubkey,
             timestamp: Date.now(),
         };
+    } else if (request.layer === "BOB") {
+      const path = "m/44'/60'/0'/0/0"; // BOB is EVM compatible
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: (request.payload?.hash || request.payload as string).replace("0x", ""),
+        network: "bob",
+      });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "RGB") {
+      const path = "m/86'/0'/0'/0/0"; // RGB uses Taproot
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: request.payload?.hash || request.payload as string,
+        network: "bitcoin",
+      });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
     } else if (request.layer === "Rootstock" || request.layer === "Ethereum") {
       // RSK / Ethereum
       const path = "m/44'/60'/0'/0/0"; // Standard RSK/ETH

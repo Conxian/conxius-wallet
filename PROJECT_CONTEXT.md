@@ -6,7 +6,7 @@
 ---
 
 ## 🛡️ The Citadel (Mobile Core)
-Conxius is an Android-first, TEE-backed sovereign interface for the Bitcoin ecosystem. It handles all private key operations within the "Conclave."
+Conxius is an Android-first, TEE-backed sovereign interface for the Full Bitcoin Ecosystem (BTC, L2, Sidechains, RGB, Ark, BitVM). It handles all private key operations within the "Conclave."
 
 ## 🚀 The Gateway (B2B Expansion)
 The **Conxian Gateway** is the institutional expansion layer for Conxius. It is a standalone web app (hosted as a standalone app under Conxian Labs) that provides:

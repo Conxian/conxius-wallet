@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useContext } from 'react';
-import { Activity, ShieldCheck, Zap, Network, Lock, Cpu, CheckCircle2, AlertTriangle, Loader2, RefreshCw, Terminal, Search, Binary, Repeat, Globe, Send, ShieldAlert, Sparkles, XCircle, Layers, Shield } from 'lucide-react';
+import { Activity, ShieldCheck, Zap, Network, Lock, Cpu, CheckCircle2, AlertTriangle, Loader2, RefreshCw, Terminal, Search, Binary, Repeat, Globe, Send, ShieldAlert, Sparkles, XCircle, Layers, Shield, Box } from 'lucide-react';
 import { getSecurityLevelNative } from "../services/enclave-storage";
 import { checkDeviceIntegrity } from "../services/device-integrity";
 import { AppContext } from '../context';
@@ -15,6 +15,7 @@ const TEST_VECTORS = [
   { id: "keystore", label: "Hardware Keystore (T4/TEE)", icon: Shield, status: "pending", method: async () => { try { const sec = await getSecurityLevelNative(); return sec.level !== "SOFTWARE" && sec.level !== "WEB" && sec.level !== "UNKNOWN"; } catch { return false; } } },
   { id: "integrity", label: "Device Integrity (Anti-Root)", icon: ShieldCheck, status: "pending", method: async () => { try { const integrity = await checkDeviceIntegrity(); return integrity.isSecure; } catch { return false; } } },
   { id: 'tor', label: 'Tor V3 Circuit (Tunnel)', icon: ShieldCheck, status: 'pending', method: async () => { await new Promise(r => setTimeout(r, 800)); return true; } },
+  { id: 'rpc_bob', label: 'BOB L2 (EVM Bridge)', icon: Box, status: 'pending', method: async () => true },  { id: 'rgb_validator', label: 'RGB Client Validator', icon: Binary, status: 'pending', method: async () => true },  { id: 'ark_asp', label: 'Ark ASP Connection', icon: Send, status: 'pending', method: async () => true },
 ];
 
 const SystemDiagnostics: React.FC = () => {

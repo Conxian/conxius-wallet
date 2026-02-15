@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
-import { Asset, Transaction } from '../types';
-import { X, ArrowUpRight, ArrowDownLeft, Clock, Bot, Loader2, ExternalLink, History, ShieldCheck, Sparkles } from 'lucide-react';
-import { LAYER_COLORS, MOCK_TRANSACTIONS } from '../constants';
+import { X, Bot, Sparkles, Loader2, ArrowUpRight, ArrowDownLeft, ShieldCheck, History, ExternalLink, Clock } from 'lucide-react';
+import { Asset } from '../types';
 import { getAssetInsight } from '../services/gemini';
+import { LAYER_COLORS, MOCK_TRANSACTIONS } from '../constants';
 
 interface AssetDetailModalProps {
   asset: Asset;
@@ -75,10 +74,21 @@ const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ asset, onClose }) =
 
         <div className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar">
           {asset.layer === 'Liquid' && (
-            <div className="bg-amber-600/10 border border-amber-600/20 rounded-3xl p-6 text-[10px] text-amber-500 font-black uppercase tracking-widest">
+            <div className="bg-emerald-600/10 border border-emerald-600/20 rounded-3xl p-6 text-[10px] text-emerald-500 font-black uppercase tracking-widest">
               Liquid balances are read from public explorer APIs and do not include confidential asset support.
             </div>
           )}
+          {asset.layer === 'RGB' && (
+            <div className="bg-blue-600/10 border border-blue-600/20 rounded-3xl p-6 text-[10px] text-blue-500 font-black uppercase tracking-widest">
+              RGB assets are client-side validated. Ensure you have a backup of the consignment file to verify provenance.
+            </div>
+          )}
+          {asset.layer === 'Ark' && (
+            <div className="bg-red-600/10 border border-red-600/20 rounded-3xl p-6 text-[10px] text-red-500 font-black uppercase tracking-widest">
+              Ark payments are off-chain. ASP: mainnet.ark-protocol.org • VTXO Status: ACTIVE
+            </div>
+          )}
+
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-5">
             <div className="bg-zinc-900/40 p-6 rounded-3xl border border-zinc-800/50 hover:border-zinc-700/50 transition-colors">
