@@ -491,6 +491,62 @@ export const requestEnclaveSignature = async (
         pin,
         path,
         messageHash: request.payload?.hash || request.payload as string,
+        network: "ark",
+      });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "Ark") {
+      const path = "m/84'/0'/0'/1/0"; // Ark VTXO path
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: request.payload?.hash || request.payload as string,
+        network: "statechain",
+      });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "StateChain") {
+      const path = "m/84'/0'/0'/2/0"; // State Chain path
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: request.payload?.hash || request.payload as string,
+        network: "maven",
+      });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "Maven") {
+      const path = "m/84'/0'/0'/3/0"; // Maven path
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: request.payload?.hash || request.payload as string,
+        network: "bitvm",
+      });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
+    } else if (request.layer === "BitVM") {
+      const path = "m/84'/0'/0'/4/0"; // BitVM path
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: request.payload?.hash || request.payload as string,
         network: "bitcoin",
       });
       return {

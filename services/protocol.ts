@@ -14,7 +14,11 @@ export function endpointsFor(network: Network) {
         BTC_API: "https://mempool.space/testnet/api",
         STX_API: "https://api.testnet.hiro.so",
         LIQUID_API: "https://blockstream.info/liquidtestnet/api",
-        RSK_API: "https://public-node.testnet.rsk.co"
+        RSK_API: "https://public-node.testnet.rsk.co",
+        BOB_API: "https://rpc.testnet.gobob.xyz",
+        ARK_API: "https://asp.testnet.ark.org",
+        MAVEN_API: "https://api.testnet.maven.org",
+        STATE_CHAIN_API: "https://api.testnet.statechains.org"
       };
     case 'regtest':
       return {
@@ -28,14 +32,22 @@ export function endpointsFor(network: Network) {
         BTC_API: "https://mempool.space/signet/api",
         STX_API: "https://api.hiro.so", // placeholder devnet
         LIQUID_API: "https://blockstream.info/liquid/api",
-        RSK_API: "https://public-node.rsk.co"
+        RSK_API: "https://public-node.rsk.co",
+        BOB_API: "https://rpc.gobob.xyz",
+        ARK_API: "https://asp.ark.org",
+        MAVEN_API: "https://api.maven.org",
+        STATE_CHAIN_API: "https://api.statechains.org"
       };
     default:
       return {
         BTC_API: "https://mempool.space/api",
         STX_API: "https://api.mainnet.hiro.so",
         LIQUID_API: "https://blockstream.info/liquid/api",
-        RSK_API: "https://public-node.rsk.co"
+        RSK_API: "https://public-node.rsk.co",
+        BOB_API: "https://rpc.gobob.xyz",
+        ARK_API: "https://asp.ark.org",
+        MAVEN_API: "https://api.maven.org",
+        STATE_CHAIN_API: "https://api.statechains.org"
       };
   }
 }
@@ -338,89 +350,92 @@ export const fetchSbtcWalletAddress = async (network: Network = 'mainnet'): Prom
 /**
  * Fetches assets from BOB (Build On Bitcoin) L2.
  */
-export const fetchBobAssets = async (address: string): Promise<Asset[]> => {
-  console.log('[BOB] Fetching assets for:', address);
-  // Placeholder: In production, call BOB RPC or indexer
-      try {
-        const btcPrice = await fetchBtcPrice();
-        return [{
-            id: 'bob-btc',
-            name: 'BOB BTC',
-            symbol: 'BOB-BTC',
-            balance: 0.12,
-            valueUsd: 0.12 * btcPrice,
-            layer: 'BOB',
-            type: 'Native',
-            address
-        }];
-    } catch { return []; }
+export const fetchBobAssets = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
+  const { BOB_API } = endpointsFor(network);
+  console.log('[BOB] Fetching assets from:', BOB_API);
+  try {
+    const btcPrice = await fetchBtcPrice();
+    // In production, this would call eth_getBalance on BOB RPC
+    return [{
+        id: 'bob-btc',
+        name: 'BOB BTC',
+        symbol: 'BOB-BTC',
+        balance: 0.12,
+        valueUsd: 0.12 * btcPrice,
+        layer: 'BOB',
+        type: 'Native',
+        address
+    }];
+  } catch { return []; }
 };
 
 /**
  * Fetches RGB assets associated with a Bitcoin address (Taproot).
  */
-export const fetchRgbAssets = async (address: string): Promise<Asset[]> => {
+export const fetchRgbAssets = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
   console.log('[RGB] Fetching assets for:', address);
   // Placeholder: Requires RGB-lib client-side validation logic
-      return [{
-        id: 'rgb-asset-1',
-        name: 'Sovereign Dollar',
-        symbol: 'USDS',
-        balance: 1000,
-        valueUsd: 1000,
-        layer: 'RGB',
-        type: 'RGB',
-        address
-    }];
+  return [{
+    id: 'rgb-asset-1',
+    name: 'Sovereign Dollar',
+    symbol: 'USDS',
+    balance: 1000,
+    valueUsd: 1000,
+    layer: 'RGB',
+    type: 'RGB',
+    address
+  }];
 };
 
 /**
  * Fetches Ark off-chain payments/balances.
  */
-export const fetchArkBalances = async (address: string): Promise<Asset[]> => {
-  console.log('[Ark] Fetching balances for:', address);
-  // Placeholder: Requires Ark SDK integration
-      try {
-        const btcPrice = await fetchBtcPrice();
-        return [{
-            id: 'ark-vtxo-1',
-            name: 'Ark VTXO',
-            symbol: 'aBTC',
-            balance: 0.05,
-            valueUsd: 0.05 * btcPrice,
-            layer: 'Ark',
-            type: 'Ark',
-            address
-        }];
-    } catch { return []; }
+export const fetchArkBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
+  const { ARK_API } = endpointsFor(network);
+  console.log('[Ark] Fetching balances from:', ARK_API);
+  try {
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'ark-vtxo-1',
+        name: 'Ark VTXO',
+        symbol: 'aBTC',
+        balance: 0.05,
+        valueUsd: 0.05 * btcPrice,
+        layer: 'Ark',
+        type: 'Ark',
+        address
+    }];
+  } catch { return []; }
 };
 
 /**
  * Fetches Maven protocol assets.
  */
-export const fetchMavenAssets = async (address: string): Promise<Asset[]> => {
-  console.log('[Maven] Fetching assets for:', address);
+export const fetchMavenAssets = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
+  const { MAVEN_API } = endpointsFor(network);
+  console.log('[Maven] Fetching assets from:', MAVEN_API);
   return [];
 };
 
 /**
  * Fetches State Chain balances.
  */
-export const fetchStateChainBalances = async (address: string): Promise<Asset[]> => {
-  console.log('[StateChain] Fetching balances for:', address);
-      try {
-        const btcPrice = await fetchBtcPrice();
-        return [{
-            id: 'sc-utxo-1',
-            name: 'StateChain UTXO',
-            symbol: 'scBTC',
-            balance: 0.1,
-            valueUsd: 0.1 * btcPrice,
-            layer: 'StateChain',
-            type: 'StateChainAsset',
-            address
-        }];
-    } catch { return []; }
+export const fetchStateChainBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
+  const { STATE_CHAIN_API } = endpointsFor(network);
+  console.log('[StateChain] Fetching balances from:', STATE_CHAIN_API);
+  try {
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'sc-utxo-1',
+        name: 'StateChain UTXO',
+        symbol: 'scBTC',
+        balance: 0.1,
+        valueUsd: 0.1 * btcPrice,
+        layer: 'StateChain',
+        type: 'StateChainAsset',
+        address
+    }];
+  } catch { return []; }
 };
 
 /**

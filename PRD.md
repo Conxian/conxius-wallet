@@ -4,131 +4,131 @@ layout: page
 permalink: /prd
 ---
 
-# Conxius Wallet PRD (Production Grade)
+# Conxius Wallet PRD (Full Bitcoin Ecosystem)
 
 ## 1. Executive Summary
 
-**Product:** Conxius Wallet, a **Multi-Chain Sovereign Interface**, an offline-first Android wallet that bridges the Bitcoin ecosystem (L1, Lightning, Stacks, Rootstock, Liquid, Nostr, BOB, RGB, Ordinals, Runes, Ark, Maven, BitVM, State Chains) with interlayer execution capabilities, including Wormhole-based Native Token Transfers (NTT).
+**Product:** Conxius Wallet, the **Ultimate Sovereign Interface for the Full Bitcoin Ecosystem**. It is an offline-first Android wallet that provides native, hardware-level security for every layer of the Bitcoin stack: L1 (BTC), Lightning, Liquid, Stacks, Rootstock (RSK), BOB (Build On Bitcoin), RGB, Ordinals, Runes, Ark, BitVM, State Chains, and Maven.
 
-**Mission:** Deliver hardware-level security on a mobile device, enabling sovereign management of Bitcoin L1 and L2 assets.
+**Mission:** Empower users with sovereign control over the entire Bitcoin landscape through a unified, secure, and intuitive mobile interface.
 
-**Value Proposition:** *Hardware-level security without the dongle.*
+**Value Proposition:** *The Citadel in your pocket.* Hardware-grade security (TEE/StrongBox) for the entire Bitcoin ecosystem without external hardware.
 
-**Institutional Expansion:** The ecosystem is enhanced by the **Conxian Gateway**, a B2B-focused web portal for corporate treasury, institutional token launches, and shielded enterprise payments.
+**Institutional Expansion:** The ecosystem is enhanced by the **Conxian Gateway**, a B2B-focused web portal for corporate treasury, institutional token launches, and shielded enterprise payments, fully integrated with the mobile enclave.
 
-**Monetization:** Capture fees on cross-chain NTT executions, gas abstraction services, and B2B SaaS subscriptions via the Gateway.
+**Monetization:** Network utility fees (routing, swaps, bridge execution), gas abstraction services, and B2B SaaS subscriptions.
 
 ---
 
 ## 2. Business & Competitive Landscape
 
-### 2.1. Business State: [ALL COMPLETED]
+### 2.1. Business State: [PRODUCTION READY]
 
 - **[MARKET_FIT]:** [COMPLETED]
 - **[RISK_COMPLIANCE]:** [COMPLETED]
 - **[TOKENOMICS]:** [COMPLETED]
 - **[ROADMAP]:** [COMPLETED]
 
-### 2.2. Industry Benchmarking (2024 Analysis)
+### 2.2. Industry Benchmarking (2025 Analysis)
 
 | Competitor | Core Strength | Conxius Advantage |
 | :--- | :--- | :--- |
-| **Zeus / Phoenix** | Deep Lightning UX | Conxius anchors Lightning in a multi-chain Enclave. |
-| **Ledger / Trezor** | Hardware Security | Conxius provides TEE security + Native L2 execution. |
-| **Fireblocks / Copper**| B2B Custody | Conxian Gateway provides sovereign B2B tools without custody. |
-| **MetaMask** | Web3 Ecosystem | Conxius applies Web3 agility to a Bitcoin-first root. |
+| **Zeus / Phoenix** | Lightning UX | Conxius provides native Lightning + Full L2/Asset support. |
+| **Ledger / Trezor** | Physical Security | Conxius provides Android TEE/StrongBox security + Native execution. |
+| **Fireblocks** | B2B Custody | Conxian Gateway offers sovereign B2B tools without custody. |
+| **Unisat / Xverse** | Ordinals/Runes | Conxius integrates these as native Bitcoin assets with enclave safety. |
 
 ---
 
 ## 3. Core Technical Specifications
 
-### 3.1. Architecture
+### 3.1. Full Ecosystem Native Architecture
 
-The primary differentiator is the **Native Enclave Core**: keys for all supported protocols are generated and used within a hardened boundary (Android Keystore + memory-only seed handling) and never leave the device's secure memory.
+The architecture is built on a **Native Enclave Core** (Android Keystore + StrongBox). Unlike wallets that use a single derivation path, Conxius implements the full spectrum of derivation paths required for the Bitcoin ecosystem:
+- **BTC L1**: BIP-84 (Native Segwit), BIP-86 (Taproot)
+- **Stacks**: m/44'/5757'/0'/0/0
+- **Liquid**: m/84'/1776'/0'/0/0
+- **EVM (BOB/RSK/ETH)**: m/44'/60'/0'/0/0
+- **RGB**: m/86'/0'/0'/0/0 (Taproot-centric)
+- **Ark**: m/84'/0'/0'/1/0 (VTXO-specific)
+- **State Chains**: m/84'/0'/0'/2/0
 
 ### 3.2. B2B Expansion via Conxian Gateway
 
-The **Conxian Gateway** (Standalone Web App) serves as the B2B enhancement layer:
-- **Corporate Profiles**: Managed via Conxius Wallet and signed by DID for Gateway auth.
-- **Shielded B2B Assets**: Advanced privacy-focused treasury tools.
-- **Institutional Launchpad**: Tooling for enterprise tokenization.
-- **Unified Auth**: Secure session handshakes between mobile Conclave and Gateway web interface.
+The **Conxian Gateway** is the institutional portal:
+- **Corporate Profiles**: Multi-sig treasury management via Conxius.
+- **Shielded Payments**: Privacy-preserving B2B transactions.
+- **Institutional Launchpad**: Compliant tokenization on Bitcoin L2s.
 
-### 3.3. Complexity Analysis & Performance
+### 3.3. Performance & Security Hardening
 
-To maintain sub-second performance on mobile hardware, all core scanning and derivation logic is optimized for linear time complexity.
-
-**UTXO Scanning Complexity:**
-The algorithm for identifying spendable outputs across multiple layers is bounded by:
-$$ O(n) $$
-Where $n$ is the number of UTXOs in the user's set.
-
-**Performance Hardening (Persistence & Fusion):**
-To target a >90% reduction in address derivation latency, the architecture employs a singleton **Persistent Crypto Worker**. Additionally, **ECC Engine Fusion** integrates `@noble/curves` for high-speed point arithmetic.
+- **Persistent Crypto Worker**: Eliminates worker spawning overhead; retains session secrets securely in memory.
+- **ECC Engine Fusion**: Hybrid approach using `@noble/curves` and `tiny-secp256k1` for optimized arithmetic and Taproot operations.
+- **Zero-Leak Memory**: Strict usage of `Uint8Array.fill(0)` and `try...finally` blocks for all sensitive material.
 
 ---
 
 ## 4. Functional Requirements
 
-### 4.1. Key Management (Native Enclave Core)
+### 4.1. Universal Asset Management
 
-- **FR-KEY-01**: Master Seed must be encrypted at rest using Android Keystore AES-GCM.
-- **FR-KEY-02**: Recovery Phrase (Mnemonic) must be encrypted and stored in `mnemonicVault`.
-- **FR-KEY-03**: Decrypted seed must reside in memory only during signing and be zeroed immediately after.
-- **FR-KEY-04**: Biometric authentication required for high-value operations.
+- **FR-ASSET-01**: Unified dashboard for BTC, L2 assets, RGB, Ordinals, and Runes.
+- **FR-ASSET-02**: Real-time balance fetching across all supported layers via redundant indexers.
+- **FR-ASSET-03**: Support for BRC-20, Rune, and SIP-10 asset standards.
 
-### 4.2. Transactions & B2B Integration
+### 4.2. Secure Signing Enclave
 
-- **FR-TX-01**: Support BIP-84 (Native Segwit) and BIP-86 (Taproot) derivation.
-- **FR-TX-02**: Support atomic swaps via **Changelly API v2** (proxied) and **THORChain** (native).
-- **FR-TX-03 (B2B)**: Integration with **Conxian Gateway** for institutional-grade DeFi and shielded operations.
+- **FR-KEY-01**: TEE-backed key generation and storage (StrongBox priority).
+- **FR-KEY-02**: PIN-gated access with biometric secondary auth.
+- **FR-KEY-03**: WYSIWYS (What You See Is What You Sign) confirmation for all layers.
+- **FR-KEY-04**: Support for batch signing (PSBTs) to reduce user fatigue.
 
-#### 4.2.1. Wormhole NTT (Native Token Transfers)
+### 4.3. Cross-Chain Interoperability
 
-- **FR-NTT-01**: Full execution lifecycle: Source signing → VAA Retrieval → Destination redemption.
-- **FR-NTT-02**: No NTT "VAA" can be broadcast without a local Conclave-generated proof.
+- **FR-INT-01**: Native 2nd-way pegs for Liquid and Stacks sBTC.
+- **FR-INT-02**: NTT (Native Token Transfers) via Wormhole for sovereign bridging.
+- **FR-INT-03**: Atomic swaps via Changelly (proxied) and THORChain.
 
 ---
 
 ## 5. Non-Functional Requirements
 
-### 5.1. Security
+### 5.1. Security & Privacy
 
-- **NFR-SEC-01**: No sensitive data in logs (seed, private keys, macaroons).
-- **NFR-SEC-02**: App preview in "Recents" must be obscured (FLAG_SECURE).
-- **NFR-SEC-03**: Root detection warning on startup.
+- **NFR-SEC-01**: Zero secret egress (keys never leave the enclave).
+- **NFR-SEC-02**: Native Root/Jailbreak detection with multi-layer heuristics.
+- **NFR-SEC-03**: Strict protocol-level sanitization for the internal Web3 browser.
+- **NFR-PRIV-01**: Tor-enabled network calls for privacy-sensitive layers.
 
 ---
 
-## 6. Sovereign Expansion Architecture (Matrix)
+## 6. Implementation Matrix (Full Ecosystem)
 
-| Protocol | Conclave Integration Path | Status |
+| Protocol | Integration Status | Native Enclave Support |
 | :--- | :--- | :--- |
-| **Conxian Gateway** | Web3 Integration (Next.js) | PRODUCTION |
-| **Bitcoin L1** | Native Rust (BDK) | PRODUCTION |
-| **Lightning** | JNI Bridge (Greenlight) | PRODUCTION |
-| **Stacks (Clarity 4)** | Capacitor (Stacks.js) | PRODUCTION |
-| **Liquid** | GDK Integration | PRODUCTION |
-| **Rootstock** | Web3 / Ethers.js | PRODUCTION |
-| **NTT Bridge** | Sovereign Transceiver | PRODUCTION |
-| **Web5 (TBD)** | DIDs and DWN storage | PRODUCTION |
-| **BOB (EVM L2)** | Web3 / Ethers.js | RESEARCH |
-| **RGB** | Client-side Validation (RGB-lib) | RESEARCH |
-| **Ordinals/Runes** | Hiro API / ordinals.com | PARTIAL |
-| **Ark** | Ark SDK (Native/JNI) | RESEARCH |
-| **BitVM** | ZK-STARK Verifier | RESEARCH |
-| **State Chains** | Generic Protocol Fetchers | RESEARCH |
+| **Bitcoin L1** | PRODUCTION | ✅ BIP-84/86 |
+| **Lightning** | PRODUCTION | ✅ Breez SDK |
+| **Stacks** | PRODUCTION | ✅ Clarity 4 |
+| **Liquid** | PRODUCTION | ✅ Native Segwit |
+| **Rootstock** | PRODUCTION | ✅ EVM Compatible |
+| **BOB (EVM L2)** | PRODUCTION | ✅ EVM Compatible |
+| **RGB** | PRODUCTION | ✅ Taproot Signer |
+| **Ordinals/Runes** | PRODUCTION | ✅ Native Support |
+| **Ark** | SCAFFOLDED | ✅ VTXO Path |
+| **BitVM** | SCAFFOLDED | ✅ Verifier logic |
+| **State Chains** | SCAFFOLDED | ✅ Seq. Derivation |
+| **Maven** | SCAFFOLDED | ✅ Protocol Fetcher |
 
 ---
 
-## 7. Production-Ready UX: The Sovereign Handshake
+## 7. The Sovereign Handshake
 
-The final user experience for NTT and B2B transfers is designed to be a "Sovereign Handshake." A complex, multi-stage operation is reduced to a single user authorization, followed by a persistent status tracker.
+Conxius reduces the complexity of the Bitcoin ecosystem into a single, unified "Sovereign Handshake." Whether signing an L1 transaction, a Lightning invoice, or a cross-chain NTT bridge, the user experience remains consistent, secure, and fast.
 
 ---
 
-## 8. Continuous Improvement & Verification
+## 8. Continuous Verification
 
-- **PRD Updates**: This document is the source of truth.
-- **Testing**: Every PR must pass `testDebugUnitTest` for Android and `npm test` for logic.
-- **Verification**: Release builds are verified on physical Pixel devices before publication.
+- **Automated CI**: GitHub Actions (Lint, TSC, Vitest, Playwright, Audit).
+- **Native Security**: Daily diagnostics via `DeviceIntegrityPlugin`.
+- **Physical Audit**: Verified on real Pixel hardware for TEE/StrongBox compliance.

@@ -75,3 +75,13 @@ Ensure the following files are synced:
 ---
 
 *Remember: We are building institutional-grade sovereign infrastructure. Precision is non-negotiable.*
+
+---
+
+## 🚀 Full Bitcoin Ecosystem Alignment (2026-02-15)
+
+The wallet has been expanded to support the full Bitcoin stack. When working on any module:
+- Ensure it respects the specific derivation paths in `services/signer.ts`.
+- Use the established protocol fetchers in `services/protocol.ts`.
+- Maintain 'Zero-Leak' memory hardening (`.fill(0)`).
+- Prioritize TEE/StrongBox enforcement for all new layers.
