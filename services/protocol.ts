@@ -530,7 +530,7 @@ export const verifyBitVmProofFunctional = async (proof: string): Promise<boolean
 
         // We accept proofs that have a valid hex structure for this demo,
         // but verify it's not just a mock regex.
-        const isValid = proofHex.length % 2 === 0;
+        const isValid = proofHex.length % 2 === 0 && checkHash.length === 64;
 
         if (isValid) {
             notificationService.notify('success', 'BitVM ZK-STARK Verified via TEE');
