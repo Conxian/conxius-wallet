@@ -3,6 +3,7 @@ import { Browser } from '@capacitor/browser';
 import { Search, Globe, ShieldCheck, ExternalLink, RefreshCw, X } from 'lucide-react';
 
 const FEATURED_DAPPS = [
+  { name: 'Conxian Gateway', url: 'https://conxian-ui.onrender.com', icon: 'https://conxian-ui.onrender.com/conxian-mark-b.svg', category: 'B2B Portal' },
   { name: 'Bitrefill', url: 'https://www.bitrefill.com', icon: 'https://www.bitrefill.com/favicon.ico', category: 'Spencer' },
   { name: 'LN Markets', url: 'https://lnmarkets.com', icon: 'https://lnmarkets.com/favicon.ico', category: 'Finance' },
   { name: 'Magma', url: 'https://magma.amboss.space', icon: 'https://magma.amboss.space/favicon.ico', category: 'Liquidity' },
@@ -52,7 +53,7 @@ const Web3Browser: React.FC = () => {
       <header className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-bold mb-1 tracking-tight">Sovereign Browser</h2>
-          <p className="text-zinc-500 text-sm">Access the decentralized web without leaving the Citadel.</p>
+          <p className="text-zinc-500 text-sm">Access the decentralized web and B2B portals securely.</p>
         </div>
       </header>
 
@@ -67,7 +68,7 @@ const Web3Browser: React.FC = () => {
                 type="text"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="Search or enter URL (e.g. gamma.io)"
+                placeholder="Search or enter URL (e.g. conxian-ui.onrender.com)"
                 className="bg-transparent border-none outline-none flex-1 text-zinc-200 placeholder:text-zinc-600 font-mono text-sm h-12"
             />
             <button type="submit" className="p-3 bg-zinc-800 hover:bg-orange-600 text-zinc-400 hover:text-white rounded-xl transition-all">
@@ -110,7 +111,7 @@ const Web3Browser: React.FC = () => {
          <div>
             <h4 className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-1">Sandbox Environment</h4>
             <p className="text-[10px] text-zinc-500 leading-relaxed">
-                External sites are loaded in an isolated webview. They cannot access your private keys or enclave data directly. Always verify the URL before connecting wallet sessions.
+                External sites are loaded in an isolated webview. They cannot access your private keys or enclave data directly. B2B portals like Conxian Gateway are recommended for enterprise treasury operations.
             </p>
          </div>
       </div>

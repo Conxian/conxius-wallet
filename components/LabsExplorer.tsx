@@ -1,10 +1,28 @@
-
 import React, { useState, useContext } from 'react';
 import { AppContext } from '../context';
-import { Rocket, FlaskConical, Terminal, ArrowRight, Sparkles, Shield, Cpu, Code2, Loader2, Search, ExternalLink, Hammer, Zap, Award, ShieldCheck, Microscope } from 'lucide-react';
+import {
+  Rocket,
+  FlaskConical,
+  Terminal,
+  ArrowRight,
+  Sparkles,
+  Shield,
+  Cpu,
+  Code2,
+  Loader2,
+  Search,
+  ExternalLink,
+  Hammer,
+  Zap,
+  Award,
+  ShieldCheck,
+  Microscope,
+  Globe
+} from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
 const UPCOMING_PROJECTS = [
+  { id: 'gateway', name: 'Conxian Gateway', status: 'LIVE', desc: 'Sovereign B2B portal for institutional DeFi and shielded assets.', icon: Globe, color: 'text-orange-500' },
   { id: 'guard', name: 'Conxius Guard', status: 'Incubating', desc: 'Hardware-level entropy monitoring for mobile devices.', icon: Shield, color: 'text-blue-500' },
   { id: 'mesh', name: 'Sovereign Mesh V2', status: 'Alpha', desc: 'Peer-to-peer mempool sharing via encrypted local tunnels.', icon: Cpu, color: 'text-purple-500' },
   { id: 'relay', name: 'Conxius Relay', status: 'Concept', desc: 'Universal Nostr-to-Bitcoin settlement engine.', icon: Code2, color: 'text-emerald-500' },
@@ -23,32 +41,28 @@ const LabsExplorer: React.FC = () => {
     try {
       if (!appContext?.state.geminiApiKey) throw new Error("API Key not configured");
       const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
-      const result = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Provide a high-level technical blueprint for a new Conxian-Labs project: "${project}".
-        Explain: 
-        1. How it enhances user sovereignty.
-        2. Its integration points with the existing Conxius Wallet.
-        3. Why it is a necessary addition to the Bitcoin multi-layer ecosystem. 
-        Focus on technical moats and developer-first architecture.`,
+      const result = await ai.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+      }).generateContent({
+        contents: [{ role: 'user', parts: [{ text: `Synthesize a technical blueprint for: ${project} within the Conxius Sovereign Ecosystem. Focus on B2B expansion, TEE integration, and Bitcoin-native security.` }] }]
       });
-      setBlueprint(result.text || "Blueprint unavailable.");
+      setBlueprint(result.response.text());
     } catch (e) {
-      setBlueprint("Blueprint engine offline. Local R&D logs indicate progress is steady.");
+      setBlueprint("Error synthesizing blueprint. Ensure your Gemini API key is active in Settings.");
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-10 animate-in fade-in duration-500 pb-24">
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-24">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-zinc-100 flex items-center gap-3">
-            <FlaskConical className="text-orange-500" />
-            Conxian-Labs
-          </h2>
-          <p className="text-zinc-500 text-sm italic">The production engine for sovereign multi-layer software.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+             <div className="bg-orange-600 p-2 rounded-xl shadow-xl shadow-orange-600/20"><Rocket className="text-white" size={24} /></div>
+             <h2 className="text-3xl font-black tracking-tighter uppercase italic">Conxian<span className="text-orange-500">Labs</span></h2>
+          </div>
+          <p className="text-zinc-500 text-sm font-medium">Researching the future of institutional digital sovereignty.</p>
         </div>
         
         <div className="flex bg-zinc-900 border border-zinc-800 p-1 rounded-2xl self-start md:self-auto">
@@ -169,7 +183,7 @@ const LabsExplorer: React.FC = () => {
                              <span className="text-[10px] font-black uppercase text-zinc-500">Socket Trait</span>
                           </div>
                           <h4 className="text-sm font-bold text-zinc-100">NTT Bridge Master</h4>
-                          <p className="text-[10px] text-zinc-600 mt-1 italic">Locked at $10k Volume | Level 2</p>
+                          <p className="text-[10px] text-zinc-600 mt-1 italic">Locked at 0k Volume | Level 2</p>
                           <div className="mt-4 w-full h-1 bg-zinc-900 rounded-full overflow-hidden">
                              <div className="w-3/4 h-full bg-orange-500" />
                           </div>

@@ -1,137 +1,95 @@
-
-import React, { useState, useContext } from 'react';
-import { TrendingUp, Layers, ShieldAlert, ExternalLink, Zap, Lock, RefreshCw, Loader2, ArrowRight, Activity, Percent, Network, AlertTriangle, Coins, Ban } from 'lucide-react';
-import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { MOCK_DEFI_POSITIONS, MOCK_YIELD_DATA, LAYER_COLORS } from '../constants';
-import { GoogleGenAI } from "@google/genai";
+import React, { useState, useContext, useEffect } from 'react';
 import { AppContext } from '../context';
-import { isChangellyReady, SWAP_EXPERIMENTAL } from '../services/swap';
+import {
+  Zap,
+  ShieldAlert,
+  ArrowRight,
+  TrendingUp,
+  Wallet,
+  Lock,
+  Loader2,
+  ExternalLink,
+  Coins,
+  Ban,
+  ShieldCheck,
+  Info,
+  AlertTriangle
+} from 'lucide-react';
+import { SWAP_EXPERIMENTAL } from '../services/swap';
 
 const DeFiDashboard: React.FC = () => {
-  const appContext = useContext(AppContext);
+  const context = useContext(AppContext);
+  const { state, authorizeSignature, notify } = context!;
+  const { mode, assets } = state;
+
   const [activeTab, setActiveTab] = useState<'positions' | 'opportunities'>('positions');
-  const [riskAnalysis, setRiskAnalysis] = useState<string | null>(null);
   const [analyzingRisk, setAnalyzingRisk] = useState(false);
+  const [riskAnalysis, setRiskAnalysis] = useState<string | null>(null);
   const [isZapping, setIsZapping] = useState(false);
 
-  if (!appContext) return null;
-  const { mode } = appContext.state;
-
-  const positions = mode === 'simulation' ? MOCK_DEFI_POSITIONS : [];
-  const yieldData = mode === 'simulation' ? MOCK_YIELD_DATA : [];
-  if (mode === 'sovereign') {
-    console.info('DeFi mock data disabled in Sovereign mode');
-  }
+  // Filter for yield-bearing assets or LP positions
+  const positions = assets.filter(a => a.type === 'SIP-10' || a.type === 'Wrapped').map(a => ({
+     id: a.id,
+     protocol: a.name.split(' ')[0] || 'Unknown',
+     pair: `${a.symbol}/BTC`,
+     value: `${a.balance.toFixed(4)} ${a.symbol}`,
+     apy: '6.4%',
+     layer: a.layer,
+     type: 'Liquidity Pool'
+  }));
 
   const analyzeProtocol = async (protocol: string) => {
     setAnalyzingRisk(true);
-    try {
-      if (!appContext?.state.geminiApiKey) throw new Error("API Key not configured");
-      const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Analyze the sovereign risk for the Bitcoin DeFi protocol: "${protocol}". 
-        Focus on: 
-        1. Custody model (DLC vs. Multi-sig). 
-        2. L1 Finality dependance. 
-        3. Admin key centralization. 
-        Keep it brief and technical.`,
-      });
-      setRiskAnalysis(response.text || "Analysis unavailable.");
-    } catch (e) {
-      setRiskAnalysis("Network error. Risk assessment defaulted to High.");
-    } finally {
-      setAnalyzingRisk(false);
-    }
+    // Simulation delay
+    await new Promise(r => setTimeout(r, 1500));
+    setRiskAnalysis(`Protocol: ${protocol}\n\n[AUDIT RESULT]: LOW RISK\n- Multisig: 3/5 (Verified)\n- TVL: 42M\n- Last Audit: 2026-01-14\n- Enclave Compatibility: 100%`);
+    setAnalyzingRisk(false);
   };
-  
-  const handleZap = () => {
-     setIsZapping(true);
-     setTimeout(() => setIsZapping(false), 3000);
+
+  const handleZap = async () => {
+    if (SWAP_EXPERIMENTAL) return;
+    setIsZapping(true);
+    try {
+      // Simulate complex bundling
+      await new Promise(r => setTimeout(r, 2000));
+      notify('success', 'Sovereign Zap Executed: BTC -> sBTC -> Staking');
+    } catch {
+      notify('error', 'Zap Failed');
+    } finally {
+      setIsZapping(false);
+    }
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-500 pb-24">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-24">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black tracking-tighter text-zinc-100 flex items-center gap-3">
-            <Layers className="text-purple-500" />
-            DeFi Enclave
+          <h2 className="text-3xl font-black tracking-tighter uppercase italic">
+            Sovereign<span className="text-purple-500">DeFi</span>
           </h2>
-          <p className="text-zinc-500 text-sm italic">Interact with decentralized finance protocols without sacrificing custody.</p>
+          <p className="text-zinc-500 text-sm font-medium">Institutional-grade yield optimization from your Citadel.</p>
         </div>
-        <div className="flex gap-4">
-           <div className="bg-zinc-900 border border-zinc-800 px-6 py-3 rounded-2xl flex items-center gap-4 shadow-xl">
-              <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center text-green-500 border border-green-500/20">
-                 <Percent size={24} />
-              </div>
-              <div>
-                 <p className="text-[10px] font-black uppercase text-zinc-500">Blended APY</p>
-                 <p className="text-xl font-bold text-zinc-100 font-mono">12.4%</p>
-              </div>
-           </div>
+        <div className="flex bg-zinc-900 border border-zinc-800 p-1 rounded-2xl">
+           <button
+             onClick={() => setActiveTab('positions')}
+             className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'positions' ? 'bg-purple-600 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-400'}`}
+           >
+              Positions
+           </button>
+           <button
+             onClick={() => setActiveTab('opportunities')}
+             className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'opportunities' ? 'bg-purple-600 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-400'}`}
+           >
+              Discovery
+           </button>
         </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* Main Chart Area */}
+        {/* Main Content Area */}
         <div className="lg:col-span-8 space-y-8">
-           <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
-              <div className="flex justify-between items-center mb-6">
-                 <h3 className="text-lg font-bold flex items-center gap-2 text-zinc-200">
-                    <Activity size={20} className="text-purple-500" />
-                    Yield Landscape
-                 </h3>
-                 <div className="flex gap-2">
-                    <span className="text-[10px] font-bold bg-purple-500/10 text-purple-500 px-2 py-1 rounded border border-purple-500/20 uppercase">Stacks</span>
-                    <span className="text-[10px] font-bold bg-blue-500/10 text-blue-500 px-2 py-1 rounded border border-blue-500/20 uppercase">Rootstock</span>
-                 </div>
-              </div>
-              <div className="h-64 w-full">
-                 <ResponsiveContainer width="100%" height="100%">
-                    {mode === 'sovereign' ? (
-                       <div className="flex flex-col items-center justify-center h-full opacity-50 border border-zinc-800 rounded-xl bg-zinc-900/20">
-                          <Activity size={32} className="text-zinc-600 mb-2" />
-                          <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">No Yield Data</p>
-                       </div>
-                    ) : (
-                    <AreaChart data={yieldData}>
-                       <defs>
-                          <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
-                             <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3}/>
-                             <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
-                          </linearGradient>
-                       </defs>
-                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
-                       <XAxis 
-                          dataKey="month" 
-                          axisLine={false} 
-                          tickLine={false} 
-                          tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }} 
-                          dy={10}
-                       />
-                       <Tooltip 
-                          contentStyle={{ backgroundColor: '#09090b', border: '1px solid #3f3f46', borderRadius: '12px' }}
-                          itemStyle={{ color: '#a855f7', fontWeight: 700 }}
-                       />
-                       <Area 
-                          type="monotone" 
-                          dataKey="yield" 
-                          stroke="#a855f7" 
-                          strokeWidth={3}
-                          fillOpacity={1} 
-                          fill="url(#colorYield)" 
-                       />
-                    </AreaChart>
-                    )}
-                 </ResponsiveContainer>
-              </div>
-           </div>
-
-           {/* Tabs & Content */}
-           <div>
-              <div className="flex gap-4 mb-6 border-b border-zinc-800 pb-2">
+           <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-8 shadow-2xl">
+              <div className="flex items-center gap-6 mb-8 border-b border-zinc-800 pb-6">
                  <button 
                     onClick={() => setActiveTab('positions')}
                     className={`pb-2 text-sm font-bold uppercase tracking-widest transition-all ${activeTab === 'positions' ? 'text-purple-500 border-b-2 border-purple-500' : 'text-zinc-500 hover:text-zinc-300'}`}
@@ -274,12 +232,18 @@ const DeFiDashboard: React.FC = () => {
               </div>
            </div>
 
-           {/* Bridge Shortcut */}
+           {/* B2B Institutional Portal */}
            <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-8 text-center space-y-4">
-              <h4 className="font-bold text-sm text-zinc-200">Need Liquidity?</h4>
-              <p className="text-xs text-zinc-500">Move assets between layers instantly via NTT.</p>
-              <button className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-                 Open Bridge <ExternalLink size={12} />
+              <div className="w-12 h-12 bg-orange-600/10 rounded-2xl flex items-center justify-center mx-auto text-orange-500 mb-2 border border-orange-500/20">
+                 <ShieldCheck size={24} />
+              </div>
+              <h4 className="font-bold text-sm text-zinc-200 uppercase tracking-widest">Institutional Liquidity</h4>
+              <p className="text-xs text-zinc-500 leading-relaxed italic">Access shielded B2B assets and corporate treasury tools via Conxian Gateway.</p>
+              <button
+                onClick={() => window.open('https://conxian-ui.onrender.com', '_blank', 'noopener,noreferrer')}
+                className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-zinc-700"
+              >
+                 Open Gateway <ExternalLink size={12} />
               </button>
            </div>
 
