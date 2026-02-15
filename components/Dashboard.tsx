@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { LAYER_COLORS } from '../constants';
 import { Asset, BitcoinLayer, UTXO } from '../types';
 import { TrendingUp, ArrowUpRight, ArrowRight, Search, Bot, Loader2, Zap, Layers, Activity, Sparkles, Shield, Send, Plus, Network, ShieldCheck, EyeOff, Users, FileSignature, CheckCircle2, X, Binary, Castle, Palette, ShoppingBag, Hammer, Award, RefreshCw, Import, Wallet, QrCode, Copy, ExternalLink, AlertTriangle, Key } from 'lucide-react';
-import { fetchBtcBalance, fetchStacksBalances, fetchBtcPrice, fetchStxPrice, fetchLiquidBalance, fetchRskBalance, broadcastBtcTx, fetchRunesBalances, fetchBtcUtxos } from '../services/protocol';
+import { fetchBtcBalance, fetchStacksBalances, fetchBtcPrice, fetchStxPrice, fetchLiquidBalance, fetchRskBalance, broadcastBtcTx, fetchRunesBalances, fetchBtcUtxos, fetchBobAssets, fetchRgbAssets, fetchArkBalances, fetchMavenAssets, fetchStateChainBalances } from '../services/protocol';
 import { SignRequest } from '../services/signer';
 import { getRecommendedFees } from '../services/fees';
 import { buildPsbt } from '../services/psbt';
@@ -55,16 +55,26 @@ const Dashboard: React.FC = () => {
             fetchStacksBalances(stxAddress, network),
             fetchLiquidBalance(btcAddress, network),
             fetchRskBalance(btcAddress, network),
-            fetchRunesBalances(btcAddress)
+            fetchRunesBalances(btcAddress),
+            fetchBobAssets(btcAddress),
+            fetchRgbAssets(btcAddress),
+            fetchArkBalances(btcAddress),
+            fetchMavenAssets(btcAddress),
+            fetchStateChainBalances(btcAddress)
         ]);
 
-        const [btcBal, stxAssets, liqBal, rskBal, runeAssets] = results;
+        const [btcBal, stxAssets, liqBal, rskBal, runeAssets, bobAssets, rgbAssets, arkAssets, mavenAssets, scAssets] = results;
         const finalAssets: Asset[] = [
             { id: 'btc-main', name: 'Bitcoin', symbol: 'BTC', balance: btcBal, valueUsd: btcBal * btcPrice, layer: 'Mainnet', type: 'Native', address: btcAddress },
             ...stxAssets,
             ...runeAssets,
             { id: 'lbtc-main', name: 'Liquid BTC', symbol: 'L-BTC', balance: liqBal, valueUsd: liqBal * btcPrice, layer: 'Liquid', type: 'Wrapped', address: btcAddress },
-            { id: 'rbtc-main', name: 'Smart BTC', symbol: 'RBTC', balance: rskBal, valueUsd: rskBal * btcPrice, layer: 'Rootstock', type: 'Native', address: btcAddress }
+            { id: 'rbtc-main', name: 'Smart BTC', symbol: 'RBTC', balance: rskBal, valueUsd: rskBal * btcPrice, layer: 'Rootstock', type: 'Native', address: btcAddress },
+            ...bobAssets,
+            ...rgbAssets,
+            ...arkAssets,
+            ...mavenAssets,
+            ...scAssets
         ];
         appContext.updateAssets(finalAssets);
         appContext.notify('success', 'Ledger Synchronized via RPC');

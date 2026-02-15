@@ -637,6 +637,51 @@ server: {
 
 ---
 
+### 45. **BOB (Build On Bitcoin) Support Missing**
+**Severity:** 🟠 High (P1)
+**Issue:** No integration for BOB (EVM L2). PRD requires full Bitcoin ecosystem support.
+**Impact:** Users cannot manage BOB assets or interact with its DeFi ecosystem.
+**Recommendation:** Add BOB to `BitcoinLayer` types, configure RPC endpoints, and implement signing logic in `signer.ts` (EVM compatible).
+**Effort:** 8 hours
+
+---
+
+### 46. **Ark Protocol Support Missing**
+**Severity:** 🟠 High (P1)
+**Issue:** No integration for Ark off-chain payment protocol.
+**Impact:** Missing core L2 technology for instant, cheap payments.
+**Recommendation:** Research Ark SDK and integrate basic balance/payment support.
+**Effort:** 24 hours
+
+---
+
+### 47. **RGB Smart Contract Support Missing**
+**Severity:** 🟠 High (P1)
+**Issue:** No integration for RGB protocol on Bitcoin.
+**Impact:** Users cannot manage RGB assets or contracts.
+**Recommendation:** Integrate RGB-lib and implement client-side validation logic.
+**Effort:** 40 hours
+
+---
+
+### 48. **BitVM & ZK-Verifier Research Only**
+**Severity:** 🟡 Medium (P2)
+**Issue:** BitVM and ZK-STARK verification are in research phase only. No code implementation.
+**Impact:** PRD/Roadmap goals for Phase 2 not yet met.
+**Recommendation:** Scaffold BitVM verifier interfaces and ZK-STARK proof verification services.
+**Effort:** 80 hours
+
+---
+
+### 49. **Maven & State Chains Integration Missing**
+**Severity:** 🟡 Medium (P2)
+**Issue:** No support for Maven or generic State Chain protocols.
+**Impact:** Incomplete Bitcoin ecosystem coverage.
+**Recommendation:** Add Maven endpoints and state chain balance fetchers to `protocol.ts`.
+**Effort:** 16 hours
+
+---
+
 ## 📝 NOTES
 
 - Original 30 gaps verified through code review (2026-02-07)

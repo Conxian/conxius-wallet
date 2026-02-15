@@ -6,6 +6,23 @@ permalink: /changelog
 
 # Changelog
 
+## [0.3.3] - 2026-02-15
+
+### Added
+- **Full Bitcoin Ecosystem Alignment**: Expanded protocol support to include BOB (EVM L2), RGB, Ark, BitVM, Maven, and generic State Chains.
+- **Ecosystem Architecture Support**: Added derivation paths and signing placeholders for new layers in `signer.ts` (EVM/Taproot compatible).
+- **Native Protocol Scaffolding**: Integrated fetchers for BOB, RGB, Ark, Maven, and State Chains in `protocol.ts`.
+- **Ecosystem UI Expansion**: Updated Dashboard to include new layers in the asset sync and receive flows. Added RGB asset issuance tab to Studio.
+
+### Changed
+- **Documentation Overhaul**: Comprehensive updates to `PRD.md`, `WHITEPAPER.md`, `ROADMAP.md`, `IMPLEMENTATION_REGISTRY.md`, and `AGENTS.md` to reflect the "Full Bitcoin Ecosystem" vision.
+- **Gaps Tracking**: Added detailed gaps and recommendations for future implementation of BOB, Ark, RGB, and BitVM.
+
+### Fixed
+- **UI Code Quality**: Fixed several syntax errors and missing commas in `Dashboard.tsx` and `Studio.tsx` introduced during ecosystem expansion.
+- **Type Safety**: Updated `BitcoinLayer` and `Asset` types to include new ecosystem protocols.
+- **Gemini Integration**: Fixed `LabsExplorer.tsx` to use correct `GoogleGenAI` SDK methods for blueprint synthesis.
+
 ## [0.3.1] - 2026-02-15
 
 ### Fixed

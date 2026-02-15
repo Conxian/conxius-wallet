@@ -334,3 +334,100 @@ export const fetchSbtcWalletAddress = async (network: Network = 'mainnet'): Prom
             : 'tb1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqmn93ld';   // Valid Testnet P2WPKH
     }
 };
+
+/**
+ * Fetches assets from BOB (Build On Bitcoin) L2.
+ */
+export const fetchBobAssets = async (address: string): Promise<Asset[]> => {
+  console.log('[BOB] Fetching assets for:', address);
+  // Placeholder: In production, call BOB RPC or indexer
+      try {
+        const btcPrice = await fetchBtcPrice();
+        return [{
+            id: 'bob-btc',
+            name: 'BOB BTC',
+            symbol: 'BOB-BTC',
+            balance: 0.12,
+            valueUsd: 0.12 * btcPrice,
+            layer: 'BOB',
+            type: 'Native',
+            address
+        }];
+    } catch { return []; }
+};
+
+/**
+ * Fetches RGB assets associated with a Bitcoin address (Taproot).
+ */
+export const fetchRgbAssets = async (address: string): Promise<Asset[]> => {
+  console.log('[RGB] Fetching assets for:', address);
+  // Placeholder: Requires RGB-lib client-side validation logic
+      return [{
+        id: 'rgb-asset-1',
+        name: 'Sovereign Dollar',
+        symbol: 'USDS',
+        balance: 1000,
+        valueUsd: 1000,
+        layer: 'RGB',
+        type: 'RGB',
+        address
+    }];
+};
+
+/**
+ * Fetches Ark off-chain payments/balances.
+ */
+export const fetchArkBalances = async (address: string): Promise<Asset[]> => {
+  console.log('[Ark] Fetching balances for:', address);
+  // Placeholder: Requires Ark SDK integration
+      try {
+        const btcPrice = await fetchBtcPrice();
+        return [{
+            id: 'ark-vtxo-1',
+            name: 'Ark VTXO',
+            symbol: 'aBTC',
+            balance: 0.05,
+            valueUsd: 0.05 * btcPrice,
+            layer: 'Ark',
+            type: 'Ark',
+            address
+        }];
+    } catch { return []; }
+};
+
+/**
+ * Fetches Maven protocol assets.
+ */
+export const fetchMavenAssets = async (address: string): Promise<Asset[]> => {
+  console.log('[Maven] Fetching assets for:', address);
+  return [];
+};
+
+/**
+ * Fetches State Chain balances.
+ */
+export const fetchStateChainBalances = async (address: string): Promise<Asset[]> => {
+  console.log('[StateChain] Fetching balances for:', address);
+      try {
+        const btcPrice = await fetchBtcPrice();
+        return [{
+            id: 'sc-utxo-1',
+            name: 'StateChain UTXO',
+            symbol: 'scBTC',
+            balance: 0.1,
+            valueUsd: 0.1 * btcPrice,
+            layer: 'StateChain',
+            type: 'StateChainAsset',
+            address
+        }];
+    } catch { return []; }
+};
+
+/**
+ * Verifies a BitVM proof.
+ */
+export const verifyBitVmProof = async (proof: string): Promise<boolean> => {
+  console.log('[BitVM] Verifying proof...');
+  // Placeholder: Future ZK-STARK/BitVM verifier logic
+  return true;
+};

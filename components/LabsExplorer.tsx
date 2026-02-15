@@ -41,12 +41,11 @@ const LabsExplorer: React.FC = () => {
     try {
       if (!appContext?.state.geminiApiKey) throw new Error("API Key not configured");
       const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
-      const result = await ai.getGenerativeModel({
+      const result = await ai.models.generateContent({
         model: 'gemini-1.5-flash',
-      }).generateContent({
-        contents: [{ role: 'user', parts: [{ text: `Synthesize a technical blueprint for: ${project} within the Conxius Sovereign Ecosystem. Focus on B2B expansion, TEE integration, and Bitcoin-native security.` }] }]
+        contents: `Synthesize a technical blueprint for: ${project} within the Conxius Sovereign Ecosystem. Focus on B2B expansion, TEE integration, and Bitcoin-native security.`
       });
-      setBlueprint(result.response.text());
+      setBlueprint(result.text ?? null);
     } catch (e) {
       setBlueprint("Error synthesizing blueprint. Ensure your Gemini API key is active in Settings.");
     } finally {
