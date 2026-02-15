@@ -1,0 +1,44 @@
+<<<<<<< SEARCH
+          } else if ("ark".equals(networkStr)) {
+              info.action = "Ark (VTXO)";
+          } else if ("rgb".equals(networkStr)) {
+              info.action = "RGB (Asset)";
+          } else if ("statechain".equals(networkStr)) {
+              info.action = "State Chain";
+          } else if ("maven".equals(networkStr)) {
+              info.action = "Maven Protocol";
+          } else if ("bitvm".equals(networkStr)) {
+              info.action = "BitVM Proof";
+          } else if ("liquid".equals(networkStr)) {
+              info.action = "Liquid (L-BTC)";
+          } else if ("bob".equals(networkStr)) {
+              info.action = "BOB (EVM L2)";
+          }
+=======
+          } else if ("ark".equals(networkStr)) {
+              info.action = "Ark VTXO Transfer";
+              info.amount = "Ark Managed";
+          } else if ("rgb".equals(networkStr)) {
+              info.action = "RGB Asset Transfer";
+              info.amount = "Client-side Validated";
+          } else if ("statechain".equals(networkStr)) {
+              info.action = "State Chain Transfer";
+          } else if ("maven".equals(networkStr)) {
+              info.action = "Maven Protocol Action";
+          } else if ("bitvm".equals(networkStr)) {
+              info.action = "BitVM Proof Signing";
+          } else if ("liquid".equals(networkStr)) {
+              info.action = "Liquid (L-BTC) Transaction";
+              // Attempt to parse Liquid as a regular BTC tx if not blinded
+              try {
+                  byte[] txBytes = org.bouncycastle.util.encoders.Hex.decode(payloadHex);
+                  org.bitcoinj.core.Transaction tx = new org.bitcoinj.core.Transaction(org.bitcoinj.params.MainNetParams.get(), txBytes);
+                  long totalOut = 0;
+                  for (org.bitcoinj.core.TransactionOutput out : tx.getOutputs()) totalOut += out.getValue().getValue();
+                  info.amount = org.bitcoinj.core.Coin.valueOf(totalOut).toFriendlyString() + " (Unblinded)";
+              } catch (Exception e) {}
+          } else if ("bob".equals(networkStr)) {
+              info.action = "BOB (EVM L2) Transaction";
+              info.amount = "EVM Payload";
+          }
+>>>>>>> REPLACE

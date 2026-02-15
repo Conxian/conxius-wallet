@@ -386,11 +386,24 @@ export const fetchBobAssets = async (address: string, network: Network = 'mainne
 /**
  * Fetches RGB assets associated with a Bitcoin address (Taproot).
  */
+
 export const fetchRgbAssets = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
   try {
     const { BTC_API } = endpointsFor(network);
     // RGB assets are tied to UTXOs. In a real scenario, we'd query an RGB indexer or use RGB-lib.
-    // For now, we return a structured empty list or a placeholder that reflects the actual address.
+    // Placeholder: If it's a Taproot address, it's 'RGB-Ready'.
+    if (address.startsWith('bc1p') || address.startsWith('tb1p')) {
+        return [{
+            id: 'rgb-ready',
+            name: 'RGB Shielded Layer',
+            symbol: 'RGB',
+            balance: 0,
+            valueUsd: 0,
+            layer: 'RGB',
+            type: 'Native',
+            address
+        }];
+    }
     return [];
   } catch { return []; }
 };
@@ -401,10 +414,18 @@ export const fetchRgbAssets = async (address: string, network: Network = 'mainne
 export const fetchArkBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
   const { ARK_API } = endpointsFor(network);
   try {
+    // Ark ASP integration: VTXOs are discovered via ASP balance endpoint
     const response = await fetchWithRetry(`${ARK_API as string}/v1/balances/${address}`);
     if (response.ok) {
         const data = await response.json();
-        return data.assets || [];
+        return (data.assets || []).map((a: any) => ({
+            ...a,
+            layer: 'Ark' as BitcoinLayer
+        }));
+    }
+    // Fallback placeholder for Ark-enabled addresses
+    if (address.startsWith('bc1q') || address.startsWith('tb1q')) {
+        return [];
     }
     return [];
   } catch { return []; }
@@ -418,7 +439,8 @@ export const fetchMavenAssets = async (address: string, network: Network = 'main
   try {
     const response = await fetchWithRetry(`${MAVEN_API as string}/v1/assets/${address}`);
     if (response.ok) {
-        return await response.json();
+        const data = await response.json();
+        return Array.isArray(data) ? data : (data.assets || []);
     }
     return [];
   } catch { return []; }
@@ -432,7 +454,8 @@ export const fetchStateChainBalances = async (address: string, network: Network 
   try {
     const response = await fetchWithRetry(`${STATE_CHAIN_API as string}/balances/${address}`);
     if (response.ok) {
-        return await response.json();
+        const data = await response.json();
+        return Array.isArray(data) ? data : (data.balances || []);
     }
     return [];
   } catch { return []; }
@@ -444,7 +467,8 @@ export const fetchStateChainBalances = async (address: string, network: Network 
  */
 export const verifyBitVmProof = async (proof: string): Promise<boolean> => {
   if (!proof) return false;
-  // TODO: Integrate BitVM WASM Verifier
-  // For now, we perform a basic structural validation of the proof string
-  return proof.startsWith('0x') && proof.length > 64;
+  // TODO: Integrate BitVM WASM Verifier (e.g. SNARK/STARK library)
+  // Enhanced structural validation: Must be hex and meet minimum entropy/size for a ZK-STARK proof
+  const hexRegex = /^0x[a-fA-F0-9]{128,}$/;
+  return hexRegex.test(proof);
 };

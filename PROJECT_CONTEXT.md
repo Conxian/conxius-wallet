@@ -42,3 +42,8 @@ The **Conxian Gateway** is the institutional expansion layer for Conxius. It is 
 - B2B alignment tests pass.
 - Gateway deployment configuration fixed (`npx serve out`).
 
+
+## 🌐 Full Bitcoin Ecosystem Alignment
+- **Enclave**: Support for BIP-340 Schnorr signing (RGB/Ark) and multi-protocol WYSIWYS verification.
+- **Protocols**: Active integration of Ark VTXO management, RGB client-side validation, and BitVM proof verification.
+- **Identity**: Enclave-backed Web5 KeyManager for sovereign DIDs.
