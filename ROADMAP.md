@@ -50,8 +50,8 @@ permalink: /roadmap
 | **M1: Foundation & Security** | Q4 2024 | ✅ COMPLETED |
 | **M2: Lightning & Taproot** | Q1 2025 | ✅ COMPLETED |
 | **M3: L2 Expansion (Liquid/Stacks/BOB)** | Q2 2025 | ✅ COMPLETED |
-| **M4: Asset Studio (Ordinals/Runes/RGB)** | Q3 2025 | 🟡 PARTIAL (Ordinals/Runes live; RGB scaffolded) |
-| **M5: Ark & State Chains** | Q4 2025 | 🟡 IN PROGRESS (service scaffolding present) |
+| **M4: Asset Studio (Ordinals/Runes/RGB)** | Q3 2025 | 🟡 PARTIAL (Ordinals/Runes live; RGB structural validation) |
+| **M5: Ark & State Chains** | Q4 2025 | 🟡 IN PROGRESS (Enclave signing & VTXO logic live; ASP partial) |
 | **M6: BitVM & ZK-Proofs** | Q1 2026 | 🟡 PARTIAL (functional verifier; full WASM verifier pending) |
 
 ---
