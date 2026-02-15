@@ -4,68 +4,60 @@ layout: page
 permalink: /roadmap
 ---
 
-# Conxius Wallet Roadmap (Implementation-Grade)
+# Conxius Wallet: Full Ecosystem Roadmap
 
 ## North Star
 
-- Android-first, offline-first wallet for Bitcoin L1 and Bitcoin-adjacent layers.
-- **B2B Expansion**: Institutional portal via Conxian Gateway for enterprise treasury and shielded payments.
-- Zero secret egress by default: keys and credentials never leave the device.
+- **The Ultimate Sovereign Interface**: A single, unified app for the entire Bitcoin ecosystem (L1, L2s, Assets, Sidechains).
+- **Enclave-Grade Security**: Universal TEE/StrongBox protection for all supported protocols.
+- **B2B Leadership**: Positioning Conxius + Gateway as the institutional standard for Bitcoin-native finance.
 
-## Standards Adherence (Non-Negotiable)
+## Phase 1: Foundation (Completed)
 
-- **Bitcoin**: BIP-32/39/84/86, BIP-174 (PSBT), BIP-21, BIP-125, BIP-352 (Silent Payments).
-- **Lightning**: BOLT11, LNURL, Greenlight (Breez SDK).
-- **Interlayer**: NTT execution lifecycle (Wormhole).
-- **Enterprise**: B2B Shielded assets, institutional launch compliance.
+- **[UNIFIED_ONBOARDING]**: BIP-39 with mandatory backup verification.
+- **[SECURE_PERSISTENCE]**: Encrypted state vault via Android Keystore.
+- **[BTC_TAPROOT]**: Native L1 support with Taproot and Silent Payments.
+- **[LIGHTNING_CORE]**: Breez SDK integration for non-custodial Lightning.
+- **[B2B_GATEWAY]**: Launch of Conxian Gateway for institutional treasury.
 
-## Current State (Implemented)
+## Phase 2: Layer 2 Expansion (In Progress)
 
-- **Unified Onboarding**: Create/Import with mandatory backup verification.
-- **Secure Persistence**: Encrypted state vault (Android Keystore).
-- **BTC L1 Transaction Pipeline**: Full PSBT lifecycle, Taproot support.
-- **B2B Portal**: Conxian Gateway live for advanced DeFi and Shielded assets.
-- **Privacy Core**: Taproot and Silent Payments key management.
-- **AI Integration**: Gemini-powered Satoshi AI and Labs Explorer.
+- **[NATIVE_PEGS]**: Full integration of Liquid (L-BTC) and Stacks (sBTC) native peg-in/out.
+- **[EVM_L2_HUB]**: Unified support for BOB (Build On Bitcoin) and Rootstock (RSK).
+- **[ASSET_STUDIO]**: Native UI for Ordinals and Runes management.
+- **[NTT_BRIDGE]**: Sovereign bridging via Wormhole Native Token Transfers.
 
-## Sovereign Expansion Milestones
+## Phase 3: Advanced Protocols (Planned)
 
-### M1 — Notifications + Event Model [COMPLETED]
-### M2 — Transaction Lifecycle + Reliability [COMPLETED]
-### M3 — PSBT Correctness + Privacy [COMPLETED]
-### M4 — Institutional Gateway Expansion (B2B) [COMPLETED]
-**Scope**
-- Deployment of **Conxian Gateway** for corporate treasury.
-- Corporate Profile integration in Conxius Settings.
-- Featured B2B portal in Sovereign Browser.
+- **[RGB_NATIVE]**: Client-side validated assets with Taproot signing.
+- **[ARK_PROTOCOL]**: VTXO management for instant off-chain payments.
+- **[STATE_CHAINS]**: Support for sequential derivation and off-chain UTXO transfers.
+- **[BITVM_VERIFIER]**: On-device ZK-STARK verification for BitVM proofs.
 
-### M5 — Native L2 Pegs (sBTC & LBTC) [IN PROGRESS]
-### M6 — Multi-Wallet / Multi-Account [PLANNED]
-### M7 — Institutional Policy Vaults (Policy-Gated Enclave) [PLANNED]
-**Scope**
-- Vault-level spend policies (Daily limits, Whitelisted addresses).
-- Multi-sig quorum (M-of-N) for corporate treasuries.
+## Phase 4: Institutional Mastery (Strategic)
 
-### M8 — Privacy Scoring & Backup Health [COMPLETED]
-### M9 — The Great Unification (Phase 1) [RESEARCH]
-### M10 — BitVM & ZK-Proofs (Phase 2) [RESEARCH]
-### M11 — Asset Protocols (RGB & Runes) [PLANNED]
-**Scope**
-- Native RGB asset management with client-side validation.
-- Full Runes balance and minting UI integration.
+- **[POLICY_VAULTS]**: Institutional policy-gated enclave (spend limits, whitelisting).
+- **[MULTI_SIG_QUORUM]**: Native multi-sig orchestration for corporate treasury.
+- **[PRIVACY_V2]**: Advanced CoinJoin and privacy scoring for the full stack.
+- **[MAVEN_INTEGRATION]**: Native support for the Maven protocol ecosystem.
 
-### M12 — Off-chain Scaling (Ark & State Chains) [RESEARCH]
-**Scope**
-- Ark protocol integration for shared UTXOs.
-- Generic state chain support for high-throughput payments.
+---
 
-### M13 — EVM L2 Hub (BOB & Rootstock) [PLANNED]
-**Scope**
-- Unified interface for Bitcoin-backed EVM layers.
-- Advanced DeFi interactions on BOB and RSK.
+## 📅 Milestones
 
-## Go-to-Market Alignment
+| Milestone | Target | Status |
+| :--- | :--- | :--- |
+| **M1: Foundation & Security** | Q4 2024 | ✅ COMPLETED |
+| **M2: Lightning & Taproot** | Q1 2025 | ✅ COMPLETED |
+| **M3: L2 Expansion (Liquid/Stacks/BOB)** | Q2 2025 | 🏗️ IN PROGRESS |
+| **M4: Asset Studio (Ordinals/Runes/RGB)**| Q3 2025 | 📅 PLANNED |
+| **M5: Ark & State Chains** | Q4 2025 | 🔍 RESEARCH |
+| **M6: BitVM & ZK-Proofs** | Q1 2026 | 🔍 RESEARCH |
 
-- **B2B Campaign**: "The Corporate Citadel" — positioning Conxius + Gateway as the ultimate institutional Bitcoin suite.
-- **Nakamoto Launch**: Integration with Stacks Nakamoto for high-throughput sBTC operations.
+---
 
+## Go-to-Market Strategy
+
+- **B2B Campaign**: "The Corporate Citadel" — targeting Bitcoin-native companies for treasury management.
+- **Developer Alpha**: Opening the Enclave SDK for 3rd-party L2 developers.
+- **Sovereign Summit**: Launching Phase 3 at major Bitcoin conferences.
