@@ -421,7 +421,7 @@ public class SecureEnclavePlugin extends Plugin {
       return digest.digest();
   }
 
-  private JSObject signSchnorrInternal(org.bitcoinj.crypto.DeterministicKey child, String messageHashHex) throws Exception {
+    private JSObject signSchnorrInternal(org.bitcoinj.crypto.DeterministicKey child, String messageHashHex) throws Exception {
       byte[] privKeyBytes = child.getPrivKeyBytes();
       byte[] msgHash = org.bouncycastle.util.encoders.Hex.decode(messageHashHex);
 
@@ -436,6 +436,74 @@ public class SecureEnclavePlugin extends Plugin {
 
       P = G.multiply(d).normalize();
       byte[] px = P.getAffineXCoord().getEncoded();
+      if (px.length != 32) {
+          byte[] tmp = new byte[32];
+          System.arraycopy(px, 0, tmp, 32 - px.length, px.length);
+          px = tmp;
+      }
+
+      byte[] d32 = new byte[32];
+      byte[] dRaw = d.toByteArray();
+      int dOffset = Math.max(0, dRaw.length - 32);
+      int dLen = Math.min(32, dRaw.length);
+      System.arraycopy(dRaw, dOffset, d32, 32 - dLen, dLen);
+
+      // BIP-340 Nonce Generation with auxiliary randomness for enhanced security
+      byte[] auxRand = new byte[32];
+      new java.security.SecureRandom().nextBytes(auxRand);
+      byte[] tHash = taggedHash("BIP0340/aux", auxRand);
+      byte[] t = new byte[32];
+      for (int i = 0; i < 32; i++) t[i] = (byte) (d32[i] ^ tHash[i]);
+
+      byte[] nonceCombined = new byte[96];
+      System.arraycopy(t, 0, nonceCombined, 0, 32);
+      System.arraycopy(px, 0, nonceCombined, 32, 32);
+      System.arraycopy(msgHash, 0, nonceCombined, 64, 32);
+
+      byte[] kPrimeBytes = taggedHash("BIP0340/nonce", nonceCombined);
+      BigInteger kPrime = new BigInteger(1, kPrimeBytes).mod(n);
+      if (kPrime.equals(BigInteger.ZERO)) throw new Exception("Generated nonce is zero");
+
+      org.bouncycastle.math.ec.ECPoint R = G.multiply(kPrime).normalize();
+      BigInteger k = R.getAffineYCoord().toBigInteger().mod(BigInteger.valueOf(2)).equals(BigInteger.ZERO)
+                              ? kPrime : n.subtract(kPrime);
+
+      R = G.multiply(k).normalize();
+      byte[] rx = R.getAffineXCoord().getEncoded();
+      if (rx.length != 32) {
+          byte[] tmp = new byte[32];
+          System.arraycopy(rx, 0, tmp, 32 - rx.length, rx.length);
+          rx = tmp;
+      }
+
+      byte[] challengeCombined = new byte[96];
+      System.arraycopy(rx, 0, challengeCombined, 0, 32);
+      System.arraycopy(px, 0, challengeCombined, 32, 32);
+      System.arraycopy(msgHash, 0, challengeCombined, 64, 32);
+
+      byte[] eBytes = taggedHash("BIP0340/challenge", challengeCombined);
+      BigInteger e = new BigInteger(1, eBytes).mod(n);
+
+      BigInteger s = k.add(e.multiply(d)).mod(n);
+
+      byte[] sBytes = s.toByteArray();
+      byte[] sig = new byte[64];
+      System.arraycopy(rx, 0, sig, 0, 32);
+      int sOff = Math.max(0, sBytes.length - 32);
+      int sL = Math.min(32, sBytes.length);
+      System.arraycopy(sBytes, sOff, sig, 64 - sL, sL);
+
+      // Memory Hardening: Zero-fill sensitive arrays
+      java.util.Arrays.fill(privKeyBytes, (byte)0);
+      java.util.Arrays.fill(d32, (byte)0);
+      java.util.Arrays.fill(auxRand, (byte)0);
+      java.util.Arrays.fill(t, (byte)0);
+
+      JSObject ret = new JSObject();
+      ret.put("signature", org.bouncycastle.util.encoders.Hex.toHexString(sig));
+      ret.put("pubkey", org.bouncycastle.util.encoders.Hex.toHexString(px));
+      return ret;
+  }
 
       byte[] d32 = new byte[32];
       byte[] dRaw = d.toByteArray();
@@ -455,7 +523,7 @@ public class SecureEnclavePlugin extends Plugin {
                               ? kPrime : n.subtract(kPrime);
 
       R = G.multiply(k).normalize();
-      byte[] rx = R.getAffineXCoord().getEncoded();
+      byte[] rx = R.getAffineXCoord().getEncoded(); if (rx.length != 32) { byte[] tmp = new byte[32]; System.arraycopy(rx, 0, tmp, 32 - rx.length, rx.length); rx = tmp; }
 
       byte[] challengeCombined = new byte[96];
       System.arraycopy(rx, 0, challengeCombined, 0, 32);
