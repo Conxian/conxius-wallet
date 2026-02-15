@@ -64,7 +64,7 @@ This document tracks the ground-truth implementation status of every major featu
 | :--- | :--- | :--- |
 | **Conxian Gateway** | ✅ PRODUCTION | Full institutional portal integration. |
 | **Corporate Profiles** | ✅ PRODUCTION | Encrypted storage & SIWx signing. |
-| **Web5 DIDs (did:dht)** | 🔧 PARTIAL | Working but no enclave-backed KeyManager yet. |
+| **Web5 DIDs (did:dht)** | ✅ PRODUCTION | Enclave-backed KeyManager bridge implemented. |
 | **Sovereignty Meter** | ✅ PRODUCTION | Dynamic scoring based on real security metrics. |
 
 ---

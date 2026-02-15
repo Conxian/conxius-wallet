@@ -574,7 +574,7 @@ describe('Enhanced Fetchers and Verifiers', () => {
     });
 
     it('verifyBitVmProof should validate correct proof structure', async () => {
-        const validProof = '0x' + 'a'.repeat(128);
+        const validProof = '0x' + 'a'.repeat(256);
         const result = await verifyBitVmProof(validProof);
         expect(result).toBe(true);
         expect(notificationService.notify).toHaveBeenCalledWith('success', expect.stringContaining('Verified'));

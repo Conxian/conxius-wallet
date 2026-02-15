@@ -17,23 +17,41 @@ import {
   Award,
   ShieldCheck,
   Microscope,
-  Globe
+  Globe, Binary, CheckCircle2
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
 const UPCOMING_PROJECTS = [
-  { id: 'gateway', name: 'Conxian Gateway', status: 'LIVE', desc: 'Sovereign B2B portal for institutional DeFi and shielded assets.', icon: Globe, color: 'text-orange-500' },
+  { id: "bitvm", name: "BitVM Verifier", status: "M6 READY", desc: "On-device ZK-STARK verification for optimistic rollups on Bitcoin.", icon: Binary, color: "text-green-500" },
+  { id: 'gateway', name: 'Conxian Gateway', status: 'LIVE', desc: 'Sovereign B2B portal for institutional DeFi and shielded assets.', icon: Globe, Binary, CheckCircle2, color: 'text-orange-500' },
   { id: 'guard', name: 'Conxius Guard', status: 'Incubating', desc: 'Hardware-level entropy monitoring for mobile devices.', icon: Shield, color: 'text-blue-500' },
   { id: 'mesh', name: 'Sovereign Mesh V2', status: 'Alpha', desc: 'Peer-to-peer mempool sharing via encrypted local tunnels.', icon: Cpu, color: 'text-purple-500' },
   { id: 'relay', name: 'Conxius Relay', status: 'Concept', desc: 'Universal Nostr-to-Bitcoin settlement engine.', icon: Code2, color: 'text-emerald-500' },
 ];
 
 const LabsExplorer: React.FC = () => {
+  const [bitVmProof, setBitVmProof] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<boolean | null>(null);
+
   const appContext = useContext(AppContext);
   const [activeSubTab, setActiveSubTab] = useState<'incubator' | 'forge'>('incubator');
   const [blueprint, setBlueprint] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeProject, setActiveProject] = useState<string | null>(null);
+
+
+  const handleVerify = async () => {
+    const { verifyBitVmProof } = await import("../services/protocol");
+    setIsVerifying(true);
+    setVerificationResult(null);
+    try {
+      const res = await verifyBitVmProof(bitVmProof);
+      setVerificationResult(res);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   const getProjectBlueprint = async (project: string) => {
     setIsGenerating(true);
@@ -119,7 +137,36 @@ const LabsExplorer: React.FC = () => {
                 </div>
                 
                 <div className="flex-1 p-10 font-mono text-xs text-zinc-400 leading-relaxed overflow-y-auto custom-scrollbar">
-                   {isGenerating ? (
+
+                   {activeProject === "BitVM Verifier" ? (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                         <div className="bg-green-600/10 border border-green-500/20 p-6 rounded-2xl">
+                            <h4 className="text-green-500 font-black uppercase text-[10px] tracking-widest mb-2">STARK Proof Input</h4>
+                            <textarea
+                               value={bitVmProof}
+                               onChange={(e) => setBitVmProof(e.target.value)}
+                               placeholder="0x... (256+ character ZK-STARK proof)"
+                               className="w-full h-32 bg-black border border-zinc-800 rounded-xl p-4 text-zinc-300 font-mono text-[10px] focus:border-green-500/50 outline-none transition-all"
+                            />
+                         </div>
+                         <button
+                            onClick={handleVerify}
+                            disabled={isVerifying || !bitVmProof}
+                            className="w-full py-4 bg-green-600 hover:bg-green-500 disabled:bg-zinc-800 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-xl shadow-green-600/10"
+                         >
+                            {isVerifying ? <Loader2 className="animate-spin" size={14} /> : <ShieldCheck size={14} />}
+                            Verify STARK Proof on TEE
+                         </button>
+                         {verificationResult !== null && (
+                            <div className={`p-4 rounded-xl border flex items-center gap-3 ${verificationResult ? "bg-green-500/10 border-green-500/20 text-green-500" : "bg-red-500/10 border-red-500/20 text-red-500"}`}>
+                               {verificationResult ? <CheckCircle2 size={16} /> : <Zap size={16} />}
+                               <span className="font-black uppercase tracking-widest text-[10px]">
+                                  {verificationResult ? "Proof Verified: Computational Integrity Guaranteed" : "Verification Failed: Proof Corrupted or Invalid"}
+                                </span>
+                            </div>
+                         )}
+                      </div>
+                   ) : isGenerating ? (
                       <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
                          <Loader2 className="animate-spin text-orange-500" size={32} />
                          <p className="uppercase tracking-widest animate-pulse">Synthesizing Blueprint...</p>
