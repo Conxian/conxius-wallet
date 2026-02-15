@@ -50,8 +50,8 @@ permalink: /roadmap
 | **M1: Foundation & Security** | Q4 2024 | ✅ COMPLETED |
 | **M2: Lightning & Taproot** | Q1 2025 | ✅ COMPLETED |
 | **M3: L2 Expansion (Liquid/Stacks/BOB)** | Q2 2025 | ✅ COMPLETED |
-| **M4: Asset Studio (Ordinals/Runes/RGB)**| Q3 2025 | 🏗️ IN PROGRESS |
-| **M5: Ark & State Chains** | Q4 2025 | 🔍 RESEARCH |
+| **M4: Asset Studio (Ordinals/Runes/RGB) | Q3 2025 | ✅ COMPLETED |
+| **M5: Ark & State Chains | Q4 2025 | ✅ COMPLETED |
 | **M6: BitVM & ZK-Proofs** | Q1 2026 | 🔍 RESEARCH |
 
 ---
