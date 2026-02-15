@@ -86,5 +86,6 @@ export const validateConsignment = async (consignment: Consignment): Promise<boo
 export const syncStash = async (address: string): Promise<number> => {
     // In production, this would communicate with an RGB proxy (e.g., Storm or Bitmask backend)
     // Returns number of new assets discovered
-    return Math.floor(Math.random() * 3);
+    const randomValue = globalThis.crypto.getRandomValues(new Uint8Array(1))[0];
+    return randomValue % 3;
 };
