@@ -352,20 +352,34 @@ export const fetchSbtcWalletAddress = async (network: Network = 'mainnet'): Prom
  */
 export const fetchBobAssets = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
   const { BOB_API } = endpointsFor(network);
-  console.log('[BOB] Fetching assets from:', BOB_API);
   try {
     const btcPrice = await fetchBtcPrice();
-    // In production, this would call eth_getBalance on BOB RPC
-    return [{
-        id: 'bob-btc',
-        name: 'BOB BTC',
-        symbol: 'BOB-BTC',
-        balance: 0.12,
-        valueUsd: 0.12 * btcPrice,
-        layer: 'BOB',
-        type: 'Native',
-        address
-    }];
+    const response = await fetchWithRetry(BOB_API as string, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "eth_getBalance",
+        params: [address, "latest"],
+        id: 1
+      })
+    });
+
+    if (response.ok) {
+        const data = await response.json();
+        const balance = parseInt(data.result, 16) / 1e18;
+        return [{
+            id: 'bob-btc',
+            name: 'BOB BTC',
+            symbol: 'BOB-BTC',
+            balance: balance,
+            valueUsd: balance * btcPrice,
+            layer: 'BOB',
+            type: 'Native',
+            address
+        }];
+    }
+    return [];
   } catch { return []; }
 };
 
@@ -373,18 +387,12 @@ export const fetchBobAssets = async (address: string, network: Network = 'mainne
  * Fetches RGB assets associated with a Bitcoin address (Taproot).
  */
 export const fetchRgbAssets = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
-  console.log('[RGB] Fetching assets for:', address);
-  // Placeholder: Requires RGB-lib client-side validation logic
-  return [{
-    id: 'rgb-asset-1',
-    name: 'Sovereign Dollar',
-    symbol: 'USDS',
-    balance: 1000,
-    valueUsd: 1000,
-    layer: 'RGB',
-    type: 'RGB',
-    address
-  }];
+  try {
+    const { BTC_API } = endpointsFor(network);
+    // RGB assets are tied to UTXOs. In a real scenario, we'd query an RGB indexer or use RGB-lib.
+    // For now, we return a structured empty list or a placeholder that reflects the actual address.
+    return [];
+  } catch { return []; }
 };
 
 /**
@@ -392,19 +400,13 @@ export const fetchRgbAssets = async (address: string, network: Network = 'mainne
  */
 export const fetchArkBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
   const { ARK_API } = endpointsFor(network);
-  console.log('[Ark] Fetching balances from:', ARK_API);
   try {
-    const btcPrice = await fetchBtcPrice();
-    return [{
-        id: 'ark-vtxo-1',
-        name: 'Ark VTXO',
-        symbol: 'aBTC',
-        balance: 0.05,
-        valueUsd: 0.05 * btcPrice,
-        layer: 'Ark',
-        type: 'Ark',
-        address
-    }];
+    const response = await fetchWithRetry(`${ARK_API as string}/v1/balances/${address}`);
+    if (response.ok) {
+        const data = await response.json();
+        return data.assets || [];
+    }
+    return [];
   } catch { return []; }
 };
 
@@ -413,8 +415,13 @@ export const fetchArkBalances = async (address: string, network: Network = 'main
  */
 export const fetchMavenAssets = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
   const { MAVEN_API } = endpointsFor(network);
-  console.log('[Maven] Fetching assets from:', MAVEN_API);
-  return [];
+  try {
+    const response = await fetchWithRetry(`${MAVEN_API as string}/v1/assets/${address}`);
+    if (response.ok) {
+        return await response.json();
+    }
+    return [];
+  } catch { return []; }
 };
 
 /**
@@ -422,27 +429,22 @@ export const fetchMavenAssets = async (address: string, network: Network = 'main
  */
 export const fetchStateChainBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
   const { STATE_CHAIN_API } = endpointsFor(network);
-  console.log('[StateChain] Fetching balances from:', STATE_CHAIN_API);
   try {
-    const btcPrice = await fetchBtcPrice();
-    return [{
-        id: 'sc-utxo-1',
-        name: 'StateChain UTXO',
-        symbol: 'scBTC',
-        balance: 0.1,
-        valueUsd: 0.1 * btcPrice,
-        layer: 'StateChain',
-        type: 'StateChainAsset',
-        address
-    }];
+    const response = await fetchWithRetry(`${STATE_CHAIN_API as string}/balances/${address}`);
+    if (response.ok) {
+        return await response.json();
+    }
+    return [];
   } catch { return []; }
 };
 
 /**
  * Verifies a BitVM proof.
+ * This is a P1 feature that will integrate with a WASM-based ZK-STARK verifier.
  */
 export const verifyBitVmProof = async (proof: string): Promise<boolean> => {
-  console.log('[BitVM] Verifying proof...');
-  // Placeholder: Future ZK-STARK/BitVM verifier logic
-  return true;
+  if (!proof) return false;
+  // TODO: Integrate BitVM WASM Verifier
+  // For now, we perform a basic structural validation of the proof string
+  return proof.startsWith('0x') && proof.length > 64;
 };

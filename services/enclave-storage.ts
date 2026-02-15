@@ -24,7 +24,7 @@ type SecureEnclavePlugin = {
     vault: string;
     pin?: string; // Made optional as per instruction
     path: string;
-    messageHash: string;
+    messageHash: string; payload?: string;
     network?: string;
   }): Promise<{ signature: string; pubkey: string }>;
   unlockSession(options: {
@@ -145,7 +145,7 @@ export async function signNative(options: {
   vault: string;
   pin?: string;
   path: string;
-  messageHash: string;
+  messageHash: string; payload?: string;
   network?: string;
 }): Promise<{ signature: string; pubkey: string }> {
   if (await hasNativeSecureEnclave()) {

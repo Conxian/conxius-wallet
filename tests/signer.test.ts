@@ -10,7 +10,8 @@ import * as bip39 from 'bip39';
 // Mock Capacitor
 vi.mock('@capacitor/core', () => ({
   Capacitor: {
-    isNativePlatform: vi.fn(() => false)
+    isNativePlatform: vi.fn(() => false),
+    SecureEnclave: { isAvailable: vi.fn().mockResolvedValue({ available: true }) }
   }
 }));
 
@@ -241,4 +242,53 @@ describe('signer service', () => {
       expect(result1.taproot).not.toBe(result2.taproot);
     });
   });
+});
+
+describe('Enclave Layer Signing (Native)', () => {
+    it('should call signNative with correct network for RGB', async () => {
+      const { signNative } = await import('../services/enclave-storage');
+      const request: SignRequest = {
+        type: 'transaction',
+        layer: 'RGB',
+        payload: { hash: '00'.repeat(32) },
+        description: 'RGB Sign'
+      };
+
+      // Mock Capacitor to be native
+      const { Capacitor } = await import('@capacitor/core');
+      (Capacitor.isNativePlatform as any).mockReturnValue(true);
+      (Capacitor as any).SecureEnclave = { isAvailable: vi.fn().mockResolvedValue({ available: true }), signTransaction: vi.fn().mockResolvedValue({ signature: 'sig', pubkey: 'pub' }) };
+
+      // Mock signNative to return success
+      (signNative as any).mockResolvedValue({ signature: 'sig', pubkey: 'pub' });
+
+      await requestEnclaveSignature(request, 'vault', '1234');
+
+      expect(signNative).toHaveBeenCalledWith(expect.objectContaining({
+        network: 'rgb',
+        path: "m/86'/0'/0'/0/0",
+        payload: JSON.stringify(request.payload)
+      }));
+    });
+
+    it('should call signNative with sequential path for StateChain', async () => {
+      const { signNative } = await import('../services/enclave-storage');
+      const request: SignRequest = {
+        type: 'transaction',
+        layer: 'StateChain',
+        payload: { hash: '00'.repeat(32), index: 5 },
+        description: 'StateChain Sign'
+      };
+
+      const { Capacitor } = await import('@capacitor/core');
+      (Capacitor.isNativePlatform as any).mockReturnValue(true);
+      (signNative as any).mockResolvedValue({ signature: 'sig', pubkey: 'pub' });
+
+      await requestEnclaveSignature(request, 'vault', '1234');
+
+      expect(signNative).toHaveBeenCalledWith(expect.objectContaining({
+        network: 'statechain',
+        path: "m/84'/0'/0'/2/5"
+      }));
+    });
 });
