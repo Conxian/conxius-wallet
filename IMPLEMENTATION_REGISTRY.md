@@ -35,10 +35,10 @@ This document tracks the ground-truth implementation status of every major featu
 | **Liquid (L-BTC)** | ✅ PRODUCTION | Native m/84'/1776' support; liquidjs-lib. |
 | **Rootstock (RBTC)** | ✅ PRODUCTION | EVM derivation m/44'/60'; real RPC. |
 | **BOB (EVM L2)** | ✅ PRODUCTION | EVM path integrated; fetcher uses eth_getBalance RPC. |
-| **Ark Protocol** | ✅ PRODUCTION-READY SCAFFOLDING | VTXO path m/84'/0'/0'/1' integrated. |
-| **State Chains** | ✅ PRODUCTION-READY SCAFFOLDING | Seq. path m/84'/0'/0'/2' integrated. |
-| **Maven** | ✅ PRODUCTION-READY SCAFFOLDING | Protocol fetcher scaffolded in protocol.ts. |
-| **BitVM** | ✅ PRODUCTION | Functional ZK-STARK proof verifier implemented. |
+| **Ark Protocol** | 🟡 PARTIAL | VTXO path m/84'/0'/0'/1' integrated; Client-side PSBT/VTXO logic implemented; ASP lifecycle partial. |
+| **State Chains** | 🟡 PARTIAL | Seq. path m/84'/0'/0'/2' integrated; Enclave recursive signing implemented; Transfer API partial. |
+| **Maven** | 🟡 SCAFFOLDED | Dedicated `services/maven.ts` created; backend/indexer connectivity incomplete. |
+| **BitVM** | 🟡 PARTIAL | Functional structural verifier implemented; full WASM STARK verifier pending. |
 
 ## IV. ASSET PROTOCOLS
 
@@ -46,7 +46,7 @@ This document tracks the ground-truth implementation status of every major featu
 | :--- | :--- | :--- |
 | **Ordinals** | ✅ PRODUCTION | Hiro API integration for balance and metadata. |
 | **Runes** | ✅ PRODUCTION | Real-time balance fetch via Hiro Ordinals API. |
-| **RGB** | ✅ PRODUCTION-READY SCAFFOLDING | Taproot signer path m/86'/0'/0' ready. |
+| **RGB** | 🟡 SCAFFOLDED | Taproot signer m/86' ready; `services/rgb.ts` has consignment types; WASM validation pending. |
 | **BRC-20** | ✅ PRODUCTION | Integrated with Ordinals fetcher. |
 
 ## V. INTEROPERABILITY & SWAPS
@@ -72,6 +72,7 @@ This document tracks the ground-truth implementation status of every major featu
 ## VII. REPAIR & UPGRADE PRIORITY
 
 ### 🟠 P1 — Feature Polish
+
 1. **Ark/StateChains**: Replace simulations with real ASP/Coordinator SDKs.
 2. **RGB Validation**: Integrate rgb-lib WASM for client-side validation.
 

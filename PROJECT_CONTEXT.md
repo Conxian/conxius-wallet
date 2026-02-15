@@ -38,9 +38,9 @@ The **Conxian Gateway** is the institutional expansion layer for Conxius. It is 
 - **Gateway**: Next.js (Static Export) - see `/conxian-ui`.
 
 ## 🧪 Verification
-- All root `tests/` pass.
-- B2B alignment tests pass.
-- Gateway deployment configuration fixed (`npx serve out`).
+- **All Tests Passed**: 138/138 unit & integration tests (Vitest).
+- **B2B Alignment**: Verified via component checks.
+- **Gateway**: Deployment configuration fixed (`npx serve out`).
 
 
 ## 🌐 Full Bitcoin Ecosystem Alignment

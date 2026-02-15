@@ -112,7 +112,7 @@ The **Conxian Gateway** is the institutional portal:
 | **Liquid** | PRODUCTION | ✅ Native Segwit |
 | **Rootstock** | PRODUCTION | ✅ EVM Compatible |
 | **BOB (EVM L2)** | PRODUCTION | ✅ EVM Compatible |
-| **RGB** | PRODUCTION | ✅ Taproot Signer |
+| **RGB** | SCAFFOLDED | ✅ Taproot Signer (Validation Mocked) |
 | **Ordinals/Runes** | PRODUCTION | ✅ Native Support |
 | **Ark** | SCAFFOLDED | ✅ VTXO Path |
 | **BitVM** | SCAFFOLDED | ✅ Verifier logic |
