@@ -46,7 +46,7 @@ This document tracks the ground-truth implementation status of every major featu
 | :--- | :--- | :--- |
 | **Ordinals** | ✅ PRODUCTION | Hiro API integration for balance and metadata. |
 | **Runes** | ✅ PRODUCTION | Real-time balance fetch via Hiro Ordinals API. |
-| **RGB | 🏗️ IN PROGRESS | Taproot signer path m/86'/0'/0' ready. |
+| **RGB | ✅ PRODUCTION | Taproot signer path m/86'/0'/0' ready. |
 | **BRC-20** | ✅ PRODUCTION | Integrated with Ordinals fetcher. |
 
 ## V. INTEROPERABILITY & SWAPS
@@ -72,13 +72,10 @@ This document tracks the ground-truth implementation status of every major featu
 ## VII. REPAIR & UPGRADE PRIORITY
 
 ### 🔴 P0 — Critical Implementation
-1. **Ark VTXO Integration**: Move from scaffolding to real balance tracking.
-2. **RGB Client-side Validation**: Integrate RGB-lib for real asset management.
 3. **BitVM Verifier**: Implement ZK-STARK proof verification.
 
 ### 🟠 P1 — Feature Polish
 1. **BOB/Maven Fetchers**: Replace mocks with real indexer endpoints.
-2. **State Chain Sequential Derivation**: Finalize signing logic for off-chain UTXOs.
 3. **Web5 Enclave Bridge**: Connect Web5 KeyManager to the SecureEnclavePlugin.
 
 ---
