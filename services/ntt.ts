@@ -105,8 +105,10 @@ export class NttService {
         // 1. Prepare Payload
         const payload = NttTransceiver.createNttPayload(
             BigInt(parseFloat(amount) * 1e8),
-            new Uint8Array(32).fill(1), // Recipient placeholder
-            new Uint8Array(32).fill(2)  // Refund address placeholder
+            8,                          // Decimals
+            new Uint8Array(32).fill(1), // Source Token placeholder
+            new Uint8Array(32).fill(2), // Recipient placeholder
+            1                           // Recipient Chain placeholder
         );
 
         // 2. Request Signature from Conclave

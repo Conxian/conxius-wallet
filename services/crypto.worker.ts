@@ -8,6 +8,14 @@ const bip32 = BIP32Factory(ecc);
 const pbkdf2Cache = new Map<string, Uint8Array>();
 const nodeCache = new Map<string, BIP32Interface>();
 
+async function hashKey(prefix: string, data: string | Uint8Array): Promise<string> {
+  const encoder = new TextEncoder();
+  const bytes = typeof data === 'string' ? encoder.encode(data) : data;
+  // Use as any to bypass strict type check on Uint8Array vs BufferSource in some environments
+  const hashBuffer = await self.crypto.subtle.digest('SHA-256', bytes as any);
+  return `${prefix}:${Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('')}`;
+}
+
 /**
  * Crypto Worker
  * Handles PBKDF2 and BIP32 derivations in a separate thread.
@@ -19,7 +27,7 @@ self.onmessage = async (e: MessageEvent) => {
     switch (type) {
       case 'DERIVE_SEED': {
         const { mnemonic, passphrase } = payload;
-        const cacheKey = `seed:${mnemonic}:${passphrase}`;
+        const cacheKey = await hashKey('seed', `${mnemonic}:${passphrase}`);
 
         if (pbkdf2Cache.has(cacheKey)) {
           self.postMessage({ id, result: pbkdf2Cache.get(cacheKey) });
@@ -35,8 +43,7 @@ self.onmessage = async (e: MessageEvent) => {
 
       case 'DERIVE_PATH': {
         const { seed, path } = payload;
-        const seedHex = Buffer.from(seed).toString('hex');
-        const cacheKey = `path:${seedHex}:${path}`;
+        const cacheKey = await hashKey('path', Buffer.concat([Buffer.from(seed), Buffer.from(path)]));
 
         if (nodeCache.has(cacheKey)) {
           const node = nodeCache.get(cacheKey)!;

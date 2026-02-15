@@ -1,4 +1,4 @@
-import { secp256k1, schnorr } from '@noble/curves/secp256k1.js';
+import { secp256k1 as nobleSecp, schnorr } from '@noble/curves/secp256k1.js';
 
 /**
  * ECC Engine Fusion
@@ -10,14 +10,14 @@ import { secp256k1, schnorr } from '@noble/curves/secp256k1.js';
  * Uses BigInt-level coordinate access (hasEvenY).
  */
 export function tweakTaprootPubkey(publicKey: Uint8Array, tweak: Uint8Array): Uint8Array {
-    const P = secp256k1.ProjectivePoint.fromHex(
+    const P = (nobleSecp as any).ProjectivePoint.fromHex(
         publicKey.length === 32
             ? '02' + Buffer.from(publicKey).toString('hex')
             : Buffer.from(publicKey).toString('hex')
     );
 
     const t = BigInt('0x' + Buffer.from(tweak).toString('hex'));
-    const Q = P.add(secp256k1.ProjectivePoint.BASE.multiply(t));
+    const Q = P.add((nobleSecp as any).ProjectivePoint.BASE.multiply(t));
 
     // Taproot uses the x-only pubkey
     return Q.toRawBytes().slice(1, 33);
@@ -28,7 +28,7 @@ export function tweakTaprootPubkey(publicKey: Uint8Array, tweak: Uint8Array): Ui
  * Equivalent to secp256k1_extrakeys_pubkey_parse in libsecp256k1.
  */
 export function hasEvenY(publicKey: Uint8Array): boolean {
-    const P = secp256k1.ProjectivePoint.fromHex(
+    const P = (nobleSecp as any).ProjectivePoint.fromHex(
         publicKey.length === 32
             ? '02' + Buffer.from(publicKey).toString('hex')
             : Buffer.from(publicKey).toString('hex')
