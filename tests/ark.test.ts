@@ -18,7 +18,7 @@ describe('Ark Service', () => {
         expect(vtxo.status).toBe('lifting');
     });
 
-    it('should forfeit a VTXO', async () => {
+    it('should forfeit a VTXO successfully via API', async () => {
         const mockVtxo: VTXO = {
             txid: 'txid123',
             vout: 0,
@@ -29,6 +29,32 @@ describe('Ark Service', () => {
             expiryHeight: 100,
             status: 'available'
         };
+
+        // Mock successful API response
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve({ txid: 'txid_real_network_123' })
+        });
+
+        const txid = await forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet');
+        expect(txid).toBe('txid_real_network_123');
+    });
+
+    it('should fallback to simulation if forfeit API fails', async () => {
+        const mockVtxo: VTXO = {
+            txid: 'txid123',
+            vout: 0,
+            amount: 100000,
+            ownerPubkey: 'pubkey1',
+            serverPubkey: 'serverpubkey1',
+            roundTxid: 'round1',
+            expiryHeight: 100,
+            status: 'available'
+        };
+
+        // Mock persistent failure for all retries
+        mockFetch.mockRejectedValue(new Error('Network Error'));
+
         const txid = await forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet');
         expect(txid).toContain('txid_forfeit_simulation');
     });
