@@ -96,6 +96,15 @@ This document describes the security boundary, threat model, cryptographic archi
 - LNURL must not treat arbitrary HTTP(S) as safe by default; enforce strict parsing and user confirmation.
 - Provide transport abstraction for Tor/proxying if “Tor routed” is a product promise.
 
+## The Bitcoin Ecosystem Hub
+
+Conxius is designed to be the central hub for the entire Bitcoin ecosystem. Beyond L1 and Lightning, it provides native support for:
+
+- **L2 & Sidechains**: Stacks (sBTC), Liquid (L-BTC), Rootstock (RBTC), and BOB (Build On Bitcoin).
+- **Asset Protocols**: Ordinals, Runes, and RGB for client-side validated smart contracts.
+- **Off-chain & State Chains**: Ark protocol for instant payments and generic state chain support.
+- **Advanced Computation**: BitVM integration for trustless computation and ZK-proof verification.
+
 ## Sovereign Interoperability (sBTC & Liquid Native Pegs)
 
 Conxius rejects "Wrapped Bitcoin" (WBTC) on centralized bridges in favor of native 1:1 sidechain pegs.

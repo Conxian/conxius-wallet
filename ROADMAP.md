@@ -49,6 +49,20 @@ permalink: /roadmap
 ### M8 — Privacy Scoring & Backup Health [COMPLETED]
 ### M9 — The Great Unification (Phase 1) [RESEARCH]
 ### M10 — BitVM & ZK-Proofs (Phase 2) [RESEARCH]
+### M11 — Asset Protocols (RGB & Runes) [PLANNED]
+**Scope**
+- Native RGB asset management with client-side validation.
+- Full Runes balance and minting UI integration.
+
+### M12 — Off-chain Scaling (Ark & State Chains) [RESEARCH]
+**Scope**
+- Ark protocol integration for shared UTXOs.
+- Generic state chain support for high-throughput payments.
+
+### M13 — EVM L2 Hub (BOB & Rootstock) [PLANNED]
+**Scope**
+- Unified interface for Bitcoin-backed EVM layers.
+- Advanced DeFi interactions on BOB and RSK.
 
 ## Go-to-Market Alignment
 
