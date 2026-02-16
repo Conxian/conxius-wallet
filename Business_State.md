@@ -4,36 +4,38 @@ layout: page
 permalink: /business
 ---
 
-**Last Updated:** 2026-02-11
+**Last Updated:** 2026-02-16
 
-## Market Fit
+## [MARKET_FIT]
+**Status:** [COMPLETED]
 
-**Status:** [DEFINED] — See `docs/COMPETITIVE_ANALYSIS.md` and `docs/PRODUCT_STRATEGY.md`
+- **BitcoinLayers Compliance Audit:** [COMPLETED] Reviewed Stacks, Rootstock, Liquid, BOB, RGB, Ark, StateChain, BitVM, and Maven against BitcoinLayers.org. Risk warnings generated in `RISK_REGISTRY.md`.
+- **Competitor Analysis (Conclave Gap):** [COMPLETED] Refined value prop in `docs/PRODUCT_STRATEGY.md` comparing vs Ledger/Metamask/Xverse.
+- **Sovereign User Persona:** [COMPLETED] Updated `docs/PRODUCT_STRATEGY.md` with "The Digital Citadelist" persona.
 
-- **Target Persona:** Security-conscious Bitcoin enthusiasts and power users seeking multi-layer sovereignty.
-- **Conclave Gap:** Hardware-level security (TEE) without a physical dongle — unique position between hardware wallets (Ledger/Trezor) and software wallets (MetaMask/Xverse).
-- **Differentiators:** Multi-chain Bitcoin L1/L2 unification, gas abstraction, privacy scoring, AI-powered UTXO management.
-- **Competitive Edge:** Zero-markup bridge integration (Solver Rebates) vs 2-5% spreads on competitors; native Lightning via Breez SDK.
+## [RISK_COMPLIANCE]
+**Status:** [COMPLETED]
 
-## Risk & Compliance
+- **Risk Registry Update:** [COMPLETED] Generated detailed warnings for BOB, Ark, RGB, StateChain, BitVM, and Maven in `RISK_REGISTRY.md`.
+- **Regulatory Alignment:** [COMPLETED] Verified partner-delegated flows in `PARTNERS_AND_COMPLIANCE.md`.
 
-**Status:** [DOCUMENTED] — See `RISK_REGISTRY.md` and `PARTNERS_AND_COMPLIANCE.md`
+## [TOKENOMICS]
+**Status:** [COMPLETED]
 
-- **Regulatory Classification:** Software provider (non-custodial), not a financial intermediary.
-- **Key Mitigations:** No fiat handling, no shadow ledgers, partner-delegated regulated flows (Transak, VALR, Changelly).
-- **Open Risks:** SEC broker-dealer classification if swap UI implies agency; AML compliance for jurisdictions requiring VASP registration.
+- **NTT Bridge Economics:** [COMPLETED] Defined Gas Abstraction (sBTC-as-Gas) and 0.1% convenience fee in `MONETIZATION.md` and `docs/SOVEREIGN_BRIDGE_STRATEGY.md`.
+- **Monetization Model:** [COMPLETED] Updated `MONETIZATION.md` with B2B SDK licensing tiers and NTT fee structures.
+- **B2B SDK Strategy:** [COMPLETED] Licensing model and value prop defined in `MONETIZATION.md`.
 
-## Monetization
+## [ROADMAP]
+**Status:** [COMPLETED]
 
-**Status:** [DEFINED] — See `MONETIZATION.md`
+- **Milestone Expansion:** [COMPLETED] Expanded M1-M11+ in `ROADMAP.md` to remove technical and business ambiguity.
+- **Marketing Alignment:** [COMPLETED] Mapped tech features to strategic campaigns (e.g., "Unwrap Your Bitcoin") in the Level 0-3 Operational Roadmap.
+- **Grant Strategy:** [COMPLETED] Tailored Stacks/Wormhole grant application templates in `docs/GRANT_APPLICATION_TEMPLATE.md`.
 
-- **Revenue Streams:** Affiliate commissions (partners), premium subscriptions (AI features), Network Utility Fees (LSP routing, Acceleration), Bridge Solver Rebates, SDK licensing.
-- **Prohibited Models:** Direct fiat custody, Money Transmission Fees (adding markup to transfers), data monetization without consent.
+## [DOCUMENTATION]
+**Status:** [COMPLETED]
 
-## Roadmap
+- **5-Second Value Prop:** [COMPLETED] Refactored `README.md` for immediate strategic clarity.
+- **Business Readability:** [COMPLETED] Reviewed and synchronized all `docs/` for strategic alignment with the Technical PRD.
 
-**Status:** [ACTIVE] — See `ROADMAP.md` and `IMPLEMENTATION_REGISTRY.md`
-
-- **Completed Milestones:** M1 (Notifications), M2 (Transaction Lifecycle), M3 (PSBT Correctness), M8 (Privacy Scoring).
-- **In Progress:** M5 (NTT Execution — experimental), M9 (Ordinals/Runes — UI drafted).
-- **Planned:** M4 (Multi-Wallet), M6 (Multi-Sig), M7 (Privacy v2), M10 (ZK Verifier), M11 (BitVM).

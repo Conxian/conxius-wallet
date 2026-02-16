@@ -6,28 +6,34 @@ permalink: /docs/product-strategy
 
 # docs/PRODUCT_STRATEGY.md
 
-## 1. Competitive Landscape
+## 1. The Conclave Gap (Value Proposition)
 
-This section analyzes the competitive position of the Conxius Wallet against key players in the market.
+The market currently suffers from a "Security vs. Utility" trade-off.
 
-*   **Metamask/Phantom:** These wallets are the dominant players in the EVM and Solana ecosystems, respectively.
-    *   **Strengths:** Large user base, extensive dApp integrations.
-    *   **Weaknesses:** Not Bitcoin-native, rely on browser extensions, and do not offer the same level of security as a hardware wallet.
-    *   **Conxius's Edge:** Conxius is a "Bitcoin-First" wallet that provides hardware-level security through its on-device TEE (Conclave). This offers a significant security advantage over browser-based wallets.
+- **Hardware Wallets (Ledger/Trezor/Passport):** Offer high security but suffer from "The Dongle Friction." They are difficult to use on the go and often have poor native support for the rapidly evolving Bitcoin L2 landscape.
+- **Mainstream Software Wallets (MetaMask/Phantom/Xverse):** Offer high utility and dApp access but are fundamentally "Hot Wallets." Keys are vulnerable to OS-level exploits and memory scraping.
+- **The Gap:** There is no solution that offers **Hardware-Grade Security** (TEE isolation) with **Seamless Mobile UX** and **Native Multi-Layer Bitcoin Support**.
 
-*   **Xverse:** A leading wallet in the Stacks ecosystem.
-    *   **Strengths:** Strong focus on the Stacks ecosystem, good user experience.
-    *   **Weaknesses:** Limited to the Stacks ecosystem, does not offer the same multi-chain capabilities as Conxius.
-    *   **Conxius's Edge:** Conxius is a multi-chain wallet that supports a wider range of Bitcoin layers, including Rootstock and Liquid. This makes it a more versatile option for users who want to explore the entire Bitcoin ecosystem.
+**Conxius (The Conclave)** fills this gap by leveraging Android's **StrongBox** and **TEE** to ensure keys never leave the hardware, while providing a unified interface for L1, Lightning, Stacks, Liquid, BOB, RGB, and more.
 
-## 2. The "Conclave Gap" - Our Value Proposition
+## 2. Sovereign User Persona: "The Digital Citadelist"
 
-The "Conclave Gap" is the space in the market for a wallet that offers the security of a hardware wallet with the convenience of a software wallet. Conxius fills this gap with its on-device TEE (Conclave), which provides "Hardware-level security without the dongle."
+**The Digital Citadelist** is our primary target. They are not just "crypto users"; they are sovereign individuals who prioritize control and privacy.
 
-## 3. Sovereign User Persona
+### Profile Attributes:
+- **Security-First:** They understand the risk of centralized exchanges and hot wallets. They likely own a hardware wallet but find it cumbersome for daily use.
+- **Multi-Layer Active:** They use Bitcoin for savings (L1), daily payments (Lightning), and yield/DeFi (Stacks/Liquid/BOB).
+- **Privacy-Conscious:** They are wary of IP tracking and address clustering. They value Tor integration and Silent Payments.
+- **Asset Diversified:** They hold not just BTC, but also Ordinals, Runes, and experimental RGB assets.
 
-The "Sovereign User Persona" is the target user for the Conxius Wallet. This user is:
+### Goals:
+- Consolidate their entire "Citadel" into one secure mobile interface.
+- Move assets between layers without trusting centralized bridges.
+- Maintain a high "Sovereignty Score" through self-custody and privacy-preserving tools.
 
-*   **Security-conscious:** They understand the importance of self-custody and are looking for a wallet that offers the highest level of security.
-*   **A Bitcoin enthusiast:** They are interested in exploring the entire Bitcoin ecosystem, not just a single L2 or sidechain.
-*   **A power user:** They are comfortable with advanced features like multi-sig and are looking for a wallet that can grow with them.
+## 3. Competitive Dominance Strategy
+
+1. **Unwrap Your Bitcoin:** Position Conxius as the primary gateway to "unlock" the value of Bitcoin on L2s via the Wormhole NTT Bridge.
+2. **Zero-Trust UX:** Every action is verified on-device. We don't just "show" a balance; we verify proofs (BitVM/ZK).
+3. **B2B Bridgehead:** Use the Conclave SDK to power corporate treasury tools, creating an institutional "standard" for Bitcoin signing.
+
