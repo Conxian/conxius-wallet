@@ -1,0 +1,38 @@
+{
+	"folders": [
+		{
+			"name": "Conxius Wallet (Web/Core)",
+			"path": "."
+		},
+		{
+			"name": "Conxius Android (Native)",
+			"path": "android"
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "automatic",
+		"java.import.maven.enabled": false,
+		"java.import.gradle.enabled": true,
+		"java.import.gradle.wrapper.enabled": true,
+		"java.home": null, 
+		"java.jdt.ls.java.home": null,
+		"files.exclude": {
+			"**/.classpath": true,
+			"**/.project": true,
+			"**/.settings": true,
+			"**/.factorypath": true,
+			"node_modules": true,
+			"dist": true
+		},
+		"git.ignoreLimitWarning": true
+	},
+	"extensions": {
+		"recommendations": [
+			"vscjava.vscode-java-pack",
+			"vscjava.vscode-gradle",
+			"dbaeumer.vscode-eslint",
+			"bradlc.vscode-tailwindcss",
+			"esbenp.prettier-vscode"
+		]
+	}
+}
