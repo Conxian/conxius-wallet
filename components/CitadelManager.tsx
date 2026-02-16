@@ -185,7 +185,7 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                         <div>
                            <p className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] mb-4">Batched Stacking Protocol (PoX-4)</p>
                            <h3 className="text-5xl font-bold text-zinc-100 font-mono tracking-tighter mb-2">
-                              {MOCK_CITADEL.pool.totalStacked.toLocaleString()} <span className="text-lg text-zinc-500">STX Pooled</span>
+                              {activeCitadel.pool.totalStacked.toLocaleString()} <span className="text-lg text-zinc-500">STX Pooled</span>
                            </h3>
                         </div>
                         <button className="w-full md:w-64 px-6 py-4 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 active:scale-[0.98]">
@@ -249,7 +249,14 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                                  </div>
                                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">Bounty Protocol Audit</h3>
                               </div>
-                              <button onClick={() => setSelectedBounty(null)} className="p-2 text-zinc-600 hover:text-white transition-colors"><X size={24} /></button>
+                              <button 
+                                onClick={() => setSelectedBounty(null)} 
+                                className="p-2 text-zinc-600 hover:text-white transition-colors"
+                                aria-label="Close"
+                                title="Close"
+                              >
+                                <X size={24} />
+                              </button>
                            </div>
 
                            <div className="bg-zinc-950 border border-zinc-900 rounded-[2rem] p-8 min-h-[300px] relative">
@@ -270,7 +277,11 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                                  <button onClick={handleClaim} className="flex-1 py-4 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 active:scale-[0.98]">
                                     Initialize Work Channel
                                  </button>
-                                 <button className="px-6 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-800">
+                                 <button 
+                                    className="px-6 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-800"
+                                    aria-label="Comment"
+                                    title="Comment"
+                                 >
                                     <MessageSquare size={16} />
                                  </button>
                               </div>
@@ -300,6 +311,8 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                         onClick={syncTreasury}
                         disabled={isSyncing}
                         className="p-2 hover:bg-white/10 rounded-full transition-all disabled:opacity-50"
+                        aria-label="Refresh Treasury"
+                        title="Refresh Treasury"
                     >
                         <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
                     </button>
