@@ -35,6 +35,15 @@ A comprehensive repository maintenance protocol was executed to align with GitHu
   - All **145+ tests** passed (Vitest).
   - Dependency audit and `pnpm` lockfile synchronization.
 
+### 📱 Android Build & Device Verification (2026-02-18)
+
+- **Build Environment**: Fixed `JAVA_HOME` compatibility (Downgraded Capacitor plugins to Java 17).
+- **Native Layer**: 
+  - Reverted `MainActivity` to Java to resolve `ClassNotFoundException`.
+  - Configured `build.gradle` for correct dependency resolution (Biometrics, Capacitor).
+- **Device Status**: Verified installation and startup on **Samsung Galaxy A10 (SM-A105F)**.
+- **Logs**: Confirmed `DeviceIntegrity` and `SecureEnclave` plugin registration without runtime crashes.
+
 ---
 
 ## 🧪 Technical State

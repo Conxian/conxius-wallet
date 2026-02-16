@@ -6,11 +6,11 @@ This document tracks the ground-truth implementation status of every major featu
 
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
-| **Android Enclave (StrongBox)** | ✅ PRODUCTION | Real TEE/StrongBox key generation, ECDSA & Schnorr signing. Fully implemented SecureEnclavePlugin. |
+| **Android Enclave (StrongBox)** | ✅ PRODUCTION | Real TEE/StrongBox key generation, ECDSA & Schnorr signing. Fully implemented SecureEnclavePlugin. **Verified on Samsung A10.** |
 | **Persistent Crypto Worker** | ✅ PRODUCTION | Singleton worker with session-level secret retention. |
 | **ECC Engine Fusion** | ✅ PRODUCTION | Hybrid @noble/curves + tiny-secp256k1. |
 | **Zero-Leak Memory** | ✅ PRODUCTION | Strict .fill(0) and try...finally enforcement. |
-| **Device Integrity Plugin** | ✅ PRODUCTION | Multi-layer heuristics for root/emulator detection. |
+| **Device Integrity Plugin** | ✅ PRODUCTION | Multi-layer heuristics for root/emulator detection. **Verified on Samsung A10.** |
 
 ## II. BITCOIN L1 (BTC)
 
