@@ -11,6 +11,17 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-02-16
+
+### Added
+- **Full Ecosystem Mesh Status**: Enhanced Dashboard topology grid with a 'Full Ecosystem (Mesh)' module to visually monitor Bitcoin L2 connectivity (Ark, RGB, Stacks, Liquid, Maven, RSK).
+- **Maven Sequential Derivation**: Updated Maven protocol to support sequential indices (m/84'/0'/0'/3/) for institutional key rotation.
+- **Enhanced Test Suite**: Expanded unit tests to include Maven sequential path verification and verified 100% pass rate on 145 tests.
+
+### Improved
+- **Protocol Audit & Hardening**: Performed a comprehensive root-to-leaf audit of all protocol services and UI components.
+- **Security Persistence**: Verified 'Zero-Leak' memory hardening across all newly refined protocol paths.
+
 ## [1.3.0] - 2026-02-16
 
 ### Added

@@ -31,6 +31,7 @@ This document identifies technical and operational gaps in the Conxius ecosystem
 **Recommendation:** Further refine with a full Rust-to-WASM based STARK verifier in Phase 4.
 
 ### 4. **Maven - Indexer Connectivity (P1)**
+**Update**: Maven protocol updated with sequential derivation paths for institutional-grade key rotation.
 
 **Status:** ✅ PRODUCTION
 **Gap:** Maven fetchers and transfer logic are now connected to API endpoints with full Enclave signing support.
@@ -59,6 +60,7 @@ This document identifies technical and operational gaps in the Conxius ecosystem
 **Recommendation:** Perform a formal audit of the BouncyCastle-based Schnorr implementation.
 
 ### 8. **WYSIWYS for Advanced Layers (P1)**
+**Update**: Dashboard topology grid now monitors 'Full Ecosystem (Mesh)' connectivity in real-time.
 
 **Status:** ✅ PRODUCTION
 **Gap:** `parsePayload` expanded to support Bitcoin, Stacks, Ark, RGB, StateChain, Maven, BitVM, Liquid, and BOB.

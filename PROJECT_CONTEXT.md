@@ -38,6 +38,7 @@ The **Conxian Gateway** is the institutional expansion layer for Conxius. It is 
 ---
 
 ## 🔧 Technical State
+- **Hardening**: Zero-Leak memory enforcement (.fill(0)) in all cryptographic modules.
 
 - **Frontend**: React 19 + Vite 7 + Tailwind 4.
 - **Native**: SecureEnclavePlugin (TEE), BreezPlugin (Lightning).
@@ -45,7 +46,7 @@ The **Conxian Gateway** is the institutional expansion layer for Conxius. It is 
 
 ## 🧪 Verification
 
-- **All Tests Passed**: 144/144 unit & integration tests (Vitest).
+- **All Tests Passed**: 145/145 unit & integration tests (Vitest).
 - **B2B Alignment**: Verified via component checks.
 - **Gateway**: Deployment configuration fixed (`npx serve out`).
 
@@ -57,5 +58,5 @@ The **Conxian Gateway** is the institutional expansion layer for Conxius. It is 
   - **RGB**: Consignment structure & on-chain anchor verification established.
   - **BitVM**: Functional cryptographic proof verification live.
   - **State Chains**: Transfer API with coordinator sync fully implemented.
-  - **Maven**: Multi-asset fetcher and transfer preparation fully implemented.
+  - **Maven**: Multi-asset fetcher and transfer preparation fully implemented with sequential derivation support (m/84'/0'/0'/3/${index}).
 - **Identity**: Enclave-backed Web5 KeyManager for sovereign DIDs.
