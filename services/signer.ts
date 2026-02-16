@@ -5,7 +5,7 @@ import { deriveLiquidAddress } from './liquid';
  * Handles deterministic key derivation and multi-layer signing via Real Cryptography.
  */
 
-import { BitcoinLayer } from '../types';
+import { BitcoinLayer, Network } from '../types';
 import * as bip39 from 'bip39';
 import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
@@ -19,6 +19,7 @@ import { signNative, getWalletInfoNative, signBatchNative } from "./enclave-stor
 import {
   getPsbtSighashes,
   finalizePsbtWithSigs,
+  signPsbtBase64,
   signPsbtBase64WithSeed,
   signPsbtBase64WithSeedReturnBase64,
 } from "./psbt";
