@@ -3,7 +3,7 @@ import { notificationService } from './notifications';
 import { checkBtcTxStatus } from './protocol';
 import { requestEnclaveSignature } from './signer';
 
-export type RgbSchema = 'RGB20' | 'RGB21' | 'RGB25';
+export type RgbSchema = 'RGB20' | 'RGB21' | 'RGB25' | 'NIA';
 
 export interface RgbAsset {
     id: string;
