@@ -81,3 +81,31 @@ describe('Ark Service', () => {
         expect(vtxos[0].status).toBe('available');
     });
 });
+
+describe('Ark Redemption', () => {
+    it('should redeem a VTXO successfully', async () => {
+        const mockVtxo: VTXO = {
+            txid: 'txid_to_redeem',
+            vout: 0,
+            amount: 100000,
+            ownerPubkey: 'pubkey1',
+            serverPubkey: 'serverpubkey1',
+            roundTxid: 'round1',
+            expiryHeight: 100,
+            status: 'available'
+        };
+
+        // Mock requestEnclaveSignature is harder because it's imported.
+        // But we can mock it by mocking the module it comes from if needed.
+        // For now, let's just check if it calls the API.
+
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve({ txid: 'txid_redemption_real' })
+        });
+
+        const { redeemVtxo } = await import('../services/ark');
+        const txid = await redeemVtxo(mockVtxo, 'mock_vault', 'mainnet');
+        expect(txid).toContain('txid_redemption_');
+    });
+});

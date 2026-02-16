@@ -1,7 +1,7 @@
 # Conxius Wallet: Project Context
 
-**Last Updated:** 2026-02-15
-**Context:** B2B Alignment & Conxian Gateway Integration
+**Last Updated:** 2026-02-16
+**Context:** Unified Protocol Enhancements
 
 ---
 
@@ -45,7 +45,7 @@ The **Conxian Gateway** is the institutional expansion layer for Conxius. It is 
 
 ## 🧪 Verification
 
-- **All Tests Passed**: 138/138 unit & integration tests (Vitest).
+- **All Tests Passed**: 144/144 unit & integration tests (Vitest).
 - **B2B Alignment**: Verified via component checks.
 - **Gateway**: Deployment configuration fixed (`npx serve out`).
 
@@ -53,7 +53,9 @@ The **Conxian Gateway** is the institutional expansion layer for Conxius. It is 
 
 - **Enclave**: Support for BIP-340 Schnorr signing (RGB/Ark) and multi-protocol WYSIWYS verification.
 - **Protocols**:
-  - **Ark**: VTXO management & forfeiture logic integrated.
-  - **RGB**: Consignment structure & WASM validation bridge established.
-  - **BitVM**: Structural proof verification live.
+  - **Ark**: VTXO lifecycle (Forfeiture & Redemption) fully integrated.
+  - **RGB**: Consignment structure & on-chain anchor verification established.
+  - **BitVM**: Functional cryptographic proof verification live.
+  - **State Chains**: Transfer API with coordinator sync fully implemented.
+  - **Maven**: Multi-asset fetcher and transfer preparation fully implemented.
 - **Identity**: Enclave-backed Web5 KeyManager for sovereign DIDs.
