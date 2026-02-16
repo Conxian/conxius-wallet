@@ -1,4 +1,4 @@
-import { secp256k1 as nobleSecp, schnorr } from '@noble/curves/secp256k1';
+import { secp256k1 as nobleSecp, schnorr } from '@noble/curves/secp256k1.js';
 
 /**
  * ECC Engine Fusion

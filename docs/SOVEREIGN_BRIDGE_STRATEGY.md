@@ -112,3 +112,44 @@ To solve UX without sacrificing sovereignty, we should integrate **Boltz**.
 3.  **Integrate Boltz SDK** (to unlock Liquid/Lightning). [IN PROGRESS]
 4.  **Implement sBTC Scripting** (to unlock Stacks). [IN PROGRESS]
     - *Requirement:* Define `define-public` Clarity 4.0 functions for `deposit-sbtc` and `withdraw-sbtc` in the Stacks bridge contract.
+
+---
+
+## 6. Bridge Economics & Gas Abstraction
+
+To ensure the best UX for the "Digital Citadelist," the Conxius NTT Bridge implements a **Sovereign Gas Abstraction** model.
+
+### A. The 0.1% Convenience Fee
+* **Value:** A 0.1% fee is charged on NTT transfers (BTC -> sBTC, sBTC -> L-BTC, etc.).
+* **Justification:** This fee covers the maintenance of the NTT Transceiver infrastructure and the automated relayer fleet.
+* **Implementation:** The fee is deducted by the NTT Manager contract on the source chain during the  or  phase.
+
+### B. Gas Abstraction (The "sBTC-as-Gas" Model)
+* **Mechanism:** When a user bridges assets to an EVM chain (e.g., BOB or Ethereum), they are prompted to pay for the destination gas in their source asset (e.g., sBTC).
+* **Architecture:**
+    1. Conxius calculates the required gas on the destination.
+    2. User signs an NTT transfer that includes an extra "Gas Payment" amount.
+    3. A **Conxian Relayer** (or authorized Solver) receives the NTT message and the Gas Payment.
+    4. The Relayer submits the VAA to the destination chain, paying the gas in ETH/Native token.
+* **Ethos Alignment:** Eliminates the "Gas Token Requirement" bottleneck, making Bitcoin layers feel like a single, unified network.
+
+
+---
+
+## 6. Bridge Economics & Gas Abstraction
+
+To ensure the best UX for the "Digital Citadelist," the Conxius NTT Bridge implements a **Sovereign Gas Abstraction** model.
+
+### A. The 0.1% Convenience Fee
+* **Value:** A 0.1% fee is charged on NTT transfers (BTC -> sBTC, sBTC -> L-BTC, etc.).
+* **Justification:** This fee covers the maintenance of the NTT Transceiver infrastructure and the automated relayer fleet.
+* **Implementation:** The fee is deducted by the NTT Manager contract on the source chain during the `burn` or `lock` phase.
+
+### B. Gas Abstraction (The "sBTC-as-Gas" Model)
+* **Mechanism:** When a user bridges assets to an EVM chain (e.g., BOB or Ethereum), they are prompted to pay for the destination gas in their source asset (e.g., sBTC).
+* **Architecture:**
+    1. Conxius calculates the required gas on the destination.
+    2. User signs an NTT transfer that includes an extra "Gas Payment" amount.
+    3. A **Conxian Relayer** (or authorized Solver) receives the NTT message and the Gas Payment.
+    4. The Relayer submits the VAA to the destination chain, paying the gas in ETH/Native token.
+* **Ethos Alignment:** Eliminates the "Gas Token Requirement" bottleneck, making Bitcoin layers feel like a single, unified network.
