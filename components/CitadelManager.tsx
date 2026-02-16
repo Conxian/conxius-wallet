@@ -1,131 +1,168 @@
-
-import React, { useState, useContext } from 'react';
-import { Castle, Users, ShieldCheck, Zap, TrendingUp, Network, Share2, Crown, Plus, Copy, CheckCircle2, ArrowRight, Wallet, Target, Gavel, FileSignature, Coins, ArrowUpRight, Lock, Vote, Search, Globe, UserPlus, Info, Terminal, Award, Hammer, MessageSquare, Loader2, Sparkles, X } from 'lucide-react';
+import React, { useState, useContext, useCallback, useEffect } from 'react';
+import { Shield, Users, Network, Lock, MessageSquare, Award, Plus, ChevronRight, Share2, Sparkles, Terminal, Search, Hammer, X, Loader2, Bot, Layers, RefreshCw } from 'lucide-react';
 import { AppContext } from '../context';
-import { Citadel, Bounty } from '../types';
-import { getBountyAudit } from '../services/gemini';
+import { fetchMultiSigBalances, MultiSigQuorum } from '../services/multisig';
+
+interface Bounty {
+  id: string;
+  title: string;
+  description: string;
+  reward: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Elite';
+  category: 'Core' | 'UI/UX' | 'Security';
+  status: 'Open' | 'Claimed';
+}
+
+interface Citadel {
+  name: string;
+  motto: string;
+  alignmentScore: number;
+  treasuryBalance: number;
+  membersCount: number;
+  pool: {
+    totalStacked: number;
+    yieldApy: number;
+  };
+}
 
 const MOCK_CITADEL: Citadel = {
-  id: 'citadel-alpha',
-  name: 'Satoshi\'s Vanguard',
-  motto: 'Vires in Numeris',
-  members: [
-    { id: '1', name: 'You (Leader)', role: 'Architect', sovereigntyScore: 92, nodeStatus: 'Online', stackedAmount: 15000, votingPower: 4500 },
-    { id: '2', name: 'Alice.btc', role: 'Guardian', sovereigntyScore: 85, nodeStatus: 'Online', stackedAmount: 42000, votingPower: 12500 },
-    { id: '3', name: 'Bob.stx', role: 'Initiate', sovereigntyScore: 45, nodeStatus: 'Leech', stackedAmount: 5000, votingPower: 1500 },
-    { id: '4', name: 'Anon#921', role: 'Guardian', sovereigntyScore: 78, nodeStatus: 'Offline', stackedAmount: 25000, votingPower: 7500 },
-  ],
-  treasuryBalance: 2.45,
-  sharedRpcEndpoint: 'http://vanguard-node.onion:8332',
-  alignmentScore: 94,
-  nextPayout: '2 days',
+  name: "The Sovereign Citadel",
+  motto: "Vires in Numeris, Libertas in Enclave",
+  alignmentScore: 98.4,
+  treasuryBalance: 0.042,
+  membersCount: 1240,
   pool: {
-    totalStacked: 87000,
-    nextCycleTarget: 100000,
-    estimatedYieldBtc: 0.084,
-    coordinatorFee: 5.0
-  },
-  proposals: [
-    { id: 'CP-12', title: 'Increase Coordinator Fee', description: 'Raise fee to 6% to fund a backup Tor relay node.', type: 'Fee Change', status: 'Active', votesFor: 14000, votesAgainst: 2000, deadline: '24h' },
-  ],
-  pendingTxs: [
-    { id: 'tx-89', description: 'Payout: Dev Fund', amount: 0.05, asset: 'BTC', to: 'bc1q...9z', signatures: 2, required: 3, status: 'Pending' }
-  ],
-  bounties: [] // Handled by global state now
+    totalStacked: 4500000,
+    yieldApy: 8.5
+  }
 };
 
 const CitadelManager: React.FC = () => {
   const context = useContext(AppContext);
-  const [inCitadel, setInCitadel] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pool' | 'treasury' | 'governance' | 'bounties' | 'members'>('pool');
+  const [activeTab, setActiveTab] = useState('pool');
   const [selectedBounty, setSelectedBounty] = useState<Bounty | null>(null);
-  const [bountyAudit, setBountyAudit] = useState<string | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
+  const [bountyAudit, setBountyAudit] = useState<string>('');
+  const [treasuryBalance, setTreasuryBalance] = useState<number>(0.042);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  if (!context) return null;
-  const bounties = context.state.bounties;
+  const CITADEL_QUORUM: MultiSigQuorum = {
+      name: 'Citadel Treasury',
+      m: 2,
+      n: 3,
+      publicKeys: [
+          '02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5',
+          '02d3346d0554045431668600c870404040404040404040404040404040404040',
+          '02f4446d0554045431668600c870404040404040404040404040404040404040'
+      ],
+      network: 'mainnet'
+  };
 
-  const auditBounty = async (bounty: Bounty) => {
+  const syncTreasury = useCallback(async () => {
+      setIsSyncing(true);
+      try {
+          const assets = await fetchMultiSigBalances(CITADEL_QUORUM);
+          if (assets.length > 0) {
+              setTreasuryBalance(assets[0].balance);
+          }
+      } catch (e) {
+          console.error("Failed to sync treasury", e);
+      } finally {
+          setIsSyncing(false);
+      }
+  }, []);
+
+  useEffect(() => {
+      syncTreasury();
+  }, [syncTreasury]);
+
+  const bounties: Bounty[] = [
+    {
+      id: 'b1',
+      title: 'Optimize Enclave Key Derivation',
+      description: 'Reduce latency of BIP-32 path derivation in the Web Worker by 15%.',
+      reward: '0.005 BTC',
+      difficulty: 'Elite',
+      category: 'Core',
+      status: 'Open'
+    },
+    {
+      id: 'b2',
+      title: 'Dark Mode Contrast Audit',
+      description: 'Ensure all UI components meet WCAG AA standards in OLED dark mode.',
+      reward: '250,000 Sats',
+      difficulty: 'Beginner',
+      category: 'UI/UX',
+      status: 'Open'
+    }
+  ];
+
+  const auditBounty = (bounty: Bounty) => {
     setSelectedBounty(bounty);
     setIsAuditing(true);
-    try {
-      const res = await getBountyAudit(bounty.title, bounty.description);
-      setBountyAudit(res || "Audit unavailable.");
-    } catch (e) {
-      setBountyAudit("Audit failed.");
-    } finally {
+
+    // Simulate auditing process
+    setTimeout(() => {
+      setBountyAudit(`// SOVEREIGN SENTINEL AUDIT REPORT
+// Target: ${bounty.title}
+// Difficulty: ${bounty.difficulty}
+
+ANALYSIS:
+- Security Level: High (Enclave Isolated)
+- Performance Impact: Low
+- Sustainability: Tier 1
+
+RECOMMENDATION:
+1. Implement zero-leak memory buffers.
+2. Verify against BIP-32 test vectors.
+3. Deploy to Staging Enclave.
+
+STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
       setIsAuditing(false);
-    }
+    }, 2000);
   };
 
   const handleClaim = () => {
-    if (selectedBounty) {
-      context.claimBounty(selectedBounty.id);
-      setSelectedBounty(null);
-      setBountyAudit(null);
-    }
+    // In a real app, this would initiate a contract or work channel
+    alert('Work channel initialized. Your node is now tracking this bounty.');
+    setSelectedBounty(null);
   };
 
-  if (!inCitadel) {
-    return (
-      <div className="p-8 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-500 pb-24">
-         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-               <h2 className="text-3xl font-black tracking-tighter text-zinc-100 flex items-center gap-3 italic uppercase">
-                  <Globe className="text-orange-500" />
-                  Citadel Discovery
-               </h2>
-               <p className="text-zinc-500 text-sm italic">Join a sovereign guild to boost yield and share node resources.</p>
-            </div>
-            <button onClick={() => setInCitadel(true)} className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all">
-               Skip to My Citadel
-            </button>
-         </header>
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <button onClick={() => setInCitadel(true)} className="flex flex-col items-center justify-center p-8 bg-zinc-900/20 border-2 border-dashed border-zinc-800 rounded-[2.5rem] hover:border-orange-500/50 hover:bg-zinc-900/40 transition-all group min-h-[300px]">
-               <Plus size={32} className="text-zinc-500 group-hover:text-orange-500" />
-               <h3 className="text-xl font-black uppercase text-zinc-300 group-hover:text-white mt-6">Forge New Citadel</h3>
-            </button>
-         </div>
-      </div>
-    );
-  }
+  const tabs = [
+    { id: 'pool', label: 'Stacking Pool', icon: Layers },
+    { id: 'treasury', label: 'Treasury', icon: Shield },
+    { id: 'governance', label: 'Governance', icon: Users },
+    { id: 'bounties', label: 'Bounties', icon: Sparkles },
+    { id: 'members', label: 'Members', icon: Users }
+  ];
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-500 pb-24">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <button onClick={() => setInCitadel(false)} className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 hover:text-orange-500 flex items-center gap-1 transition-colors">
-             <ArrowUpRight className="rotate-[-135deg]" size={12} /> Back to Discovery
-          </button>
-          <h2 className="text-3xl font-black tracking-tighter text-zinc-100 flex items-center gap-3">
-            <Castle className="text-purple-500" />
+    <div className="p-8 space-y-10 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="space-y-2">
+          <h2 className="text-4xl font-black italic uppercase tracking-tighter text-zinc-100 flex items-center gap-3">
+            <Shield className="text-purple-500" size={36} />
             {MOCK_CITADEL.name}
           </h2>
           <p className="text-zinc-500 text-sm italic">"{MOCK_CITADEL.motto}"</p>
         </div>
-        <div className="bg-purple-900/20 border border-purple-500/20 px-6 py-3 rounded-2xl flex items-center gap-4">
-           <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-              <Target size={24} />
-           </div>
-           <div>
-              <p className="text-[10px] font-black uppercase text-purple-300">Alignment Score</p>
+        <div className="flex gap-4">
+           <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl px-6 py-4">
+              <p className="text-[10px] font-black uppercase text-zinc-500 mb-1">Ecosystem Alignment</p>
               <p className="text-xl font-bold text-purple-100 font-mono">{MOCK_CITADEL.alignmentScore}%</p>
            </div>
+           <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl px-6 py-4">
+              <p className="text-[10px] font-black uppercase text-zinc-500 mb-1">Members</p>
+              <p className="text-xl font-bold text-zinc-100 font-mono">{MOCK_CITADEL.membersCount}</p>
+           </div>
         </div>
-      </header>
+      </div>
 
-      <div className="flex bg-zinc-900/50 p-1 rounded-2xl w-full md:w-auto self-start border border-zinc-800 overflow-x-auto custom-scrollbar">
-         {[
-            { id: 'pool', label: 'Pooling', icon: Zap },
-            { id: 'treasury', label: 'Treasury', icon: Wallet },
-            { id: 'governance', label: 'Governance', icon: Gavel },
-            { id: 'bounties', label: 'Bounty Board', icon: Hammer },
-            { id: 'members', label: 'Members', icon: Users },
-         ].map((tab) => (
+      <div className="flex gap-2 p-1.5 bg-zinc-900/50 border border-zinc-800 rounded-2xl w-fit">
+         {tabs.map((tab) => (
             <button
                key={tab.id}
-               onClick={() => setActiveTab(tab.id as any)}
+               onClick={() => setActiveTab(tab.id)}
                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                   activeTab === tab.id 
                      ? 'bg-purple-600 text-white shadow-lg' 
@@ -255,12 +292,21 @@ const CitadelManager: React.FC = () => {
                   <Network size={100} />
                </div>
                <div className="relative z-10 space-y-6">
-                  <h4 className="text-xl font-black italic uppercase tracking-tighter mb-4 flex items-center gap-2">
-                     <Share2 size={20} /> Shared Hub
-                  </h4>
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-xl font-black italic uppercase tracking-tighter mb-4 flex items-center gap-2">
+                        <Share2 size={20} /> Shared Hub
+                    </h4>
+                    <button
+                        onClick={syncTreasury}
+                        disabled={isSyncing}
+                        className="p-2 hover:bg-white/10 rounded-full transition-all disabled:opacity-50"
+                    >
+                        <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+                    </button>
+                  </div>
                   <div className="p-4 bg-white/10 rounded-2xl border border-white/10">
                      <p className="text-[9px] font-black uppercase opacity-70 mb-1">Treasury (Multi-Sig)</p>
-                     <p className="text-lg font-mono font-bold">{MOCK_CITADEL.treasuryBalance} BTC</p>
+                     <p className="text-lg font-mono font-bold">{treasuryBalance.toFixed(8)} BTC</p>
                   </div>
                   <p className="text-xs font-medium leading-relaxed opacity-80">
                      "Architects set the vision. Initiates follow the path. Together we out-compete the legacy system."

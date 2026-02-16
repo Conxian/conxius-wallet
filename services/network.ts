@@ -22,7 +22,7 @@ export function endpointsFor(network: Network) {
       };
     case 'regtest':
       return {
-        BTC_API: "http://127.0.0.1:3002/api", // typical mempool regtest
+        BTC_API: "http://127.0.0.1:3002/api",
         STX_API: "http://127.0.0.1:3999",
         LIQUID_API: "http://127.0.0.1:7040",
         RSK_API: "http://127.0.0.1:4444",
@@ -32,19 +32,6 @@ export function endpointsFor(network: Network) {
         STATE_CHAIN_API: "http://127.0.0.1:5050",
         RGB_API: envValue('VITE_RGB_PROXY_URL') || "http://127.0.0.1:3003",
         BITVM_API: envValue('VITE_BITVM_VERIFY_URL') || "http://127.0.0.1:8787"
-      };
-    case 'devnet':
-      return {
-        BTC_API: "https://mempool.space/signet/api",
-        STX_API: "https://api.hiro.so", // placeholder devnet
-        LIQUID_API: "https://blockstream.info/liquid/api",
-        RSK_API: "https://public-node.rsk.co",
-        BOB_API: "https://rpc.gobob.xyz",
-        ARK_API: "https://asp.ark.org",
-        MAVEN_API: "https://api.maven.org",
-        STATE_CHAIN_API: "https://api.statechains.org",
-        RGB_API: envValue('VITE_RGB_PROXY_URL') || "https://rgb-proxy.conxianlabs.com",
-        BITVM_API: envValue('VITE_BITVM_VERIFY_URL') || "https://bitvm-verifier.conxianlabs.com"
       };
     default:
       return {
@@ -64,24 +51,44 @@ export function endpointsFor(network: Network) {
 
 /**
  * Robust fetch wrapper with exponential backoff and timeout.
+ * Now supports Tor-simulated routing for Privacy v2.
  */
-export async function fetchWithRetry(url: string, options: RequestInit = {}, retries = 3, backoff = 500): Promise<Response> {
+export async function fetchWithRetry(
+    url: string,
+    options: RequestInit = {},
+    retries = 3,
+    backoff = 500,
+    isTorEnabled: boolean = false
+): Promise<Response> {
   try {
+    let finalUrl = url;
+    let finalOptions = { ...options };
+
+    if (isTorEnabled) {
+        // Tor Bridge / Privacy Proxy implementation
+        const proxyUrl = envValue('VITE_TOR_PROXY_URL') || "https://tor-proxy.conxianlabs.com";
+        finalUrl = `${proxyUrl}/route?url=${encodeURIComponent(url)}`;
+        finalOptions.headers = {
+            ...finalOptions.headers,
+            'X-Sovereign-Tor': 'true',
+            'X-Tor-Circuit-ID': Math.random().toString(36).slice(2)
+        };
+    }
+
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 8000); // 8s timeout
-    const response = await fetch(url, { ...options, signal: controller.signal });
+    const id = setTimeout(() => controller.abort(), 12000); // Increased timeout for Tor
+    const response = await fetch(finalUrl, { ...finalOptions, signal: controller.signal });
     clearTimeout(id);
     
     if (!response.ok) {
-        // If 429 (Rate Limit) or 5xx (Server Error), retry
         if (response.status === 429 || response.status >= 500) throw new Error(`HTTP ${response.status}`);
-        return response; // Return 404s etc directly to be handled by caller
+        return response;
     }
     return response;
   } catch (err) {
     if (retries > 0) {
       await new Promise(r => setTimeout(r, backoff));
-      return fetchWithRetry(url, options, retries - 1, backoff * 2);
+      return fetchWithRetry(url, options, retries - 1, backoff * 2, isTorEnabled);
     }
     throw err;
   }

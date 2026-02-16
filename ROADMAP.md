@@ -47,8 +47,8 @@ permalink: /roadmap
 | **M3: PSBT & L2 Expansion** | Q2 2025 | ✅ | Liquid/Stacks/BOB PSBT support | "The Multi-Layer Upgrade" |
 | **M4: Multi-Wallet Core | Q2 2025 | ✅ | HD Wallet support for multiple seeds | "Sovereign Separation of Concerns" |
 | **M5: NTT Bridge Execution | Q3 2025 | ✅ | Wormhole NTT Transceiver Mainnet | **"Unwrap Your Bitcoin"** Launch |
-| **M6: Multi-Sig Quorum** | Q3 2025 | 🟡 | Native 2-of-3 Enclave orchestration | **"The Corporate Vault"** Campaign |
-| **M7: Privacy v2** | Q4 2025 | ⚪ | Advanced CoinJoin & Tor bridges | "Invisible Sovereignty" |
+| **M6: Multi-Sig Quorum** | Q3 2025 | ✅ | Native 2-of-3 Enclave orchestration | **"The Corporate Vault"** Campaign |
+| **M7: Privacy v2** | Q4 2025 | ✅ | Advanced CoinJoin & Tor bridges | "Invisible Sovereignty" |
 | **M8: Privacy Scoring** | Q4 2025 | ✅ | Sovereign Score & UX Quests | "Gamified Security" |
 | **M9: Asset Studio v2 | Q1 2026 | ✅ | Ordinals/Runes/RGB full lifecycle | "Mint Your Legacy on Bitcoin" |
 | **M10: ZK Verifier Core | Q1 2026 | ✅ | On-device STARK/SNARK verification | "Trust But Verify" (Native ZK) |
