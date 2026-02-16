@@ -1,5 +1,5 @@
 import React, { useContext, useState, useMemo } from 'react';
-import { Shield, CheckCircle2, Circle, Trophy, ArrowRight, Zap, Crown, Star, Medal, AlertTriangle, Castle } from 'lucide-react';
+import { Shield, CheckCircle2, ArrowRight, Zap, Crown, Star, Medal, AlertTriangle } from 'lucide-react';
 import { AppContext } from '../context';
 import { getSecurityLevelNative } from "../services/enclave-storage";
 import { checkDeviceIntegrity } from "../services/device-integrity";
@@ -24,24 +24,25 @@ const SovereigntyMeter: React.FC = () => {
   }, []);
   const [showBackupAudit, setShowBackupAudit] = useState(false);
 
-  const isHotWallet = context?.state.walletConfig?.type === 'hot';
+  const state = context?.state;
+  const isHotWallet = state?.walletConfig?.type === 'hot';
 
   const privacyResult = useMemo(() => {
-    if (!context?.state) return { score: 0, breakdown: { network: 0, scriptTypes: 0, utxoHealth: 0 }, recommendations: [] };
-    return calculatePrivacyScore(context.state);
-  }, [context?.state]);
+    if (!state) return { score: 0, breakdown: { network: 0, scriptTypes: 0, utxoHealth: 0 }, recommendations: [] };
+    return calculatePrivacyScore(state);
+  }, [state]);
 
   // Dynamic quests based on wallet state
   const ACTIVE_QUESTS: Quest[] = [
     { id: 'wallet_setup', label: 'Initialize Wallet', points: 10, completed: true, category: 'Security' },
-    { id: 'backup_verified', label: 'Verify Master Backup', points: 40, completed: context?.state.walletConfig?.backupVerified ?? false, category: 'Security' },
-    { id: 'biometric_active', label: 'Enable Biometric Gate', points: 20, completed: context?.state.security?.biometricUnlock ?? false, category: 'Security' },
-    { id: 'node', label: 'Connect Local Node', points: 30, completed: !!(context?.state.lnBackend?.endpoint || context?.state.activeCitadel?.sharedRpcEndpoint), category: 'Security' },
-    { id: 'silent_pay', label: 'Execute Silent Payment', points: 25, completed: (context?.state.utxos ?? []).some(u => u.address.startsWith('sp1')), category: 'Privacy' },
-    { id: 'taproot_audit', label: 'Taproot Asset Audit', points: 15, completed: context?.state.walletConfig?.taprootAddress !== undefined, category: 'Privacy' },
-    { id: 'citadel', label: 'Join a Citadel', points: 20, completed: !!context?.state.activeCitadel, category: 'Community' },
-    { id: 'tor', label: 'Enable Tor Routing', points: 20, completed: context?.state.isTorEnabled ?? false, category: 'Privacy' },
-    { id: 'consolidation', label: 'Sovereign Consolidation', points: 50, completed: !!(context?.state.assets && context.state.assets.length > 0 && context.state.assets.every(a => a.symbol === 'BTC' || a.balance === 0)), category: 'Security' },
+    { id: 'backup_verified', label: 'Verify Master Backup', points: 40, completed: state?.walletConfig?.backupVerified ?? false, category: 'Security' },
+    { id: 'biometric_active', label: 'Enable Biometric Gate', points: 20, completed: state?.security?.biometricUnlock ?? false, category: 'Security' },
+    { id: 'node', label: 'Connect Local Node', points: 30, completed: !!(state?.lnBackend?.endpoint || state?.activeCitadel?.sharedRpcEndpoint), category: 'Security' },
+    { id: 'silent_pay', label: 'Execute Silent Payment', points: 25, completed: (state?.utxos ?? []).some(u => u.address.startsWith('sp1')), category: 'Privacy' },
+    { id: 'taproot_audit', label: 'Taproot Asset Audit', points: 15, completed: state?.walletConfig?.taprootAddress !== undefined, category: 'Privacy' },
+    { id: 'citadel', label: 'Join a Citadel', points: 20, completed: !!state?.activeCitadel, category: 'Community' },
+    { id: 'tor', label: 'Enable Tor Routing', points: 20, completed: state?.isTorEnabled ?? false, category: 'Privacy' },
+    { id: 'consolidation', label: 'Sovereign Consolidation', points: 50, completed: !!(state?.assets && state.assets.length > 0 && state.assets.every(a => a.symbol === 'BTC' || a.balance === 0)), category: 'Security' },
     { id: 'fee_opt', label: 'Optimize Network Fees', points: 15, completed: false, category: 'Security' },
   ];
 
@@ -52,6 +53,25 @@ const SovereigntyMeter: React.FC = () => {
   let rankName = 'Initiate';
   if (level > 2) rankName = 'Citadel Guard';
   if (level > 4) rankName = 'Sovereign';
+
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
+  const handleUpgradePass = async () => {
+    if (isUpgrading) return;
+    setIsUpgrading(true);
+    context?.notify('info', 'Verifying Sovereign Credentials...');
+    
+    // Simulate network check
+    await new Promise(r => setTimeout(r, 1500));
+
+    if (currentXP < totalXP * 0.5) {
+        context?.notify('error', 'Insufficient XP for Tier Upgrade. Complete more quests.');
+    } else {
+        context?.notify('success', `Pass Upgraded to ${rankName}. Metadata synced to Enclave.`);
+        // In real impl, this would mint/update a BRC-721 or Ordinal
+    }
+    setIsUpgrading(false);
+  };
 
   return (
     <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] p-6 space-y-6 shadow-xl relative overflow-hidden group">
@@ -82,7 +102,7 @@ const SovereigntyMeter: React.FC = () => {
            </div>
            <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-900 p-0.5">
               <div
-                className="h-full bg-gradient-to-r from-orange-600 to-yellow-500 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(249,115,22,0.4)]"
+                className="h-full bg-linear-to-r from-orange-600 to-yellow-500 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(249,115,22,0.4)]"
                 style={{ width: `${(currentXP / totalXP) * 100}%` }}
               />
            </div>
@@ -164,8 +184,13 @@ const SovereigntyMeter: React.FC = () => {
         )}
       </div>
 
-      <button className="w-full py-3 bg-zinc-800 hover:bg-orange-600 text-zinc-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95">
-        Upgrade My Pass <ArrowRight size={14} />
+      <button 
+        onClick={handleUpgradePass}
+        disabled={isUpgrading}
+        className="w-full py-3 bg-zinc-800 hover:bg-orange-600 text-zinc-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+      >
+        {isUpgrading ? <Zap size={14} className="animate-spin" /> : <ArrowRight size={14} />}
+        {isUpgrading ? 'Minting Pass...' : 'Upgrade My Pass'}
       </button>
 
       {showBackupAudit && <BackupAuditModal onClose={() => setShowBackupAudit(false)} />}

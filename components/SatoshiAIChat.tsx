@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { Terminal, Send, Bot, Loader2, X, Sparkles, ChevronRight } from 'lucide-react';
+import { Terminal, Send, Bot, Loader2, X, ChevronRight } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { AppContext } from '../context';
 import { calculatePrivacyScore } from '../services/privacy';
@@ -28,32 +28,40 @@ const SatoshiAIChat: React.FC = () => {
     setIsLoading(true);
 
     try {
-      if (!appContext?.state.geminiApiKey) {
-        setMessages(prev => [...prev, { role: 'ai', content: "Gemini API Key not configured in Enclave Settings." }]);
-        setIsLoading(false);
-        return;
-      }
-
-      const privacyResults = calculatePrivacyScore(appContext.state);
-      const systemContext = `You are Satoshi AI, a master of Bitcoin technology and sovereign finance.
+      let responseText = "";
+      
+      if (!appContext.state.geminiApiKey) {
+         // Simulation Mode Response
+         await new Promise(r => setTimeout(r, 1000)); // Simulate think time
+         const responses = [
+             "Analyzing the mempool... The blocks are full but fees are low. A good time to consolidate UTXOs.",
+             "Your sovereignty score is solid. Have you considered running a local node to reach 100%?",
+             "Stacks sBTC peg-in is approaching activation. Keep an eye on the Signer set.",
+             "Reminder: Not your keys, not your coins. The Enclave is secure.",
+             "Layer 2 liquidity is deepening. Arbitrage opportunities detected between Liquid and Rootstock.",
+             `Privacy Audit: ${calculatePrivacyScore(appContext.state).score}/100. ${calculatePrivacyScore(appContext.state).recommendations[0] || "Maintain vigilance."}`
+         ];
+         responseText = responses[Math.floor(Math.random() * responses.length)] + " [SIMULATION]";
+      } else {
+          const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
+          const result = await ai.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: userMessage,
+            config: {
+              systemInstruction: `You are Satoshi AI, a master of Bitcoin technology and sovereign finance.
 You are concise, technical, and prioritize user privacy.
 You help users understand Bitcoin layers and risk.
 Current Wallet Context:
-- Privacy Score: ${privacyResults.score}/100
-- Privacy Recommendations: ${privacyResults.recommendations.join(', ')}
+- Privacy Score: ${calculatePrivacyScore(appContext.state).score}/100
+- Privacy Recommendations: ${calculatePrivacyScore(appContext.state).recommendations.join(', ')}
 - Tor Routing: ${appContext.state.isTorEnabled ? 'ENABLED' : 'DISABLED'}
-Use a terminal-style tone.`;
+Use a terminal-style tone.`,
+            }
+          });
+          responseText = result.response.text();
+      }
 
-      const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: userMessage,
-        config: {
-          systemInstruction: systemContext,
-        }
-      });
-
-      setMessages(prev => [...prev, { role: 'ai', content: response.text || "Connection to the network lost." }]);
+      setMessages(prev => [...prev, { role: 'ai', content: responseText || "Connection to the network lost." }]);
     } catch (error) {
       console.error("AI Error:", error);
       setMessages(prev => [...prev, { role: 'ai', content: "An error occurred in the mempool. Try again later." }]);
@@ -66,7 +74,9 @@ Use a terminal-style tone.`;
     return (
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-4 md:bottom-8 md:right-8 w-12 h-12 md:w-14 md:h-14 bg-orange-600 text-white rounded-2xl shadow-2xl shadow-orange-600/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-[60] border border-orange-500/20"
+        className="fixed bottom-24 right-4 md:bottom-8 md:right-8 w-12 h-12 md:w-14 md:h-14 bg-orange-600 text-white rounded-2xl shadow-2xl shadow-orange-600/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-60 border border-orange-500/20"
+        aria-label="Open Satoshi AI Chat"
+        title="Open Satoshi AI Chat"
       >
         <Bot size={24} className="md:w-7 md:h-7" />
       </button>
@@ -74,18 +84,23 @@ Use a terminal-style tone.`;
   }
 
   return (
-    <div className="fixed bottom-24 right-4 md:bottom-8 md:right-8 w-[calc(100vw-2rem)] md:w-96 h-[500px] bg-zinc-950 border border-zinc-800 rounded-[2.5rem] shadow-2xl z-[70] flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-300">
+    <div className="fixed bottom-24 right-4 md:bottom-8 md:right-8 w-[calc(100vw-2rem)] md:w-96 h-[500px] bg-zinc-950 border border-zinc-800 rounded-[2.5rem] shadow-2xl z-70 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-300">
       <div className="p-5 border-b border-zinc-900 bg-zinc-900/50 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Terminal size={18} className="text-orange-500" />
           <h3 className="font-bold text-sm tracking-tight">Satoshi Terminal</h3>
         </div>
-        <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-500">
+        <button 
+            onClick={() => setIsOpen(false)} 
+            className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-500"
+            aria-label="Close Chat"
+            title="Close Chat"
+        >
           <X size={18} />
         </button>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-[radial-gradient(circle_at_center,_#09090b_0%,_#000000_100%)]">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-[radial-gradient(circle_at_center,#09090b_0%,#000000_100%)]">
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed ${
@@ -124,6 +139,8 @@ Use a terminal-style tone.`;
           disabled={isLoading || !input.trim()}
           type="submit" 
           className="w-10 h-10 bg-orange-600 text-white rounded-xl flex items-center justify-center disabled:opacity-50 hover:bg-orange-500 transition-colors"
+          aria-label="Send Message"
+          title="Send Message"
         >
           <Send size={16} />
         </button>

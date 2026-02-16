@@ -391,14 +391,25 @@ const App: React.FC = () => {
   const setWalletConfig = (config: WalletConfig & { mode?: AppMode }, pin?: string) => {
      const effectiveMode: AppMode = config.mode ?? 'sovereign';
      const initialAssets = effectiveMode === 'sovereign' ? [] : MOCK_ASSETS;
-     if (pin) currentPinRef.current = pin;
-     setState(prev => ({ 
-        ...prev, 
+     const newPin = pin || currentPinRef.current;
+     if (newPin) currentPinRef.current = newPin;
+     
+     const newState = { 
+        ...state, 
         mode: effectiveMode,
         walletConfig: config,
         assets: initialAssets,
         sovereigntyScore: config.backupVerified ? 100 : 70
-     }));
+     };
+     
+     setState(newState);
+     
+     // CRITICAL: Persist immediately on creation/restore to prevent data loss on app switch
+     if (newPin) {
+        persistState(newState, newPin).then(() => {
+            setEnclaveExists(true); // Ensure lock screen knows vault exists immediately
+        });
+     }
   };
 
   const claimBounty = (id: string) => setState(prev => ({

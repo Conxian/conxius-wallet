@@ -7,9 +7,11 @@ import { LAYER_COLORS, MOCK_TRANSACTIONS } from '../constants';
 interface AssetDetailModalProps {
   asset: Asset;
   onClose: () => void;
+  onSend: () => void;
+  onReceive: () => void;
 }
 
-const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ asset, onClose }) => {
+const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ asset, onClose, onSend, onReceive }) => {
   const [insight, setInsight] = useState<string | null>(null);
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
 
@@ -197,10 +199,16 @@ const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ asset, onClose }) =
 
         {/* Footer Actions */}
         <div className="p-8 bg-zinc-950/80 backdrop-blur-md border-t border-zinc-900 flex gap-4">
-          <button className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-bold py-4 rounded-2xl transition-all border border-zinc-800 active:scale-[0.98]">
+          <button 
+            onClick={onReceive}
+            className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-bold py-4 rounded-2xl transition-all border border-zinc-800 active:scale-[0.98]"
+          >
             Receive
           </button>
-          <button className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-orange-600/20 active:scale-[0.98]">
+          <button 
+            onClick={onSend}
+            className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-orange-600/20 active:scale-[0.98]"
+          >
             Send {asset.symbol}
           </button>
         </div>
