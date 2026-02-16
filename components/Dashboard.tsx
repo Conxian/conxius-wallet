@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { LAYER_COLORS } from '../constants';
 import { Asset, BitcoinLayer, UTXO } from '../types';
-import { TrendingUp, ArrowUpRight, ArrowRight, Search, Bot, Loader2, Zap, Layers, Activity, Sparkles, Shield, Send, Plus, Network, ShieldCheck, EyeOff, Users, FileSignature, CheckCircle2, X, Binary, Castle, Palette, ShoppingBag, Hammer, Award, RefreshCw, Import, Wallet, QrCode, Copy, ExternalLink, AlertTriangle, Key } from 'lucide-react';
-import { fetchBtcBalance, fetchStacksBalances, fetchBtcPrice, fetchStxPrice, fetchLiquidBalance, fetchRskBalance, broadcastBtcTx, fetchRunesBalances, fetchBtcUtxos, fetchBobAssets, fetchRgbAssets, fetchArkBalances, fetchMavenAssets, fetchStateChainBalances } from '../services/protocol';
+import { TrendingUp, ArrowUpRight, Search, Bot, Loader2, Shield, Send, Plus, Network, ShieldCheck, EyeOff, CheckCircle2, X, ShoppingBag, RefreshCw, Key, Copy, ExternalLink, ArrowDownLeft, Clock, History, Sparkles } from 'lucide-react';
+import { fetchBtcBalance, fetchStacksBalances, fetchBtcPrice, fetchLiquidBalance, fetchRskBalance, broadcastBtcTx, fetchRunesBalances, fetchBtcUtxos, fetchBobAssets, fetchRgbAssets, fetchArkBalances, fetchMavenAssets, fetchStateChainBalances } from '../services/protocol';
 import { SignRequest } from '../services/signer';
 import { getRecommendedFees } from '../services/fees';
 import { buildPsbt } from '../services/psbt';
@@ -501,7 +501,22 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {detailedAsset && <AssetDetailModal asset={detailedAsset} onClose={() => setDetailedAsset(null)} />}
+      {detailedAsset && (
+        <AssetDetailModal 
+            asset={detailedAsset} 
+            onClose={() => setDetailedAsset(null)} 
+            onSend={() => {
+                setDetailedAsset(null);
+                setShowSend(true);
+                setSendStep('form');
+            }}
+            onReceive={() => {
+                setDetailedAsset(null);
+                setReceiveLayer(detailedAsset.layer);
+                setShowReceive(true);
+            }}
+        />
+      )}
     </div>
   );
 };
