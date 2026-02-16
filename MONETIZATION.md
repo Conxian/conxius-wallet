@@ -4,52 +4,65 @@ layout: page
 permalink: /monetization
 ---
 
-# Conxius Monetization Strategy: The Sovereign Revenue Model
+# Conxius Monetization Strategy: The "Lowest Yet Profitable" Sovereign Model
 
-**Philosophy:** Conxius is a **Software Provider**. Revenue is generated through **Licensing**, **Technology Services**, and **Affiliate Referrals**. We strictly **do not** charge management fees, hold custody of funds, or act as a money transmitter.
+**Philosophy:** Conxius operates as a **Non-Custodial Software Infrastructure Provider**. Our revenue model is designed to be disruptively low-cost for users while maintaining high-margin B2B and SaaS revenue streams. We aim to be the **lowest-fee bridge and wallet** in the Bitcoin ecosystem.
 
-## 1. Revenue Streams
+## 1. Dynamic Metric-Adjustable Finance (The SAF Model)
 
-### 1.1 The Sovereign Bridge (Gas Abstraction & NTT) 🌉
+To align user incentives with sovereign behavior, Conxius uses the **Sovereignty-Adjusted Fee (SAF)**.
 
-**Concept:** A technical bridge allowing users to move assets between chains natively using Wormhole Native Token Transfers (NTT).
+### 1.1 The SAF Formula
+```
+Effective Fee = Base Fee * (1 - Loyalty Discount) * (1 - Sovereignty Multiplier)
+```
+*   **Base Fee:** 0.25% (Compare to MetaMask's 0.875% or Phantom's 0.85%).
+*   **Loyalty Discount:** Up to 50% based on account age, total volume, and "Conclave Pro" status.
+*   **Sovereignty Multiplier:** Up to 20% based on the user's **Sovereignty Score** (e.g., StrongBox active, Tor enabled, Daily backups verified).
+*   **Floor Fee:** **0.1%** (The industry's lowest "Keep the Lights On" rate).
 
-*   **Mechanism:** Users perform NTT via the Conxius interface.
-*   **Convenience Fee:** A **0.1% technology integration fee** is applied to the gross value of cross-chain transfers, capped at $50.
-*   **Gas Abstraction Model:**
-    *   **The Problem:** Moving sBTC from Stacks to Ethereum usually requires ETH for gas on the destination.
-    *   **The Solution:** Conxius allows the user to pay for destination gas in **sBTC**. We utilize a network of "Solvers" (Relayers) who accept sBTC and pay the ETH gas. Conxius captures a **Solver Rebate** from the service provider for routing this volume.
+### 1.2 Dynamic Operational Buffer (DOB)
+Fees for high-compute actions (like BitVM proofs or complex cross-chain relaying) include a dynamic buffer that scales with network congestion and provider costs, ensuring Conxius never operates at a loss on infrastructure.
 
-### 1.2 B2B SDK Licensing (The "Infrastructure" Layer) 🏢
+## 2. B2C Revenue Streams (Hyper-Growth Focus)
 
-**Concept:** Packaging the "Conclave" TEE technology for 3rd-party integration.
+### 2.1 The Sovereign Bridge (0.1% - 0.25%)
+*   **NTT Transfers:** Moving sBTC, L-BTC, or RBTC between layers.
+*   **Gas Abstraction:** Users pay destination gas in source assets (e.g., sBTC). Conxius captures a small spread on the "Gas Swap" provided by our Relayer network.
 
-*   **Target:** Fintechs, Neo-banks, and Institutional Treasury providers who want to offer "Hardware-grade" security to their own mobile users.
-*   **Model:**
-    *   **Tier 1 (Startup):** $2,500 / month flat fee (up to 10k users).
-    *   **Tier 2 (Enterprise):** $10,000 / month + volume-based signing fees.
-*   **Value Prop:** Instant compliance with "StrongBox-backed" security requirements for high-value transaction signing.
+### 2.2 Conclave Pro (SaaS)
+*   **Price:** $9.99/month or $99/year.
+*   **Features:** Multi-sig orchestration, advanced privacy scouting, unlimited Tor bridges, and 0% Base Fee for all swaps (SAF floor only).
 
-### 1.3 Network Utility Services (The "Speed" Layer) ⚡
+### 2.3 Network Utility & Referrals
+*   **Affiliate Commissions:** 10-15% on hardware wallet sales (BitBox, Trezor, Ledger).
+*   **Boltz/THORChain Referrals:** 10-50 bps on atomic swaps routed through the app.
+*   **Transaction Accelerator:** Service fee for CPFP/RBF coordination.
 
-*   **LSP Routing Fees (Breez/Greenlight):** As an LSP partner, we earn a share of the routing fees for liquidity provided to user channels.
-*   **Transaction Accelerator ("Turbo Boost"):** Users pay a premium (service fee) to accelerate stuck Bitcoin transactions via RBF/CPFP partners.
+## 3. B2B & Enterprise Revenue (High-Income Focus)
 
-### 1.4 Affiliate Commissions (The "Referral" Layer) 🛡️
+### 3.1 Conclave SDK Licensing
+For Fintechs, Banks, and Neobanks.
+*   **Standard ($2,500/mo):** Up to 10k users, basic TEE signing, community support.
+*   **Pro ($7,500/mo):** Up to 50k users, custom derivation paths, priority relaying, SLA.
+*   **Institutional ($15k+/mo):** Unlimited users, custom HSM/MPC hybrid integration, compliance logging.
 
-*   **Hardware Affiliates:** BitBox02, Trezor, Ledger (10-15% commission).
-*   **"Live on Crypto" (Bitrefill):** 1% of total volume for gift card/utility purchases.
-*   **Sovereign Swaps (THORChain/Boltz):** 10-50 bps affiliate fee appended to swap memos.
+### 3.2 Infrastructure-as-a-Service (IaaS)
+*   **Proof-as-a-Service:** $0.05 per BitVM/STARK proof generated/verified for 3rd parties.
+*   **Relay-as-a-Service:** $0.01 per cross-chain message verified via Conxian Relayers.
 
-### 1.5 Premium Software Features (SaaS)
+## 4. Growth & Retention Cycle (The Sovereign Flywheel)
 
-*   **"Conclave Pro" Subscription:** $9.99/mo for advanced multi-sig tools, dedicated Tor bridges, and AI-powered UTXO privacy scouting.
+1.  **Lowest Cost Entry:** 0.1% fees attract high-volume users from competitors.
+2.  **Sovereignty Lock-in:** Users increase their "Sovereignty Score" to maintain low fees, making it harder to switch to less secure wallets.
+3.  **Pro Expansion:** High-value users convert to "Conclave Pro" for advanced tools.
+4.  **B2B Maturity:** Retail volume proves the tech, driving Enterprise SDK adoption.
+5.  **Re-investment:** B2B profits subsidize B2C gas abstraction, fueling hyper-growth.
 
-## 2. Prohibited Revenue Models (The "Red Lines")
+## 5. Prohibited Models ("The Sovereign Code")
+*   **NO** AUM-based fees (We don't manage your money).
+*   **NO** Custody (We don't hold your keys).
+*   **NO** Sale of User Data (Tor-by-default makes this impossible).
+*   **NO** Front-running/MEV capture on user trades.
 
-To maintain our "Software Provider" regulatory status, Conxian Labs **strictly prohibits**:
-
-*   **x** Taking a percentage of "Assets Under Management" (AUM).
-*   **x** Charging "Performance Fees" or guaranteeing returns.
-*   **x** Internal market making or spread capture on user trades.
-*   **x** Holding user fiat in a Conxian bank account.
+---
