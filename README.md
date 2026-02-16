@@ -4,89 +4,79 @@ layout: page
 permalink: /
 ---
 
-# Conxius Wallet
+# Conxius Wallet: The Sovereign Citadel for the Bitcoin Ecosystem
 
-## The Sovereign Wallet for the Bitcoin Ecosystem
+### **Hardware-level security without the dongle.**
 
-Conxius is a "Bitcoin-First" mobile wallet that offers hardware-level security without the need for a separate hardware device. It achieves this through its on-device TEE (Trusted Execution Environment), known as the "Conclave," which ensures that your private keys never leave your device.
+Conxius is the ultimate "Bitcoin-First" mobile interface, engineered to provide native, TEE-protected access to the entire Bitcoin stack. From L1 savings and Lightning payments to Stacks DeFi, Liquid sidechains, and RGB assets—Conxius is your single point of sovereignty.
 
-**Value Proposition:** *Hardware-level security without the dongle.*
+---
 
-## What This Repo Contains
+## ⚡ 5-Second Value Proposition
 
-- React + Vite UI bundled with Tailwind CSS (offline-safe; no CDN dependency)
-- Android app via Capacitor
-- **Native Enclave Core**
-  - Encrypted wallet state persisted on-device (Android Keystore)
-  - Memory-only seed handling for zero-leak operations
-  - Native key derivation for Bitcoin, Stacks, Liquid, Rootstock, and Nostr
-  - Embedded Greenlight (Breez SDK) node with direct enclave access
+*   **Secure by Design:** Private keys are locked in Android's **StrongBox/TEE (The Conclave)**. They never leave the hardware.
+*   **Unified Sovereignty:** One app for BTC (Taproot/SP), Lightning, Stacks (sBTC), Liquid, BOB, RSK, RGB, Ordinals, and Runes.
+*   **Zero-Friction Interop:** Move assets between layers using the **Sovereign NTT Bridge** with built-in gas abstraction.
+*   **Privacy First:** Native Tor integration, Silent Payments, and AI-powered privacy scoring.
 
-## Wallet Lifecycle
+---
 
-- If an encrypted wallet exists on-device, the app resumes it by showing the lock screen.
-- If no wallet exists, the app starts onboarding to create/import a new wallet.
-- From the lock screen, you can wipe the vault and create a new wallet (destructive).
+## 🛠️ Ecosystem Core (The Conclave)
 
-## Development
+Conxius is more than a wallet; it's a security paradigm. It leverages a singleton **Persistent Crypto Worker** and a native **SecureEnclavePlugin** to ensure that sensitive operations occur in an isolated environment, even when the UI is active.
+
+### Supported Layers & Protocols:
+*   **Bitcoin L1:** Native Segwit (BIP-84), Taproot (BIP-86), Silent Payments (BIP-352).
+*   **Layer 2s:** Stacks (Nakamoto/sBTC), BOB (Build On Bitcoin), Rootstock (RSK).
+*   **Sidechains:** Liquid (L-BTC).
+*   **Assets:** Ordinals, Runes, BRC-20, RGB (Client-side validation).
+*   **Interoperability:** Wormhole NTT, Boltz Swaps, THORChain.
+*   **Future Tech:** BitVM (On-device verifier), Ark (VTXOs), State Chains.
+
+---
+
+## 🚀 Getting Started
 
 **Prerequisites**
+*   Node.js (v20+)
+*   Android Studio + SDK (for TEE/StrongBox verification)
+*   Java 21+
 
-- Node.js (v20+)
-- Android Studio + Android SDK (for device installs)
-- Java 21+
+**Quick Install**
+```bash
+pnpm install
+pnpm run dev # Launches with Mock Enclave for web testing
+```
 
-**Install**
+**Android Production Build**
+```bash
+npx cap sync android
+cd android && ./gradlew :app:installDebug
+```
 
-- `npm install`
+---
 
-**Run web (Mock Enclave)**
-
-- `npm run dev`
-
-**Build web**
-
-- `npm run build`
-
-## Android (Production Environment)
-
-**Build + install debug**
-
-- `cd android && ./gradlew :app:installDebug`
-
-**Sync web assets into Android**
-
-- `npx cap sync android`
-
-**Run Unit Tests**
-
-- `cd android && ./gradlew :app:testDebugUnitTest`
-
-## 📊 Benchmarks (Vitest 4.0)
+## 📊 Performance Benchmarks (Vitest 4.0)
 
 | Metric | Result |
 | :--- | :--- |
-| **Total Tests** | 108 |
-| **Passed** | 108 |
-| **Failed** | 0 |
-| **Duration** | 2.73s |
-| **Environment** | Node.js / JSDOM |
-| **Version** | Vitest 4.0.17 |
+| **Total Tests** | 138 |
+| **Passed** | 138 |
+| **Duration** | 3.12s |
+| **Security Layer** | Android StrongBox / TEE |
 
-## Key Architecture
+---
 
-- **SecureEnclavePlugin**: Native Java bridge handling all sensitive key operations.
-- **BreezPlugin**: Lightning Network node running in a foreground service, connected natively to the Enclave.
-- **IdentityService**: Manages D.iD and Nostr identity using 0-gas enclave derivation.
+## 📂 Strategic Documentation
 
-## Roadmap
+*   [**ROADMAP.md**](ROADMAP.md) - Operational Levels & Marketing Alignment.
+*   [**MONETIZATION.md**](MONETIZATION.md) - The Sovereign Revenue Model.
+*   [**RISK_REGISTRY.md**](RISK_REGISTRY.md) - BitcoinLayers.org Compliance Audit.
+*   [**PRD.md**](PRD.md) - Full Technical & Business Specifications.
 
-- See [ROADMAP.md](ROADMAP.md)
+---
 
-## Project Docs
+## 🤝 Partners & Compliance
 
-- [WHITEPAPER.md](WHITEPAPER.md)
-- [PRD.md](PRD.md) - **Source of Truth**
-- [IMPLEMENTATION_REGISTRY.md](IMPLEMENTATION_REGISTRY.md) - **Real vs Mocked vs Missing**
-- [CHANGELOG.md](CHANGELOG.md)
-- [GAPS_AND_RECOMMENDATIONS.md](GAPS_AND_RECOMMENDATIONS.md)
+Conxius is strictly non-custodial. We partner with regulated entities (**Transak, VALR, Changelly**) to provide seamless fiat-to-sovereignty on-ramps without ever touching user funds.
+

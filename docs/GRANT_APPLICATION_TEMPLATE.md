@@ -1,38 +1,59 @@
 ---
-title: Grant Template
+title: Grant Application Template
 layout: page
 permalink: /docs/grant-template
 ---
 
-# Grant Application Template
+# Conxius Wallet: Grant Application Template (Stacks & Wormhole)
 
-## Project Overview
+## 1. Project Overview
 
 **Project Name:** Conxius Wallet
+**Entity:** Conxian Labs
+**One-Liner:** A "Bitcoin-First" mobile gateway providing TEE-secured, multi-layer sovereignty for the full Bitcoin ecosystem.
 
-**One-Liner:** A "Bitcoin-First" mobile wallet with hardware-level security, powered by an on-device TEE (Trusted Execution Environment).
+**The Problem:** Users are fragmented across custodial bridges and disparate apps for Stacks (sBTC), Bitcoin L1, and EVM-compatible Bitcoin L2s. There is no unified mobile interface that offers hardware-grade security for cross-chain movement.
 
-**Problem:** The Bitcoin ecosystem is expanding rapidly with the growth of L2s and sidechains. However, there is a lack of mobile wallets that offer both high security and seamless multi-chain support.
+**The Solution:** Conxius integrates **Stacks sBTC** and **Wormhole NTT** into a single Android Enclave (The Conclave). This allows users to bridge, swap, and sign transactions across the entire stack with zero secret egress and unified gas abstraction.
 
-**Solution:** The Conxius Wallet bridges this gap by providing a single, secure, and user-friendly interface for managing assets across the entire Bitcoin ecosystem.
+---
 
-## Technical Strengths
+## 2. Technical Strengths & Innovation
 
-*   **On-Device TEE (Conclave):** Our on-device TEE provides hardware-level security without the need for a separate hardware device. This is a significant security advantage over other mobile wallets.
-*   **Multi-Chain Support:** We support a wide range of Bitcoin L2s and sidechains, including Stacks, Rootstock, and Liquid.
-*   **Wormhole NTT Integration:** Our integration with Wormhole NTT enables seamless cross-chain asset transfers.
-*   **"Bitcoin-First" Philosophy:** We are committed to the "Bitcoin-First" philosophy and believe that Bitcoin is the foundation of the decentralized internet.
+*   **Native Enclave Core:** We utilize Android **StrongBox** to ensure private keys are never exposed to the application layer.
+*   **Wormhole NTT Transceiver:** We have implemented a sovereign transceiver that allows for "Native Token Transfers," maintaining the native properties of assets like sBTC when moving across chains.
+*   **sBTC Native Integration:** Deep support for the Stacks Nakamoto release, including native peg-in/out scripting in `signer.ts`.
+*   **Gas Abstraction:** Enabling users to pay for cross-chain bridging fees in sBTC/BTC, removing the barrier of entry for non-EVM users.
 
-## Grant Request
+---
 
-We are seeking a grant to support the following initiatives:
+## 3. Specific Grant Initiatives
 
-*   **[Initiative 1]:** [Description of initiative]
-*   **[Initiative 2]:** [Description of initiative]
-*   **[Initiative 3]:** [Description of initiative]
+### Initiative A: The Stacks sBTC On-Ramp Hub
+*   **Objective:** Make Conxius the primary mobile interface for sBTC.
+*   **Milestones:**
+    1. Integration of Stacks Clarity 4.0 deposit functions.
+    2. Real-time Hiro API indexing for sBTC balances.
+    3. "Stacks Sovereignty" marketing campaign to onboard 5k active users.
 
-We believe that these initiatives will help to grow the [Stacks/Wormhole] ecosystem and make it more accessible to a wider range of users.
+### Initiative B: The Wormhole Sovereign Bridge (NTT)
+*   **Objective:** Deploy and maintain the first mobile-first NTT bridge for Bitcoin L2 assets.
+*   **Milestones:**
+    1. Deployment of Conxius NTT Manager contracts on BOB and Base.
+    2. Implementation of the "sBTC-as-Gas" Relayer service.
+    3. Integration of Wormhole VAA verification directly into the on-device ZK-Verifier (M10).
 
-## Team
+---
 
-The Conxius Wallet team is composed of experienced engineers and designers with a passion for Bitcoin and decentralized technologies. We have a proven track record of shipping high-quality products and are confident that we can deliver on our promises.
+## 4. Ecosystem Impact
+
+*   **Stacks Growth:** By lowering the barrier to entry for sBTC, we drive TVL and transaction volume to the Stacks network.
+*   **Wormhole Volume:** Our gas abstraction model and 0.1% convenience fee structure provide a sustainable flow of cross-chain volume through the Wormhole Guardian network.
+*   **Security Standard:** We set a new benchmark for "Mobile Sovereignty," encouraging other developers to use the Conclave SDK for secure Bitcoin signing.
+
+---
+
+## 5. Team & Track Record
+
+The Conxian Labs team consists of experts in Android TEE security, Bitcoin scripting, and cross-chain architecture. We have successfully completed Milestones M1-M3 and are currently executing the Level 2 Operational Roadmap.
+

@@ -76,3 +76,33 @@ This section outlines the risk profiles of the Bitcoin L2s and Sidechains suppor
 * **Risk Warning:** Federated.
 * **Custody Model:** The Liquid Network is a sidechain with a federated model. A group of "functionaries" (trusted parties) are responsible for managing the two-way peg.
 * **Key Consideration:** This is a custodial model where users are trusting the federation of functionaries to secure their assets.
+
+### 4.4 BOB (Build On Bitcoin)
+* **Risk Level:** Medium (EVM L2) - [BitcoinLayers.org: L2 - Optimistic/Federated]
+* **Risk Warning:** Federated/EVM Risk.
+* **Custody Model:** BOB is an EVM-compatible L2 that uses a multi-sig bridge. While it aims for BitVM-based security, current phases involve federated controls.
+* **Key Consideration:** Users are exposed to EVM smart contract risks and the honesty of the bridge federation.
+
+### 4.5 Ark Protocol (VTXOs)
+* **Risk Level:** Low (L2 - Off-chain)
+* **Risk Warning:** Service Dependency.
+* **Custody Model:** Funds are held in shared UTXOs (VTXOs). Users have unilateral exit rights to L1, but daily off-chain transactions depend on an Ark Service Provider (ASP).
+* **Key Consideration:** If the ASP goes offline, users must wait for the exit timeout to reclaim funds on L1.
+
+### 4.6 RGB Protocol
+* **Risk Level:** Low (Client-Side Validated)
+* **Risk Warning:** Data Availability Risk.
+* **Custody Model:** Truly non-custodial. Assets live in Taproot commitments.
+* **Key Consideration:** Users are responsible for their own consignment data. If data is lost, the asset cannot be proven/transferred. Conxius mitigates this via encrypted cloud backups of consignments.
+
+### 4.7 State Chains
+* **Risk Level:** Medium (Off-chain UTXO)
+* **Risk Warning:** Federated Trust.
+* **Custody Model:** Uses a 2-of-2 multi-sig between the user and a State Chain Entity (SCE).
+* **Key Consideration:** The SCE cannot steal funds alone, but they can collude with a previous owner or refuse to sign, requiring an L1 exit.
+
+### 4.8 BitVM & Maven
+* **Risk Level:** Experimental.
+* **Risk Warning:** Technical Complexity.
+* **Custody Model:** Purely cryptographic/mathematical security.
+* **Key Consideration:** These protocols are in early stages; unintended bugs in the verifier logic could lead to loss of funds.

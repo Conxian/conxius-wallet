@@ -4,7 +4,7 @@ layout: page
 permalink: /roadmap
 ---
 
-# Conxius Wallet: Full Ecosystem Roadmap
+# Conxius Wallet: Operational Roadmap & Strategic Milestones
 
 ## North Star
 
@@ -12,51 +12,51 @@ permalink: /roadmap
 - **Enclave-Grade Security**: Universal TEE/StrongBox protection for all supported protocols.
 - **B2B Leadership**: Positioning Conxius + Gateway as the institutional standard for Bitcoin-native finance.
 
-## Phase 1: Foundation (Completed)
+---
 
-- **[UNIFIED_ONBOARDING]**: BIP-39 with mandatory backup verification.
-- **[SECURE_PERSISTENCE]**: Encrypted state vault via Android Keystore.
-- **[BTC_TAPROOT]**: Native L1 support with Taproot and Silent Payments.
-- **[LIGHTNING_CORE]**: Breez SDK integration for non-custodial Lightning.
-- **[B2B_GATEWAY]**: Launch of Conxian Gateway for institutional treasury.
+## 🏗️ Operational Levels
 
-## Phase 2: Layer 2 Expansion (In Progress)
+### Level 0: Product Validation (ROOT) - [COMPLETED]
+*   **Focus:** Core Enclave & L1/Lightning stability.
+*   **Tech:** BIP-39, BIP-84/86, Breez SDK, Android TEE bridge.
+*   **Biz:** PRD finalized, Market Fit validated, Seed round closed.
 
-- **[NATIVE_PEGS]**: Full integration of Liquid (L-BTC) and Stacks (sBTC) native peg-in/out.
-- **[EVM_L2_HUB]**: Unified support for BOB (Build On Bitcoin) and Rootstock (RSK).
-- **[ASSET_STUDIO]**: Native UI for Ordinals and Runes management.
-- **[NTT_BRIDGE]**: Sovereign bridging via Wormhole Native Token Transfers.
+### Level 1: Foundation (ACTIVE)
+*   **Focus:** Bitcoin Layer Expansion & Audit Readiness.
+*   **Tech:** sBTC Native Peg, Liquid/RSK Hub, BOB integration.
+*   **Biz:** **"The Multi-Layer Upgrade"** Campaign; Appointment of Security Audit Partners.
 
-## Phase 3: Advanced Protocols (Planned)
+### Level 2: Interoperability (UPCOMING)
+*   **Focus:** Sovereign Bridging & Mainnet Liquidity.
+*   **Tech:** Wormhole NTT Transceiver Mainnet; Gas Abstraction.
+*   **Biz:** **"Unwrap Your Bitcoin"** Campaign Launch; Wormhole Ecosystem Grant execution.
 
-- **[RGB_NATIVE]**: Client-side validated assets with Taproot signing.
-- **[ARK_PROTOCOL]**: VTXO management for instant off-chain payments.
-- **[STATE_CHAINS]**: Support for sequential derivation and off-chain UTXO transfers.
-- **[BITVM_VERIFIER]**: On-device ZK-STARK verification for BitVM proofs.
-
-## Phase 4: Institutional Mastery (Strategic)
-
-- **[POLICY_VAULTS]**: Institutional policy-gated enclave (spend limits, whitelisting).
-- **[MULTI_SIG_QUORUM]**: Native multi-sig orchestration for corporate treasury.
-- **[PRIVACY_V2]**: Advanced CoinJoin and privacy scoring for the full stack.
-- **[MAVEN_INTEGRATION]**: Native support for the Maven protocol ecosystem.
+### Level 3: Institutional Mastery (STRATEGIC)
+*   **Focus:** B2B SDK & Privacy-Preserving Treasury.
+*   **Tech:** Policy-gated Enclave, Multi-sig Quorum, ZK Verifier.
+*   **Biz:** **"The Corporate Citadel"** B2B Campaign; Conclave SDK Public Beta.
 
 ---
 
-## 📅 Milestones
+## 📅 Strategic Milestones (M1 - M11+)
 
-| Milestone | Target | Status |
-| :--- | :--- | :--- |
-| **M1: Foundation & Security** | Q4 2024 | ✅ COMPLETED |
-| **M2: Lightning & Taproot** | Q1 2025 | ✅ COMPLETED |
-| **M3: L2 Expansion (Liquid/Stacks/BOB)** | Q2 2025 | ✅ COMPLETED |
-| **M4: Asset Studio (Ordinals/Runes/RGB)** | Q3 2025 | 🟡 PARTIAL (Ordinals/Runes live; RGB structural validation) |
-| **M5: Ark & State Chains** | Q4 2025 | 🟡 IN PROGRESS (Enclave signing & VTXO logic live; ASP partial) |
-| **M6: BitVM & ZK-Proofs** | Q1 2026 | 🟡 PARTIAL (functional verifier; full WASM verifier pending) |
+| Milestone | Target | Status | Tech Scope | Marketing / Biz Campaign |
+| :--- | :--- | :--- | :--- | :--- |
+| **M1: Notifications & Foundation** | Q4 2024 | ✅ | Push notifications & Secure Vault | "The Citadel in Your Pocket" |
+| **M2: Lifecycle & Lightning** | Q1 2025 | ✅ | Breez SDK & Tx States | "Spend Bitcoin Anywhere" |
+| **M3: PSBT & L2 Expansion** | Q2 2025 | ✅ | Liquid/Stacks/BOB PSBT support | "The Multi-Layer Upgrade" |
+| **M4: Multi-Wallet Core** | Q2 2025 | 🟡 | HD Wallet support for multiple seeds | "Sovereign Separation of Concerns" |
+| **M5: NTT Bridge Execution** | Q3 2025 | 🟡 | Wormhole NTT Transceiver Mainnet | **"Unwrap Your Bitcoin"** Launch |
+| **M6: Multi-Sig Quorum** | Q3 2025 | 🟡 | Native 2-of-3 Enclave orchestration | **"The Corporate Vault"** Campaign |
+| **M7: Privacy v2** | Q4 2025 | ⚪ | Advanced CoinJoin & Tor bridges | "Invisible Sovereignty" |
+| **M8: Privacy Scoring** | Q4 2025 | ✅ | Sovereign Score & UX Quests | "Gamified Security" |
+| **M9: Asset Studio v2** | Q1 2026 | 🟡 | Ordinals/Runes/RGB full lifecycle | "Mint Your Legacy on Bitcoin" |
+| **M10: ZK Verifier Core** | Q1 2026 | ⚪ | On-device STARK/SNARK verification | "Trust But Verify" (Native ZK) |
+| **M11: BitVM Execution** | Q2 2026 | 🟡 | BitVM bridge & computation verifier | "The Turing-Complete Bitcoin" |
 
 ---
 
-## Go-to-Market Strategy
+## 🚀 Go-to-Market Strategy
 
 - **B2B Campaign**: "The Corporate Citadel" — targeting Bitcoin-native companies for treasury management.
 - **Developer Alpha**: Opening the Enclave SDK for 3rd-party L2 developers.
