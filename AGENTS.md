@@ -78,7 +78,7 @@ Ensure the following files are synced:
 
 ---
 
-## 🚀 Full Bitcoin Ecosystem Alignment (2026-02-15)
+## 🚀 Full Bitcoin Ecosystem Alignment (2026-02-16)
 
 The wallet has been expanded to support the full Bitcoin stack. When working on any module:
 - Ensure it respects the specific derivation paths in `services/signer.ts`.

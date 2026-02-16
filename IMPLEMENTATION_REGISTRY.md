@@ -67,7 +67,7 @@ This document tracks the ground-truth implementation status of every major featu
 
 ### 🟢 ALL CORE PROTOCOLS ENHANCED
 
-1. **Done**: Full audit and hardening of Ark, RGB, StateChains, Maven, and BitVM completed. Maven updated with sequential derivation support.
+1. **Done**: Sprint 2026-02-16 Root-to-Leaf Audit & Repair completed. Refined native signing for 14+ layers, hardened Web5 enclave bridge, and synchronized Dashboard receive flows.
 2. **Next**: Further optimize RGB client-side validation using full WASM libraries in Phase 4.
 
 ---
