@@ -2,6 +2,7 @@ import { notificationService } from './notifications';
 import { Network } from '../types';
 import { endpointsFor, fetchWithRetry } from './network';
 import { requestEnclaveSignature } from './signer';
+import { generateRandomString } from './random';
 
 export interface SwapQuote {
   id: string;
@@ -47,7 +48,7 @@ export const fetchChangellyQuote = async (
 
         // High-fidelity fallback
         return {
-            id: 'chg_' + Math.random().toString(36).slice(2),
+            id: 'chg_' + generateRandomString(10),
             fromAsset: from,
             toAsset: to,
             fromAmount: amount,

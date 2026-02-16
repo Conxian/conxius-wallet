@@ -1,4 +1,5 @@
 import { Network } from '../types';
+import { generateRandomString } from './random';
 
 function envValue(key: string): string | undefined {
   const value = (import.meta as any).env?.[key];
@@ -71,7 +72,7 @@ export async function fetchWithRetry(
         finalOptions.headers = {
             ...finalOptions.headers,
             'X-Sovereign-Tor': 'true',
-            'X-Tor-Circuit-ID': Math.random().toString(36).slice(2)
+            'X-Tor-Circuit-ID': generateRandomString(12)
         };
     }
 
