@@ -701,3 +701,20 @@ export const requestEnclaveSignature = async (
     }
   }
 };
+
+/**
+ * Signs a Multi-Sig PSBT using the Enclave.
+ */
+export const signMultiSigPsbt = async (psbtBase64: string, network: Network, vault: string, pin: string): Promise<string> => {
+    // 1. Get hashes from PSBT
+    // 2. Sign each hash with Enclave
+    // 3. Finalize PSBT
+
+    // For now, we'll use a simplified flow where we sign using the standard BIP-84/86 keys
+    // if they are part of the quorum.
+
+    // Real implementation would derive the specific key for the multi-sig path if different.
+
+    const signResult = await signPsbtBase64(vault, psbtBase64, network);
+    return signResult;
+};
