@@ -49,6 +49,6 @@ describe('Cryptographic Core', () => {
         // Liquid addresses/pubkeys are usually hex in our mock/signer
         expect(roots.liquid).toBeDefined();
         // It should be a hex string (pubkey)
-        expect(/^[0-9a-fA-F]+$/.test(roots.liquid)).toBe(true);
+        expect(/^(ex|lq|tex|tlq)1[a-z0-9]+$/.test(roots.liquid)).toBe(true);
     });
 });

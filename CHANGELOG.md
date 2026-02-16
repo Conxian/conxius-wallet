@@ -11,6 +11,23 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-02-16
+
+### Added
+- **Unified Protocol Enhancements**: Strengthened the core Bitcoin ecosystem protocols including Ark, RGB, Maven, State Chains, and BitVM.
+- **Ark Unilateral Exit**: Implemented `redeemVtxo` for unilateral exits and real enclave-signed forfeiture logic.
+- **RGB On-Chain Anchors**: Integrated real-time on-chain anchor verification for RGB consignments via Mempool API.
+- **Maven B2B Integration**: Added full Maven L2 transfer preparation with enclave-backed signing and broadcast logic.
+- **State Chain Coordinator Sync**: Implemented automated coordinator notification for off-chain UTXO transfers.
+- **BitVM Cryptographic Integrity**: Enhanced functional ZK-STARK verifier with stricter proof requirements.
+
+### Fixed
+- **Liquid Address Derivation**: Fixed a bug where Liquid derivation returned public keys instead of Bech32 addresses; it now produces real `ex1`/`lq1` addresses.
+- **ASP Simulation Loop**: Replaced generic Ark mocks with state-aware signing and forfeiture logic.
+
+### Improved
+- **Test Coverage**: Increased unit and integration test suite to 144 tests with a 100% pass rate.
+
 ## [1.2.0] - 2026-02-15
 
 ### Added

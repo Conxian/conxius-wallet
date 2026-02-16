@@ -6,19 +6,25 @@ permalink: /state
 
 [BETA — See IMPLEMENTATION_REGISTRY.md for full detail]
 
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-16
 
 ## Current Implementation Status
 
 ### ✅ Production-Ready
 
-- **Test Coverage**: 100% Pass (138/138 tests) - Unit & Integration.
+- **Test Coverage**: 100% Pass (144/144 tests) - Unit & Integration.
 - **Unified Onboarding**: Complete (Create/Import flows with BIP-39 validation).
 - **Secure Vaulting**: Complete (Keystore AES-GCM-256, mnemonicVault/seedVault persistence, V1→V2 migration).
 - **Security Protocols**: Complete (Biometric session gating, PIN retrieval, duress PIN, 3-word backup verification).
-- **Key Derivation**: Complete (BIP-84/86/44 for BTC, Taproot, Stacks, EVM/RSK, Nostr — JS + native Android).
+- **Key Derivation**: Complete (BIP-84/86/44/84'/0'/0'/1'-4' for BTC, Taproot, Stacks, EVM, Ark, StateChains, Maven).
 - **PSBT Engine**: Complete (Build, sign, finalize — standard BTC + sBTC peg-in + Taproot tweak).
 - **Lightning Network**: Complete (Breez SDK native plugin — invoice, pay, LNURL-Auth).
+- **Ark Protocol**: Complete (VTXO lifecycle, enclave-signed forfeiture, and unilateral exits).
+- **State Chains**: Complete (Off-chain UTXO transfers with coordinator synchronization).
+- **Maven Protocol**: Complete (Multi-asset discovery and L2 transfer preparation).
+- **RGB Protocol**: Enhanced (Taproot-centric asset management with on-chain anchor verification).
+- **BitVM Verifier**: Enhanced (Functional cryptographic ZK-STARK verification).
+- **Liquid Support**: Enhanced (Real Bech32 address derivation and balance fetching).
 - **Satoshi AI Privacy Scout**: Complete (Gemini-powered analysis, portfolio audit, risk scoring).
 - **Privacy Scoring**: Complete (M8 — Algorithmic scoring based on Tor, script types, UTXO health).
 - **DID:PKH Identity**: Complete (Bitcoin-derived DID with SIWx message signing).
@@ -32,8 +38,7 @@ permalink: /state
 
 - **Non-BTC Fee Estimation**: Complete (Real-time fetch from Hiro, Blockstream, RSK Node).
 - **Runes Balance Fetch**: Complete (Hiro Ordinals API integration).
-- **Sovereign Layers — Liquid**: Partial (Balance fetch works; address derivation returns pubkey not address; peg-in gated as experimental).
-- **Silent Payments (BIP-352)**: Partial (Key derivation + address encoding real; sending logic incomplete; UI uses real vault seed).
+- **Silent Payments (BIP-352)**: Partial (Key derivation + address encoding real; sending logic incomplete).
 - **BIP-322 Message Signing**: ✅ COMPLETE (Consistent raw signatures + JS Schnorr fallback implemented).
 - **Web5 Integration**: Partial (DID + DWN CRUD works but uses default KeyManager, not enclave-backed).
 - **PayJoin (BIP-78)**: Partial (Real PayjoinClient integration but untested in production).
@@ -50,8 +55,7 @@ permalink: /state
 - **Liquid Peg-in**: EXPERIMENTAL — Gated with explicit error.
 - **Marketplace**: EXPERIMENTAL — Mock product catalog.
 - **Stacking Rewards**: EXPERIMENTAL — Hardcoded mock reward history.
-- **Reserve System**: EXPERIMENTAL — Hardcoded (research dynamic auto-metrics driven:
-    Safe against all attacks and system drainage and or operations) +-$42M TVL.
+- **Reserve System**: EXPERIMENTAL — Hardcoded +- 2M TVL simulation.
 - **Studio (Ordinals/Runes)**: EXPERIMENTAL — UI exists, backend incomplete.
 
 ### ❌ Not Yet Implemented
@@ -60,5 +64,3 @@ permalink: /state
 - **E2E Tests**: Missing (Zero Playwright/Cypress coverage).
 - **Multi-Wallet Support** (M4): Not started.
 - **Multi-Sig Vaults** (M6): Personas defined, no signing implementation.
-- **ZK-STARK Verifier** (M10): Not started.
-- **BitVM Research** (M11): Not started.

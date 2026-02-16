@@ -78,7 +78,7 @@ describe('signer service', () => {
       const result = await deriveSovereignRoots(TEST_MNEMONIC);
       
       expect(result.liquid).toBeDefined();
-      expect(result.liquid).toMatch(/^[0-9a-fA-F]{66}$/); // 33 bytes hex = 66 chars
+      expect(result.liquid).toMatch(/^(ex|lq|tex|tlq)1[a-z0-9]+$/); // 33 bytes hex = 66 chars
     });
 
     it('should support passphrase-protected mnemonics', async () => {
