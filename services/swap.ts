@@ -1,4 +1,5 @@
-import { Network, notificationService } from './notifications';
+import { notificationService } from './notifications';
+import { Network } from '../types';
 import { endpointsFor, fetchWithRetry } from './network';
 import { requestEnclaveSignature } from './signer';
 
@@ -18,7 +19,7 @@ export interface SwapQuote {
  * Orchestrates cross-chain and multi-layer swaps.
  */
 
-const SWAP_EXPERIMENTAL = false; // Unblocked for high-fidelity flow
+export const SWAP_EXPERIMENTAL = false; // Unblocked for high-fidelity flow
 
 export const isChangellyReady = (): boolean => {
   return true; // Allow flow even if proxy is missing (will use mock fallback)
@@ -99,7 +100,6 @@ export const createChangellyTransaction = async (quote: SwapQuote, destAddress: 
     };
 };
 
-export const SWAP_EXPERIMENTAL = false;
 
 export const executeGasSwap = async (amount: number, network: Network): Promise<string> => {
     notificationService.notifyTransaction('Gas Abstraction', 'Swapping for native gas...', true);

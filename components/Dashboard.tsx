@@ -37,11 +37,18 @@ const Dashboard: React.FC = () => {
   const [isSigning, setIsSigning] = useState(false);
   const [receiveLayer, setReceiveLayer] = useState<BitcoinLayer>('Mainnet');
 
-  if (!appContext) return null;
-  const { mode, network, assets, privacyMode, walletConfig, language } = appContext.state;
+  const { mode, network, assets, privacyMode, walletConfig, language } = appContext?.state || {
+    mode: 'simulation',
+    network: 'mainnet',
+    assets: [],
+    privacyMode: false,
+    walletConfig: null,
+    language: 'en'
+  };
   const btcAddress = walletConfig?.masterAddress || '';
   const taprootAddress = walletConfig?.taprootAddress || '';
   const stxAddress = walletConfig?.stacksAddress || '';
+
 
   const t = (key: string) => getTranslation(language, key);
 
@@ -76,11 +83,11 @@ const Dashboard: React.FC = () => {
             ...mavenAssets,
             ...scAssets
         ];
-        appContext.updateAssets(finalAssets);
-        appContext.notify('success', 'Ledger Synchronized via RPC');
+        appContext?.updateAssets(finalAssets);
+        appContext?.notify('success', 'Ledger Synchronized via RPC');
     } catch (e) {
         console.error("Omni-Sync Failed", e);
-        appContext.notify('error', 'Sync Failed: Node Unreachable');
+        appContext?.notify('error', 'Sync Failed: Node Unreachable');
     } finally {
         setIsSyncing(false);
     }
@@ -135,6 +142,8 @@ const Dashboard: React.FC = () => {
       setQrError(true);
     }
   };
+
+  if (!appContext) return null;
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-10 animate-in fade-in duration-700 pb-32">
@@ -399,7 +408,7 @@ const Dashboard: React.FC = () => {
                                 setSignedHex(result.broadcastReadyHex || '');
                                 setSendStep('broadcast');
                             } catch (e) {
-                                appContext.notify('error', 'Signing Failed');
+                                appContext?.notify('error', 'Signing Failed');
                             } finally {
                                 setIsSigning(false);
                             }
@@ -427,10 +436,10 @@ const Dashboard: React.FC = () => {
                             try {
                                 const txid = await broadcastBtcTx(signedHex, network);
                                 setBroadcastResult(txid);
-                                appContext.notify('success', 'Transaction Broadcasted!');
+                                appContext?.notify('success', 'Transaction Broadcasted!');
                                 setTimeout(() => { setShowSend(false); setSendStep('form'); }, 2000);
                             } catch (e) {
-                                appContext.notify('error', 'Broadcast Failed');
+                                appContext?.notify('error', 'Broadcast Failed');
                             } finally {
                                 setIsBroadcasting(false);
                             }
