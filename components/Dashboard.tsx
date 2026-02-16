@@ -454,7 +454,7 @@ const Dashboard: React.FC = () => {
               <button onClick={() => setShowReceive(false)} aria-label="Close" className="absolute top-8 right-8 text-zinc-700 hover:text-zinc-300"><X size={24} /></button>
               
               <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800 mb-4">
-                {(['Mainnet', 'Stacks', 'Rootstock'] as BitcoinLayer[]).map(l => (
+                {(['Mainnet', 'Stacks', 'Liquid', 'Rootstock', 'RGB', 'Ark'] as BitcoinLayer[]).map(l => (
                     <button 
                         key={l}
                         onClick={() => setReceiveLayer(l)}
@@ -483,7 +483,7 @@ const Dashboard: React.FC = () => {
                  <div className="w-full space-y-3">
                     <p className="text-[9px] font-black text-zinc-600 uppercase text-center">{receiveLayer} Root</p>
                     <div className="flex items-center gap-3 bg-zinc-950 p-4 rounded-xl border border-zinc-800">
-                       <p className="text-[10px] font-mono text-zinc-400 truncate flex-1">{receiveLayer === 'Stacks' ? stxAddress : btcAddress}</p>
+                       <p className="text-[10px] font-mono text-zinc-400 truncate flex-1">{receiveLayer === 'Stacks' ? stxAddress : (receiveLayer === 'RGB' ? taprootAddress : btcAddress)}</p>
                        <button onClick={() => { navigator.clipboard.writeText(receiveLayer === 'Stacks' ? stxAddress : btcAddress); appContext.notify('info', 'Address Copied to Clipboard'); }} aria-label="Copy Address" className="text-orange-500"><Copy size={14} /></button>
                     </div>
                  </div>
