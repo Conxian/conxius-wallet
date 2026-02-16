@@ -630,3 +630,22 @@ export const checkBtcTxStatus = async (txid: string, network: Network = 'mainnet
     return { confirmed: false };
   }
 };
+
+/**
+ * Multi-Sig Treasury Fetcher
+ */
+export const fetchCitadelTreasury = async (network: Network = 'mainnet'): Promise<Asset[]> => {
+    const { fetchMultiSigBalances } = await import('./multisig');
+    const CITADEL_QUORUM = {
+        name: 'Citadel Treasury',
+        m: 2,
+        n: 3,
+        publicKeys: [
+            '02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5',
+            '02d3346d0554045431668600c870404040404040404040404040404040404040',
+            '02f4446d0554045431668600c870404040404040404040404040404040404040'
+        ],
+        network
+    };
+    return fetchMultiSigBalances(CITADEL_QUORUM);
+};
