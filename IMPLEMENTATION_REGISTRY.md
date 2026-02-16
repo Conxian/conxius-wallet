@@ -67,7 +67,7 @@ This document tracks the ground-truth implementation status of every major featu
 
 ### 🟢 ALL CORE PROTOCOLS ENHANCED
 
-1. **Done**: Ark/StateChains/Maven/RGB/BitVM moved to Production-grade implementations.
+1. **Done**: Full audit and hardening of Ark, RGB, StateChains, Maven, and BitVM completed. Maven updated with sequential derivation support.
 2. **Next**: Further optimize RGB client-side validation using full WASM libraries in Phase 4.
 
 ---
