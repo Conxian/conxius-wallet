@@ -1,6 +1,7 @@
 import { UTXO, Network } from '../types';
 import { notificationService } from './notifications';
 import { endpointsFor, fetchWithRetry } from './network';
+import { generateRandomString } from './random';
 
 export interface CoinJoinRound {
     roundId: string;
@@ -46,7 +47,7 @@ export const registerInputs = async (
     });
 
     // Simulate coordinator handshake
-    return 'registration_token_' + Math.random().toString(36).slice(2);
+    return 'registration_token_' + generateRandomString(12);
 };
 
 export const registerOutput = async (
