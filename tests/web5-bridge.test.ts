@@ -28,7 +28,7 @@ describe('EnclaveKeyManager', () => {
         const jwk = await km.getPublicKey({ keyAlias: 'test' });
         expect(jwk.kty).toBe('EC');
         expect(jwk.crv).toBe('secp256k1');
-        expect(jwk.x).toBe('a'.repeat(64));
+        expect(jwk.x).toBe(Buffer.from('a'.repeat(64), 'hex').toString('base64url'));
     });
 
     it('should sign data via enclave', async () => {

@@ -552,6 +552,21 @@ export const requestEnclaveSignature = async (
         pubkey: res.pubkey,
         timestamp: Date.now(),
       };
+    } else if (request.layer === "Runes" || request.layer === "Ordinals") {
+      const path = "m/86'/0'/0'/0/0"; // Taproot standard
+      const res = await signNative({
+        vault,
+        pin,
+        path,
+        messageHash: request.payload?.hash || (typeof request.payload === "string" ? request.payload : ""),
+        network: "bitcoin",
+          payload: JSON.stringify(request.payload)
+        });
+      return {
+        signature: res.signature,
+        pubkey: res.pubkey,
+        timestamp: Date.now(),
+      };
     } else if (request.layer === "BitVM") {
       const path = "m/84'/0'/0'/4/0"; // BitVM path
       const res = await signNative({

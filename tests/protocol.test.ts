@@ -556,6 +556,10 @@ describe('protocol service', () => {
 
 describe('Enhanced Fetchers and Verifiers', () => {
     it('fetchRgbAssets should return assets for Taproot address', async () => {
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => [{ id: 'rgb1', name: 'Sovereign Bond', symbol: 'SBOND', balance: 1000 }]
+        });
         const assets = await fetchRgbAssets('bc1p0000000000000000000000000000000000000000000000000000000000');
         expect(assets.length).toBeGreaterThan(0);
         expect(assets[0].layer).toBe('RGB');
@@ -568,10 +572,9 @@ describe('Enhanced Fetchers and Verifiers', () => {
     });
 
     it('fetchArkBalances should return VTXOs for supported addresses', async () => {
-        // Mock a 404 response to trigger fallback assets
         mockFetch.mockResolvedValueOnce({
-            ok: false,
-            status: 404
+            ok: true,
+            json: async () => [{ id: 'vtxo1', amount_sats: 500000, symbol: 'ARK-BTC' }]
         });
         const balances = await fetchArkBalances('bc1q00000000000000000000000000000000000000');
         expect(balances.length).toBeGreaterThan(0);

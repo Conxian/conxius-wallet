@@ -1,3 +1,4 @@
+import * as ecc from "tiny-secp256k1";
 import { Web5 } from "@web5/api";
 import { getDerivedSecretNative, signNative, getEnclaveBlob } from "./enclave-storage";
 
@@ -30,11 +31,19 @@ export class EnclaveKeyManager {
         const { pubkey } = await getDerivedSecretNative({ vault: this.vault!, path });
 
         // Return as simplified JWK for secp256k1
+        // Ensure uncompressed for JWK (65 bytes: 04 + 32x + 32y)
+        let uncompressed = pubkey;
+        if (pubkey.length === 66) {
+            const buf = Buffer.from(pubkey, "hex");
+            const expanded = ecc.pointCompress(buf, false);
+            if (expanded) uncompressed = Buffer.from(expanded).toString("hex");
+        }
+
         return {
             kty: "EC",
             crv: "secp256k1",
-            x: pubkey.substring(2, 66),
-            y: pubkey.substring(66)
+            x: Buffer.from(uncompressed.substring(2, 66), "hex").toString("base64url"),
+            y: Buffer.from(uncompressed.substring(66), "hex").toString("base64url")
         };
     }
 

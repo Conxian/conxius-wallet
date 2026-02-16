@@ -17,6 +17,7 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 import org.bitcoinj.core.NetworkParameters;
+import org.json.JSONObject;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.HDKeyDerivation;
 import org.bitcoinj.params.MainNetParams;
@@ -346,56 +347,78 @@ public class SecureEnclavePlugin extends Plugin {
         });
     }
 
-    private TransactionInfo parsePayload(String payloadHex, String networkStr) {
+        private TransactionInfo parsePayload(String payload, String networkStr) {
         TransactionInfo info = new TransactionInfo();
         info.action = "Sign Hash";
         info.amount = "Unknown";
         info.recipient = "Unknown";
-        if (payloadHex == null || payloadHex.isEmpty()) return info;
+        if (payload == null || payload.isEmpty()) return info;
 
         try {
-            if ("stacks".equals(networkStr)) {
-                byte[] data = org.bouncycastle.util.encoders.Hex.decode(payloadHex);
-                if (data.length > 2) {
-                    int postConditionMode = data[1] & 0xFF;
-                    if (postConditionMode == 0x02) {
+            if (payload.startsWith("{")) {
+                JSONObject json = new JSONObject(payload);
+                if ("stacks".equals(networkStr)) {
+                    info.action = "Stacks Protocol";
+                    if (json.has("amount")) info.amount = json.getString("amount") + " STX";
+                    if (json.has("recipient")) info.recipient = json.getString("recipient");
+                    if (json.has("postConditionMode") && json.getInt("postConditionMode") == 0x02) {
                         info.warning = true;
                         info.warningMessage = "REJECTED: Stacks PostConditionMode.ALLOW is not permitted for security reasons.";
                     }
-                    info.action = "Stacks Transaction";
+                } else if ("rgb".equals(networkStr)) {
+                    info.action = "RGB Asset Transfer";
+                    if (json.has("assetId")) info.recipient = json.getString("assetId");
+                    if (json.has("amount")) info.amount = json.getString("amount");
+                } else if ("ark".equals(networkStr)) {
+                    info.action = "Ark VTXO Transfer";
+                    if (json.has("amount")) info.amount = json.getString("amount") + " sats";
+                    if (json.has("recipient")) info.recipient = json.getString("recipient");
+                } else if ("liquid".equals(networkStr)) {
+                    info.action = "Liquid Transaction";
+                    if (json.has("amount")) info.amount = json.getString("amount") + " L-BTC";
+                    if (json.has("recipient")) info.recipient = json.getString("recipient");
+                } else if ("bob".equals(networkStr)) {
+                    info.action = "BOB (EVM L2) Transaction";
+                    if (json.has("value")) info.amount = json.getString("value") + " ETH";
+                    if (json.has("to")) info.recipient = json.getString("to");
+                } else if ("statechain".equals(networkStr)) {
+                    info.action = "State Chain Transfer";
+                    if (json.has("amount")) info.amount = json.getString("amount") + " sats";
+                } else if ("maven".equals(networkStr)) {
+                    info.action = "Maven Protocol Action";
+                } else if ("bitvm".equals(networkStr)) {
+                    info.action = "BitVM Proof Signing";
                 }
-            } else if ("mainnet".equals(networkStr) || "testnet".equals(networkStr) || "bitcoin".equals(networkStr)) {
-                NetworkParameters params = "testnet".equals(networkStr) ? TestNet3Params.get() : MainNetParams.get();
-                byte[] txBytes = org.bouncycastle.util.encoders.Hex.decode(payloadHex);
-                org.bitcoinj.core.Transaction tx = new org.bitcoinj.core.Transaction(params, txBytes);
-                info.action = "Bitcoin (Raw)";
-                long totalOut = 0;
-                StringBuilder recipients = new StringBuilder();
-                for (org.bitcoinj.core.TransactionOutput out : tx.getOutputs()) {
-                    totalOut += out.getValue().getValue();
-                    try {
-                        org.bitcoinj.core.Address addr = out.getScriptPubKey().getToAddress(params);
-                        if (addr != null) recipients.append(addr.toString()).append(" ");
-                    } catch (Exception e) {}
+            } else {
+                // Hex Payload (Bitcoin/EVM Raw)
+                if ("mainnet".equals(networkStr) || "testnet".equals(networkStr) || "bitcoin".equals(networkStr)) {
+                    NetworkParameters params = "testnet".equals(networkStr) ? TestNet3Params.get() : MainNetParams.get();
+                    byte[] txBytes = org.bouncycastle.util.encoders.Hex.decode(payload);
+                    org.bitcoinj.core.Transaction tx = new org.bitcoinj.core.Transaction(params, txBytes);
+                    info.action = "Bitcoin (Raw)";
+                    long totalOut = 0;
+                    StringBuilder recipients = new StringBuilder();
+                    for (org.bitcoinj.core.TransactionOutput out : tx.getOutputs()) {
+                        totalOut += out.getValue().getValue();
+                        try {
+                            org.bitcoinj.core.Address addr = out.getScriptPubKey().getToAddress(params);
+                            if (addr != null) recipients.append(addr.toString()).append(" ");
+                        } catch (Exception e) {}
+                    }
+                    info.amount = org.bitcoinj.core.Coin.valueOf(totalOut).toFriendlyString();
+                    info.recipient = recipients.toString().trim();
+                } else if ("stacks".equals(networkStr)) {
+                    // Raw stacks tx
+                    byte[] data = org.bouncycastle.util.encoders.Hex.decode(payload);
+                    if (data.length > 2) {
+                        int postConditionMode = data[1] & 0xFF;
+                        if (postConditionMode == 0x02) {
+                            info.warning = true;
+                            info.warningMessage = "REJECTED: Stacks PostConditionMode.ALLOW is not permitted for security reasons.";
+                        }
+                        info.action = "Stacks Raw Transaction";
+                    }
                 }
-                info.amount = org.bitcoinj.core.Coin.valueOf(totalOut).toFriendlyString();
-                info.recipient = recipients.toString().trim();
-            } else if ("ark".equals(networkStr)) {
-                info.action = "Ark VTXO Transfer";
-                info.amount = "Ark Managed";
-            } else if ("rgb".equals(networkStr)) {
-                info.action = "RGB Asset Transfer";
-                info.amount = "Client-side Validated";
-            } else if ("statechain".equals(networkStr)) {
-                info.action = "State Chain Transfer";
-            } else if ("maven".equals(networkStr)) {
-                info.action = "Maven Protocol Action";
-            } else if ("bitvm".equals(networkStr)) {
-                info.action = "BitVM Proof Signing";
-            } else if ("liquid".equals(networkStr)) {
-                info.action = "Liquid (L-BTC) Transaction";
-            } else if ("bob".equals(networkStr)) {
-                info.action = "BOB (EVM L2) Transaction";
             }
         } catch (Exception e) {
             Log.e("SecureEnclave", "Parsing failed", e);

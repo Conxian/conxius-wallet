@@ -355,28 +355,7 @@ export const fetchBobAssets = async (address: string, network: Network = 'mainne
  */
 
 export const fetchRgbAssets = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
-  const fallbackAssets: Asset[] = [
-    {
-      id: 'rgb:sovereign-bond',
-      name: 'Sovereign Bond #1',
-      symbol: 'SBOND',
-      balance: 1000,
-      valueUsd: 1000,
-      layer: 'RGB',
-      type: 'RGB',
-      address
-    },
-    {
-      id: 'rgb:l-usd',
-      name: 'Liquid USD (RGB)',
-      symbol: 'LUSD',
-      balance: 42.5,
-      valueUsd: 42.5,
-      layer: 'RGB',
-      type: 'RGB',
-      address
-    }
-  ];
+  const fallbackAssets: Asset[] = [];
 
   try {
     if (!address.startsWith('bc1p') && !address.startsWith('tb1p')) return [];
@@ -416,18 +395,7 @@ export const fetchRgbAssets = async (address: string, network: Network = 'mainne
  * Fetches Ark off-chain payments/balances.
  */
 export const fetchArkBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
-  const fallbackAssets: Asset[] = [
-    {
-      id: 'ark:vtxo-active',
-      name: 'Ark VTXO (Shared)',
-      symbol: 'ARK-BTC',
-      balance: 0.005,
-      valueUsd: 0.005 * 68500,
-      layer: 'Ark',
-      type: 'Ark',
-      address
-    }
-  ];
+  const fallbackAssets: Asset[] = [];
 
   try {
     if (!address.startsWith('bc1') && !address.startsWith('tb1')) return [];
@@ -471,18 +439,7 @@ export const fetchMavenAssets = async (address: string, network: Network = 'main
  * Fetches State Chain balances.
  */
 export const fetchStateChainBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
-  const fallbackAssets: Asset[] = [
-    {
-      id: 'sc:utxo-off-chain',
-      name: 'StateChain UTXO',
-      symbol: 'SC-BTC',
-      balance: 0.012,
-      valueUsd: 0.012 * 68500,
-      layer: 'StateChain',
-      type: 'StateChainAsset',
-      address
-    }
-  ];
+  const fallbackAssets: Asset[] = [];
 
   try {
     if (!address.startsWith('bc1') && !address.startsWith('tb1')) return [];
