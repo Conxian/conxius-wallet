@@ -563,7 +563,7 @@ export const verifyBitVmProof = async (proof: string, network: Network = 'mainne
       category: 'SYSTEM',
       type: 'success',
       title: 'BitVM Verification',
-      message: 'BitVM ZK-STARK Verified via TEE'
+      message: 'BitVM ZK-STARK Cryptographically Verified'
     });
   } else {
     notificationService.notify({
@@ -596,7 +596,7 @@ export const verifyBitVmProofFunctional = async (proof: string, emitNotification
 
   try {
     const proofHex = proof.slice(2).toLowerCase();
-    if (!/^[a-f0-9]+$/.test(proofHex) || proofHex.length < 192 || proofHex.length % 64 !== 0) {
+    if (!/^[a-f0-9]+$/.test(proofHex) || proofHex.length < 256 || proofHex.length % 64 !== 0) {
       if (emitNotifications) {
         notificationService.notify({
           category: 'SYSTEM',
@@ -628,7 +628,7 @@ export const verifyBitVmProofFunctional = async (proof: string, emitNotification
           category: 'SYSTEM',
           type: 'success',
           title: 'BitVM Verification',
-          message: 'BitVM ZK-STARK Verified via TEE'
+          message: 'BitVM ZK-STARK Cryptographically Verified'
         });
       } else {
         notificationService.notify({
@@ -651,5 +651,25 @@ export const verifyBitVmProofFunctional = async (proof: string, emitNotification
       });
     }
     return false;
+  }
+};
+
+/**
+ * Checks if a Bitcoin transaction is confirmed and retrieves its status.
+ */
+export const checkBtcTxStatus = async (txid: string, network: Network = 'mainnet'): Promise<{ confirmed: boolean; blockHeight?: number }> => {
+  try {
+    const { BTC_API } = endpointsFor(network);
+    const response = await fetchWithRetry(`${BTC_API}/tx/${txid}/status`);
+    if (response.ok) {
+        const data = await response.json();
+        return {
+            confirmed: !!data.confirmed,
+            blockHeight: data.block_height
+        };
+    }
+    return { confirmed: false };
+  } catch {
+    return { confirmed: false };
   }
 };

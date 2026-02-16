@@ -1,3 +1,4 @@
+import { deriveLiquidAddress } from './liquid';
 
 /**
  * Conxius Signing Enclave Service - Production Grade
@@ -79,7 +80,7 @@ export const deriveSovereignRoots = async (mnemonicOrVault: string, passphraseOr
           // For now, we return the Liquid Pubkey or derived address if compatible
           const liquidPubkey = Buffer.from(info.liquidPubkey, 'hex');
           // const { address: liquidAddress } = bitcoin.payments.p2wpkh({ pubkey: liquidPubkey, network: liquidNetwork });
-          const liquidAddress = info.liquidPubkey; // Returning pubkey as placeholder if lib missing
+          const liquidAddress = deriveLiquidAddress(Buffer.from(info.liquidPubkey, "hex"), "mainnet"); // Returning pubkey as placeholder if lib missing
 
           // Stacks Address Derivation from Pubkey
           const stxAddress = getAddressFromPublicKey(info.stxPubkey, 'mainnet');
@@ -138,7 +139,7 @@ export const deriveSovereignRoots = async (mnemonicOrVault: string, passphraseOr
     stx: stxAddress,
     rbtc: rskAddress,
     eth: rskAddress,
-    liquid: liquidDerived.publicKey,
+    liquid: deriveLiquidAddress(Buffer.from(liquidDerived.publicKey, "hex"), "mainnet"),
     derivationPath: "m/84'/0'/0'/0/0"
   };
   } finally {
