@@ -1,0 +1,6 @@
+appId: com.conxius.wallet
+---
+- launchApp
+- takeScreenshot: "lock_screen_state"
+- assertVisible: "CONXIUS ENCLAVE"
+
