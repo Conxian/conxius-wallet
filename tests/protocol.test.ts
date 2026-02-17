@@ -23,14 +23,20 @@ vi.mock('../services/notifications', () => ({
 // Mock fetch globally
 const mockFetch = vi.fn();
 
+// Suppress console.error during tests to keep output clean
+const originalConsoleError = console.error;
+const mockConsoleError = vi.fn();
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockFetch.mockReset();
   global.fetch = mockFetch;
+  console.error = mockConsoleError;
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
+  console.error = originalConsoleError;
 });
 
 describe('protocol service', () => {
