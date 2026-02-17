@@ -45,3 +45,8 @@ service-account*.json
 # Capacitor - Generated web assets
 android/app/src/main/assets/public/
 ios/App/public/
+
+# Maestro
+.maestro/
+maestro.zip
+*.png
