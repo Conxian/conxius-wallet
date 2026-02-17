@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  changelly-proxy:
+    build: ./changelly-proxy
+    ports:
+      - "8080:8080"
+    environment:
+      - CHANGELLY_API_KEY=${CHANGELLY_API_KEY}
+      - CHANGELLY_API_SECRET=${CHANGELLY_API_SECRET}
+    restart: always
+
+  bisq-node:
+    image: openjdk:17-slim
+    volumes:
+      - ./bisq:/app/bisq
+      - bisq-data:/root/.local/share/Bisq
+    working_dir: /app/bisq
+    command: /bin/bash -c "apt-get update && apt-get install -y wget tor && wget https://github.com/bisq-network/bisq/releases/download/v1.9.14/Bisq-64bit-1.9.14.deb -O /tmp/bisq.deb && dpkg -i /tmp/bisq.deb || apt-get install -f -y && /opt/bisq/bin/Bisq --headless --apiPort=9998 --apiPassword=${BISQ_API_PASSWORD:-CHANGE_ME}"
+    ports:
+      - "9998:9998"
+    restart: always
+
+volumes:
+  bisq-data:

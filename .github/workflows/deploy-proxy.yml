@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'infrastructure/gcp/changelly-proxy/**'
+      - 'gateway/changelly-proxy/**'
       - '.github/workflows/deploy-proxy.yml'
   workflow_dispatch:
 
@@ -42,7 +42,7 @@ jobs:
 
       - name: Build and Push Container
         run: |
-          cd infrastructure/gcp/changelly-proxy
+          cd gateway/changelly-proxy
           gcloud builds submit --tag gcr.io/$PROJECT_ID/$REPO_NAME
 
       - name: Deploy to Cloud Run

@@ -6,7 +6,27 @@ function envValue(key: string): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
+/**
+ * The Conxian Gateway acts as a unified entry point for sovereign services.
+ * Defaults to localhost in development/regtest and conxianlabs.com in production.
+ */
+export function getGatewayUrl(network: Network): string {
+  const envGateway = envValue('VITE_GATEWAY_URL');
+  if (envGateway) return envGateway;
+
+  switch (network) {
+    case 'regtest':
+      return "http://127.0.0.1:8080";
+    case 'testnet':
+      return "https://gateway.testnet.conxianlabs.com";
+    default:
+      return "https://gateway.conxianlabs.com";
+  }
+}
+
 export function endpointsFor(network: Network) {
+  const gateway = getGatewayUrl(network);
+
   switch (network) {
     case 'testnet':
       return {
@@ -18,8 +38,10 @@ export function endpointsFor(network: Network) {
         ARK_API: "https://asp.testnet.ark.org",
         MAVEN_API: "https://api.testnet.maven.org",
         STATE_CHAIN_API: "https://api.testnet.statechains.org",
-        RGB_API: envValue('VITE_RGB_PROXY_URL') || "https://rgb-proxy.testnet.conxianlabs.com",
-        BITVM_API: envValue('VITE_BITVM_VERIFY_URL') || "https://bitvm-verifier.testnet.conxianlabs.com"
+        RGB_API: envValue('VITE_RGB_PROXY_URL') || `${gateway}/rgb`,
+        BITVM_API: envValue('VITE_BITVM_VERIFY_URL') || `${gateway}/bitvm`,
+        BISQ_API: envValue('VITE_BISQ_PROXY_URL') || `${gateway}/bisq`,
+        CHANGELLY_API: envValue('VITE_CHANGELLY_PROXY_URL') || `${gateway}/changelly`
       };
     case 'regtest':
       return {
@@ -31,8 +53,10 @@ export function endpointsFor(network: Network) {
         ARK_API: "http://127.0.0.1:3535",
         MAVEN_API: "http://127.0.0.1:7070",
         STATE_CHAIN_API: "http://127.0.0.1:5050",
-        RGB_API: envValue('VITE_RGB_PROXY_URL') || "http://127.0.0.1:3003",
-        BITVM_API: envValue('VITE_BITVM_VERIFY_URL') || "http://127.0.0.1:8787"
+        RGB_API: envValue('VITE_RGB_PROXY_URL') || `${gateway}/rgb`,
+        BITVM_API: envValue('VITE_BITVM_VERIFY_URL') || `${gateway}/bitvm`,
+        BISQ_API: envValue('VITE_BISQ_PROXY_URL') || `${gateway}/bisq`,
+        CHANGELLY_API: envValue('VITE_CHANGELLY_PROXY_URL') || `${gateway}/changelly`
       };
     default:
       return {
@@ -44,8 +68,10 @@ export function endpointsFor(network: Network) {
         ARK_API: "https://asp.ark.org",
         MAVEN_API: "https://api.maven.org",
         STATE_CHAIN_API: "https://api.statechains.org",
-        RGB_API: envValue('VITE_RGB_PROXY_URL') || "https://rgb-proxy.conxianlabs.com",
-        BITVM_API: envValue('VITE_BITVM_VERIFY_URL') || "https://bitvm-verifier.conxianlabs.com"
+        RGB_API: envValue('VITE_RGB_PROXY_URL') || `${gateway}/rgb`,
+        BITVM_API: envValue('VITE_BITVM_VERIFY_URL') || `${gateway}/bitvm`,
+        BISQ_API: envValue('VITE_BISQ_PROXY_URL') || `${gateway}/bisq`,
+        CHANGELLY_API: envValue('VITE_CHANGELLY_PROXY_URL') || `${gateway}/changelly`
       };
   }
 }
@@ -63,11 +89,13 @@ export async function fetchWithRetry(
 ): Promise<Response> {
   try {
     let finalUrl = url;
-    let finalOptions = { ...options };
+    const finalOptions = { ...options };
 
     if (isTorEnabled) {
         // Tor Bridge / Privacy Proxy implementation
-        const proxyUrl = envValue('VITE_TOR_PROXY_URL') || "https://tor-proxy.conxianlabs.com";
+        // Defaulting to gateway's tor route
+        const gateway = getGatewayUrl('mainnet'); // default to mainnet gateway for routing if not specified
+        const proxyUrl = envValue('VITE_TOR_PROXY_URL') || `${gateway}/tor`;
         finalUrl = `${proxyUrl}/route?url=${encodeURIComponent(url)}`;
         finalOptions.headers = {
             ...finalOptions.headers,
