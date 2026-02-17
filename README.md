@@ -7,7 +7,7 @@ permalink: /
 # Conxius Wallet: The Sovereign Citadel for the Bitcoin Ecosystem
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests Passing](https://img.shields.io/badge/tests-145%2F145%20passing-brightgreen)](https://github.com/Conxian/Conxius_Wallet/actions)
+[![Tests Passing](https://img.shields.io/badge/tests-149%2F149%20passing-brightgreen)](https://github.com/Conxian/Conxius_Wallet/actions)
 [![Bitcoin-First](https://img.shields.io/badge/Bitcoin-First-orange.svg)](https://bitcoin.org)
 [![Security: TEE/StrongBox](https://img.shields.io/badge/Security-TEE%2FStrongBox-blue.svg)](https://developer.android.com/training/articles/keystore)
 
@@ -56,6 +56,27 @@ graph TD
 
 ---
 
+## 📂 Repository Structure
+
+```text
+.
+├── android/            # Native Android project (Capacitor)
+├── components/         # React UI components
+├── docs/               # In-depth documentation
+│   ├── architecture/   # System design and infra
+│   ├── business/       # Strategy, PRD, and monetization
+│   ├── legal/          # Compliance and risk registries
+│   ├── operations/     # Roadmap and release guides
+│   ├── protocols/      # Layer-specific implementation details
+│   └── archive/        # Historical reports and snapshots
+├── public/             # Static assets
+├── scripts/            # Maintenance and utility scripts
+├── services/           # Core business logic and crypto
+└── tests/              # Comprehensive test suites
+```
+
+---
+
 ## 🚀 Getting Started
 
 **Prerequisites**
@@ -83,33 +104,43 @@ cd android && ./gradlew :app:installDebug
 We maintain a rigorous testing protocol to ensure cryptographic integrity and security.
 
 ```bash
-pnpm test          # Run Vitest suite (145+ tests)
+pnpm test          # Run Vitest suite (149+ tests)
 pnpm run lint      # Run ESLint for code quality
 pnpm run test:e2e  # Run Playwright E2E tests
 ```
 
 | Metric | Result |
 | :--- | :--- |
-| **Total Tests** | 145+ |
+| **Total Tests** | 149+ |
 | **Status** | 100% Passing |
 | **Security Layer** | Android StrongBox / TEE |
 
 ---
 
-## 📂 Documentation
+## 📖 Documentation Index
 
-*   [**CONTRIBUTING.md**](CONTRIBUTING.md) - How to help build the future of sovereignty.
-*   [**ROADMAP.md**](ROADMAP.md) - Operational Levels & Milestones.
-*   [**PRD.md**](PRD.md) - Technical & Business Specifications.
-*   [**RISK_REGISTRY.md**](RISK_REGISTRY.md) - BitcoinLayers.org Compliance.
-*   [**MONETIZATION.md**](MONETIZATION.md) - The Sovereign Revenue Model.
+### 🏢 Business & Strategy
+*   [**PRD.md**](docs/business/PRD.md) - Technical & Business Specifications.
+*   [**WHITEPAPER.md**](docs/business/WHITEPAPER.md) - Theoretical foundation.
+*   [**MONETIZATION.md**](docs/business/MONETIZATION.md) - Revenue model.
+*   [**ROADMAP.md**](docs/operations/ROADMAP.md) - Operational Levels & Milestones.
+
+### 🛡️ Security & Legal
+*   [**SECURITY.md**](SECURITY.md) - Security policy.
+*   [**RISK_REGISTRY.md**](docs/legal/RISK_REGISTRY.md) - BitcoinLayers.org Compliance.
+*   [**PARTNERS_AND_COMPLIANCE.md**](docs/legal/PARTNERS_AND_COMPLIANCE.md) - Partner-delegated flows.
+
+### ⚙️ Implementation & Protocols
+*   [**IMPLEMENTATION_REGISTRY.md**](docs/protocols/IMPLEMENTATION_REGISTRY.md) - Ground-truth feature status.
+*   [**SOVEREIGN_BRIDGE_STRATEGY.md**](docs/protocols/SOVEREIGN_BRIDGE_STRATEGY.md) - Cross-chain logic.
+*   [**UX_FLOW_FINAL.md**](docs/protocols/UX_FLOW_FINAL.md) - User journey mapping.
 
 ---
 
 ## 🤝 Community & Support
 
-- **Code of Conduct:** Please review our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
-- **Security:** Report vulnerabilities via [SECURITY.md](SECURITY.md).
+- **Contributing:** See [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Code of Conduct:** Review our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 - **License:** Distributed under the MIT License. See [LICENSE.md](LICENSE.md) for details.
 
 Conxius is strictly non-custodial. We partner with regulated entities (**Transak, VALR, Changelly**) for on-ramps without ever touching user funds.
