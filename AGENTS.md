@@ -42,7 +42,8 @@ Welcome, Sovereign Agent. This document provides instructions and context for wo
 - `/components`: 38 React UI components.
 - `/services`: Core business logic (32 modules).
 - `/android`: Capacitor Android project.
-- `/conxian-ui`: (Sub-project) The Conxian Gateway enhancement.
+- `/conxian-gateway`: (Sub-project) The Conxian Gateway enhancement.
+- `/lib-conxian-core`: (Sub-project) The shared Conxian core logic library.
 
 ---
 
