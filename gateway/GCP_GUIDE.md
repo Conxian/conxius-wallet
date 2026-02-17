@@ -34,7 +34,7 @@ This document maps the Conxius "No Mock" production requirements to Google Cloud
 2. **Build Container:**
 
    ```bash
-   gcloud builds submit --tag gcr.io/gen-lang-client-0264096458/changelly-proxy ./gateway/changelly-proxy
+   gcloud builds submit --tag gcr.io/gen-lang-client-0264096458/changelly-proxy ./infrastructure/gcp/changelly-proxy
    ```
 
 3. **Deploy:**
@@ -66,7 +66,7 @@ This document maps the Conxius "No Mock" production requirements to Google Cloud
      --image-family=debian-11 \
      --image-project=debian-cloud \
      --boot-disk-size=50GB \
-     --metadata-from-file startup-script=./gateway/bisq/startup-script.sh
+     --metadata-from-file startup-script=./infrastructure/gcp/bisq-node/startup-script.sh
    ```
 
 2. **Security:**
