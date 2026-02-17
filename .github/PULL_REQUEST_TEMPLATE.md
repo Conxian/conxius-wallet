@@ -1,11 +1,9 @@
 ## Description
 Describe your changes in detail.
 
-## Related Issue
-Fixes # (issue)
-
 ## Motivation and Context
 Why is this change required? What problem does it solve?
+If it fixes an open issue, please link to the issue here.
 
 ## How Has This Been Tested?
 Please describe the tests that you ran to verify your changes.
@@ -13,11 +11,8 @@ Please describe the tests that you ran to verify your changes.
 ## Screenshots (if appropriate):
 
 ## Checklist:
-- [ ] My code follows the style guidelines of this project
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
-- [ ] Any dependent changes have been merged and published in downstream modules
+- [ ] My code follows the code style of this project.
+- [ ] My change requires a change to the documentation.
+- [ ] I have updated the documentation accordingly.
+- [ ] I have added tests to cover my changes.
+- [ ] All new and existing tests passed.
