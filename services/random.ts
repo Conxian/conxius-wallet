@@ -26,3 +26,24 @@ export function generateRandomString(length: number = 12): string {
     }
     return result;
 }
+
+/**
+ * Generates a cryptographically secure random integer in the range [0, max).
+ * Uses rejection sampling to eliminate modulo bias.
+ */
+export function getRandomInt(max: number): number {
+    if (max <= 0) throw new Error("max must be positive");
+    if (max === 1) return 0;
+
+    // Use 4 bytes for max up to 2^32
+    const values = new Uint32Array(1);
+    // Find the largest multiple of max that fits in 32 bits
+    const limit = Math.floor(4294967296 / max) * max;
+
+    while (true) {
+        globalThis.crypto.getRandomValues(values);
+        if (values[0] < limit) {
+            return values[0] % max;
+        }
+    }
+}
