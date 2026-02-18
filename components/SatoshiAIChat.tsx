@@ -3,6 +3,7 @@ import { Terminal, Send, Bot, Loader2, X, ChevronRight } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { AppContext } from '../context';
 import { calculatePrivacyScore } from '../services/privacy';
+import { getRandomInt } from '../services/random';
 
 const SatoshiAIChat: React.FC = () => {
   const appContext = useContext(AppContext);
@@ -20,7 +21,7 @@ const SatoshiAIChat: React.FC = () => {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !appContext) return;
 
     const userMessage = input;
     setInput('');
@@ -41,10 +42,10 @@ const SatoshiAIChat: React.FC = () => {
              "Layer 2 liquidity is deepening. Arbitrage opportunities detected between Liquid and Rootstock.",
              `Privacy Audit: ${calculatePrivacyScore(appContext.state).score}/100. ${calculatePrivacyScore(appContext.state).recommendations[0] || "Maintain vigilance."}`
          ];
-         responseText = responses[Math.floor(Math.random() * responses.length)] + " [SIMULATION]";
+         responseText = responses[getRandomInt(responses.length)] + " [SIMULATION]";
       } else {
           const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
-          const result = await ai.models.generateContent({
+          const response = await ai.models.generateContent({
             model: 'gemini-1.5-flash',
             contents: userMessage,
             config: {
@@ -58,7 +59,7 @@ Current Wallet Context:
 Use a terminal-style tone.`,
             }
           });
-          responseText = result.response.text();
+          responseText = response.text || "";
       }
 
       setMessages(prev => [...prev, { role: 'ai', content: responseText || "Connection to the network lost." }]);
