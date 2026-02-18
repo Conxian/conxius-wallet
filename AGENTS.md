@@ -8,7 +8,7 @@ permalink: /agents
 
 Welcome, Sovereign Agent. This document provides instructions and context for working with the Conxius Wallet codebase and its B2B enhancement, the Conxian Gateway.
 
-**Last Updated:** 2026-02-15
+**Last Updated:** 2026-02-18
 **Context:** B2B Alignment (Conxius Wallet + Conxian Gateway)
 
 ---
@@ -42,7 +42,8 @@ Welcome, Sovereign Agent. This document provides instructions and context for wo
 - `/components`: 38 React UI components.
 - `/services`: Core business logic (32 modules).
 - `/android`: Capacitor Android project.
-- `/conxian-ui`: (Sub-project) The Conxian Gateway enhancement.
+- `/conxian-gateway`: (Sub-project) The Conxian Gateway enhancement.
+- `/lib-conxian-core`: (Sub-project) The shared Conxian core logic library.
 
 ---
 
@@ -67,10 +68,10 @@ cd android && ./gradlew :app:testDebugUnitTest
 ## 📜 Documentation Maintenance
 
 Ensure the following files are synced:
-- `PROJECT_CONTEXT.md`: Current state and session notes.
-- `PRD.md`: The high-authority source of truth.
-- `ROADMAP.md`: Technical and business milestones.
-- `IMPLEMENTATION_REGISTRY.md`: Feature-level status.
+- `docs/archive/PROJECT_CONTEXT.md`: Current state and session notes.
+- `docs/business/PRD.md`: The high-authority source of truth.
+- `docs/operations/ROADMAP.md`: Technical and business milestones.
+- `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status.
 
 ---
 
@@ -78,7 +79,7 @@ Ensure the following files are synced:
 
 ---
 
-## 🚀 Full Bitcoin Ecosystem Alignment (2026-02-16)
+## 🚀 Full Bitcoin Ecosystem Alignment (2026-02-18)
 
 The wallet has been expanded to support the full Bitcoin stack. When working on any module:
 - Ensure it respects the specific derivation paths in `services/signer.ts`.

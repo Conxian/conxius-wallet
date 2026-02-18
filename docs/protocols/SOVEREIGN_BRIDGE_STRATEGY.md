@@ -6,7 +6,7 @@ permalink: /docs/sovereign-bridge-strategy
 
 # Sovereign Bridge & Interoperability Strategy
 
-**Date:** 2026-02-10
+**Date:** 2026-02-18
 **Status:** DRAFT
 **Context:** Research findings on Wormhole availability and native ethos-aligned bridging mechanisms.
 

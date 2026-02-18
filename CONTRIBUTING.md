@@ -37,7 +37,7 @@ Before submitting a change:
 
 ## 📜 Documentation & PRD Sync
 
-Conxius follows an **Anti-Drift** policy. Any architectural change must be reflected in the [PRD.md](PRD.md).
+Conxius follows an **Anti-Drift** policy. Any architectural change must be reflected in the [PRD.md](docs/business/PRD.md).
 -   If you add a new chain or protocol, update the **Layer Unification Matrix**.
 -   If you modify internal logic, update the corresponding documentation sections from **Pending** to **Active**.
 

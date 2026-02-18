@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
+title: "[BUG] "
 labels: bug
 assignees: ''
 
@@ -24,9 +24,9 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Environment (please complete the following information):**
- - Device: [e.g. Pixel 7, Android Emulator]
- - OS: [e.g. Android 14]
- - App Version: [e.g. 0.3.0]
+ - Device: [e.g. Pixel 6]
+ - OS: [e.g. Android 13]
+ - Version: [e.g. 1.0.0]
 
 **Additional context**
-Add any other context about the problem here (e.g., logs from logcat).
+Add any other context about the problem here.

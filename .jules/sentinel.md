@@ -69,3 +69,8 @@ permalink: /sentinel
 **Vulnerability:** Multiple services (`swap.ts`, `coinjoin.ts`, `network.ts`) utilized `Math.random().toString(36)` for generating critical identifiers like swap IDs, registration tokens, and Tor circuit IDs, making them potentially predictable.
 **Learning:** Relying on `Math.random()` for any identifier that interacts with external services or multi-party protocols (like CoinJoin or Tor) creates a security weakness. Centralizing cryptographically secure random string generation into a single utility ensures consistency and facilitates project-wide security audits.
 **Prevention:** Implement a centralized `generateRandomString` utility backed by `globalThis.crypto.getRandomValues()` and mandate its use for all random alphanumeric identifiers, replacing all legacy `Math.random()` calls.
+
+## 2026-05-22 - [Modulo Bias in Random String Generation]
+**Vulnerability:** The `generateRandomString` utility used the modulo operator (`%`) on random bytes to select characters from a 36-char charset. Since 256 is not a multiple of 36, this introduced a statistical bias where the first four characters were ~14% more likely to appear.
+**Learning:** Cryptographically secure randomness requires more than just a secure source (like `crypto.getRandomValues`); it also requires uniform mapping to the target space. Simple modulo on non-power-of-two ranges always introduces bias.
+**Prevention:** Use rejection sampling when mapping random bytes to a range that does not evenly divide the byte's maximum value (e.g., 256). Discard values that fall into the biased "tail" and retry.
