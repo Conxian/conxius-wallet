@@ -26,6 +26,13 @@ export class IdentityService {
   }
 
   /**
+   * Memory Hardening: Explicitly clear the identity cache during wallet lock or purge.
+   */
+  static clearCache() {
+      this.cache.clear();
+  }
+
+  /**
    * Retrieves the Decentralized Identifier (DID) for the current vault.
    * Format: did:pkh:btc:<chain_id>:<address>
    * Enhanced with Web5 DID retrieval.

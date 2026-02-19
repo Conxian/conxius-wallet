@@ -53,6 +53,8 @@ import { evaluateSecurityPosture } from './services/device-integrity';
 import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
 import { notificationService } from './services/notifications';
 import { setGeminiApiKey as setGeminiServiceKey } from './services/gemini';
+import { IdentityService } from './services/identity';
+import { Web5Service } from './services/web5';
 
 const STORAGE_KEY = 'conxius_enclave_v3_encrypted';
 
@@ -244,7 +246,11 @@ const App: React.FC = () => {
         await removeEnclaveBlob(STORAGE_KEY);
         localStorage.clear();
         sessionStorage.clear();
-        clearEnclaveBiometricSession(); setGeminiServiceKey('');
+        clearEnclaveBiometricSession();
+        setGeminiServiceKey('');
+        workerManager.clearCache();
+        IdentityService.clearCache();
+        Web5Service.getInstance().clearSession();
         setState({ ...DEFAULT_STATE, assets: [], walletConfig: undefined });
         currentPinRef.current = null;
         setEnclaveExists(false);
@@ -326,8 +332,11 @@ const App: React.FC = () => {
 
   const performLock = () => {
      currentPinRef.current = null;
-     clearEnclaveBiometricSession(); setGeminiServiceKey('');
+     clearEnclaveBiometricSession();
+     setGeminiServiceKey('');
      workerManager.clearCache();
+     IdentityService.clearCache();
+     Web5Service.getInstance().clearSession();
      setIsLocked(true);
      // Memory Hardening: Reset state to defaults on lock to purge sensitive material (Gemini keys, assets) from RAM.
      setState(prev => ({
