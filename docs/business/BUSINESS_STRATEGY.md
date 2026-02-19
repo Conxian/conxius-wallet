@@ -11,14 +11,17 @@ permalink: /docs/business-strategy
 ## 1. Executive Summary
 Conxius is not just a wallet; it is a **Bitcoin-native Infrastructure Layer**. By leveraging mobile Secure Enclaves (TEE/StrongBox), we commoditize high-end security. Our business model pivots away from the "high-fee retail trap" and towards a "high-volume, low-margin utility" model supplemented by high-value B2B licensing.
 
-## 2. Market Positioning
-We position Conxius as the **"Robinhood of Sovereign Finance"**—disruptively low costs enabled by technical innovation, but with the **security of a Swiss Vault**.
+## 2. Market Positioning (Revised)
 
-### Competitive Comparison (Investopedia Standards)
-*   **Traditional Fintech (Revolut/PayPal):** Low friction, high centralization, custodial.
-*   **First-Gen Crypto (Coinbase/Binance):** High liquidity, high fees, high regulatory risk (custodial).
-*   **Second-Gen Wallets (MetaMask/Phantom):** High utility, high fees (0.85%+), low hardware integration.
-*   **Conxius (The Third Gen):** High utility, **lowest fees (0.1%+)**, **Native Hardware Security**.
+We position Conxius as the **"Intelligent Security Layer"** for Bitcoin—dynamically matching security requirements to device capabilities without compromising user experience.
+
+### Competitive Comparison (Enhanced)
+| Feature | Traditional Wallets | Conxius |
+| :--- | :--- | :--- |
+| Hardware Security | Binary (on/off) | **Adaptive**: TEE for daily ops, StrongBox for vault keys |
+| Key Attestation | Rarely implemented | **Verified**: Server-side validation of hardware backing [citation:9] |
+| Device Fragmentation | Ignored (crashes) | **Managed**: Graceful fallback with security downgrade alerts [citation:1] |
+| Performance | 4-10 second delays | **Optimized**: 300ms daily ops (AES_GCM) [citation:6] |
 
 ## 3. Financial & Operational Benefits (Dynamic Metrics)
 Conxius employs an **Operational Benefit Model** where infrastructure costs are offset by B2B revenue.
