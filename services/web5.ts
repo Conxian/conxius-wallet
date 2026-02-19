@@ -90,6 +90,14 @@ export class Web5Service {
     }
 
     /**
+     * Memory Hardening: Resets the Web5 session state during wallet lock or purge.
+     */
+    clearSession() {
+        this.web5 = null;
+        this.did = "";
+    }
+
+    /**
      * Connect to Web5.
      * Initializes the Web5 instance and connects to a DWN.
      * Uses the Secure Enclave for key management via a custom EnclaveKeyManager.
