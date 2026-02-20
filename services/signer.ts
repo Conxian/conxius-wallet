@@ -182,8 +182,16 @@ export const signBip322Message = async (
     } else {
         if (typeof vaultOrSeed === 'string') throw new Error("BIP-322 JS fallback requires seed bytes");
         const root = bip32.fromSeed(Buffer.from(vaultOrSeed));
-        const child = root.derivePath(path);
-        pubkey = Buffer.from(child.publicKey);
+        try {
+            const child = root.derivePath(path);
+            try {
+                pubkey = Buffer.from(child.publicKey);
+            } finally {
+                if (child.privateKey) child.privateKey.fill(0);
+            }
+        } finally {
+            if (root.privateKey) root.privateKey.fill(0);
+        }
     }
 
     // Step 1: Build the message hash per BIP-322
@@ -259,15 +267,23 @@ export const signBip322Message = async (
         signatureHex = res.signature;
     } else {
         const root = bip32.fromSeed(Buffer.from(vaultOrSeed as Uint8Array));
-        const child = root.derivePath(path);
-        // Note: For Taproot, we should technically use Schnorr sign.
-        // bitcoinjs-lib's sign() for BIP32 is ECDSA.
-        // If scriptType is P2TR, we need a Schnorr signer.
-        if (scriptType === 'P2TR') {
-            if (!child.privateKey) throw new Error('BIP-322: Missing private key for Taproot signing');
-            signatureHex = Buffer.from(signSchnorr(sighash, child.privateKey)).toString('hex');
-        } else {
-            signatureHex = Buffer.from(child.sign(sighash)).toString('hex');
+        try {
+            const child = root.derivePath(path);
+            try {
+                // Note: For Taproot, we should technically use Schnorr sign.
+                // bitcoinjs-lib's sign() for BIP32 is ECDSA.
+                // If scriptType is P2TR, we need a Schnorr signer.
+                if (scriptType === 'P2TR') {
+                    if (!child.privateKey) throw new Error('BIP-322: Missing private key for Taproot signing');
+                    signatureHex = Buffer.from(signSchnorr(sighash, child.privateKey)).toString('hex');
+                } else {
+                    signatureHex = Buffer.from(child.sign(sighash)).toString('hex');
+                }
+            } finally {
+                if (child.privateKey) child.privateKey.fill(0);
+            }
+        } finally {
+            if (root.privateKey) root.privateKey.fill(0);
         }
     }
 

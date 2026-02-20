@@ -266,12 +266,20 @@ const App: React.FC = () => {
 
         // Migration/Upgrade: Ensure seedVault and mnemonicVault exist
         if (typeof walletConfig.mnemonic === 'string') {
-          const seedBytes = await bip39.mnemonicToSeed(walletConfig.mnemonic, walletConfig.passphrase || undefined);
-          if (!walletConfig.seedVault) {
-            walletConfig.seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
-          }
-          if (!walletConfig.mnemonicVault) {
-            walletConfig.mnemonicVault = await encryptSeed(new TextEncoder().encode(walletConfig.mnemonic), pin);
+          let seedBytes: Uint8Array | null = null;
+          let mnemonicBuf: Uint8Array | null = null;
+          try {
+            seedBytes = await bip39.mnemonicToSeed(walletConfig.mnemonic, walletConfig.passphrase || undefined);
+            if (!walletConfig.seedVault) {
+              walletConfig.seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
+            }
+            if (!walletConfig.mnemonicVault) {
+              mnemonicBuf = new TextEncoder().encode(walletConfig.mnemonic);
+              walletConfig.mnemonicVault = await encryptSeed(mnemonicBuf, pin);
+            }
+          } finally {
+            if (seedBytes) (seedBytes as any).fill(0);
+            if (mnemonicBuf) mnemonicBuf.fill(0);
           }
         }
 
