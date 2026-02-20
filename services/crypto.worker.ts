@@ -74,6 +74,11 @@ self.onmessage = async (e: MessageEvent) => {
       case 'CLEAR_CACHE': {
         pbkdf2Cache.forEach(buf => buf.fill(0));
         pbkdf2Cache.clear();
+        // Memory Hardening: Explicitly wipe private keys and chain codes from cached BIP32 nodes
+        nodeCache.forEach(node => {
+           if (node.privateKey) node.privateKey.fill(0);
+           if (node.chainCode) node.chainCode.fill(0);
+        });
         nodeCache.clear();
         self.postMessage({ id, result: true });
         break;
