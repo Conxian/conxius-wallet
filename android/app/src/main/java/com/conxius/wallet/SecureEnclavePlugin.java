@@ -377,7 +377,7 @@ public class SecureEnclavePlugin extends Plugin {
                     info.action = "Liquid Transaction";
                     if (json.has("amount")) info.amount = json.getString("amount") + " L-BTC";
                     if (json.has("recipient")) info.recipient = json.getString("recipient");
-                } else if ("bob".equals(networkStr)) {
+                } else if ("bob".equals(networkStr) || "b2".equals(networkStr) || "botanix".equals(networkStr) || "mezo".equals(networkStr)) {
                     info.action = "BOB (EVM L2) Transaction";
                     if (json.has("value")) info.amount = json.getString("value") + " ETH";
                     if (json.has("to")) info.recipient = json.getString("to");
@@ -560,7 +560,7 @@ public class SecureEnclavePlugin extends Plugin {
                 return signSchnorrInternal(child, messageHashHex);
             }
 
-            if (Arrays.asList("rsk", "ethereum", "evm", "stacks", "bob").contains(networkStr)) {
+            if (Arrays.asList("rsk", "ethereum", "evm", "stacks", "bob", "b2", "botanix", "mezo").contains(networkStr)) {
                 byte[] privKey = child.getPrivKeyBytes();
                 org.web3j.crypto.ECKeyPair keyPair = org.web3j.crypto.ECKeyPair.create(privKey);
                 Arrays.fill(privKey, (byte) 0);

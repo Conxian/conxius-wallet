@@ -182,8 +182,16 @@ export const signBip322Message = async (
     } else {
         if (typeof vaultOrSeed === 'string') throw new Error("BIP-322 JS fallback requires seed bytes");
         const root = bip32.fromSeed(Buffer.from(vaultOrSeed));
-        const child = root.derivePath(path);
-        pubkey = Buffer.from(child.publicKey);
+        try {
+            const child = root.derivePath(path);
+            try {
+                pubkey = Buffer.from(child.publicKey);
+            } finally {
+                if (child.privateKey) child.privateKey.fill(0);
+            }
+        } finally {
+            if (root.privateKey) root.privateKey.fill(0);
+        }
     }
 
     // Step 1: Build the message hash per BIP-322
@@ -259,15 +267,23 @@ export const signBip322Message = async (
         signatureHex = res.signature;
     } else {
         const root = bip32.fromSeed(Buffer.from(vaultOrSeed as Uint8Array));
-        const child = root.derivePath(path);
-        // Note: For Taproot, we should technically use Schnorr sign.
-        // bitcoinjs-lib's sign() for BIP32 is ECDSA.
-        // If scriptType is P2TR, we need a Schnorr signer.
-        if (scriptType === 'P2TR') {
-            if (!child.privateKey) throw new Error('BIP-322: Missing private key for Taproot signing');
-            signatureHex = Buffer.from(signSchnorr(sighash, child.privateKey)).toString('hex');
-        } else {
-            signatureHex = Buffer.from(child.sign(sighash)).toString('hex');
+        try {
+            const child = root.derivePath(path);
+            try {
+                // Note: For Taproot, we should technically use Schnorr sign.
+                // bitcoinjs-lib's sign() for BIP32 is ECDSA.
+                // If scriptType is P2TR, we need a Schnorr signer.
+                if (scriptType === 'P2TR') {
+                    if (!child.privateKey) throw new Error('BIP-322: Missing private key for Taproot signing');
+                    signatureHex = Buffer.from(signSchnorr(sighash, child.privateKey)).toString('hex');
+                } else {
+                    signatureHex = Buffer.from(child.sign(sighash)).toString('hex');
+                }
+            } finally {
+                if (child.privateKey) child.privateKey.fill(0);
+            }
+        } finally {
+            if (root.privateKey) root.privateKey.fill(0);
         }
     }
 
@@ -478,14 +494,14 @@ export const requestEnclaveSignature = async (
             pubkey: res.pubkey,
             timestamp: Date.now(),
         };
-    } else if (request.layer === "BOB") {
+    } else if (request.layer === "BOB" || request.layer === "B2" || request.layer === "Botanix" || request.layer === "Mezo") {
       const path = "m/44'/60'/0'/0/0"; // BOB is EVM compatible
       const res = await signNative({
         vault,
         pin,
         path,
         messageHash: (request.payload?.hash || request.payload as string).replace("0x", ""),
-        network: "bob",
+        network: request.layer.toLowerCase(),
           payload: JSON.stringify(request.payload)
         });
       return {
@@ -683,6 +699,29 @@ export const requestEnclaveSignature = async (
             }
 
             signature = Buffer.from(child.sign(hashToSign)).toString("hex");
+          } finally {
+            privKeyBuf.fill(0);
+          }
+      }
+    } else if ((request.layer === 'BOB' || request.layer === 'B2' || request.layer === 'Botanix' || request.layer === 'Mezo' || request.layer === 'Rootstock' || request.layer === 'Ethereum') && seedBytes) {
+      const path = "m/44'/60'/0'/0/0";
+      const derived = await workerManager.derivePath(seedBytes, path);
+      pubkey = derived.publicKey;
+
+      if (derived.privateKey) {
+          const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
+          try {
+            const child = bip32.fromPrivateKey(privKeyBuf, Buffer.alloc(32));
+            let hashToSign: Buffer;
+            if (typeof request.payload === 'string') {
+              hashToSign = Buffer.from(request.payload.replace('0x', ''), 'hex');
+            } else if (request.payload?.hash) {
+              hashToSign = Buffer.from(request.payload.hash.replace('0x', ''), 'hex');
+            } else {
+              const cx = Buffer.from(JSON.stringify(request.payload));
+              hashToSign = Buffer.from(bitcoin.crypto.sha256(cx));
+            }
+            signature = Buffer.from(child.sign(hashToSign)).toString('hex');
           } finally {
             privKeyBuf.fill(0);
           }
