@@ -5,7 +5,7 @@
 
 import { BitcoinLayer, Asset, UTXO, Network } from '../types';
 import { notificationService } from './notifications';
-import { endpointsFor, fetchWithRetry } from './network';
+import { endpointsFor, fetchWithRetry, sanitizeError } from './network';
 import { fetchBtcPrice, fetchStxPrice } from './prices';
 
 // Re-export for backward compatibility
@@ -70,7 +70,7 @@ export const fetchBtcBalance = async (address: string, network: Network = 'mainn
     const spent = data.chain_stats.spent_txo_sum + data.mempool_stats.spent_txo_sum;
     return (funded - spent) / 100000000;
   } catch (e) { 
-    console.warn("BTC Fetch failed:", e);
+    console.warn("BTC Fetch failed:", sanitizeError(e));
     return 0; 
   }
 };
@@ -123,7 +123,7 @@ export const fetchRunesBalances = async (address: string): Promise<Asset[]> => {
         }));
 
     } catch (e) {
-        console.warn('[Runes] Balance fetch failed:', e);
+        console.warn('[Runes] Balance fetch failed:', sanitizeError(e));
         return [];
     }
 };
@@ -176,8 +176,9 @@ export const broadcastBtcTx = async (hex: string, network: Network = 'mainnet'):
     });
     if (!response.ok) {
         const err = await response.text();
-        notificationService.notifyTransaction('Broadcast Failed', `BTC Tx failed: ${err.substring(0, 50)}...`, false);
-        throw new Error(err);
+        const safeMsg = sanitizeError(err, 'Broadcast Rejected');
+        notificationService.notifyTransaction('Broadcast Failed', `BTC Tx failed: ${safeMsg}`, false);
+        throw new Error(safeMsg);
     }
     const txid = await response.text();
     notificationService.notifyTransaction('Transaction Broadcasted', `BTC Tx ${txid.substring(0, 8)}... is now pending.`);
@@ -312,7 +313,7 @@ export const fetchSbtcWalletAddress = async (network: Network = 'mainnet'): Prom
         }
         throw new Error('sBTC API unreachable');
     } catch (e) {
-        console.warn('Failed to fetch sBTC wallet address, using static fallback', e);
+        console.warn('Failed to fetch sBTC wallet address, using static fallback', sanitizeError(e));
         // Fallback addresses (Valid Bech32 formats for PSBT construction safety)
         // These are Burn addresses or valid checksum placeholders
         return network === 'mainnet' 
@@ -675,7 +676,7 @@ async function fetchEvmBalance(rpc: string, address: string): Promise<number> {
     const wei = BigInt(data.result);
     return Number(wei) / 1e18;
   } catch (e) {
-    console.warn("EVM Balance Fetch Failed for " + rpc, e);
+    console.warn("EVM Balance Fetch Failed for " + rpc, sanitizeError(e, "Internal RPC Error"));
     return 0;
   }
 }
