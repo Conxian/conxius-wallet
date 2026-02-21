@@ -7,6 +7,18 @@
 		{
 			"name": "Conxius Android (Native)",
 			"path": "android"
+		},
+		{
+			"path": "../lib-conxian-core"
+		},
+		{
+			"path": "../conxian-gateway"
+		},
+		{
+			"path": "../conxius-platform"
+		},
+		{
+			"path": "../conxian-nexus-main"
 		}
 	],
 	"settings": {

@@ -29,7 +29,9 @@ To run the standard flow on a connected device:
 ## 4. Test Flows
 
 ### `tests/maestro/flow.yaml`
+
 A basic smoke test that:
+
 1. Launches `com.conxius.wallet`.
 2. Takes a screenshot (`lock_screen_state`).
 3. Asserts that the text "CONXIUS ENCLAVE" is visible on the Lock Screen.
@@ -37,9 +39,12 @@ A basic smoke test that:
 ## 5. Troubleshooting
 
 If elements are not found:
+
 1. Run the hierarchy command to inspect the UI tree:
+
    ```powershell
    .\run_maestro.bat hierarchy
    ```
+
 2. Verify the `resource-id` or `text` attributes in the output.
 3. Ensure the device screen is on and unlocked (if not testing the lock screen itself).

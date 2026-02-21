@@ -1,0 +1,54 @@
+appId: com.conxius.wallet
+---
+- clearState
+- launchApp
+- assertVisible: "Initialize your sovereign interface"
+- tapOn: "Import Recovery"
+- inputText: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+- hideKeyboard
+- tapOn: "Verify Mnemonic"
+# Security Screen
+- assertVisible: "Secure Enclave"
+- inputText: "123456"
+- tapOn: "Confirm"
+- inputText: "123456"
+- tapOn: "Confirm Encryption"
+# Backup Screen (skipped logically by user, but UI forces it)
+- assertVisible: "Master Seed Backup"
+- tapOn: "Verify Backup"
+# Verification Screen
+- assertVisible: "Verify Backup"
+# First Word (0-3) is always abandon
+- tapOn:
+    index: 0
+    text: "Word.*" # Tapping the label might not focus the input. Tapping the input is needed. 
+    # Inputs don't have text. They are below labels.
+    # Let's try tapping by index of EditText class if possible, or use point relative to labels.
+    # Or just tap the first input found.
+- tapOn:
+    index: 0
+    class: "android.widget.EditText"
+- inputText: "abandon"
+# Second Word (4-7) is always abandon
+- tapOn:
+    index: 1
+    class: "android.widget.EditText"
+- inputText: "abandon"
+# Third Word (8-11) - Check for Word #12
+- tapOn:
+    index: 2
+    class: "android.widget.EditText"
+- runFlow:
+    when:
+      visible: "Word #12"
+    commands:
+      - inputText: "about"
+- runFlow:
+    when:
+      notVisible: "Word #12"
+    commands:
+      - inputText: "abandon"
+- hideKeyboard
+- tapOn: "Initialize Enclave"
+# Final Assertion
+- assertVisible: "Sovereignty" # Dashboard header element

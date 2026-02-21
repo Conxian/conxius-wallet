@@ -1,0 +1,5 @@
+appId: com.conxius.wallet
+---
+- clearState
+- launchApp
+- takeScreenshot: "onboarding_start"
