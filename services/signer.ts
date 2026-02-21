@@ -494,14 +494,14 @@ export const requestEnclaveSignature = async (
             pubkey: res.pubkey,
             timestamp: Date.now(),
         };
-    } else if (request.layer === "BOB") {
+    } else if (request.layer === "BOB" || request.layer === "B2" || request.layer === "Botanix" || request.layer === "Mezo") {
       const path = "m/44'/60'/0'/0/0"; // BOB is EVM compatible
       const res = await signNative({
         vault,
         pin,
         path,
         messageHash: (request.payload?.hash || request.payload as string).replace("0x", ""),
-        network: "bob",
+        network: request.layer.toLowerCase(),
           payload: JSON.stringify(request.payload)
         });
       return {
@@ -699,6 +699,29 @@ export const requestEnclaveSignature = async (
             }
 
             signature = Buffer.from(child.sign(hashToSign)).toString("hex");
+          } finally {
+            privKeyBuf.fill(0);
+          }
+      }
+    } else if ((request.layer === 'BOB' || request.layer === 'B2' || request.layer === 'Botanix' || request.layer === 'Mezo' || request.layer === 'Rootstock' || request.layer === 'Ethereum') && seedBytes) {
+      const path = "m/44'/60'/0'/0/0";
+      const derived = await workerManager.derivePath(seedBytes, path);
+      pubkey = derived.publicKey;
+
+      if (derived.privateKey) {
+          const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
+          try {
+            const child = bip32.fromPrivateKey(privKeyBuf, Buffer.alloc(32));
+            let hashToSign: Buffer;
+            if (typeof request.payload === 'string') {
+              hashToSign = Buffer.from(request.payload.replace('0x', ''), 'hex');
+            } else if (request.payload?.hash) {
+              hashToSign = Buffer.from(request.payload.hash.replace('0x', ''), 'hex');
+            } else {
+              const cx = Buffer.from(JSON.stringify(request.payload));
+              hashToSign = Buffer.from(bitcoin.crypto.sha256(cx));
+            }
+            signature = Buffer.from(child.sign(hashToSign)).toString('hex');
           } finally {
             privKeyBuf.fill(0);
           }
