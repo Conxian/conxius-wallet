@@ -118,6 +118,10 @@ The **Conxian Gateway** is the institutional portal:
 | **BitVM** | PRODUCTION | ✅ Cryptographic STARK Verifier |
 | **State Chains | PRODUCTION | ✅ Seq. Derivation |
 | **Maven | PRODUCTION | ✅ Protocol Fetcher |
+| **B2 Network** | PRODUCTION | ✅ EVM Path |
+| **Botanix** | PRODUCTION | ✅ Spiderchain |
+| **Mezo** | PRODUCTION | ✅ tBTC Bridge |
+
 
 ---
 

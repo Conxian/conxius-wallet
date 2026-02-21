@@ -106,3 +106,21 @@ This section outlines the risk profiles of the Bitcoin L2s and Sidechains suppor
 * **Risk Warning:** Technical Complexity.
 * **Custody Model:** Purely cryptographic/mathematical security.
 * **Key Consideration:** These protocols are in early stages; unintended bugs in the verifier logic could lead to loss of funds.
+
+### 4.9 B2 Network
+* **Risk Level:** Medium (BitVM-based L2) - [BitcoinLayers.org: L2]
+* **Risk Warning:** New Tech / EVM Risk.
+* **Custody Model:** Utilizes a BitVM-based challenge system for verification but currently relies on a multi-sig bridge in early phases.
+* **Key Consideration:** Subject to typical L2 rollup risks and bridge federation honesty during the bootstrap phase.
+
+### 4.10 Botanix Spiderchain
+* **Risk Level:** Medium (Spiderchain) - [BitcoinLayers.org: Sidechain]
+* **Risk Warning:** Federated Security.
+* **Custody Model:** Uses a decentralized network of orchestrators (Spiderchain) to manage the peg.
+* **Key Consideration:** Security is derived from the number and honesty of orchestrators; currently more federated than fully decentralized.
+
+### 4.11 Mezo Network
+* **Risk Level:** Medium (tBTC-based L2) - [BitcoinLayers.org: L2]
+* **Risk Warning:** tBTC Dependency.
+* **Custody Model:** Leverages the tBTC bridge mechanism for Bitcoin deposits.
+* **Key Consideration:** Security is inherently linked to the Threshold Network's tBTC peg and the Mezo consensus protocol.

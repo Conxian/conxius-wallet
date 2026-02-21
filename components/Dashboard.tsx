@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { LAYER_COLORS } from '../constants';
 import { Asset, BitcoinLayer, UTXO } from '../types';
 import { TrendingUp, ArrowUpRight, Search, Bot, Loader2, Shield, Send, Plus, Network, ShieldCheck, EyeOff, CheckCircle2, X, ShoppingBag, RefreshCw, Key, Copy, ExternalLink, ArrowDownLeft, Clock, History, Sparkles } from 'lucide-react';
-import { fetchBtcBalance, fetchStacksBalances, fetchBtcPrice, fetchLiquidBalance, fetchRskBalance, broadcastBtcTx, fetchRunesBalances, fetchBtcUtxos, fetchBobAssets, fetchRgbAssets, fetchArkBalances, fetchMavenAssets, fetchStateChainBalances } from '../services/protocol';
+import { fetchBtcBalance, fetchStacksBalances, fetchBtcPrice, fetchLiquidBalance, fetchRskBalance, broadcastBtcTx, fetchRunesBalances, fetchBtcUtxos, fetchBobAssets, fetchRgbAssets, fetchArkBalances, fetchMavenAssets, fetchStateChainBalances, fetchB2Assets, fetchBotanixAssets, fetchMezoAssets } from '../services/protocol';
 import { SignRequest } from '../services/signer';
 import { getRecommendedFees } from '../services/fees';
 import { buildPsbt } from '../services/psbt';
@@ -67,10 +67,13 @@ const Dashboard: React.FC = () => {
             fetchRgbAssets(btcAddress),
             fetchArkBalances(btcAddress),
             fetchMavenAssets(btcAddress),
-            fetchStateChainBalances(btcAddress)
+            fetchStateChainBalances(btcAddress),
+            fetchB2Assets(btcAddress, network),
+            fetchBotanixAssets(btcAddress, network),
+            fetchMezoAssets(btcAddress, network)
         ]);
 
-        const [btcBal, stxAssets, liqBal, rskBal, runeAssets, bobAssets, rgbAssets, arkAssets, mavenAssets, scAssets] = results;
+        const [btcBal, stxAssets, liqBal, rskBal, runeAssets, bobAssets, rgbAssets, arkAssets, mavenAssets, scAssets, b2Assets, botAssets, mezoAssets] = results;
         const finalAssets: Asset[] = [
             { id: 'btc-main', name: 'Bitcoin', symbol: 'BTC', balance: btcBal, valueUsd: btcBal * btcPrice, layer: 'Mainnet', type: 'Native', address: btcAddress },
             ...stxAssets,
@@ -81,7 +84,10 @@ const Dashboard: React.FC = () => {
             ...rgbAssets,
             ...arkAssets,
             ...mavenAssets,
-            ...scAssets
+            ...scAssets,
+            ...b2Assets,
+            ...botAssets,
+            ...mezoAssets
         ];
         appContext?.updateAssets(finalAssets);
         appContext?.notify('success', 'Ledger Synchronized via RPC');

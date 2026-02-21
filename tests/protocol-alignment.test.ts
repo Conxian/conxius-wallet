@@ -6,7 +6,7 @@ import * as path from 'path';
 
 describe('Protocol and Signer Alignment', () => {
   const supportedLayers = [
-    'Mainnet', 'Stacks', 'Liquid', 'BOB', 'RGB', 'Ark', 'StateChain', 'Maven', 'BitVM', 'Rootstock'
+    'Mainnet', 'Stacks', 'Liquid', 'BOB', 'RGB', 'Ark', 'StateChain', 'Maven', 'BitVM', 'Rootstock', 'B2', 'Botanix', 'Mezo'
   ];
 
   it('should have fetchers for all supported layers', () => {
@@ -19,6 +19,9 @@ describe('Protocol and Signer Alignment', () => {
     expect(protocolContent).toContain('fetchArkBalances');
     expect(protocolContent).toContain('fetchStateChainBalances');
     expect(protocolContent).toContain('fetchMavenAssets');
+    expect(protocolContent).toContain('fetchB2Assets');
+    expect(protocolContent).toContain('fetchBotanixAssets');
+    expect(protocolContent).toContain('fetchMezoAssets');
   });
 
   it('should have signer logic for all supported layers', () => {
@@ -32,7 +35,7 @@ describe('Protocol and Signer Alignment', () => {
   it('should have native parsePayload support for all layers', () => {
     const enclaveContent = fs.readFileSync(path.join(process.cwd(), 'android/app/src/main/java/com/conxius/wallet/SecureEnclavePlugin.java'), 'utf8');
 
-    const expectedNetworks = ['stacks', 'mainnet', 'ark', 'rgb', 'statechain', 'maven', 'bitvm', 'liquid', 'bob'];
+    const expectedNetworks = ['stacks', 'mainnet', 'ark', 'rgb', 'statechain', 'maven', 'bitvm', 'liquid', 'bob', 'b2', 'botanix', 'mezo'];
     expectedNetworks.forEach(net => {
       expect(enclaveContent).toContain(`"${net}".equals(networkStr)`);
     });

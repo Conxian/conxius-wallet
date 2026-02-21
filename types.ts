@@ -1,5 +1,5 @@
 
-export type BitcoinLayer = 'Mainnet' | 'Stacks' | 'Rootstock' | 'Ethereum' | 'Lightning' | 'Liquid' | 'Runes' | 'Ordinals' | 'BOB' | 'RGB' | 'Ark' | 'BitVM' | 'StateChain' | 'Maven';
+export type BitcoinLayer = 'Mainnet' | 'Stacks' | 'Rootstock' | 'Ethereum' | 'Lightning' | 'Liquid' | 'Runes' | 'Ordinals' | 'BOB' | 'RGB' | 'Ark' | 'BitVM' | 'StateChain' | 'Maven' | 'B2' | 'Botanix' | 'Mezo';
 export type AppMode = 'sovereign' | 'simulation';
 export type Network = 'mainnet' | 'testnet' | 'regtest' | 'devnet';
 export type LnBackendType = "None" | "LND" | "Breez" | "Greenlight";

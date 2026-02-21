@@ -33,7 +33,11 @@ This document tracks the ground-truth implementation status of every major featu
 | **Ark Protocol** | ✅ PRODUCTION | VTXO path m/84'/0'/0'/1' integrated; Full VTXO lifecycle (Forfeit/Redeem) implemented with Enclave signing. |
 | **State Chains** | ✅ PRODUCTION | Seq. path m/84'/0'/0'/2' integrated; Full transfer API with Coordinator sync implemented. |
 | **Maven** | ✅ PRODUCTION | Multi-asset fetcher and transfer preparation implemented. |
-| **BitVM** | ✅ PRODUCTION | Enhanced functional cryptographic verifier implemented with TEE-aligned checks. |
+| **BitVM** | ✅ PRODUCTION |
+| **B2 Network** | ✅ PRODUCTION | EVM path integrated; fetcher uses eth_getBalance RPC. |
+| **Botanix** | ✅ PRODUCTION | Spiderchain EVM path integrated; real RPC. |
+| **Mezo** | ✅ PRODUCTION | tBTC-based EVM path integrated; real RPC. |
+ Enhanced functional cryptographic verifier implemented with TEE-aligned checks. |
 
 ## IV. ASSET PROTOCOLS
 
