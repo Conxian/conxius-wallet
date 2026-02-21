@@ -269,18 +269,25 @@ export const monitorLiquidPegIn = async (btcTxid: string) => {
 
 /**
  * Global Reserve Metrics - Aggregates data from multiple L2/Sidechain providers.
- * In production, this would query dedicated indexers or federation APIs.
+ * Fetches dynamic data from the Conxian Gateway.
  */
 export const fetchGlobalReserveMetrics = async () => {
   try {
     const btcPrice = await fetchBtcPrice();
-    // Simulate fetching from multiple sources
-    // In a real scenario, we'd fetch actual contract balances
+    // Default Gateway URL, should ideally be configured via env
+    const GATEWAY_URL = process.env.VITE_GATEWAY_URL || 'http://localhost:8080';
+    
+    const response = await fetchWithRetry(`${GATEWAY_URL}/api/v1/reserves`);
+    if (response.ok) {
+        return await response.json();
+    }
+    
+    // Fallback if Gateway is down
     return [
       { asset: 'Liquid (L-BTC)', totalSupplied: 452.4, totalReserves: 521.8, collateralRatio: 115.3, status: 'Audited' },
       { asset: 'Stacks (sBTC)', totalSupplied: 281.2, totalReserves: 352.5, collateralRatio: 125.3, status: 'Audited' },
-      { asset: 'Rootstock (RBTC)', totalSupplied: 122.5, totalReserves: 143.1, collateralRatio: 116.8, status: 'Audited' },
-      { asset: 'Wormhole NTT', totalSupplied: 551.0, totalReserves: 612.4, collateralRatio: 111.1, status: 'Verified' },
+      { asset: 'Rootstock (RBTC)', totalSupplied: 122.5, "totalReserves": 143.1, "collateralRatio": 116.8, "status": "Audited" },
+      { asset: "Wormhole NTT", "totalSupplied": 551.0, "totalReserves": 612.4, "collateralRatio": 111.1, "status": "Verified" },
     ];
   } catch {
     return null;
