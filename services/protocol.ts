@@ -649,3 +649,77 @@ export const fetchCitadelTreasury = async (network: Network = 'mainnet'): Promis
     };
     return fetchMultiSigBalances(CITADEL_QUORUM);
 };
+
+async function fetchEvmBalance(rpc: string, address: string): Promise<number> {
+  if (!address || !rpc) return 0;
+  try {
+    const res = await fetchWithRetry(rpc, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'eth_getBalance',
+        params: [address, 'latest']
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const wei = BigInt(data.result);
+    return Number(wei) / 1e18;
+  } catch (e) {
+    console.warn("EVM Balance Fetch Failed for " + rpc, e);
+    return 0;
+  }
+}
+
+export async function fetchB2Assets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).B2_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'b2-btc',
+        name: 'B2 Network',
+        symbol: 'B2-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'B2',
+        type: 'Native',
+        address
+    }];
+}
+
+export async function fetchBotanixAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).BOTANIX_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'botanix-btc',
+        name: 'Botanix Spiderchain',
+        symbol: 'BOT-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Botanix',
+        type: 'Native',
+        address
+    }];
+}
+
+export async function fetchMezoAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).MEZO_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'mezo-btc',
+        name: 'Mezo Network',
+        symbol: 'MEZO-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Mezo',
+        type: 'Native',
+        address
+    }];
+}
