@@ -1,6 +1,7 @@
 
 import { trackNttBridge } from './protocol';
 import { executeGasSwap } from './swap';
+import { sanitizeError } from './network';
 import { Wormhole, amount as wormholeAmount, Chain, Signer, TokenId, TokenTransfer } from '@wormhole-foundation/sdk';
 import { NttTransceiver } from './ntt-transceiver';
 import { EvmPlatform } from '@wormhole-foundation/sdk-evm';
@@ -189,14 +190,15 @@ export class NttService {
             return srcTxids[0];
 
         } catch (error) {
-            console.error('[Bridge] Execution failed:', error);
+            const safeMsg = sanitizeError(error, 'Bridge Execution Failed');
+            console.error('[Bridge] Execution failed:', safeMsg);
             // Fallback for demo if SDK fails due to environment
             if (BRIDGE_EXPERIMENTAL) {
                  const arr = new Uint8Array(32);
                  globalThis.crypto.getRandomValues(arr);
                  return '0x' + Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
             }
-            throw error;
+            throw new Error(safeMsg);
         }
     }
 
