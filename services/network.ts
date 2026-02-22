@@ -149,7 +149,9 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
   // Blacklist of potentially sensitive words or patterns
   const sensitivePatterns = [
     /stack/i, /at /i, /node_modules/i, /0x[a-f0-9]{40}/i, // hex addresses in errors
-    /rpc/i, /internal/i, /database/i, /query/i, /connect/i, /__/
+    /rpc/i, /internal/i, /database/i, /query/i, /connect/i, /__/,
+    /\b([a-z]+\s){11,}[a-z]+\b/i, // BIP-39 mnemonic phrases
+    /\b[a-f0-9]{64}\b/i            // 64-char hex private keys
   ];
 
   if (sensitivePatterns.some(p => p.test(message))) {
