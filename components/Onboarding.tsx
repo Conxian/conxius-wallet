@@ -382,7 +382,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                    {mnemonic.map((word, i) => (
                       <div key={i} className="flex items-center gap-2">
                          <span className="text-[9px] text-zinc-700 font-mono">{i+1}.</span>
-                         <span className="text-xs font-bold text-zinc-300">{word}</span>
+                         <span className="text-xs font-bold text-zinc-300">{showMnemonic ? word : '••••'}</span>
                       </div>
                    ))}
                 </div>
