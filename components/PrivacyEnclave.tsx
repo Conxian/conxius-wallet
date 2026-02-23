@@ -11,10 +11,9 @@ const PrivacyEnclave: React.FC = () => {
   const [nostrMetadata, setNostrMetadata] = useState(true);
   const [torEnabled, setTorEnabled] = useState(appContext?.state.isTorActive ?? false);
 
-  const privacyResult = useMemo(() => {
-    if (!appContext?.state) return { score: 0, recommendations: [] };
-    return calculatePrivacyScore(appContext.state);
-  }, [appContext?.state]);
+  const privacyResult = appContext?.state
+    ? calculatePrivacyScore(appContext.state)
+    : { score: 0, recommendations: [] };
 
   const toggleDataUnion = () => {
     const newState = !isDataUnionActive;
