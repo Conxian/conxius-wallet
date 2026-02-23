@@ -11,6 +11,7 @@ import { buildPsbt } from '../services/psbt';
 import { parseBip21 } from '../services/bip21';
 import { Network } from '../types';
 import { estimateFees, FeeEstimation } from "../services/FeeEstimator";
+import { sanitizeError } from '../services/network';
 
 const PaymentPortal: React.FC = () => {
   const context = useContext(AppContext);
@@ -167,7 +168,7 @@ const PaymentPortal: React.FC = () => {
         setRecipient('');
         setAmount('');
       } catch (e: any) {
-        const msg = e?.message || 'On-chain send failed';
+        const msg = sanitizeError(e, 'On-chain send failed');
         setOnchainError(msg);
         context?.notify('error', msg);
       } finally {
@@ -205,7 +206,7 @@ const PaymentPortal: React.FC = () => {
         setRecipient('');
         setAmount('');
       } catch (e: any) {
-        context?.notify('error', e?.message || 'Lightning send failed');
+        context?.notify('error', sanitizeError(e, 'Lightning send failed'));
       } finally {
         setIsSending(false);
       }
@@ -215,7 +216,7 @@ const PaymentPortal: React.FC = () => {
     if (method === 'onramp') {
       setIsSending(true);
       
-      const apiKey = import.meta.env.VITE_TRANSAK_API_KEY || '4b97b059-3663-42e6-b619-3ffa7f883259'; // Fallback to a demo key if missing
+      const apiKey = import.meta.env.VITE_TRANSAK_API_KEY || '';
       const environment = (context?.state.network === 'mainnet' && context?.state.isMainnetLive) ? 'PRODUCTION' : 'STAGING';
       const baseUrl = environment === 'PRODUCTION' ? 'https://global.transak.com' : 'https://global-stg.transak.com';
       const walletAddress = context?.state.walletConfig?.masterAddress;
