@@ -14,6 +14,7 @@ import {
 import { useContext } from 'react';
 import { AppContext } from '../context';
 import { issueRgbAsset } from '../services/rgb';
+import { sanitizeError } from '../services/network';
 
 const Studio: React.FC = () => {
   const appContext = useContext(AppContext);
@@ -64,7 +65,7 @@ const Studio: React.FC = () => {
         setRgbSymbol('');
         setRgbSeal('');
     } catch (e: any) {
-        appContext!.notify('error', e.message || 'RGB Issuance Failed');
+        appContext!.notify('error', sanitizeError(e, 'RGB Issuance Failed'));
     } finally {
         setIsProcessing(false);
     }

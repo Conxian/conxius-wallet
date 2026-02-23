@@ -151,7 +151,8 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     /stack/i, /at /i, /node_modules/i, /0x[a-f0-9]{40}/i, // hex addresses in errors
     /rpc/i, /internal/i, /database/i, /query/i, /connect/i, /__/,
     /\b([a-z]+\s){11,}[a-z]+\b/i, // BIP-39 mnemonic phrases
-    /\b[a-f0-9]{64}\b/i            // 64-char hex private keys
+    /\b[a-f0-9]{64}\b/i,           // 64-char hex private keys
+    /\b[xtuvyz]prv[1-9A-HJ-NP-Za-km-z]{50,110}\b/i // BIP32 extended private keys (xprv, tprv, etc)
   ];
 
   if (sensitivePatterns.some(p => p.test(message))) {

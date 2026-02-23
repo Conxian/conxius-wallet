@@ -52,6 +52,7 @@ import { ConxiusWormholeSigner } from './services/wormhole-signer';
 import { evaluateSecurityPosture } from './services/device-integrity';
 import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
 import { notificationService } from './services/notifications';
+import { sanitizeError } from './services/network';
 import { setGeminiApiKey as setGeminiServiceKey } from './services/gemini';
 import { IdentityService } from './services/identity';
 import { Web5Service } from './services/web5';
@@ -219,12 +220,13 @@ const App: React.FC = () => {
   }, []);
 
   const notify = async (type: ToastType, message: string, title?: string) => {
+    const sanitizedMessage = type === 'error' ? sanitizeError(message) : message;
     const defaultTitle = type === 'error' ? 'Security Alert' : type === 'success' ? 'Operation Success' : 'Wallet Update';
     const event = await notificationService.notify({
       category: (type === 'error' || type === 'warning') ? 'SECURITY' : 'SYSTEM',
       type,
       title: title || defaultTitle,
-      message
+      message: sanitizedMessage
     });
 
     setToasts(prev => [...prev, { id: event.id, type: event.type, message: event.message }]);
