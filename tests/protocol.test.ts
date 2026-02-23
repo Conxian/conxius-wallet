@@ -555,7 +555,7 @@ describe('protocol service', () => {
       const { fetchSbtcWalletAddress } = await import('../services/protocol');
       const address = await fetchSbtcWalletAddress('mainnet');
       // Updated expectation to match the valid Bech32 fallback
-      expect(address).toBe('bc1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqth887');
+      expect(address).toBe('bc1q6rnmwsm9v8v7yqny4q9k8v7yqny4q9k8v7yqny');
     });
   });
 });

@@ -3,7 +3,7 @@ import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp,
 import { AppContext } from '../context';
 import { estimateFees, FeeEstimation } from '../services/FeeEstimator';
 import { NttService, BRIDGE_STAGES } from '../services/ntt';
-import { fetchBtcUtxos, broadcastBtcTx, fetchSbtcWalletAddress } from '../services/protocol';
+import { fetchBtcUtxos, broadcastBtcTx, fetchSbtcWalletAddress, monitorSbtcPegIn } from '../services/protocol';
 import { buildSbtcPegInPsbt } from '../services/psbt';
 
 const NTTBridge: React.FC = () => {
@@ -39,11 +39,15 @@ const NTTBridge: React.FC = () => {
   useEffect(() => {
     if (isBridgeInProgress && txHash) {
       const pollProgress = async () => {
-        // If Native Peg, we just check confirmation count (simplified for now)
-        if (bridgeType === 'Native Peg') {
-             // TODO: Implement proper sBTC deposit monitoring
-             // For now, we assume it's confirming if we have a txHash
-             setCurrentStage(0); 
+        if (bridgeType === 'Native Peg' && targetLayer === 'Stacks') {
+             const status = await monitorSbtcPegIn(txHash, context.state.network);
+             if (status.status === 'confirmed' || status.status === 'success') {
+                 setCurrentStage(BRIDGE_STAGES.length - 1);
+             } else if (status.status === 'pending_stx_confirmation') {
+                 setCurrentStage(1);
+             } else {
+                 setCurrentStage(0);
+             }
              return;
         }
         

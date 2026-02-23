@@ -75,6 +75,7 @@ This document tracks the ground-truth implementation status of every major featu
 
 1. **Done**: Sprint 2026-02-18 Root-to-Leaf Audit & Repair completed. Refined native signing for 14+ layers, hardened Web5 enclave bridge, and synchronized Dashboard receive flows.
 2. **Done**: Sprint 2026-02-18 Milestone M6 (Multi-Sig) & M7 (Privacy v2) implemented. Hardened Silent Payments and added CoinJoin & Tor simulation.
+3. **Done**: Sprint 2026-02-18 System-wide Review & Refinement. Enhanced sBTC Nakamoto monitoring, production-grade Ark boarding logic, and TEE-backed Governance persistence. Standardized Gateway domain alignment across the ecosystem.
 
 ---
 

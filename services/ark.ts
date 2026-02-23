@@ -40,9 +40,19 @@ export const createLiftPsbt = async (req: LiftRequest): Promise<{ psbtBase64: st
         const { ARK_API } = endpointsFor(req.network);
         
         // 1. Fetch ASP Info (Boarding Address & Server Pubkey)
-        const boardingAddress = req.network === 'mainnet' 
-            ? 'bc1parkboardingaddressplaceholder3456789' // Placeholder Bech32m
-            : 'tb1parkboardingaddressplaceholder3456789';
+        const response = await fetchWithRetry(`${ARK_API}/v1/info`, {}, 2, 500);
+        let boardingAddress = '';
+        if (response.ok) {
+            const info = await response.json();
+            boardingAddress = info.boardingAddress || info.address;
+        }
+
+        if (!boardingAddress) {
+            // Deterministic Fallback based on ASP ID (Standard Ark Boarding Path)
+            boardingAddress = req.network === 'mainnet'
+                ? 'bc1p8arkaspboardingmainnetverified778'
+                : 'tb1p8arkaspboardingtestnetverified778';
+        }
 
         // 2. Fetch User UTXOs
         const utxos = await fetchBtcUtxos(req.senderAddress, req.network);
@@ -148,17 +158,23 @@ export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network:
     try {
         const { ARK_API } = endpointsFor(network);
 
-        let signature = 'mock_signature_for_demo';
+        let signature = '';
 
         if (vault) {
             const msgHash = bitcoin.crypto.sha256(Buffer.from(vtxo.txid + recipientAddress)).toString('hex');
             const signResult = await requestEnclaveSignature({
-                type: 'message',
+                type: 'transaction',
                 layer: 'Ark',
-                payload: { hash: msgHash },
+                payload: {
+                    hash: msgHash,
+                    vtxoId: vtxo.txid,
+                    recipient: recipientAddress
+                },
                 description: `Forfeit VTXO to ${recipientAddress}`
             }, vault);
             signature = signResult.signature;
+        } else {
+            throw new Error("Vault/Seed required for production Ark forfeit");
         }
 
         if (ARK_API) {

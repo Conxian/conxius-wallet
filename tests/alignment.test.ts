@@ -52,6 +52,15 @@ describe('Alignment and Logic Fixes', () => {
   });
 
   it('should fetch global reserve metrics correctly', async () => {
+    // Mock fetch for global reserve metrics
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([
+        { asset: 'Liquid (L-BTC)', totalSupplied: 452.4, totalReserves: 521.8, collateralRatio: 115.3, status: 'Audited' }
+      ])
+    });
+    global.fetch = mockFetch as any;
+
     const metrics = await fetchGlobalReserveMetrics();
     expect(metrics).not.toBeNull();
     if (metrics) {
