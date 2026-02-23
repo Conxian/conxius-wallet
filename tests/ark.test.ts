@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { liftToArk, forfeitVtxo, syncVtxos, VTXO } from '../services/ark';
 
+// Mock signer
+vi.mock('../services/signer', () => ({
+    requestEnclaveSignature: vi.fn().mockResolvedValue({ signature: 'mock_sig', pubkey: 'mock_pub' })
+}));
+
 // Mock fetch globally
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -36,7 +41,7 @@ describe('Ark Service', () => {
             json: () => Promise.resolve({ txid: 'txid_real_network_123' })
         });
 
-        const txid = await forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet');
+        const txid = await forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', 'mock_vault');
         expect(txid).toBe('txid_real_network_123');
     });
 
@@ -55,7 +60,7 @@ describe('Ark Service', () => {
         // Mock persistent failure for all retries
         mockFetch.mockRejectedValue(new Error('Network Error'));
 
-        const txid = await forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet');
+        const txid = await forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', 'mock_vault');
         expect(txid).toContain('txid_forfeit_simulation');
     });
 

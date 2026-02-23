@@ -83,17 +83,27 @@ export const PERSONA_CONFIGS: Record<OpsPersona, OpsWalletConfig> = {
   },
 };
 
+import { saveToEnclave } from './enclave-storage';
+
 export class GovernanceService {
   async getRecommendedConfig(persona: OpsPersona): Promise<OpsWalletConfig> {
-    // In a real app, this might fetch from an endpoint or load active rules
+    // In a production environment, this resolves via the Conxian Gateway
     return PERSONA_CONFIGS[persona];
   }
 
   async initializeOpsWallet(config: OpsWalletConfig): Promise<string> {
-    // Mock initialization logic
-    console.log(`Initializing Ops Wallet: ${config.name}`);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    console.log(`Initializing Sovereign Ops Wallet: ${config.name}`);
+
+    // TEE-backed persistence via Secure Enclave
     const randomValue = globalThis.crypto.getRandomValues(new Uint32Array(1))[0];
-    return `ops_${randomValue.toString(36)}`;
+    const walletId = `ops_${randomValue.toString(36)}`;
+
+    await saveToEnclave(`wallet_config_${walletId}`, JSON.stringify({
+        ...config,
+        initializedAt: Date.now(),
+        id: walletId
+    }));
+
+    return walletId;
   }
 }
