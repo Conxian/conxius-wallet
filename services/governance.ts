@@ -83,7 +83,7 @@ export const PERSONA_CONFIGS: Record<OpsPersona, OpsWalletConfig> = {
   },
 };
 
-import { saveToEnclave } from './enclave-storage';
+import { setEnclaveBlob } from './enclave-storage';
 
 export class GovernanceService {
   async getRecommendedConfig(persona: OpsPersona): Promise<OpsWalletConfig> {
@@ -98,7 +98,7 @@ export class GovernanceService {
     const randomValue = globalThis.crypto.getRandomValues(new Uint32Array(1))[0];
     const walletId = `ops_${randomValue.toString(36)}`;
 
-    await saveToEnclave(`wallet_config_${walletId}`, JSON.stringify({
+    await setEnclaveBlob(`wallet_config_${walletId}`, JSON.stringify({
         ...config,
         initializedAt: Date.now(),
         id: walletId
