@@ -1,7 +1,7 @@
 import { trackNttBridge } from './protocol';
 import { executeGasSwap } from './swap';
 import { sanitizeError } from './network';
-import { sha256 } from '@noble/hashes/sha256';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { Wormhole, amount as wormholeAmount, Chain, Signer, TokenId, TokenTransfer } from '@wormhole-foundation/sdk';
 import { NttTransceiver } from './ntt-transceiver';
 import { EvmPlatform } from '@wormhole-foundation/sdk-evm';
