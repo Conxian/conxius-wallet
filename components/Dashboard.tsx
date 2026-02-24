@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { LAYER_COLORS } from '../constants';
 import { Asset, BitcoinLayer, UTXO } from '../types';
 import { TrendingUp, ArrowUpRight, Search, Bot, Loader2, Shield, Send, Plus, Network, ShieldCheck, EyeOff, CheckCircle2, X, ShoppingBag, RefreshCw, Key, Copy, ExternalLink, ArrowDownLeft, Clock, History, Sparkles, QrCode } from 'lucide-react';
-import { fetchBtcBalance, fetchStacksBalances, fetchBtcPrice, fetchLiquidBalance, fetchRskBalance, broadcastBtcTx, fetchRunesBalances, fetchBtcUtxos, fetchBobAssets, fetchRgbAssets, fetchArkBalances, fetchMavenAssets, fetchStateChainBalances, fetchB2Assets, fetchBotanixAssets, fetchMezoAssets } from '../services/protocol';
+import { fetchBtcBalance, fetchStacksBalances, fetchBtcPrice, fetchLiquidBalance, fetchRskBalance, broadcastBtcTx, fetchRunesBalances, fetchBtcUtxos, fetchBobAssets, fetchRgbAssets, fetchArkBalances, fetchMavenAssets, fetchStateChainBalances, fetchB2Assets, fetchBotanixAssets, fetchMezoAssets, fetchAlpenAssets, fetchZuluAssets, fetchBisonAssets, fetchHemiAssets, fetchNubitAssets, fetchLorenzoAssets, fetchCitreaAssets, fetchBabylonAssets, fetchMerlinAssets, fetchBitlayerAssets, fetchTaprootAssets } from '../services/protocol';
 import { SignRequest } from '../services/signer';
 import { getRecommendedFees } from '../services/fees';
 import { buildPsbt } from '../services/psbt';
@@ -70,10 +70,22 @@ const Dashboard: React.FC = () => {
             fetchStateChainBalances(btcAddress),
             fetchB2Assets(btcAddress, network),
             fetchBotanixAssets(btcAddress, network),
-            fetchMezoAssets(btcAddress, network)
+            fetchMezoAssets(btcAddress, network),
+            fetchAlpenAssets(btcAddress, network),
+            fetchZuluAssets(btcAddress, network),
+            fetchBisonAssets(btcAddress, network),
+            fetchHemiAssets(btcAddress, network),
+            fetchNubitAssets(btcAddress, network),
+            fetchLorenzoAssets(btcAddress, network),
+            fetchCitreaAssets(btcAddress, network),
+            fetchBabylonAssets(btcAddress, network),
+            fetchMerlinAssets(btcAddress, network),
+            fetchBitlayerAssets(btcAddress, network),
+            fetchTaprootAssets(taprootAddress, network)
         ]);
 
-        const [btcBal, stxAssets, liqBal, rskBal, runeAssets, bobAssets, rgbAssets, arkAssets, mavenAssets, scAssets, b2Assets, botAssets, mezoAssets] = results;
+        const [btcBal, stxAssets, liqBal, rskBal, runeAssets, bobAssets, rgbAssets, arkAssets, mavenAssets, scAssets, b2Assets, botAssets, mezoAssets, alpenAssets, zuluAssets, bisonAssets, hemiAssets, nubitAssets, lorenzoAssets, citreaAssets, babylonAssets, merlinAsset...bitlayerAssets,
+            ...taprootAssets, taprootAssets] = results;
         const finalAssets: Asset[] = [
             { id: 'btc-main', name: 'Bitcoin', symbol: 'BTC', balance: btcBal, valueUsd: btcBal * btcPrice, layer: 'Mainnet', type: 'Native', address: btcAddress },
             ...stxAssets,
@@ -87,7 +99,18 @@ const Dashboard: React.FC = () => {
             ...scAssets,
             ...b2Assets,
             ...botAssets,
-            ...mezoAssets
+            ...mezoAssets,
+            ...alpenAssets,
+            ...zuluAssets,
+            ...bisonAssets,
+            ...hemiAssets,
+            ...nubitAssets,
+            ...lorenzoAssets,
+            ...citreaAssets,
+            ...babylonAssets,
+            ...merlinAssets,
+            ...bitlayerAssets,
+            ...taprootAssets
         ];
         appContext?.updateAssets(finalAssets);
         appContext?.notify('success', 'Ledger Synchronized via RPC');
@@ -469,7 +492,7 @@ const Dashboard: React.FC = () => {
               <button onClick={() => setShowReceive(false)} aria-label="Close" className="absolute top-8 right-8 text-zinc-700 hover:text-zinc-300"><X size={24} /></button>
               
               <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800 mb-4">
-                {(['Mainnet', 'Stacks', 'Liquid', 'Rootstock', 'RGB', 'Ark'] as BitcoinLayer[]).map(l => (
+                {(['Mainnet', 'Stacks', 'Liquid', 'Rootstock', 'RGB', 'Ark', 'BOB', 'B2', 'Botanix', 'Mezo', 'Alpen', 'Zulu', 'Bison', 'Hemi', 'Nubit', 'Lorenzo', 'Citrea', 'Babylon', 'Merlin', 'Bitlayer', 'TaprootAssets'] as BitcoinLayer[]).map(l => (
                     <button 
                         key={l}
                         onClick={() => setReceiveLayer(l)}

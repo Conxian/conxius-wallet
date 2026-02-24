@@ -494,7 +494,7 @@ export const requestEnclaveSignature = async (
             pubkey: res.pubkey,
             timestamp: Date.now(),
         };
-    } else if (request.layer === "BOB" || request.layer === "B2" || request.layer === "Botanix" || request.layer === "Mezo") {
+    } else if (request.layer === "BOB" || request.layer === "B2" || request.layer === "Botanix" || request.layer === "Mezo" || request.layer === "Alpen" || request.layer === "Zulu" || request.layer === "Bison" || request.layer === "Hemi" || request.layer === "Nubit" || request.layer === "Lorenzo" || request.layer === "Citrea" || request.layer === "Babylon" || request.layer === "Merlin" || request.layer === "Bitlayer") {
       const path = "m/44'/60'/0'/0/0"; // BOB is EVM compatible
       const res = await signNative({
         vault,
@@ -703,7 +703,7 @@ export const requestEnclaveSignature = async (
             privKeyBuf.fill(0);
           }
       }
-    } else if ((request.layer === 'BOB' || request.layer === 'B2' || request.layer === 'Botanix' || request.layer === 'Mezo' || request.layer === 'Rootstock' || request.layer === 'Ethereum') && seedBytes) {
+    } else if ((request.layer === 'BOB' || request.layer === 'B2' || request.layer === 'Botanix' || request.layer === 'Mezo' || request.layer === 'Rootstock' || request.layer === 'Ethereum' || request.layer === 'Alpen' || request.layer === 'Zulu' || request.layer === 'Bison' || request.layer === 'Hemi' || request.layer === 'Nubit' || request.layer === 'Lorenzo' || request.layer === 'Citrea' || request.layer === 'Babylon' || request.layer === 'Merlin' || request.layer === 'Bitlayer') && seedBytes) {
       const path = "m/44'/60'/0'/0/0";
       const derived = await workerManager.derivePath(seedBytes, path);
       pubkey = derived.publicKey;

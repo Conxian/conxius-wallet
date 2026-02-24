@@ -37,6 +37,10 @@ This document tracks the ground-truth implementation status of every major featu
 | **B2 Network** | ✅ PRODUCTION | EVM path integrated; fetcher uses eth_getBalance RPC. |
 | **Botanix** | ✅ PRODUCTION | Spiderchain EVM path integrated; real RPC. |
 | **Mezo** | ✅ PRODUCTION | tBTC-based EVM path integrated; real RPC. |
+| **Alpen / Citrea / Bitlayer** | ✅ PRODUCTION | ZK-rollup EVM path integrated; real RPC. |
+| **Zulu / Bison / Hemi** | ✅ PRODUCTION | EVM path integrated; real RPC. |
+| **Nubit / Lorenzo / Babylon** | ✅ PRODUCTION | BTC staking & DA integration ready; fetchers implemented. |
+| **Merlin Chain** | ✅ PRODUCTION | EVM path integrated; real RPC. |
  Enhanced functional cryptographic verifier implemented with TEE-aligned checks. |
 
 ## IV. ASSET PROTOCOLS

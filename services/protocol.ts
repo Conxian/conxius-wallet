@@ -757,6 +757,176 @@ export async function fetchMezoAssets(address: string, network: Network = 'mainn
     }];
 }
 
+export async function fetchAlpenAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).ALPEN_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'alpen-btc',
+        name: 'Alpen Labs',
+        symbol: 'ALP-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Alpen',
+        type: 'Native',
+        address
+    }];
+}
+
+export async function fetchZuluAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).ZULU_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'zulu-btc',
+        name: 'Zulu Network',
+        symbol: 'ZULU-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Zulu',
+        type: 'Native',
+        address
+    }];
+}
+
+export async function fetchBisonAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).BISON_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'bison-btc',
+        name: 'Bison Labs',
+        symbol: 'BIS-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Bison',
+        type: 'Native',
+        address
+    }];
+}
+
+export async function fetchHemiAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).HEMI_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'hemi-btc',
+        name: 'Hemi Network',
+        symbol: 'HEMI-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Hemi',
+        type: 'Native',
+        address
+    }];
+}
+
+export async function fetchNubitAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).NUBIT_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'nubit-btc',
+        name: 'Nubit',
+        symbol: 'NUB-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Nubit',
+        type: 'Native',
+        address
+    }];
+}
+
+export async function fetchLorenzoAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).LORENZO_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'lorenzo-btc',
+        name: 'Lorenzo Protocol',
+        symbol: 'LOR-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Lorenzo',
+        type: 'Native',
+        address
+    }];
+}
+
+export async function fetchCitreaAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).CITREA_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'citrea-btc',
+        name: 'Citrea',
+        symbol: 'CIT-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Citrea',
+        type: 'Native',
+        address
+    }];
+}
+
+export async function fetchBabylonAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).BABYLON_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'babylon-btc',
+        name: 'Babylon',
+        symbol: 'BAB-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Babylon',
+        type: 'Native',
+        address
+    }];
+}
+
+export async function fetchMerlinAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).MERLIN_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'merlin-btc',
+        name: 'Merlin Chain',
+        symbol: 'MER-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Merlin',
+        type: 'Native',
+        address
+    }];
+}
+
+export async function fetchBitlayerAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).BITLAYER_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
+    const btcPrice = await fetchBtcPrice();
+    return [{
+        id: 'bitlayer-btc',
+        name: 'Bitlayer',
+        symbol: 'BIT-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'Bitlayer',
+        type: 'Native',
+        address
+    }];
+}
+
 /**
  * Fetches the native peg-in (deposit) address for a given Bitcoin layer.
  */
@@ -791,7 +961,48 @@ export const fetchNativePegAddress = async (layer: BitcoinLayer, network: Networ
             return network === 'mainnet' ? 'bc1qbotanixspiderchain...' : 'tb1qbotanixspiderchain...';
         case 'Mezo':
             return network === 'mainnet' ? 'bc1qmezotbtcmainnet...' : 'tb1qmezotbtctestnet...';
+        case 'Alpen':
+            return network === 'mainnet' ? 'bc1qalpengatewaymainnet...' : 'tb1qalpengatewaytestnet...';
+        case 'Zulu':
+            return network === 'mainnet' ? 'bc1qzulugatewaymainnet...' : 'tb1qzulugatewaytestnet...';
+        case 'Bison':
+            return network === 'mainnet' ? 'bc1qbisongatewaymainnet...' : 'tb1qbisongatewaytestnet...';
+        case 'Hemi':
+            return network === 'mainnet' ? 'bc1qhemigatewaymainnet...' : 'tb1qhemigatewaytestnet...';
+        case 'Nubit':
+            return network === 'mainnet' ? 'bc1qnubitgatewaymainnet...' : 'tb1qnubitgatewaytestnet...';
+        case 'Lorenzo':
+            return network === 'mainnet' ? 'bc1qlorenzogatewaymainnet...' : 'tb1qlorenzogatewaytestnet...';
+        case 'Citrea':
+            return network === 'mainnet' ? 'bc1qcitreagatewaymainnet...' : 'tb1qcitreagatewaytestnet...';
+        case 'Babylon':
+            return network === 'mainnet' ? 'bc1qbabylongatewaymainnet...' : 'tb1qbabylongatewaytestnet...';
+        case 'Merlin':
+            return network === 'mainnet' ? 'bc1qmerlingatewaymainnet...' : 'tb1qmerlingatewaytestnet...';
+        case 'Bitlayer':
+            return network === 'mainnet' ? 'bc1qbitlayergatewaymainnet...' : 'tb1qbitlayergatewaytestnet...';
         default:
             throw new Error(`Native peg-in not supported for layer: ${layer}`);
     }
 };
+
+export async function fetchTaprootAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    // Taproot Assets (formerly Taro) - Placeholder for integration with lightning-terminal or similar
+    // For now, we simulate an empty discovery if not on a real node.
+    try {
+        const { RGB_API } = endpointsFor(network); // Reusing RGB proxy endpoint as it often handles Taproot assets too
+        const response = await fetchWithRetry(`${RGB_API}/v1/taproot-assets/${address}`, {}, 1, 500);
+        if (!response.ok) return [];
+        const data = await response.json();
+        return (data.assets || []).map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            symbol: a.symbol,
+            balance: a.amount,
+            valueUsd: 0,
+            layer: 'TaprootAssets' as BitcoinLayer,
+            type: 'Native' as const,
+            address
+        }));
+    } catch { return []; }
+}
