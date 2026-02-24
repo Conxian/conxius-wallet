@@ -3,6 +3,11 @@ package com.conxius.wallet;
 import android.os.Build;
 import android.util.Log;
 
+import com.google.android.play.core.integrity.IntegrityManager;
+import com.google.android.play.core.integrity.IntegrityManagerFactory;
+import com.google.android.play.core.integrity.IntegrityTokenRequest;
+import com.google.android.play.core.integrity.IntegrityTokenResponse;
+import com.google.android.gms.tasks.Task;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -121,7 +126,43 @@ public class DeviceIntegrityPlugin extends Plugin {
     /**
      * Quick root-only check (lightweight, no emulator detection).
      */
+        /**
+     * Request a Play Integrity token.
+     * This token should be sent to the Conxian Gateway for server-side verification.
+     */
     @PluginMethod
+    public void requestIntegrityToken(PluginCall call) {
+        String nonce = call.getString("nonce");
+        if (nonce == null || nonce.isEmpty()) {
+            call.reject("Nonce is required for Play Integrity request");
+            return;
+        }
+
+        try {
+            IntegrityManager integrityManager = IntegrityManagerFactory.create(getContext());
+            Task<IntegrityTokenResponse> integrityTokenResponse = integrityManager.requestIntegrityToken(
+                IntegrityTokenRequest.builder()
+                    .setNonce(nonce)
+                    .build()
+            );
+
+            integrityTokenResponse.addOnSuccessListener(response -> {
+                String token = response.token();
+                JSObject ret = new JSObject();
+                ret.put("token", token);
+                call.resolve(ret);
+            });
+
+            integrityTokenResponse.addOnFailureListener(e -> {
+                Log.e(TAG, "Play Integrity API error", e);
+                call.reject("Play Integrity API error: " + e.getMessage());
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to initialize Play Integrity API", e);
+            call.reject("Failed to initialize Play Integrity API: " + e.getMessage());
+        }
+    }
+
     public void isRooted(PluginCall call) {
         JSObject result = new JSObject();
         boolean rooted = checkSuBinary() || checkRootPackages();

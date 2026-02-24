@@ -33,19 +33,16 @@ The Conxius Wallet Android implementation follows a "Native-First" security mode
 ## 3. Findings & Recommendations
 
 ### 3.1 Critical: Backup Policy
-- **Finding:** `android:allowBackup="true"` is enabled in `AndroidManifest.xml`.
-- **Risk:** Allows users (or attackers with physical access) to extract app data via `adb backup`, potentially exposing encrypted vaults.
-- **Recommendation:** Set `android:allowBackup="false"`.
+- **Status:** FIXED ✅
+- **Change:** Set `android:allowBackup="false"` and `android:fullBackupContent="false"` in `AndroidManifest.xml`.
 
 ### 3.2 High: ProGuard/R8 Configuration
-- **Finding:** `proguard-rules.pro` is empty despite using reflection-heavy libraries like `web3j`.
-- **Risk:** Minification in release builds may break internal logic in blockchain libraries, leading to runtime crashes or incorrect signing.
-- **Recommendation:** Implement specific `-keep` rules for `org.bitcoinj.**`, `org.web3j.**`, and `org.bouncycastle.**`.
+- **Status:** FIXED ✅
+- **Change:** Implemented comprehensive ProGuard rules for all integrated blockchain SDKs.
 
 ### 3.3 Medium: Hardware Attestation
-- **Finding:** Integrity checks are currently performed locally.
-- **Risk:** Local checks can be bypassed by advanced hooking frameworks (e.g., Frida, Xposed) if not properly obfuscated.
-- **Recommendation:** Transition to Google's **Play Integrity API** for hardware-backed attestation as outlined in the release prep documentation.
+- **Status:** IMPROVED ✅
+- **Change:** Integrated Play Integrity API scaffolding and \`requestIntegrityToken\` method for server-side validation.
 
 ### 3.4 Observation: Kotlin Standard Library
 - **Finding:** Kotlin versions are forced in `build.gradle` to maintain compatibility.
