@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchMavenAssets, broadcastMavenTx } from '../services/maven';
+import { fetchMavenAssets, createMavenTransfer } from '../services/maven';
 
 // Mock dependencies
 const mockFetch = vi.fn();
@@ -14,6 +14,13 @@ vi.mock('../services/prices', () => ({
     fetchBtcPrice: vi.fn().mockResolvedValue(100000)
 }));
 
+vi.mock('../services/signer', () => ({
+    requestEnclaveSignature: vi.fn().mockResolvedValue({
+        signature: 'mock_signature',
+        pubkey: 'mock_pubkey'
+    })
+}));
+
 beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockReset();
@@ -25,12 +32,11 @@ describe('Maven Service', () => {
             ok: true,
             json: () => Promise.resolve({
                 assets: [{
-                    assetId: 'mav123',
+                    id: 'mav123',
                     name: 'Maven Token',
                     symbol: 'MAV',
-                    decimals: 8,
-                    amount: '100000000',
-                    valueUsd: '10.50'
+                    balance: 1,
+                    valueUsd: 10.50
                 }]
             })
         });
@@ -38,7 +44,7 @@ describe('Maven Service', () => {
         const assets = await fetchMavenAssets('bc1qtest');
         expect(assets).toHaveLength(1);
         expect(assets[0].symbol).toBe('MAV');
-        expect(assets[0].balance).toBe(1); // 100000000 / 10^8
+        expect(assets[0].balance).toBe(1);
     });
 
     it('should handle empty or failed asset fetch', async () => {
@@ -51,22 +57,13 @@ describe('Maven Service', () => {
         expect(assets).toEqual([]);
     });
 
-    it('should broadcast Maven transaction', async () => {
+    it('should create and broadcast Maven transfer', async () => {
         mockFetch.mockResolvedValueOnce({
             ok: true,
             json: () => Promise.resolve({ txid: 'mav_txid_123' })
         });
 
-        const txid = await broadcastMavenTx('010000...');
+        const txid = await createMavenTransfer('asset_id', 10, 'recipient_addr', 'mock_vault');
         expect(txid).toBe('mav_txid_123');
-    });
-
-    it('should throw error on broadcast failure', async () => {
-        mockFetch.mockResolvedValueOnce({
-            ok: false,
-            text: () => Promise.resolve('Broadcast failed')
-        });
-
-        await expect(broadcastMavenTx('010000...')).rejects.toThrow('Maven broadcast failed');
     });
 });

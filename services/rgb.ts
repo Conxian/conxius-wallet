@@ -59,7 +59,7 @@ export const issueRgbAsset = async (
     }
 
     // Simulate contract creation (Contract ID is usually SHA256 of genesis)
-    const contractId = Buffer.from(bitcoin.crypto.sha256(Buffer.from(name + symbol + Date.now().toString()))).toString('hex').substring(0, 32);
+    const contractId = Buffer.from(bitcoin.crypto.sha256(Buffer.from(name + symbol + Date.now().toString()))).toString("hex").substring(0, 32);
 
     const asset: RgbAsset = {
         id: `rgb:${contractId}`,
@@ -73,7 +73,7 @@ export const issueRgbAsset = async (
         description
     };
 
-    notificationService.notifyTransaction('RGB Asset Issued', `Successfully issued ${totalSupply} ${symbol}`, true);
+    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'RGB Asset Issued', message: `Successfully issued ${totalSupply} ${symbol}` });
 
     return asset;
 };
@@ -85,7 +85,7 @@ export const issueRgbAsset = async (
  * In Production: This would pass the consignment blob to `rgb-lib-wasm` or `rgb-node` to verify the DAG.
  */
 export const validateConsignment = async (consignment: Consignment, network: any = 'mainnet'): Promise<boolean> => {
-    notificationService.notify('info', 'Validating RGB Consignment...');
+    notificationService.notify({ category: 'SYSTEM', type: 'info', title: 'RGB', message: 'Validating RGB Consignment...' });
 
     // 1. Verify schema compliance
     if (!consignment.assetId.startsWith('rgb:')) {
@@ -103,7 +103,7 @@ export const validateConsignment = async (consignment: Consignment, network: any
         const status = await checkBtcTxStatus(consignment.anchor.txid, network);
         if (!status.confirmed) {
             console.warn('Anchor transaction not confirmed on-chain');
-            notificationService.notify('warning', 'RGB Anchor Pending Confirmation');
+            notificationService.notify({ category: 'SYSTEM', type: 'warning', title: 'RGB', message: 'RGB Anchor Pending Confirmation' });
         }
     }
 
@@ -112,9 +112,9 @@ export const validateConsignment = async (consignment: Consignment, network: any
         const isValid = await verifyRgbProofWasm(consignment.witness);
         
         if (isValid) {
-            notificationService.notify('success', 'RGB Consignment Validated (CSV)');
+            notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'RGB', message: 'RGB Consignment Validated (CSV)' });
         } else {
-            notificationService.notify('error', 'RGB Validation Failed: Invalid Witness');
+            notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'RGB', message: 'RGB Validation Failed: Invalid Witness' });
         }
         return isValid;
     } catch (e) {
@@ -132,11 +132,11 @@ export const createRgbTransfer = async (
     beneficiary: string,
     vault: string
 ): Promise<Consignment> => {
-    notificationService.notifyTransaction('RGB Transfer', `Preparing consignment for ${amount} ${assetId.slice(0,8)}...`, true);
+    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'RGB Transfer', message: `Preparing consignment for ${amount} ${assetId.slice(0,8)}...` });
 
     try {
         // 1. Prepare State Transition Hash
-        const transitionHash = bitcoin.crypto.sha256(Buffer.from(assetId + amount + beneficiary)).toString('hex');
+        const transitionHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(assetId + amount + beneficiary))).toString("hex");
 
         // 2. Request Enclave Signature (Taproot Tweak)
         const signResult = await requestEnclaveSignature({
@@ -163,7 +163,7 @@ export const createRgbTransfer = async (
         return consignment;
 
     } catch (e: any) {
-        notificationService.notify('error', `RGB Transfer Failed: ${e.message}`);
+        notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'RGB', message: `RGB Transfer Failed: ${e.message}` });
         throw e;
     }
 };

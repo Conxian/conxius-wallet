@@ -84,18 +84,18 @@ export const createSilentPaymentOutput = (
     // 2. Input Hash
     // Simplified: Tagged hash of outpoints
     const outpointData = Buffer.concat(outpoints.map(o => Buffer.concat([Buffer.from(o.txid, 'hex').reverse(), Buffer.alloc(4).fill(o.vout)])));
-    const inputHash = bitcoin.crypto.taggedHash('BIP352/Inputs', outpointData);
+    const inputHash = Buffer.from((bitcoin.crypto as any).taggedHash('BIP352/Inputs', outpointData));
 
     // 3. Shared Secret S = inputHash * a * ScanPub
-    const factor = (BigInt('0x' + inputHash.toString('hex')) * a) % n;
+    const factor = (BigInt('0x' + Buffer.from(inputHash).toString('hex')) * a) % n;
     const factorBuf = Buffer.from(factor.toString(16).padStart(64, '0'), 'hex');
 
     const sharedSecretPoint = ecc.pointMultiply(scanPub, factorBuf);
     if (!sharedSecretPoint) throw new Error("Invalid shared secret");
 
     // 4. Tweak SpendPub
-    const tweak = bitcoin.crypto.taggedHash('BIP352/SharedSecret', sharedSecretPoint);
-    const tweakedSpendPub = ecc.pointAdd(spendPub, ecc.pointMultiply(ecc.generator, tweak)!);
+    const tweak = Buffer.from((bitcoin.crypto as any).taggedHash('BIP352/SharedSecret', sharedSecretPoint));
+    const tweakedSpendPub = ecc.pointAdd(spendPub, ecc.pointMultiply(Buffer.from('0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798', 'hex'), tweak)!);
 
     return {
         address: bitcoin.payments.p2tr({ pubkey: Buffer.from(tweakedSpendPub!).slice(1, 33) }).address,

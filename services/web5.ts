@@ -52,7 +52,7 @@ export class EnclaveKeyManager {
         const path = "m/84'/0'/0'/6/0";
 
         // Web5 passes raw bytes. Native Enclave expects SHA-256 hash.
-        const hashBuffer = await crypto.subtle.digest("SHA-256", params.data);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", params.data as any);
         const hashHex = Array.from(new Uint8Array(hashBuffer))
             .map(b => b.toString(16).padStart(2, "0"))
             .join("");
