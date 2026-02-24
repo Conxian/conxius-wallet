@@ -2,6 +2,7 @@
 import { trackNttBridge } from './protocol';
 import { executeGasSwap } from './swap';
 import { sanitizeError } from './network';
+import { sha256 } from '@noble/hashes/sha256';
 import { Wormhole, amount as wormholeAmount, Chain, Signer, TokenId, TokenTransfer } from '@wormhole-foundation/sdk';
 import { NttTransceiver } from './ntt-transceiver';
 import { EvmPlatform } from '@wormhole-foundation/sdk-evm';
@@ -58,6 +59,16 @@ export class NttManager {
     static async getOutboundLimit(chain: BridgeChain): Promise<bigint> {
         return 1000000000n; // Placeholder
     }
+
+    /**
+     * Stacks address workaround: Hashes Stacks contract principals into a 32-byte string
+     * to ensure compatibility with Wormhole's 32-byte address format.
+     * @param principal Stacks contract principal (e.g., ST1PQ...sbtc-token)
+     * @returns 32-byte Uint8Array hash
+     */
+    static hashStacksPrincipal(principal: string): Uint8Array {
+        return sha256(new TextEncoder().encode(principal));
+    }
 }
 
 // ─── Feature Gate ────────────────────────────────────────────────────────────
@@ -103,16 +114,25 @@ export class NttService {
     ): Promise<string | null> {
         console.log(`[NTT] Executing Native Token Transfer: ${amount} to ${targetLayer}`);
 
-        // 1. Prepare Payload
+        // 1. Resolve Source Token Address (with Stacks 32-byte hashing workaround)
+        let sourceTokenAddr = new Uint8Array(32).fill(1); // Default placeholder
+        const config = Object.values(NTT_CONFIGS).find(c => c.symbol === 'sBTC');
+        if (config && sourceLayer === 'Stacks') {
+            const principal = config.tokenIds.Stacks;
+            sourceTokenAddr = NttManager.hashStacksPrincipal(principal);
+            console.log(`[NTT] Hashed Stacks Principal for Wormhole: ${Buffer.from(sourceTokenAddr).toString('hex')}`);
+        }
+
+        // 2. Prepare Payload
         const payload = NttTransceiver.createNttPayload(
             BigInt(parseFloat(amount) * 1e8),
             8,                          // Decimals
-            new Uint8Array(32).fill(1), // Source Token placeholder
+            sourceTokenAddr,            // Source Token (hashed if Stacks)
             new Uint8Array(32).fill(2), // Recipient placeholder
             1                           // Recipient Chain placeholder
         );
 
-        // 2. Request Signature from Conclave
+        // 3. Request Signature from Conclave
         // In a real flow, this would call signer.ts -> authorizeSignature
         // For this module, we assume the VAA is formatted with a signature.
         const signature = new Uint8Array(65).fill(0);

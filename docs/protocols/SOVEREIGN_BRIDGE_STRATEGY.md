@@ -14,11 +14,11 @@ permalink: /docs/sovereign-bridge-strategy
 
 ## 1. Executive Summary
 
-To maintain our "Sovereign by Design" ethos, Conxius cannot rely on custodial bridges or opaque "wrapped" assets. Our interoperability strategy uses a **Hybrid Model**:
+To maintain our "Sovereign by Design" ethos, Conxius cannot rely on custodial bridges or opaque "wrapped" assets. Our interoperability strategy uses a **Sovereign-First Hybrid Model**:
 
-1. **Native Sovereign Pegs** (Primary): Use the canonical, trust-minimized bridge of each layer (sBTC, PowPeg, L-BTC) where possible.
+1. **Native Bitcoin Support** (Mandated): All transfers between Bitcoin L1 and all Bitcoin L2s (and beyond) utilize native, trust-minimized bridges or atomic swaps. NTT is NOT the primary method for Bitcoin-to-Bitcoin (or Bitcoin-to-L2) transfers.
 2. **Trustless Atomic Swaps** (Accelerator): Use **Boltz** for fast, non-custodial entry/exit to Liquid and Lightning.
-3. **Wormhole NTT** (Inter-Layer): Use Wormhole's **Guardian Network** for message passing, but we must deploy and own the **NTT Contracts**.
+3. **Wormhole NTT** (Cross-Chain Satellites): Reserved for non-Bitcoin networks (e.g., Ethereum, Chainlink, etc.). We deploy and own the **NTT Contracts** for these satellite ecosystems.
 
 ---
 
@@ -31,8 +31,9 @@ To maintain our "Sovereign by Design" ethos, Conxius cannot rely on custodial br
 * **What is Available:** The **Wormhole Guardian Network** (19 validators) is live and public. They *will* attest to your messages if emitted correctly.
 * **What is Missing:** There is no "Public Generic Relayer" that automatically knows about your specific Conxius NTT token.
 * **Requirement:** We must deploy **Native Token Transfer (NTT)** contracts to our target chains (Ethereum, Arbitrum, Base).
-  * **Manager Contract:** Handles mint/burn/lock logic.
+  * **Manager Contract:** Handles mint/burn/lock logic ($O(1)$ state mapping).
   * **Transceiver Contract:** Emits messages to the Guardians.
+* **Stacks Principal Hashing:** To support Stacks' long contract names within Wormhole's 32-byte address limit, we hash the principal (e.g., `sbtc-token`) using SHA-256.
 * **Relayer Strategy:** We cannot rely on the "Standard Relayer" for custom NTT logic without configuration. We should run a lightweight **Specialized Relayer** (serverless function) that observes our NTT events and submits the VAA to the destination chain.
 
 **Ethos Check:**
@@ -103,36 +104,16 @@ To solve UX without sacrificing sovereignty, we should integrate **Boltz**.
 | **Stacks** | **sBTC Native Peg** | N/A (Waiting for Bitflow/Alex) | Bitcoin Node (Index) |
 | **Liquid** | **Boltz Atomic Swap** | **Boltz Atomic Swap** | Boltz API Client |
 | **RSK** | **PowPeg** | Sovryn FastBTC | None (Direct Contract) |
-| **EVM** | **Wormhole Token Bridge** | Wormhole Token Bridge | Standard Portal Contracts |
+| **Bitcoin L2s (EVM)** | **Native Bridge (L1-L2)** | **Native Bridge (L1-L2)** | Bridge Smart Contracts |
+| **Non-BTC (EVM)** | **Wormhole NTT** | **Wormhole NTT** | Standard Portal Contracts |
 
 **Next Step:**
 
 1.  **Refactor `ntt.ts`** to use Standard Token Bridge SDK. [COMPLETED]
 2.  **Implement Native Token Transfer (NTT) Transceiver** module for sovereign bridging. [COMPLETED]
 3.  **Integrate Boltz SDK** (to unlock Liquid/Lightning). [IN PROGRESS]
-4.  **Implement sBTC Scripting** (to unlock Stacks). [IN PROGRESS]
+4.  **Implement sBTC Scripting** (to unlock Stacks). [COMPLETED]
     - *Requirement:* Define `define-public` Clarity 4.0 functions for `deposit-sbtc` and `withdraw-sbtc` in the Stacks bridge contract.
-
----
-
-## 6. Bridge Economics & Gas Abstraction
-
-To ensure the best UX for the "Digital Citadelist," the Conxius NTT Bridge implements a **Sovereign Gas Abstraction** model.
-
-### A. The 0.1% Convenience Fee
-* **Value:** A 0.1% fee is charged on NTT transfers (BTC -> sBTC, sBTC -> L-BTC, etc.).
-* **Justification:** This fee covers the maintenance of the NTT Transceiver infrastructure and the automated relayer fleet.
-* **Implementation:** The fee is deducted by the NTT Manager contract on the source chain during the  or  phase.
-
-### B. Gas Abstraction (The "sBTC-as-Gas" Model)
-* **Mechanism:** When a user bridges assets to an EVM chain (e.g., BOB or Ethereum), they are prompted to pay for the destination gas in their source asset (e.g., sBTC).
-* **Architecture:**
-    1. Conxius calculates the required gas on the destination.
-    2. User signs an NTT transfer that includes an extra "Gas Payment" amount.
-    3. A **Conxian Relayer** (or authorized Solver) receives the NTT message and the Gas Payment.
-    4. The Relayer submits the VAA to the destination chain, paying the gas in ETH/Native token.
-* **Ethos Alignment:** Eliminates the "Gas Token Requirement" bottleneck, making Bitcoin layers feel like a single, unified network.
-
 
 ---
 
