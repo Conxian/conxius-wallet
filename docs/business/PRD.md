@@ -85,9 +85,10 @@ The **Conxian Gateway** is the institutional portal:
 
 ### 4.3. Cross-Chain Interoperability
 
-- **FR-INT-01**: Native 2nd-way pegs for Liquid and Stacks sBTC.
-- **FR-INT-02**: NTT (Native Token Transfers) via Wormhole for sovereign bridging.
-- **FR-INT-03**: Atomic swaps via Changelly (proxied) and THORChain.
+- **FR-INT-01**: Native 2nd-way pegs for Liquid and Stacks sBTC ($O(1)$ efficiency).
+- **FR-INT-02**: Native-First Interoperability: Direct Bitcoin L1-to-L2 transfers for sovereign ecosystems; NTT reserved for non-Bitcoin satellites.
+- **FR-INT-03**: NTT Enhancements: Support for Stacks principal hashing and sBTC manager flow.
+- **FR-INT-04**: Atomic swaps via Boltz (Direct BTC-to-LN/Liquid) and Changelly (proxied).
 
 ---
 

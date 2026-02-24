@@ -28,6 +28,7 @@ The following logic segments are currently held in `/drafts` and are NOT part of
 | :--- | :--- | :--- |
 | `Ark V-UTXO` | Researching Native ASP Client stability. | PENDING |
 | `BitVM Verifier` | Waiting for finalized BitVM 2 specs. | RESEARCH |
+| `sBTC Bridge` | Missing Clarity 4.0 scripting debt. | COMPLETED |
 
 ## 🔄 Reintegration Workflow
 
