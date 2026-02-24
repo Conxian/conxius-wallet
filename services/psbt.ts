@@ -337,3 +337,54 @@ export function getUnsignedTxHex(psbtBase64: string, network: Network) {
   const tx = (psbt.data.globalMap.unsignedTx as any).tx;
   return Buffer.from(tx.toBuffer()).toString('hex');
 }
+
+/**
+ * Builds a PSBT for a Native Peg-in to any Bitcoin Layer.
+ * Supports optional OP_RETURN data for protocol-specific routing (e.g. sBTC, BOB).
+ */
+export function buildNativePegPsbt(params: {
+    utxos: UTXO[];
+    amountSats: number;
+    changeAddress: string;
+    feeRate: number;
+    network: Network;
+    pegInAddress: string;
+    opReturnData?: string;
+}) {
+    const net = networkFrom(params.network);
+    const psbt = new bitcoin.Psbt({ network: net });
+    let totalIn = 0;
+
+    params.utxos.forEach(u => {
+        totalIn += u.amount;
+        psbt.addInput({
+            hash: u.txid,
+            index: u.vout,
+            witnessUtxo: {
+                script: bitcoin.payments.p2wpkh({ address: u.address, network: net })!.output!,
+                value: BigInt(u.amount)
+            }
+        });
+    });
+
+    // Output 1: Peg-in Address
+    psbt.addOutput({ address: params.pegInAddress, value: BigInt(params.amountSats) });
+
+    // Output 2: OP_RETURN (Optional)
+    if (params.opReturnData) {
+        const data = Buffer.from(params.opReturnData);
+        const embed = bitcoin.payments.embed({ data: [data] });
+        psbt.addOutput({ script: embed.output!, value: 0n });
+    }
+
+    const outputCount = params.opReturnData ? 3 : 2;
+    const vbytes = estimateVbytes(params.utxos.length, outputCount);
+    const fee = Math.floor(vbytes * params.feeRate);
+    const change = totalIn - params.amountSats - fee;
+
+    if (change > 546) {
+        psbt.addOutput({ address: params.changeAddress, value: BigInt(change) });
+    }
+
+    return psbt.toBase64();
+}

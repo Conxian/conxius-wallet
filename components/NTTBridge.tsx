@@ -1,10 +1,11 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { BitcoinLayer } from '../types';
 import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp, ShieldCheck, Zap, Globe, Search, RefreshCw, ExternalLink } from 'lucide-react';
 import { AppContext } from '../context';
 import { estimateFees, FeeEstimation } from '../services/FeeEstimator';
-import { NttService, BRIDGE_STAGES } from '../services/ntt';
-import { fetchBtcUtxos, broadcastBtcTx, fetchSbtcWalletAddress, monitorSbtcPegIn } from '../services/protocol';
-import { buildSbtcPegInPsbt } from '../services/psbt';
+import { NttService, BRIDGE_STAGES, getRecommendedBridgeProtocol } from '../services/ntt';
+import { fetchBtcUtxos, broadcastBtcTx, fetchSbtcWalletAddress, monitorSbtcPegIn, fetchNativePegAddress } from '../services/protocol';
+import { buildSbtcPegInPsbt, buildNativePegPsbt } from '../services/psbt';
 
 const NTTBridge: React.FC = () => {
   const context = useContext(AppContext);
@@ -20,42 +21,39 @@ const NTTBridge: React.FC = () => {
   const [feeEstimation, setFeeEstimation] = useState<FeeEstimation | null>(null);
   const [isEstimatingFees, setIsEstimatingFees] = useState(false);
   const [autoSwap, setAutoSwap] = useState(true);
-
-  // New state for the "in-progress" view
   const [isBridgeInProgress, setIsBridgeInProgress] = useState(false);
-  const [currentStage, setCurrentStage] = useState(0);
 
-  // Fee Estimation Effect
   useEffect(() => {
-    if (step === 2) {
+    if (!context) return;
+    if (sourceLayer && targetLayer) {
+        const recommended = getRecommendedBridgeProtocol(sourceLayer, targetLayer);
+        if (recommended === 'Native') {
+            setBridgeType('Native Peg');
+        } else {
+            setBridgeType('NTT');
+        }
+    }
+  }, [sourceLayer, targetLayer, context]);
+
+  useEffect(() => {
+    if (step === 2 && sourceLayer && targetLayer) {
       setIsEstimatingFees(true);
       estimateFees(sourceLayer, targetLayer, autoSwap)
         .then(setFeeEstimation)
+        .catch(console.error)
         .finally(() => setIsEstimatingFees(false));
     }
   }, [step, sourceLayer, targetLayer, autoSwap]);
 
-  // Real-time bridge progress tracking
   useEffect(() => {
-    if (isBridgeInProgress && txHash) {
-      const pollProgress = async () => {
-        if (bridgeType === 'Native Peg' && targetLayer === 'Stacks') {
-             const status = await monitorSbtcPegIn(txHash, context.state.network);
-             if (status.status === 'confirmed' || status.status === 'success') {
-                 setCurrentStage(BRIDGE_STAGES.length - 1);
-             } else if (status.status === 'pending_stx_confirmation') {
-                 setCurrentStage(1);
-             } else {
-                 setCurrentStage(0);
-             }
-             return;
-        }
-        
-        const stage = await NttService.trackProgress(txHash);
-        setCurrentStage(stage);
-      };
-
-      const interval = setInterval(pollProgress, 10000); // Poll every 10 seconds
+    if (isBridgeInProgress && txHash && bridgeType === 'NTT') {
+        const interval = setInterval(async () => {
+            const progress = await NttService.trackProgress(txHash);
+            if (progress === 2) {
+                setIsBridgeInProgress(false);
+                setStep(4);
+            }
+        }, 10000);
       return () => clearInterval(interval);
     }
   }, [isBridgeInProgress, txHash, bridgeType]);
@@ -80,163 +78,150 @@ const NTTBridge: React.FC = () => {
       if (!context) return;
       const amountSats = Math.floor(parseFloat(amount) * 100000000);
       const utxos = await fetchBtcUtxos(context.state.walletConfig?.masterAddress || '', context.state.network);
-      const fees = { hourFee: 20, halfHourFee: 25, fastestFee: 30 }; // Should use context network base URL
       
-      const sbtcWalletAddress = await fetchSbtcWalletAddress(context.state.network);
+      try {
+          const pegInAddress = await fetchNativePegAddress(targetLayer as BitcoinLayer, context.state.network);
 
-      // 1. Build PSBT
-      const psbtBase64 = buildSbtcPegInPsbt({
-          utxos,
-          stacksAddress: context.state.walletConfig?.stacksAddress || '',
-          amountSats,
-          changeAddress: context.state.walletConfig?.masterAddress || '',
-          feeRate: fees.halfHourFee,
-          network: context.state.network,
-          pegInAddress: sbtcWalletAddress
-      });
+          let opReturnData: string | undefined;
+          if (targetLayer === 'Stacks') {
+              opReturnData = context.state.walletConfig?.stacksAddress;
+          } else if (targetLayer === 'BOB') {
+              opReturnData = context.state.walletConfig?.masterAddress;
+          }
 
-      // 2. Authorize & Sign via Enclave Context
-      const signResult = await context.authorizeSignature({
-          type: 'transaction',
-          layer: 'Mainnet',
-          payload: { psbt: psbtBase64, network: context.state.network },
-          description: `sBTC Deposit: ${amountSats} sats`
-      });
+          // 1. Build PSBT
+          const psbtBase64 = buildNativePegPsbt({
+              utxos,
+              amountSats,
+              changeAddress: context.state.walletConfig?.masterAddress || '',
+              feeRate: 20,
+              network: context.state.network,
+              pegInAddress,
+              opReturnData
+          });
 
-      if (!signResult.broadcastReadyHex) {
-          throw new Error('Signing failed');
+          // 2. Request Signature
+          const signResult = await context.authorizeSignature({
+              type: 'transaction',
+              layer: 'Mainnet',
+              payload: { psbt: psbtBase64, network: context.state.network },
+              description: `Native Peg-in to ${targetLayer}`
+          });
+
+          if (signResult && signResult.broadcastReadyHex) {
+              const txid = await broadcastBtcTx(signResult.broadcastReadyHex, context.state.network);
+              setTxHash(txid);
+              setIsBridgeInProgress(true);
+              setStep(4);
+              context.notify('success', `Native Peg Broadcasted: ${txid.substring(0, 8)}...`);
+          }
+      } catch (e: any) {
+          context.notify('error', `Native Peg Failed: ${e.message}`);
+      } finally {
+          setIsBridging(false);
       }
-
-      // 3. Broadcast
-      const txid = await broadcastBtcTx(signResult.broadcastReadyHex, context.state.network);
-      setTxHash(txid);
-      
-      setIsBridging(false);
-      setIsBridgeInProgress(true);
-      setStep(4);
-      context.notify('success', `sBTC Deposit Broadcasted: ${txid.substring(0, 8)}...`);
   };
 
   const handleWormholeBridge = async () => {
-        if (!context) return;
-        // Map UI Source Layer to Wormhole Chain
-        let chainName = sourceLayer;
-        if (sourceLayer === 'Mainnet') chainName = 'Bitcoin';
-        
-        const signer = context.getWormholeSigner(chainName);
-
-        const hash = await NttService.executeBridge(
+      if (!context) return;
+      const signer = context.getWormholeSigner(sourceLayer);
+      const txid = await NttService.executeBridge(
           amount,
           sourceLayer,
           targetLayer,
           autoSwap,
           signer,
           context.state.network,
-          feeEstimation?.gasAbstractionSwapFee
-        );
-
-        if (!hash) {
-          throw new Error('Bridge execution returned no hash.');
-        }
-
-        setTxHash(hash);
-
-        // Simulate API call and then start the progress view
-        setTimeout(() => {
-          setIsBridging(false);
-          setIsBridgeInProgress(true); // Start the new in-progress view
-          setStep(4); // Move to a new step that shows the progress
-          context.notify('info', 'Bridge process initiated. You can track the progress here.');
-        }, 1500);
+          feeEstimation?.destinationNetworkFee
+      );
+      if (txid) {
+          setTxHash(txid);
+          setIsBridgeInProgress(true);
+          setStep(4);
+      }
+      setIsBridging(false);
   };
 
   const handleTrack = async () => {
-    if (!txHash) {
-        context?.notify('warning', 'Please enter a Transaction Hash');
-        return;
-    }
-    setIsTracking(true);
-    try {
-        const results = await NttService.getTrackingDetails([txHash]); const data = results[0];
-        if (data) {
-            setTrackingData(data);
-            context?.notify('success', 'Wormhole Attestation Found');
-        } else {
-            setTrackingData(null);
-            context?.notify('info', 'No attestation found for this tx hash yet.');
-        }
-    } catch (e) {
-        context?.notify('error', 'Wormhole API Unreachable. Retrying via Tor...');
-    } finally {
+     if (!txHash) return;
+     setIsTracking(true);
+     try {
+        const data = await NttService.getTrackingDetails([txHash]);
+        if (data && data[0]) setTrackingData(data[0]);
+     } finally {
         setIsTracking(false);
-    }
+     }
   };
 
   const resetBridge = () => {
     setStep(1);
     setAmount('');
     setTxHash('');
+    setTrackingData(null);
     setIsBridgeInProgress(false);
-    setCurrentStage(0);
-    setFeeEstimation(null);
+    setIsBridging(false);
   };
 
-  // New render function for the "in-progress" view
-  const renderBridgeProgress = () => {
-    const isComplete = currentStage === BRIDGE_STAGES.length - 1;
-    return (
-      <div className="space-y-8 animate-in zoom-in">
+  const renderBridgeProgress = () => (
+    <div className="space-y-12 animate-in fade-in zoom-in duration-700">
         <div className="text-center space-y-4">
-          <div className={`w-20 h-20 ${isComplete ? 'bg-green-600/10 border-green-500/20 text-green-500' : 'bg-orange-600/10 border-orange-500/20 text-orange-500'} border rounded-full flex items-center justify-center mx-auto`}>
-            {isComplete ? <CheckCircle2 size={40} /> : <Loader2 size={40} className="animate-spin" />}
-          </div>
-          <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white">
-            {isComplete ? 'Transfer Complete' : 'Transfer in Progress'}
-          </h3>
-          <p className="text-xs text-zinc-500 max-w-xs mx-auto italic leading-relaxed">Estimated Time Remaining: {isComplete ? 'Done' : `${(BRIDGE_STAGES.length - 1 - currentStage) * 5} seconds`}</p>
+            <div className="w-24 h-24 bg-orange-600/10 border-2 border-orange-500/20 rounded-full flex items-center justify-center mx-auto relative">
+                <div className="absolute inset-0 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+                <TrendingUp size={48} className="text-orange-500" />
+            </div>
+            <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white">Transfer in Transit</h3>
+            <p className="text-zinc-500 text-sm max-w-xs mx-auto italic">Your assets are being etched across layers. Stay sovereign.</p>
         </div>
 
         <div className="space-y-6">
-          {BRIDGE_STAGES.map((stage, index) => (
-            <div key={stage.id} className="flex items-center gap-4">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${index <= currentStage ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-zinc-500'}`}>
-                {index < currentStage ? <CheckCircle2 size={16} /> : <Loader2 size={16} className={index === currentStage && !isComplete ? 'animate-spin' : ''} />}
-              </div>
-              <div>
-                <p className={`font-bold ${index <= currentStage ? 'text-white' : 'text-zinc-500'}`}>{stage.text}</p>
-                <p className="text-xs text-zinc-500 italic">{stage.userMessage}</p>
-              </div>
-            </div>
-          ))}
+            {BRIDGE_STAGES.map((s, i) => (
+                <div key={s.id} className="relative flex gap-6 group">
+                    <div className="flex flex-col items-center">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${step === 4 ? 'bg-green-500 border-green-400' : 'bg-zinc-900 border-zinc-800 group-hover:border-orange-500/50'}`}>
+                            {step === 4 ? <CheckCircle2 size={20} className="text-white" /> : <span className="text-[10px] font-bold text-zinc-500">{i + 1}</span>}
+                        </div>
+                        {i < BRIDGE_STAGES.length - 1 && <div className="w-0.5 h-12 bg-zinc-800 my-1" />}
+                    </div>
+                    <div className="pt-1 flex-1">
+                        <h4 className={`text-xs font-black uppercase tracking-widest ${step === 4 ? 'text-green-500' : 'text-zinc-300'}`}>{s.text}</h4>
+                        <p className="text-[11px] text-zinc-500 italic leading-relaxed mt-1">{s.userMessage}</p>
+                    </div>
+                </div>
+            ))}
         </div>
 
-        {isComplete && (
-            <div className="p-6 bg-zinc-950 border border-zinc-900 rounded-[2rem] space-y-4 text-center">
-                <p className="text-xs text-zinc-400">Your transfer of {amount} BTC from {sourceLayer} to {targetLayer} is complete.</p>
-                <a href="#" className="text-orange-500 hover:text-orange-400 text-xs font-bold inline-flex items-center gap-2">
-                    View on Explorer <ExternalLink size={14} />
-                </a>
+        <div className="bg-zinc-950 border border-zinc-900 rounded-[2.5rem] p-8 space-y-4 shadow-inner">
+            <div className="flex justify-between items-center text-[10px] font-black uppercase text-zinc-600">
+                <span>Transaction Hash</span>
+                <button onClick={() => window.open(`https://mempool.space/tx/${txHash}`, '_blank')} className="text-orange-500 flex items-center gap-1 hover:text-orange-400 transition-colors">
+                    View <ExternalLink size={10} />
+                </button>
             </div>
-        )}
+            <p className="font-mono text-[10px] text-zinc-300 break-all bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">{txHash}</p>
+            <p className="text-center text-[10px] text-zinc-500 italic mt-2">Closing this view will not interrupt your transfer.</p>
+        </div>
 
-        <button type="button" onClick={resetBridge} className="w-full py-4 text-zinc-600 hover:text-zinc-400 text-[10px] font-black uppercase tracking-widest transition-all">
-          New Transfer
-        </button>
-      </div>
-    );
-  };
-
+        <button onClick={resetBridge} className="w-full py-4 text-zinc-500 hover:text-zinc-300 text-[10px] font-black uppercase tracking-widest transition-all">Dismiss & Return Home</button>
+    </div>
+  );
 
   return (
-    <div className="p-8 max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
-      <div className="text-center">
-        <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-2">Interlayer Bridge</h2>
-        <p className="text-zinc-500 text-sm">Cross-chain execution and native sovereign pegs.</p>
-      </div>
-
-      <div className="flex bg-zinc-950 p-1 rounded-2xl border border-zinc-900 mx-auto max-w-xs">
-         <button onClick={() => setBridgeType('NTT')} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${bridgeType === 'NTT' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600'}`}>Wormhole Portal</button>
-         <button onClick={() => setBridgeType('Native Peg')} className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${bridgeType === 'Native Peg' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600'}`}>Native Peg</button>
+    <div className="p-8 max-w-4xl mx-auto space-y-12 pb-32">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-600/10 border border-orange-500/20 rounded-full">
+                <Globe size={14} className="text-orange-500" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500">Cross-Layer Settlement</span>
+            </div>
+            <h2 className="text-6xl font-black italic uppercase tracking-tighter text-white leading-[0.9]">
+                Sovereign<br />
+                <span className="text-orange-500">Transceiver</span>
+            </h2>
+        </div>
+        <div className="flex gap-2">
+            <button onClick={() => setBridgeType('NTT')} className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${bridgeType === 'NTT' ? 'bg-white text-black shadow-xl scale-105' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}>Standard NTT</button>
+            <button onClick={() => setBridgeType('Native Peg')} className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${bridgeType === 'Native Peg' ? 'bg-orange-600 text-white shadow-xl scale-105' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}>Native Peg-in</button>
+        </div>
       </div>
 
       <div className="bg-zinc-900/40 border border-zinc-800 rounded-[3rem] p-10 space-y-8 shadow-2xl relative overflow-hidden">
@@ -248,16 +233,29 @@ const NTTBridge: React.FC = () => {
                 <label className="text-[10px] font-black uppercase text-zinc-600">Source</label>
                 <select value={sourceLayer} onChange={e => setSourceLayer(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-zinc-200 focus:outline-none" aria-label="Source Layer" title="Source Layer">
                   <option>Mainnet</option>
+                  <option>Liquid</option>
                   <option>Stacks</option>
                   <option>Rootstock</option>
+                  <option>BOB</option>
+                  <option>B2</option>
+                  <option>Botanix</option>
+                  <option>Mezo</option>
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-zinc-600">Destination</label>
                 <select value={targetLayer} onChange={e => setTargetLayer(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-zinc-200 focus:outline-none" aria-label="Target Layer" title="Target Layer">
                   <option>Stacks</option>
-                  <option>Mainnet</option>
                   <option>Liquid</option>
+                  <option>Rootstock</option>
+                  <option>BOB</option>
+                  <option>B2</option>
+                  <option>Botanix</option>
+                  <option>Mezo</option>
+                  <option>Ethereum</option>
+                  <option>Solana</option>
+                  <option>Arbitrum</option>
+                  <option>Base</option>
                 </select>
               </div>
             </div>
@@ -401,7 +399,7 @@ const NTTBridge: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center text-[10px] font-black uppercase text-zinc-600">
                     <span>Protocol</span>
-                    <span className="text-zinc-200">{targetLayer === 'Stacks' ? 'sBTC (Nakamoto)' : 'LBTC (Elements)'}</span>
+                    <span className="text-zinc-200">{targetLayer === 'Stacks' ? 'sBTC (Nakamoto)' : targetLayer === 'Liquid' ? 'LBTC (Elements)' : targetLayer === 'Rootstock' ? 'PowPeg' : targetLayer === 'BOB' ? 'BOB Gateway' : targetLayer === 'B2' ? 'B2 Bridge' : targetLayer === 'Botanix' ? 'Spiderchain' : targetLayer === 'Mezo' ? 'tBTC Bridge' : 'Native Peg'}</span>
                 </div>
              </div>
 

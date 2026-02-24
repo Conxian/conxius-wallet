@@ -1,4 +1,3 @@
-
 import { trackNttBridge } from './protocol';
 import { executeGasSwap } from './swap';
 import { sanitizeError } from './network';
@@ -144,11 +143,7 @@ export class NttService {
     ): Promise<string | null> {
         // Gas abstraction
         if (autoSwap && gasFee) {
-            const swapSuccess = await executeGasSwap(
-                'BTC',
-                gasFee,
-                targetLayer
-            );
+            const swapSuccess = await executeGasSwap(gasFee, network);
             if (!swapSuccess) return null;
         }
 
@@ -169,9 +164,9 @@ export class NttService {
             let tokenId: TokenId = Wormhole.tokenId(sourceChain.chain, 'native');
             
             // Attempt to resolve via NTT_CONFIGS if applicable
-            const config = Object.values(NTT_CONFIGS).find(c => c.tokenIds[sourceLayer as keyof typeof c.tokenIds]);
+            const config = Object.values(NTT_CONFIGS).find(c => (c.tokenIds as any)[sourceLayer]);
             if (config) {
-                const addr = config.tokenIds[sourceLayer as keyof typeof config.tokenIds];
+                const addr = (config.tokenIds as any)[sourceLayer];
                 tokenId = Wormhole.tokenId(sourceChain.chain, addr as any);
             }
             
@@ -242,3 +237,25 @@ export class NttService {
         return null;
     }
 }
+
+/**
+ * Enhanced NttService with Native Protocol Prioritization
+ */
+export const getRecommendedBridgeProtocol = (source: string, target: string): 'Native' | 'NTT' | 'Swap' => {
+    const bitcoinEcosystem = [
+        'Stacks', 'Liquid', 'Rootstock', 'BOB', 'B2', 'Botanix', 'Mezo',
+        'RGB', 'Ark', 'StateChain', 'Lightning'
+    ];
+
+    if (source === 'Mainnet' && bitcoinEcosystem.includes(target)) {
+        return 'Native';
+    }
+
+    // Use Swaps for fast L1 <-> LN or L1 <-> Liquid (Boltz)
+    if ((source === 'Mainnet' && (target === 'Lightning' || target === 'Liquid')) ||
+        (source === 'Liquid' && target === 'Mainnet')) {
+        return 'Swap';
+    }
+
+    return 'NTT';
+};

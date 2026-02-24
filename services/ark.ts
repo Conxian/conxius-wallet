@@ -151,7 +151,7 @@ export const syncVtxos = async (address: string, network: Network = 'mainnet'): 
  * This broadcasts a signed forfeit transaction via the ASP.
  */
 export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network: Network, vault?: string): Promise<string> => {
-    notificationService.notifyTransaction('Ark Transfer', `Forfeiting VTXO ${vtxo.txid.slice(0,8)}...`, true);
+    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'Ark Transfer', message: `Forfeiting VTXO ${vtxo.txid.slice(0,8)}...` });
     
     if (!vtxo.txid || !recipientAddress) throw new Error("Invalid VTXO or Recipient");
 
@@ -161,7 +161,7 @@ export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network:
         let signature = '';
 
         if (vault) {
-            const msgHash = bitcoin.crypto.sha256(Buffer.from(vtxo.txid + recipientAddress)).toString('hex');
+            const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(vtxo.txid + recipientAddress))).toString("hex");
             const signResult = await requestEnclaveSignature({
                 type: 'transaction',
                 layer: 'Ark',
@@ -207,10 +207,10 @@ export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network:
  * This creates a transaction that spends the VTXO and broadcasts it to Bitcoin L1.
  */
 export const redeemVtxo = async (vtxo: VTXO, vault: string, network: Network): Promise<string> => {
-    notificationService.notifyTransaction('Ark Redemption', `Initiating Unilateral Exit for ${vtxo.txid.slice(0,8)}...`, true);
+    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'Ark Redemption', message: `Initiating Unilateral Exit for ${vtxo.txid.slice(0,8)}...` });
 
     try {
-        const msgHash = bitcoin.crypto.sha256(Buffer.from("redeem:" + vtxo.txid)).toString('hex');
+        const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from("redeem:" + vtxo.txid))).toString("hex");
 
         const signResult = await requestEnclaveSignature({
             type: 'message',
@@ -231,11 +231,11 @@ export const redeemVtxo = async (vtxo: VTXO, vault: string, network: Network): P
             });
         }
 
-        notificationService.notify('success', 'Unilateral Exit Broadcasted');
+        notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'BitVM Verification', message: 'Unilateral Exit Broadcasted' });
         return "txid_redemption_" + Date.now();
 
     } catch (e: any) {
-        notificationService.notify('error', `Redemption failed: ${e.message}`);
+        notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'BitVM Verification', message: `Redemption failed: ${e.message}` });
         throw e;
     }
 };
