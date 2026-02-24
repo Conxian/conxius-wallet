@@ -465,7 +465,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         )}
 
         <p className="text-center text-[9px] text-zinc-700 uppercase tracking-widest font-black">
-          Conxius SVN 0.3 • SOVEREIGN
+          Conxius SVN 1.5 • SOVEREIGN
         </p>
       </div>
     </div>

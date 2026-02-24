@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
           <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">Conxius <span className="text-[var(--accent)]">Wallet</span></h1>
           <div className="flex items-center gap-1.5">
             <p className="text-[10px] text-[var(--muted)] font-black uppercase tracking-[0.2em]">Native Enclave</p>
-            <span className="bg-[rgba(247,147,26,0.12)] text-[var(--accent)] text-[8px] px-1.5 py-0.5 rounded border border-[rgba(247,147,26,0.35)] font-black uppercase shadow-sm">SVN 0.3</span>
+            <span className="bg-[rgba(247,147,26,0.12)] text-[var(--accent)] text-[8px] px-1.5 py-0.5 rounded border border-[rgba(247,147,26,0.35)] font-black uppercase shadow-sm">SVN 1.5</span>
           </div>
         </div>
       </div>

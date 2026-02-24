@@ -8,7 +8,7 @@ permalink: /license
 # Conxius Business Source License 1.1
 
 **Licensor:** Conxian-Labs
-**Licensed Work:** Conxius Sovereign Enclave (SVN 0.3+)
+**Licensed Work:** Conxius Sovereign Enclave (SVN 1.5+)
 **Change Date:** 2028-01-01
 **Change License:** GNU General Public License v3.0 (or later)
 
