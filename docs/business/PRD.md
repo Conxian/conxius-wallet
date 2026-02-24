@@ -22,14 +22,16 @@ permalink: /prd
 
 ## 2. Business & Competitive Landscape
 
-### 2.1. Business State: [PRODUCTION READY]
+### 2.1. Business State: [INFRASTRUCTURE PIVOT]
 
 - **[MARKET_FIT]:** [ORCHESTRATING]
 - **[RISK_COMPLIANCE]:** [ORCHESTRATING]
 - **[TOKENOMICS]:** [ORCHESTRATING]
-- **[ROADMAP]:** [ORCHESTRATING]
+- **[ROADMAP]:** [ALIGNED - PHASE 4]
 
-### 2.2. Industry Benchmarking (2025 Analysis)
+*Current Priority: Deploying the "Real Rails" (Changelly Proxy, Bisq Node, Wormhole Transceivers) to unblock production financial flows.*
+
+### 2.2. Industry Benchmarking (2025-2026 Analysis)
 
 | Competitor | Core Strength | Conxius Advantage |
 | :--- | :--- | :--- |
@@ -75,6 +77,7 @@ The **Conxian Gateway** is the institutional portal:
 - **FR-ASSET-01**: Unified dashboard for BTC, L2 assets, RGB, Ordinals, and Runes.
 - **FR-ASSET-02**: Real-time balance fetching across all supported layers via redundant indexers.
 - **FR-ASSET-03**: Support for BRC-20, Rune, and SIP-10 asset standards.
+- **FR-ASSET-04**: **Full DAG Validation** for RGB assets via integrated `rgb-lib-wasm`.
 
 ### 4.2. Secure Signing Enclave
 
@@ -82,13 +85,15 @@ The **Conxian Gateway** is the institutional portal:
 - **FR-KEY-02**: PIN-gated access with biometric secondary auth.
 - **FR-KEY-03**: WYSIWYS (What You See Is What You Sign) confirmation for all layers.
 - **FR-KEY-04**: Support for batch signing (PSBTs) to reduce user fatigue.
+- **FR-KEY-05**: **Taproot Musig2** support for aggregated institutional multi-sig quorums.
 
 ### 4.3. Cross-Chain Interoperability
 
-- **FR-INT-01**: Native 2nd-way pegs for Liquid and Stacks sBTC ($O(1)$ efficiency).
+- **FR-INT-01**: Native 2nd-way pegs for Liquid and Stacks sBTC ((1)$ efficiency).
 - **FR-INT-02**: Native-First Interoperability: Direct Bitcoin L1-to-L2 transfers for sovereign ecosystems; NTT reserved for non-Bitcoin satellites.
 - **FR-INT-03**: NTT Enhancements: Support for Stacks principal hashing and sBTC manager flow.
 - **FR-INT-04**: Atomic swaps via Boltz (Direct BTC-to-LN/Liquid) and Changelly (proxied).
+- **FR-INT-05**: **Outcome-Based UI** for bridging, abstracting technical complexity from the user.
 
 ---
 
@@ -99,7 +104,9 @@ The **Conxian Gateway** is the institutional portal:
 - **NFR-SEC-01**: Zero secret egress (keys never leave the enclave).
 - **NFR-SEC-02**: Native Root/Jailbreak detection with multi-layer heuristics.
 - **NFR-SEC-03**: Strict protocol-level sanitization for the internal Web3 browser.
+- **NFR-SEC-04**: **Mandatory Play Integrity Attestation** for high-value operations (>0.1 BTC).
 - **NFR-PRIV-01**: Tor-enabled network calls for privacy-sensitive layers.
+- **NFR-PRIV-02**: Integrated **WabiSabi CoinJoin** coordinator for native L1 privacy.
 
 ---
 
@@ -113,7 +120,7 @@ The **Conxian Gateway** is the institutional portal:
 | **Liquid** | PRODUCTION | ✅ Native Segwit |
 | **Rootstock** | PRODUCTION | ✅ EVM Compatible |
 | **BOB (EVM L2)** | PRODUCTION | ✅ EVM Compatible |
-| **RGB** | PRODUCTION | ✅ Taproot Signer (CSV Logic Integrated) |
+| **RGB** | ENHANCED | ✅ Taproot Signer (WASM Ready) |
 | **Ordinals/Runes** | PRODUCTION | ✅ Native Support |
 | **Ark | PRODUCTION | ✅ VTXO Path |
 | **BitVM** | PRODUCTION | ✅ Cryptographic STARK Verifier |
@@ -122,7 +129,6 @@ The **Conxian Gateway** is the institutional portal:
 | **B2 Network** | PRODUCTION | ✅ EVM Path |
 | **Botanix** | PRODUCTION | ✅ Spiderchain |
 | **Mezo** | PRODUCTION | ✅ tBTC Bridge |
-
 
 ---
 
@@ -137,3 +143,4 @@ Conxius reduces the complexity of the Bitcoin ecosystem into a single, unified "
 - **Automated CI**: GitHub Actions (Lint, TSC, Vitest, Playwright, Audit).
 - **Native Security**: Daily diagnostics via `DeviceIntegrityPlugin`.
 - **Physical Audit**: Verified on real Pixel hardware for TEE/StrongBox compliance.
+- **E2E Readiness**: Comprehensive Playwright suite for cross-chain "Rails" validation.
