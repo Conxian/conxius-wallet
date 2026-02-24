@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { BitcoinLayer } from '../types';
-import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp, ShieldCheck, Zap, Globe, Search, RefreshCw, ExternalLink } from 'lucide-react';
+import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp, ShieldCheck, Zap, Globe, Search, RefreshCw, ExternalLink, Target } from 'lucide-react';
 import { AppContext } from '../context';
 import { estimateFees, FeeEstimation } from '../services/FeeEstimator';
 import { NttService, BRIDGE_STAGES, getRecommendedBridgeProtocol } from '../services/ntt';
@@ -22,6 +22,28 @@ const NTTBridge: React.FC = () => {
   const [isEstimatingFees, setIsEstimatingFees] = useState(false);
   const [autoSwap, setAutoSwap] = useState(true);
   const [isBridgeInProgress, setIsBridgeInProgress] = useState(false);
+
+  // Persistence Logic
+  useEffect(() => {
+    const savedTx = localStorage.getItem('PENDING_NTT_TX');
+    const savedLayer = localStorage.getItem('PENDING_NTT_TARGET');
+    if (savedTx) {
+      setTxHash(savedTx);
+      setIsBridgeInProgress(true);
+      setStep(4);
+      if (savedLayer) setTargetLayer(savedLayer);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isBridgeInProgress && txHash) {
+      localStorage.setItem('PENDING_NTT_TX', txHash);
+      localStorage.setItem('PENDING_NTT_TARGET', targetLayer);
+    } else {
+      localStorage.removeItem('PENDING_NTT_TX');
+      localStorage.removeItem('PENDING_NTT_TARGET');
+    }
+  }, [isBridgeInProgress, txHash, targetLayer]);
 
   useEffect(() => {
     if (!context) return;
@@ -52,6 +74,7 @@ const NTTBridge: React.FC = () => {
             if (progress === 2) {
                 setIsBridgeInProgress(false);
                 setStep(4);
+                localStorage.removeItem('PENDING_NTT_TX');
             }
         }, 10000);
       return () => clearInterval(interval);
@@ -154,12 +177,21 @@ const NTTBridge: React.FC = () => {
   };
 
   const resetBridge = () => {
+    localStorage.removeItem('PENDING_NTT_TX');
     setStep(1);
     setAmount('');
     setTxHash('');
     setTrackingData(null);
     setIsBridgeInProgress(false);
     setIsBridging(false);
+  };
+
+  const setIntent = (intent: 'DEFI' | 'SIDECHAIN' | 'SCALING' | 'EVM') => {
+      setSourceLayer('Mainnet');
+      if (intent === 'DEFI') setTargetLayer('Stacks');
+      if (intent === 'SIDECHAIN') setTargetLayer('Liquid');
+      if (intent === 'SCALING') setTargetLayer('BOB');
+      if (intent === 'EVM') setTargetLayer('Ethereum');
   };
 
   const renderBridgeProgress = () => (
@@ -198,53 +230,66 @@ const NTTBridge: React.FC = () => {
                 </button>
             </div>
             <p className="font-mono text-[10px] text-zinc-300 break-all bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">{txHash}</p>
-            <p className="text-center text-[10px] text-zinc-500 italic mt-2">Closing this view will not interrupt your transfer.</p>
         </div>
 
-        <button onClick={resetBridge} className="w-full py-4 text-zinc-500 hover:text-zinc-300 text-[10px] font-black uppercase tracking-widest transition-all">Dismiss & Return Home</button>
+        <button onClick={resetBridge} className="w-full py-4 bg-zinc-900 text-zinc-500 rounded-2xl text-[10px] font-black uppercase tracking-widest">New Transfer</button>
     </div>
   );
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-12 pb-32">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-600/10 border border-orange-500/20 rounded-full">
-                <Globe size={14} className="text-orange-500" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500">Cross-Layer Settlement</span>
-            </div>
-            <h2 className="text-6xl font-black italic uppercase tracking-tighter text-white leading-[0.9]">
-                Sovereign<br />
-                <span className="text-orange-500">Transceiver</span>
-            </h2>
-        </div>
-        <div className="flex gap-2">
-            <button onClick={() => setBridgeType('NTT')} className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${bridgeType === 'NTT' ? 'bg-white text-black shadow-xl scale-105' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}>Standard NTT</button>
-            <button onClick={() => setBridgeType('Native Peg')} className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${bridgeType === 'Native Peg' ? 'bg-orange-600 text-white shadow-xl scale-105' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}>Native Peg-in</button>
-        </div>
-      </div>
-
-      <div className="bg-zinc-900/40 border border-zinc-800 rounded-[3rem] p-10 space-y-8 shadow-2xl relative overflow-hidden">
-        
+    <div className="max-w-4xl mx-auto space-y-12 pb-20">
+      <div className="bg-zinc-900/40 p-10 rounded-[3rem] border border-zinc-800 shadow-2xl backdrop-blur-xl">
         {step === 1 && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-zinc-600">Source</label>
-                <select value={sourceLayer} onChange={e => setSourceLayer(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-zinc-200 focus:outline-none" aria-label="Source Layer" title="Source Layer">
+          <div className="space-y-10 animate-in slide-in-from-left-4">
+            <div className="flex justify-between items-end">
+                <div className="space-y-2">
+                    <h2 className="text-4xl font-black italic uppercase tracking-tighter text-white">Sovereign Bridge</h2>
+                    <p className="text-xs text-zinc-500 italic tracking-wide">Select your intent and target layer.</p>
+                </div>
+                <div className="flex gap-2">
+                    <div className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase ${bridgeType === 'NTT' ? 'bg-orange-600/10 text-orange-500 border border-orange-500/20' : 'bg-green-600/10 text-green-500 border border-green-500/20'}`}>
+                        {bridgeType} Protocol
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                    { id: 'DEFI', label: 'BTC DeFi', icon: <TrendingUp size={14}/> },
+                    { id: 'SIDECHAIN', label: 'Sidechain', icon: <ShieldCheck size={14}/> },
+                    { id: 'SCALING', label: 'L2 Scaling', icon: <Zap size={14}/> },
+                    { id: 'EVM', label: 'EVM Sat', icon: <Globe size={14}/> }
+                ].map(intent => (
+                    <button
+                        key={intent.id}
+                        onClick={() => setIntent(intent.id as any)}
+                        className={`p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all ${(intent.id === 'DEFI' && targetLayer === 'Stacks') || (intent.id === 'SIDECHAIN' && targetLayer === 'Liquid') || (intent.id === 'SCALING' && targetLayer === 'BOB') || (intent.id === 'EVM' && targetLayer === 'Ethereum') ? 'bg-orange-600/10 border-orange-500 text-orange-500' : 'bg-zinc-950 border-zinc-900 text-zinc-500 hover:border-zinc-700'}`}
+                    >
+                        {intent.icon}
+                        <span className="text-[10px] font-black uppercase tracking-tight">{intent.label}</span>
+                    </button>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-6">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase text-zinc-600 ml-1">Source</label>
+                <select value={sourceLayer} onChange={e => setSourceLayer(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-3xl p-5 text-sm font-bold text-white focus:outline-none appearance-none cursor-pointer hover:border-orange-500/50 transition-colors">
                   <option>Mainnet</option>
-                  <option>Liquid</option>
                   <option>Stacks</option>
-                  <option>Rootstock</option>
-                  <option>BOB</option>
-                  <option>B2</option>
-                  <option>Botanix</option>
-                  <option>Mezo</option>
+                  <option>Liquid</option>
                 </select>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-zinc-600">Destination</label>
-                <select value={targetLayer} onChange={e => setTargetLayer(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-4 text-zinc-200 focus:outline-none" aria-label="Target Layer" title="Target Layer">
+
+              <div className="flex justify-center pt-6">
+                <div className="w-12 h-12 bg-zinc-950 rounded-full border border-zinc-800 flex items-center justify-center text-orange-500 shadow-inner">
+                  <ArrowRight size={20} />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase text-zinc-600 ml-1">Destination</label>
+                <select value={targetLayer} onChange={e => setTargetLayer(e.target.value)} className="w-full bg-zinc-950 border border-zinc-800 rounded-3xl p-5 text-sm font-bold text-white focus:outline-none appearance-none cursor-pointer hover:border-orange-500/50 transition-colors">
                   <option>Stacks</option>
                   <option>Liquid</option>
                   <option>Rootstock</option>
@@ -366,7 +411,7 @@ const NTTBridge: React.FC = () => {
                     <div className="p-6 bg-zinc-950 border border-zinc-900 rounded-[2rem] space-y-4 animate-in slide-in-from-top-4">
                         <div className="flex justify-between items-center">
                             <span className="text-[10px] font-black uppercase text-zinc-600">Guardian Status</span>
-                            <span className="text-[10px] font-bold text-green-500 uppercase px-2 py-0.5 bg-green-500/10 rounded">{trackingData.status || 'In Progress'}</span>
+                            <span className={`text-[10px] font-bold text-green-500 uppercase px-2 py-0.5 bg-green-500/10 rounded`}>{trackingData.status || 'In Progress'}</span>
                         </div>
                         <div className="space-y-1">
                             <div className="w-full h-1 bg-zinc-900 rounded-full overflow-hidden">

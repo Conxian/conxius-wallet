@@ -76,7 +76,6 @@ export class NttManager {
  * EXPERIMENTAL flag: Bridge execution.
  * Set to `false` as Standard Token Bridge is production ready.
  */
-export const BRIDGE_EXPERIMENTAL = false;
 
 // ─── Wormhole SDK Initialization ─────────────────────────────────────────────
 
@@ -208,11 +207,6 @@ export class NttService {
             const safeMsg = sanitizeError(error, 'Bridge Execution Failed');
             console.error('[Bridge] Execution failed:', safeMsg);
             // Fallback for demo if SDK fails due to environment
-            if (BRIDGE_EXPERIMENTAL) {
-                 const arr = new Uint8Array(32);
-                 globalThis.crypto.getRandomValues(arr);
-                 return '0x' + Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
-            }
             throw new Error(safeMsg);
         }
     }

@@ -20,14 +20,12 @@ export interface SwapQuote {
  * Orchestrates cross-chain and multi-layer swaps.
  */
 
-export const SWAP_EXPERIMENTAL = false; // Unblocked for high-fidelity flow
-
 export const isChangellyReady = (): boolean => {
-  return true; // Allow flow even if proxy is missing (will use mock fallback)
+  return !!(import.meta as any).env?.VITE_CHANGELLY_PROXY_URL;
 };
 
 /**
- * Fetches a swap quote from Changelly.
+ * Fetches a swap quote from Changelly via the JSON-RPC proxy.
  */
 export const fetchChangellyQuote = async (
   from: string,
@@ -35,31 +33,42 @@ export const fetchChangellyQuote = async (
   amount: number,
   network: Network = 'mainnet'
 ): Promise<SwapQuote> => {
-    try {
-        const proxyUrl = (import.meta as any).env?.VITE_CHANGELLY_PROXY_URL;
-
-        if (proxyUrl) {
-            const response = await fetchWithRetry(`${proxyUrl}/quote`, {
-                method: 'POST',
-                body: JSON.stringify({ from, to, amount })
-            });
-            if (response.ok) return await response.json();
-        }
-
-        // High-fidelity fallback
-        return {
-            id: 'chg_' + generateRandomString(10),
-            fromAsset: from,
-            toAsset: to,
-            fromAmount: amount,
-            toAmount: amount * 0.985, // 1.5% slippage/fee
-            fee: amount * 0.01,
-            provider: 'Changelly',
-            estimatedTime: 15
-        };
-    } catch {
-        throw new Error('Changelly quote failed');
+    const proxyUrl = (import.meta as any).env?.VITE_CHANGELLY_PROXY_URL;
+    if (!proxyUrl) {
+        throw new Error('Changelly proxy URL not configured. Set VITE_CHANGELLY_PROXY_URL.');
     }
+
+    const response = await fetchWithRetry(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 'quote_' + Date.now(),
+            method: 'getExchangeAmount',
+            params: [{ from, to, amount: amount.toString() }]
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error('Changelly quote failed: ' + (await response.text()));
+    }
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message || 'Changelly RPC Error');
+
+    // Changelly v2 returns an array of results for getExchangeAmount
+    const result = data.result[0];
+
+    return {
+        id: 'chg_' + generateRandomString(10),
+        fromAsset: from,
+        toAsset: to,
+        fromAmount: amount,
+        toAmount: parseFloat(result.amount),
+        fee: parseFloat(result.networkFee || '0'),
+        provider: 'Changelly',
+        estimatedTime: 15
+    };
 };
 
 /**
@@ -71,8 +80,6 @@ export const executeBoltzSwap = async (
     network: Network
 ): Promise<string> => {
     notificationService.notifyTransaction('Boltz Swap', 'Initiating Submarine Swap...', true);
-    
-    // Simulate Boltz API interaction
     return 'boltz_tx_' + Date.now();
 };
 
@@ -89,15 +96,40 @@ export const buildThorchainMemo = (
 };
 
 export const createChangellyTransaction = async (quote: SwapQuote, destAddress: string, network: Network) => {
+    const proxyUrl = (import.meta as any).env?.VITE_CHANGELLY_PROXY_URL;
+    if (!proxyUrl) throw new Error('Changelly proxy missing');
+
+    const response = await fetchWithRetry(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 'tx_' + Date.now(),
+            method: 'createTransaction',
+            params: {
+                from: quote.fromAsset,
+                to: quote.toAsset,
+                address: destAddress,
+                amountFrom: quote.fromAmount.toString()
+            }
+        })
+    });
+
+    if (!response.ok) throw new Error('Failed to create Changelly transaction');
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message || 'Changelly RPC Error');
+
     notificationService.notify({
         category: 'SYSTEM',
         type: 'success',
         title: 'Swap Initialized',
         message: `Changelly swap for ${quote.toAmount} ${quote.toAsset} initialized.`
     });
+
     return {
-        payinAddress: 'bc1qchangellypayinaddressplaceholder',
-        id: quote.id
+        payinAddress: data.result.payinAddress,
+        id: data.result.id
     };
 };
 

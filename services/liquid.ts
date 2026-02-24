@@ -9,7 +9,7 @@ import { Network } from '../types';
  * Receiving L-BTC on Liquid (via confidential addresses) is functional.
  * Peg-in (BTC → L-BTC) remains gated until federation script is available.
  */
-export const LIQUID_PEGIN_EXPERIMENTAL = true;
+export const LIQUID_PEGIN_EXPERIMENTAL = false;
 
 // ─── Network Mapping ─────────────────────────────────────────────────────────
 

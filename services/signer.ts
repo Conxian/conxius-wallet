@@ -1,3 +1,4 @@
+import { ensureDeviceSafety } from "./integrity";
 import { deriveLiquidAddress } from './liquid';
 
 /**
@@ -319,6 +320,14 @@ export const requestEnclaveSignature = async (
   seedOrVault?: Uint8Array | string,
   pin?: string,
 ): Promise<SignResult> => {
+    // Security Hardening: Play Integrity for high-value transactions
+    if (request.type === "transaction") {
+        const amountSats = request.payload?.amountSats || 0;
+        if (amountSats > 10000000) {
+            const isSafe = await ensureDeviceSafety();
+            if (!isSafe) throw new Error("Security Check Failed: Device integrity mandatory for high-value operations.");
+        }
+    }
   // Simulate secure element processing time
   if (
     typeof window !== "undefined" &&
@@ -757,4 +766,23 @@ export const signMultiSigPsbt = async (psbtBase64: string, network: Network, vau
 
     const signResult = await signPsbtBase64(vault, psbtBase64, network);
     return signResult;
+};
+
+/**
+ * Parses a BIP-322 message into its constituent parts (if structured)
+ * to allow for clearer UI presentation during signing.
+ */
+export const parseBip322Message = (message: string) => {
+    // Check if it's a domain-bound message (e.g., for login)
+    const domainMatch = message.match(/([a-zA-Z0-9.-]+\.[a-z]{2,})\s+wants you to sign in/i);
+    const nonceMatch = message.match(/nonce:\s*([a-fA-F0-9]+)/i);
+    const timestampMatch = message.match(/timestamp:\s*(\d+)/i);
+
+    return {
+        raw: message,
+        domain: domainMatch ? domainMatch[1] : undefined,
+        nonce: nonceMatch ? nonceMatch[1] : undefined,
+        timestamp: timestampMatch ? parseInt(timestampMatch[1]) : undefined,
+        isLogin: !!domainMatch
+    };
 };

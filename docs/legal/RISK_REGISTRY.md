@@ -6,12 +6,12 @@ permalink: /risk
 
 # Conxius Wallet Risk & Compliance Registry
 
-**Last Updated:** 2026-02-06
+**Last Updated:** 2026-02-18
 **Entity:** Conxian Labs
 **Jurisdiction:** South Africa (Primary), Global (Secondary)
 
 ## 1. Executive Summary
-Conxius Wallet is a strictly non-custodial software interface ("The Tool"). It leverages a Trusted Execution Environment (TEE) known as "The Conclave" to ensure Conxian Labs never possesses, manages, or controls user funds. All financial services (Fiat On-Ramps, Swaps) are offloaded to regulated third-party providers.
+Conxius Wallet is a strictly non-custodial software interface ("The Tool"). It leverages a Trusted Execution Environment (TEE) known as "The Conclave" to ensure Conxian Labs never possesses, manages, or controls user funds. All financial services (Fiat On-Ramps, Swaps) are offloaded to regulated third-party providers or executed via decentralized protocols.
 
 ---
 
@@ -29,98 +29,78 @@ Conxius Wallet is a strictly non-custodial software interface ("The Tool"). It l
 * **Description:** Risk of the platform being used for illicit flows.
 * **Mitigation:**
     * **Partner Reliance:** We do not process payments. Partners (Transak/Changelly) perform all KYC/CDD checks on users before allowing value transfer.
-    * **No Fiat Touchpoints:** Conxian-Labs bank accounts never touch user funds.
+    * **Non-Custodial Privacy:** Protocols like **WabiSabi (CoinJoin)** and **Silent Payments** are implemented as decentralized software logic on-device. Conxian Labs does not act as a centralized "mixer" or "custodian" of funds during these operations.
 
 ### 2.3 Risk: US Securities Laws (SEC)
-* **Description:** Risk of being deemed an unregistered Broker-Dealer for facilitating swaps.
+* **Description:** Risk of being deemed an unregistered Broker-Dealer for enabling access to swap protocols.
 * **Mitigation:**
     * **Direct Routing:** Swap features utilize the **Changelly API** or Decentralized Atomic Swaps. Conxius does not match orders or hold inventory.
     * **UI-Only Role:** The Terms of Service explicitly define the app as a "Self-Hosted Wallet Interface."
 
 ---
 
-## 3. Technical Risks
+## 3. Infrastructure Sovereignty (The "Real Rails")
 
-### 3.1 Risk: Enclave Breach / Side-Channel Attack
+### 3.1 Technical Relays (Proxies)
+As part of the **Infrastructure Pivot (M12)**, Conxian Labs operates dedicated proxies for **Changelly** and **Bisq**.
+* **Risk:** Potential classification as an intermediary.
+* **Mitigation:** These proxies are strictly **Technical Relays**. They do not possess the ability to modify transaction destination addresses or intercept funds, as all payloads are cryptographically signed within the user's Enclave before transmission. They serve to ensure uptime, privacy (by masking user IPs), and protocol optimization.
+
+### 3.2 Conxian Gateway (B2B)
+The Gateway acts as a portal for institutional users to interact with their mobile enclaves.
+* **Risk:** Institutional data privacy.
+* **Mitigation:** The Gateway never sees private keys. It only facilitates the transmission of unsigned transaction data to the user's device for signing.
+
+---
+
+## 4. Technical Risks
+
+### 4.1 Risk: Enclave Breach / Side-Channel Attack
 * **Description:** An attacker bypasses the Android Keystore/TEE protections.
 * **Mitigation:**
     * **Memory-Only Handling:** Seed phrases are never written to disk.
     * **Biometric Hardening:** Critical actions require biometric re-authentication at the OS level.
+    * **Play Integrity Attestation:** Mandatory for high-value operations to ensure the device environment is uncompromised.
 
-### 3.2 Risk: Third-Party API Failure (Dependency Risk)
+### 4.2 Risk: Third-Party API Failure (Dependency Risk)
 * **Description:** Transak, VALR, or Breez services go offline.
 * **Mitigation:**
+    * **Sovereign Rails:** Deployment of dedicated proxies and nodes (M12) reduces reliance on shared public infrastructure.
     * **Failsafe Mode:** If APIs fail, the wallet defaults to "Basic Mode" (Send/Receive on-chain) which requires no third parties.
-    * **Vendor Diversity:** Architecture allows hot-swapping providers (e.g., switching Transak to MoonPay) via remote config.
 
 ---
 
-## 4. Bitcoin Layer Risk Assessment
+## 5. Bitcoin Layer Risk Assessment
 
-This section outlines the risk profiles of the Bitcoin L2s and Sidechains supported by the Conxius Wallet.
-
-### 4.1 Stacks (sBTC)
+### 5.1 Stacks (sBTC)
 * **Risk Level:** Low (L2) - [BitcoinLayers.org: L2]
 * **Risk Warning:** Decentralized, but Novel.
-* **Custody Model:** The sBTC peg is designed to be trust-minimized and decentralized. However, the system's security relies on a novel consensus mechanism (Proof-of-Transfer) and the economic incentives of STX miners.
-* **Key Consideration:** While not custodial in the traditional sense, users should be aware that the security of their assets is tied to the Stacks network's consensus and the correct functioning of the sBTC protocol.
+* **Custody Model:** Trust-minimized and decentralized.
 
-### 4.2 Rootstock (RSK)
-* **Risk Level:** Medium (Sidechain) - [BitcoinLayers.org: Sidechain]
+### 5.2 Rootstock (RSK) & Liquid (L-BTC)
+* **Risk Level:** Medium (Sidechain)
 * **Risk Warning:** Federated.
-* **Custody Model:** Rootstock uses a merge-mined model, which provides a high degree of security. However, the two-way peg (PowPeg) is managed by a federation of well-known blockchain companies.
-* **Key Consideration:** Users are trusting this federation (the PowPeg federation) to act honestly and competently in managing the peg.
+* **Custody Model:** Users trust a federation of functionaries/signers.
 
-### 4.3 Liquid Network (L-BTC)
-* **Risk Level:** Medium (Sidechain) - [BitcoinLayers.org: Sidechain]
-* **Risk Warning:** Federated.
-* **Custody Model:** The Liquid Network is a sidechain with a federated model. A group of "functionaries" (trusted parties) are responsible for managing the two-way peg.
-* **Key Consideration:** This is a custodial model where users are trusting the federation of functionaries to secure their assets.
-
-### 4.4 BOB (Build On Bitcoin)
-* **Risk Level:** Medium (EVM L2) - [BitcoinLayers.org: L2 - Optimistic/Federated]
-* **Risk Warning:** Federated/EVM Risk.
-* **Custody Model:** BOB is an EVM-compatible L2 that uses a multi-sig bridge. While it aims for BitVM-based security, current phases involve federated controls.
-* **Key Consideration:** Users are exposed to EVM smart contract risks and the honesty of the bridge federation.
-
-### 4.5 Ark Protocol (VTXOs)
-* **Risk Level:** Low (L2 - Off-chain)
-* **Risk Warning:** Service Dependency.
-* **Custody Model:** Funds are held in shared UTXOs (VTXOs). Users have unilateral exit rights to L1, but daily off-chain transactions depend on an Ark Service Provider (ASP).
-* **Key Consideration:** If the ASP goes offline, users must wait for the exit timeout to reclaim funds on L1.
-
-### 4.6 RGB Protocol
+### 5.3 RGB Protocol
 * **Risk Level:** Low (Client-Side Validated)
 * **Risk Warning:** Data Availability Risk.
 * **Custody Model:** Truly non-custodial. Assets live in Taproot commitments.
-* **Key Consideration:** Users are responsible for their own consignment data. If data is lost, the asset cannot be proven/transferred. Conxius mitigates this via encrypted cloud backups of consignments.
 
-### 4.7 State Chains
-* **Risk Level:** Medium (Off-chain UTXO)
-* **Risk Warning:** Federated Trust.
-* **Custody Model:** Uses a 2-of-2 multi-sig between the user and a State Chain Entity (SCE).
-* **Key Consideration:** The SCE cannot steal funds alone, but they can collude with a previous owner or refuse to sign, requiring an L1 exit.
+### 5.4 WabiSabi (CoinJoin)
+* **Risk Level:** Low (Privacy Protocol)
+* **Risk Warning:** Coordinator Reliability.
+* **Custody Model:** Non-custodial. Users retain control throughout the mixing process.
 
-### 4.8 BitVM & Maven
-* **Risk Level:** Experimental.
-* **Risk Warning:** Technical Complexity.
-* **Custody Model:** Purely cryptographic/mathematical security.
-* **Key Consideration:** These protocols are in early stages; unintended bugs in the verifier logic could lead to loss of funds.
+### 5.5 Musig2 (Taproot Multi-Sig)
+* **Risk Level:** Low (Cryptographic Standard)
+* **Risk Warning:** Key Management.
+* **Custody Model:** Enhances sovereignty by allowing institutional quorums without a single point of failure.
 
-### 4.9 B2 Network
-* **Risk Level:** Medium (BitVM-based L2) - [BitcoinLayers.org: L2]
-* **Risk Warning:** New Tech / EVM Risk.
-* **Custody Model:** Utilizes a BitVM-based challenge system for verification but currently relies on a multi-sig bridge in early phases.
-* **Key Consideration:** Subject to typical L2 rollup risks and bridge federation honesty during the bootstrap phase.
+### 5.6 BitVM, Ark, State Chains, Maven
+* **Risk Level:** Experimental / Medium.
+* **Note:** See IMPLEMENTATION_REGISTRY.md for current status.
 
-### 4.10 Botanix Spiderchain
-* **Risk Level:** Medium (Spiderchain) - [BitcoinLayers.org: Sidechain]
-* **Risk Warning:** Federated Security.
-* **Custody Model:** Uses a decentralized network of orchestrators (Spiderchain) to manage the peg.
-* **Key Consideration:** Security is derived from the number and honesty of orchestrators; currently more federated than fully decentralized.
+---
 
-### 4.11 Mezo Network
-* **Risk Level:** Medium (tBTC-based L2) - [BitcoinLayers.org: L2]
-* **Risk Warning:** tBTC Dependency.
-* **Custody Model:** Leverages the tBTC bridge mechanism for Bitcoin deposits.
-* **Key Consideration:** Security is inherently linked to the Threshold Network's tBTC peg and the Mezo consensus protocol.
+*Maintained by: Conxian Labs Legal & Compliance Team*

@@ -15,46 +15,43 @@ Market analysis reveals a critical void:
 - **Hot Wallets:** High utility, high risk, vulnerable to OS exploits.
 - **The Conclave Solution:** Mobile TEE (StrongBox) isolation provides hardware-grade security with the seamless UX of a modern smartphone.
 
-## 2. Competitive Dominance: "Lowest Yet Profitable"
+## 2. Competitive Dominance: "Sovereign Rails"
 
 Conxius wins on two fronts:
-1.  **Price Dominance:** Our SAF (Sovereignty-Adjusted Fee) model ensures we are 70-80% cheaper than MetaMask and Phantom.
-2.  **Security Dominance:** We are the only mobile wallet enforcing StrongBox-backed signing for all Bitcoin layers (L1, L2, Sidechains).
+1.  **Price & Speed:** Our SAF (Sovereignty-Adjusted Fee) model and Persistent Crypto Worker ensure we are the fastest and cheapest entry point to Bitcoin L2s.
+2.  **Infrastructure Sovereignty:** Unlike competitors who rely on public APIs, Conxius is deploying the **"Real Rails"** (dedicated proxies and transceivers) to guarantee user execution.
 
 ## 3. The Sovereign Retention Cycle (The Flywheel)
 
-Our growth is driven by a self-reinforcing loop:
-
-### Phase A: Acquisition (The "Magnetic Low-Fee" Hook)
-We use disruptively low fees (0.1% bridge/swap) and gas abstraction (pay gas in sBTC) to pull users from high-fee ecosystems.
+### Phase A: Acquisition (The "Sovereign Rails" Hook)
+We pull users from fragmented wallets into a unified Bitcoin interface that "just works" for every layer (L1, Lightning, Stacks, RGB).
 
 ### Phase B: Activation (Sovereignty Quests)
 Users are gamified into securing their accounts.
 *   **Quest 1: The Vault:** Enable StrongBox/TEE.
-*   **Quest 2: The Ghost:** Enable Tor routing.
-*   **Quest 3: The Sentry:** Verify physical backups.
-*   **Reward:** Completing these quests increases the **Sovereignty Score**, which directly lowers transaction fees.
+*   **Quest 2: The Sentry:** Complete Play Integrity attestation.
+*   **Quest 3: The Ghost:** Enable Tor and Silent Payments.
+*   **Reward:** Higher **Sovereignty Score** unlocks lower fees and B2B "Citadel" features.
 
-### Phase C: Retention (Sovereign Lock-in)
-Once a user has achieved a high Sovereignty Score and low fee tier, the "switching cost" to another wallet is high—not just in terms of technical friction, but in financial loss (higher fees elsewhere).
+### Phase C: Retention (Institutional Lock-in)
+For B2B users, the wallet becomes part of their corporate governance. The "switching cost" is the security of their entire treasury.
 
-### Phase D: Monetization (Pro & B2B Expansion)
-Retained users upgrade to **Conclave Pro**. Massive retail activity creates the "Lindy Effect" required to sell the **Conclave SDK** to institutional partners.
+### Phase D: Monetization (B2B Expansion)
+Retail success feeds the **Conclave SDK** and **Conxian Gateway** institutional adoption.
 
-## 4. Multi-Layer Roadmap
+## 4. Multi-Layer Roadmap (Phase 4 Alignment)
 
 | Milestone | Feature | Status |
 | :--- | :--- | :--- |
-| **M1: Foundations** | StrongBox Core, BIP-39, L1 BTC | COMPLETED |
-| **M2: Interop** | Liquid, Stacks, Boltz Swaps | COMPLETED |
-| **M3: The Bridge** | Wormhole NTT, sBTC-as-Gas | COMPLETED |
-| **M4: Privacy** | Tor, Silent Payments, CoinJoin | IN PROGRESS |
-| **M5: Proofs** | BitVM Verifier, STARK verification | COMPLETED |
-| **M6: Enterprise** | Conclave SDK v1, Institutional API | Q3 2026 |
+| **M1-M11** | Core L1/L2, Bridge, Privacy v1, BitVM | COMPLETED |
+| **M12: Real Rails** | Infrastructure (Changelly/Bisq Proxies) | **ACTIVE** |
+| **M13: Musig2** | Taproot Aggregated Multi-Sig | Q3 2026 |
+| **M14: RGB Pro** | Full WASM Client-Side Validation | Q3 2026 |
+| **M15: Privacy Hub** | WabiSabi Coordinator Integration | Q4 2026 |
 
-## 5. Success Metrics (Dynamic Monitoring)
+## 5. Success Metrics
+*   **Infrastructure Uptime:** Reliability of the "Real Rails".
 *   **Total Sovereignty Score (TSS):** Aggregate security health of the user base.
-*   **Protocol Revenue Per User (PRPU):** Diversified income across fees, SaaS, and B2B.
-*   **Churn-to-Fee Ratio:** Correlating fee competitiveness with user retention.
+*   **B2B Conversion Rate:** Adoption of the Conclave SDK by 3rd-party devs.
 
 ---
