@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { LAYER_COLORS } from '../constants';
 import { Asset, BitcoinLayer, UTXO } from '../types';
-import { TrendingUp, ArrowUpRight, Search, Bot, Loader2, Shield, Send, Plus, Network, ShieldCheck, EyeOff, CheckCircle2, X, ShoppingBag, RefreshCw, Key, Copy, ExternalLink, ArrowDownLeft, Clock, History, Sparkles } from 'lucide-react';
+import { TrendingUp, ArrowUpRight, Search, Bot, Loader2, Shield, Send, Plus, Network, ShieldCheck, EyeOff, CheckCircle2, X, ShoppingBag, RefreshCw, Key, Copy, ExternalLink, ArrowDownLeft, Clock, History, Sparkles, QrCode } from 'lucide-react';
 import { fetchBtcBalance, fetchStacksBalances, fetchBtcPrice, fetchLiquidBalance, fetchRskBalance, broadcastBtcTx, fetchRunesBalances, fetchBtcUtxos, fetchBobAssets, fetchRgbAssets, fetchArkBalances, fetchMavenAssets, fetchStateChainBalances, fetchB2Assets, fetchBotanixAssets, fetchMezoAssets } from '../services/protocol';
 import { SignRequest } from '../services/signer';
 import { getRecommendedFees } from '../services/fees';
