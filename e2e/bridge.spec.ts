@@ -1,22 +1,42 @@
 import { test, expect } from '@playwright/test';
 
-test('NTT Bridge UI should show intent buttons and handle persistence', async ({ page }) => {
-  await page.goto('/');
+test.describe('Sovereign Bridge Flow', () => {
+  test('should render bridge component and handle intent selection', async ({ page }) => {
+    await page.goto('/');
 
-  // Skip onboarding if needed (simplified mock state)
-  // In a real app, we might need to click "Create Wallet" or "Skip"
+    // Wait for app to boot
+    await page.waitForTimeout(5000);
 
-  // Navigate to Bridge (assuming it's in the menu or a direct route)
-  // For this test, we'll assume the app starts or can reach the bridge
+    // Navigate to Bridge (if not active tab)
+    // Assuming we can click a bottom nav item
+    const bridgeTab = page.locator('button:has-text("Bridge")');
+    if (await bridgeTab.isVisible()) {
+        await bridgeTab.click();
+    }
 
-  // Wait for app to boot
-  await page.waitForTimeout(5000);
+    // Check for Bridge title
+    await expect(page.locator('text=Sovereign Bridge')).toBeVisible();
 
-  // Check for "Sovereign Bridge" title
-  // Since we might be on onboarding, we'll search for the component if possible
-  // Or we can mock the state in a real test.
+    // Verify intent buttons
+    await expect(page.locator('text=BTC DeFi')).toBeVisible();
+    await expect(page.locator('text=Sidechain')).toBeVisible();
+  });
 
-  // For now, we'll just check if the component renders if we can find it
-  const bridgeTitle = page.locator('text=Sovereign Bridge');
-  // If not visible, we might need to navigate there.
+  test('should persist bridge state across reload', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(2000);
+
+    // Mock localStorage for a pending transaction
+    await page.evaluate(() => {
+      localStorage.setItem('PENDING_NTT_TX', '0xmocktxhash123456789');
+      localStorage.setItem('PENDING_NTT_TARGET', 'Liquid');
+    });
+
+    await page.reload();
+    await page.waitForTimeout(5000);
+
+    // Should automatically be on step 4 (Transfer in Transit)
+    await expect(page.locator('text=Transfer in Transit')).toBeVisible();
+    await expect(page.locator('text=0xmocktxhash123456789')).toBeVisible();
+  });
 });

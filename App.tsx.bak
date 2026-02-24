@@ -97,13 +97,13 @@ const DEFAULT_STATE: AppState & { language: Language } = {
   theme: 'dark'
 };
 
+  const [pendingSignRequest, setPendingSignRequest] = useState<{ request: SignRequest; resolve: (result: SignResult) => void; reject: (reason: any) => void; } | null>(null);
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [pendingSignRequest, setPendingSignRequest] = useState<{ request: SignRequest; resolve: (val: boolean) => void; } | null>(null);
   const [bootStep, setBootStep] = useState(0);
   const [isBooting, setIsBooting] = useState(true);
   const [state, setState] = useState<AppState & { language: Language }>(DEFAULT_STATE);
-  
+
   // Security & UX State
   const [isLocked, setIsLocked] = useState(false);
   const [lockError, setLockError] = useState(false);
@@ -299,18 +299,18 @@ const App: React.FC = () => {
       setEnclaveExists(true);
       setIsLocked(false);
       setLockError(false);
-      
+
       // Migration: If legacy blob detected, re-encrypt immediately to harden
       if (isLegacyBlob(saved)) {
          persistState(nextState, pin);
          notify('success', 'Vault Upgraded to V2 Security');
       }
-      
+
       // Phase 3: Optimize Session - Unlock Cache
       if ((window as any).Capacitor?.isNativePlatform() && nextState.walletConfig?.seedVault) {
-          SecureEnclave.unlockSession({ 
-              vault: nextState.walletConfig.seedVault, 
-              pin 
+          SecureEnclave.unlockSession({
+              vault: nextState.walletConfig.seedVault,
+              pin
           }).catch(e => console.warn("Failed to unlock enclave session cache:", e));
       }
 
@@ -333,8 +333,8 @@ const App: React.FC = () => {
   const updateAssets = (assets: Asset[]) => setState(prev => ({ ...prev, assets }));
   const setLanguage = (language: Language) => setState(prev => ({ ...prev, language }));
   const setNetwork = (network: Network) => setState(prev => ({ ...prev, network }));
-  const setMode = (mode: AppMode) => setState(prev => ({ 
-    ...prev, 
+  const setMode = (mode: AppMode) => setState(prev => ({
+    ...prev,
     mode,
     assets: mode === 'simulation' ? MOCK_ASSETS : []
   }));
@@ -370,29 +370,26 @@ const App: React.FC = () => {
       throw new Error('Master Seed missing from session vault.');
     }
 
-    // Hardening: Explicit confirmation for message signing (BIP-322 / Login)
-    if (request.type === 'message') {
-        const confirmed = await new Promise<boolean>((resolve) => {
-            setPendingSignRequest({
-                request,
-                resolve: (val) => resolve(val)
-            });
-        });
-        setPendingSignRequest(null);
-        if (!confirmed) throw new Error('Signature request declined by user.');
-    }
-    
     // Check if running on Android/iOS native runtime
+    // @ts-ignore - Vite defines this globally usually or we check window
     const isNative = (window as any).Capacitor?.isNativePlatform();
 
     if (isNative) {
+       // Phase 3: Fast Path (Session Cache)
+       // We try to pass undefined PIN first if we believe session is active.
+       // Currently requestEnclaveSignature handles "undefined" pin by calling signNative without PIN.
+       // SecureEnclavePlugin.java checks cache if PIN is null.
+
+       // Note: We still pass vault string because the plugin needs salt/IV from it to verify/decrypt.
        try {
-          return await requestEnclaveSignature(request, seedVault, undefined); 
+          return await requestEnclaveSignature(request, seedVault, undefined);
        } catch (e: any) {
+          // If session expired (Native cache cleared), fallback to explicit PIN (Slow Path)
           console.warn("Session Native Cache Miss/Expired, falling back to explicit PIN", e);
           return await requestEnclaveSignature(request, seedVault, pin);
        }
     } else {
+       // Web Fallback: Decrypt in JS memory
        const seed = await decryptSeed(seedVault, pin);
        try {
          return await requestEnclaveSignature(request, seed);
@@ -402,33 +399,32 @@ const App: React.FC = () => {
     }
   };
 
-  
   const getWormholeSigner = (chain: any) => {
-    // Assuming 'chain' is compatible or we map it. 
+    // Assuming 'chain' is compatible or we map it.
     // The signer needs the auth callback which we already have: authorizeSignature
     // We use a placeholder address because the actual address is derived/verified by the enclave during signing
-    // or expected to be known by the caller. 
+    // or expected to be known by the caller.
     // In a real implementation, we might want to pass the derived address here if known.
-    const address = state.walletConfig?.masterAddress || '0xPlaceholder'; 
+    const address = state.walletConfig?.masterAddress || '0xPlaceholder';
     return new ConxiusWormholeSigner(chain, address, authorizeSignature);
   };
-  
+
   const setWalletConfig = (config: WalletConfig & { mode?: AppMode }, pin?: string) => {
      const effectiveMode: AppMode = config.mode ?? 'sovereign';
      const initialAssets = effectiveMode === 'sovereign' ? [] : MOCK_ASSETS;
      const newPin = pin || currentPinRef.current;
      if (newPin) currentPinRef.current = newPin;
-     
-     const newState = { 
-        ...state, 
+
+     const newState = {
+        ...state,
         mode: effectiveMode,
         walletConfig: config,
         assets: initialAssets,
         sovereigntyScore: config.backupVerified ? 100 : 70
      };
-     
+
      setState(newState);
-     
+
      // CRITICAL: Persist immediately on creation/restore to prevent data loss on app switch
      if (newPin) {
         persistState(newState, newPin).then(() => {
@@ -572,8 +568,8 @@ const App: React.FC = () => {
                  <img src="/conxius-logo.svg" alt="Conxius" className="w-full h-full object-cover" />
                </div>
                <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
-                 state.isMainnetLive 
-                   ? 'bg-[var(--text)] text-[var(--bg)] border-[var(--text)]' 
+                 state.isMainnetLive
+                   ? 'bg-[var(--text)] text-[var(--bg)] border-[var(--text)]'
                    : state.mode === 'sovereign'
                     ? 'bg-[rgba(34,197,94,0.12)] text-[var(--success)] border-[rgba(34,197,94,0.35)]'
                     : 'bg-[rgba(251,191,36,0.12)] text-[var(--accent-2)] border-[rgba(251,191,36,0.35)]'
@@ -608,14 +604,6 @@ const App: React.FC = () => {
             </ErrorBoundary>
           </div>
           {activeTab !== 'menu' && <SatoshiAIChat />}
-
-          {pendingSignRequest && (
-            <SignLoginMessageModal
-                message={typeof pendingSignRequest.request.payload === 'string' ? pendingSignRequest.request.payload : (pendingSignRequest.request.payload as any).message || JSON.stringify(pendingSignRequest.request.payload)}
-                onConfirm={() => pendingSignRequest.resolve(true)}
-                onCancel={() => pendingSignRequest.resolve(false)}
-            />
-          )}
           <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
           <ToastContainer toasts={toasts} removeToast={removeToast} />
         </main>

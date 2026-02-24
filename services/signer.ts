@@ -1,3 +1,4 @@
+import { ensureDeviceSafety } from "./integrity";
 import { deriveLiquidAddress } from './liquid';
 
 /**
@@ -319,6 +320,14 @@ export const requestEnclaveSignature = async (
   seedOrVault?: Uint8Array | string,
   pin?: string,
 ): Promise<SignResult> => {
+    // Security Hardening: Play Integrity for high-value transactions
+    if (request.type === "transaction") {
+        const amountSats = request.payload?.amountSats || 0;
+        if (amountSats > 10000000) {
+            const isSafe = await ensureDeviceSafety();
+            if (!isSafe) throw new Error("Security Check Failed: Device integrity mandatory for high-value operations.");
+        }
+    }
   // Simulate secure element processing time
   if (
     typeof window !== "undefined" &&
