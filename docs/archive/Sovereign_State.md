@@ -18,6 +18,7 @@ permalink: /state
 - **Security Protocols**: Complete (Biometric session gating, PIN retrieval, duress PIN, 3-word backup verification).
 - **Key Derivation**: Complete (BIP-84/86/44/84'/0'/0'/1'-4' for BTC, Taproot, Stacks, EVM, Ark, StateChains, Maven).
 - **PSBT Engine**: Complete (Build, sign, finalize — standard BTC + sBTC peg-in + Taproot tweak).
+- **sBTC Bridge (Clarity 4)**: ✅ COMPLETE (Native deposit/withdraw scripting reintegrated).
 - **Lightning Network**: Complete (Breez SDK native plugin — invoice, pay, LNURL-Auth).
 - **Ark Protocol**: Complete (VTXO lifecycle, enclave-signed forfeiture, and unilateral exits).
 - **State Chains**: Complete (Off-chain UTXO transfers with coordinator synchronization).
