@@ -9,45 +9,45 @@ permalink: /docs/business-strategy
 **Mission:** To industrialize Bitcoin self-custody by providing the world's most secure and affordable financial infrastructure.
 
 ## 1. Executive Summary
-Conxius is not just a wallet; it is a **Bitcoin-native Infrastructure Layer**. By leveraging mobile Secure Enclaves (TEE/StrongBox), we commoditize high-end security. Our business model pivots away from the "high-fee retail trap" and towards a "high-volume, low-margin utility" model supplemented by high-value B2B licensing.
+Conxius is not just a wallet; it is a **Bitcoin-native Infrastructure Layer**. By leveraging mobile Secure Enclaves (TEE/StrongBox), we commoditize high-end security. Our business model pivots away from the "high-fee retail trap" and towards a "high-volume, low-margin utility" model supplemented by high-value B2B licensing through the **Conxian Gateway**.
 
-## 2. Market Positioning (Revised)
+## 2. Market Positioning (Infrastructure Pivot)
 
-We position Conxius as the **"Intelligent Security Layer"** for Bitcoin—dynamically matching security requirements to device capabilities without compromising user experience.
+We position Conxius as the **"Intelligent Security Layer"** for Bitcoin. The current strategic focus is the **Infrastructure Pivot**: deploying our own proxies (Changelly, Bisq) and cross-chain transceivers (Wormhole) to ensure 100% uptime and sovereignty for our financial rails.
 
-### Competitive Comparison (Enhanced)
+### Competitive Comparison (2026 Analysis)
 | Feature | Traditional Wallets | Conxius |
 | :--- | :--- | :--- |
 | Hardware Security | Binary (on/off) | **Adaptive**: TEE for daily ops, StrongBox for vault keys |
-| Key Attestation | Rarely implemented | **Verified**: Server-side validation of hardware backing [citation:9] |
-| Device Fragmentation | Ignored (crashes) | **Managed**: Graceful fallback with security downgrade alerts [citation:1] |
-| Performance | 4-10 second delays | **Optimized**: 300ms daily ops (AES_GCM) [citation:6] |
+| Key Attestation | Rarely implemented | **Verified**: Play Integrity + Hardware-backed attestation |
+| Infrastructure | Third-party dependencies | **Sovereign**: Own proxies and validator-ready nodes |
+| Performance | 4-10 second delays | **Optimized**: 300ms daily ops (Persistent Worker) |
 
 ## 3. Financial & Operational Benefits (Dynamic Metrics)
 Conxius employs an **Operational Benefit Model** where infrastructure costs are offset by B2B revenue.
 
-### 3.1 Cost Optimization
-*   **Zero-Knowledge Proofs (ZKP):** Using BitVM to verify L2 states off-chain reduces the need for expensive L1 data availability.
-*   **Relayer Federation:** A decentralized network of relayer-partners reduces Conxian Labs' direct cloud expenditure.
+### 3.1 Cost Optimization & Sovereignty
+*   **Sovereign Rails:** Deploying dedicated proxies for swaps (Changelly) and trading (Bisq) eliminates "API middleware" fees and increases reliability.
+*   **ZKP Efficiency:** Using BitVM and on-device STARK verifiers reduces L1 verification costs.
 
 ### 3.2 Revenue Diversification
-*   **B2C:** Fees, SaaS (Pro), Affiliates.
-*   **B2B:** SDK Licensing, IaaS (Proof generation), White-labeling.
+*   **B2C:** Utility fees (0.1% - 0.25%), Pro Subscriptions, Affiliate Rebates.
+*   **B2B:** **Conclave SDK** licensing, Gateway SaaS for corporate treasury, and institutional token launchpad services.
 
 ## 4. Hyper-Growth & Adoption Strategy
 
 ### 4.1 The "Sovereign Virus" (Viral Growth)
-*   **Shared Conclaves:** Users invite friends/family to join a multi-sig "Conclave" for shared savings or treasury. Every new participant is a new user onboarded.
-*   **Gas Subsidies:** New users receive their first 5 cross-chain transfers "Gas-Free" (subsidized by the B2B marketing budget).
+*   **Shared Conclaves:** Family and corporate multi-sig "Conclaves" drive multi-user onboarding.
+*   **Institutional Handshake:** The Conxian Gateway acts as the bridge for corporations to manage Bitcoin assets using mobile enclaves as signing devices.
 
 ### 4.2 Ecosystem Alignment
-We partner with Bitcoin L2s (Stacks, BOB, Rootstock) to be their **preferred mobile interface**, gaining direct access to their user bases in exchange for native bridge support.
+We partner with the full spectrum of Bitcoin layers (Stacks, Liquid, BOB, B2, RGB) to be their **de facto mobile citadel**, providing them with hardware-level security for their native assets.
 
 ## 5. Risk Management & Compliance
-*   **Non-Custodial Status:** By never holding keys, we avoid being classified as a Money Transmitter in most jurisdictions (FinCEN/FATF guidance).
-*   **Privacy-by-Design:** Tor and on-device processing minimize the surface area for data subpoenas.
+*   **Non-Custodial Multi-Sig:** Our 2-of-3 Enclave orchestration provides security without Conxian Labs ever touching keys.
+*   **Regulatory Buffer:** Offloading KYC-heavy flows to partners (Transak, VALR) while maintaining a seamless UX.
 
 ## 6. Long-Term Vision (2027+)
-To become the **Universal Signing Layer** for the internet. Any transaction—be it Bitcoin, Web3, or Identity—will be signed via a Conxius-powered Secure Enclave.
+To become the **Universal Signing Layer** for the internet. Conxius will power the "Citadel" of every Bitcoin-native institution, from startups to sovereign states.
 
 ---
