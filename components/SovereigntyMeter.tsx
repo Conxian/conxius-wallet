@@ -44,7 +44,7 @@ const SovereigntyMeter: React.FC = () => {
     { id: 'tor', label: 'Enable Tor Routing', points: 20, completed: state?.isTorEnabled ?? false, category: 'Privacy' },
     { id: 'consolidation', label: 'Sovereign Consolidation', points: 50, completed: !!(state?.assets && state.assets.length > 0 && state.assets.every(a => a.symbol === 'BTC' || a.balance === 0)), category: 'Security' },
     { id: 'fee_opt', label: 'Optimize Network Fees', points: 15, completed: false, category: 'Security' },
-    { id: 'l2_expansion', label: 'L2 Expansion: B2/Botanix/Mezo', points: 30, completed: (state?.assets ?? []).some(a => ['B2', 'Botanix', 'Mezo'].includes(a.layer)), category: 'Security' },
+    { id: 'l2_expansion', label: 'L2 Expansion: B2/Botanix/Mezo+', points: 30, completed: (state?.assets ?? []).some(a => ['B2', 'Botanix', 'Mezo', 'Alpen', 'Zulu', 'Bison', 'Hemi', 'Nubit', 'Lorenzo', 'Citrea', 'Babylon', 'Merlin', 'Bitlayer'].includes(a.layer)), category: 'Security' },
   ];
 
   const currentXP = ACTIVE_QUESTS.reduce((acc, q) => q.completed ? acc + q.points : acc, 0);

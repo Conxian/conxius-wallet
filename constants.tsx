@@ -46,6 +46,17 @@ export const LAYER_COLORS: Record<BitcoinLayer, string> = {
   'B2': 'bg-orange-700',
   'Botanix': 'bg-emerald-700',
   'Mezo': 'bg-blue-900',
+  'Alpen': 'bg-slate-500',
+  'Zulu': 'bg-lime-600',
+  'Bison': 'bg-amber-800',
+  'Hemi': 'bg-rose-700',
+  'Nubit': 'bg-sky-500',
+  'Lorenzo': 'bg-teal-600',
+  'Citrea': 'bg-violet-700',
+  'Babylon': 'bg-red-700',
+  'Merlin': 'bg-fuchsia-800',
+  'Bitlayer': 'bg-stone-600',
+  'TaprootAssets': 'bg-orange-400',
 };
 
 export const MOCK_TRANSACTIONS: any[] = [
