@@ -8,7 +8,7 @@ import {
 import * as bip39 from 'bip39';
 
 // Mock Capacitor
-vi.mock('@capacitor/core', () => ({
+vi.mock('@capacitor/core', () => ({ registerPlugin: vi.fn(),
   Capacitor: {
     isNativePlatform: vi.fn(() => false),
     SecureEnclave: { isAvailable: vi.fn().mockResolvedValue({ available: true }) }
