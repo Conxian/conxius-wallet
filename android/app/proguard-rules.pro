@@ -1,21 +1,33 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Conxius Wallet ProGuard Rules
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# bitcoinj
+-keep class org.bitcoinj.** { *; }
+-dontwarn org.bitcoinj.**
+-keep class org.bitcoin.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# web3j
+-keep class org.web3j.** { *; }
+-dontwarn org.web3j.**
+-keep class okhttp3.** { *; }
+-dontwarn okhttp3.**
+-keep class rx.** { *; }
+-dontwarn rx.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# BouncyCastle
+-keep class org.bouncycastle.** { *; }
+-dontwarn org.bouncycastle.**
+
+# Breez SDK
+-keep class breez_sdk.** { *; }
+-dontwarn breez_sdk.**
+
+# Capacitor
+-keep class com.getcapacitor.** { *; }
+-keep class com.conxius.wallet.** { *; }
+
+# Jackson (often used by web3j)
+-keep class com.fasterxml.jackson.** { *; }
+-dontwarn com.fasterxml.jackson.**
+
+# Protobuf (used by bitcoinj)
+-keep class com.google.protobuf.** { *; }
