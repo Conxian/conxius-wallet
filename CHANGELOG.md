@@ -11,6 +11,18 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-02-18
+
+### Added
+- **Phase 5 Bitcoin Ecosystem Alignment**: Completed full protocol parity for 14+ Bitcoin layers including Alpen, Zulu, Bison, Hemi, Nubit, Lorenzo, Citrea, Babylon, Merlin, and Bitlayer.
+- **Maestro UI Testing**: Initialized automated on-device UI testing with Maestro, including environment scripts (`run_maestro.bat`) and flow definitions.
+- **BitVM Cryptographic Verification**: Verified and documented the functional cryptographic STARK verifier in the Labs Explorer, aligned with TEE security standards.
+- **Ecosystem-Wide Versioning**: Harmonized system versioning to v1.5.0 across mobile components, B2B gateway descriptors, and core libraries.
+
+### Improved
+- **Protocol Fetcher Resilience**: Refactored all Bitcoin layer fetchers in `protocol.ts` to ensure production data integrity by returning empty arrays on API failure.
+- **Documentation Synchronization**: Comprehensive update of Implementation Registry, Project Context, and PRD to reflect the "Production Ready" state of the full Bitcoin stack.
+
 ## [1.4.0] - 2026-02-16
 
 ### Added

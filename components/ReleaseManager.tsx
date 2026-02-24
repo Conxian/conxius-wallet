@@ -39,7 +39,7 @@ const ReleaseManager: React.FC = () => {
     'Auditing DAO Bounty Smart Logic',
     'Hardening Enclave Entropy Source',
     'Signing Artifacts with Air-Gapped Key',
-    'Finalizing SVN 0.3 Release Candidate'
+    'Finalizing SVN 1.5 Release Candidate'
   ];
 
   const startPackaging = async () => {
@@ -62,7 +62,7 @@ const ReleaseManager: React.FC = () => {
     setIsGeneratingNotes(false);
     
     setIsPackaging(false);
-    setBuildLogs(prev => [...prev, `[FINALIZE] RELEASE SVN 0.3 READY FOR DISTRIBUTION.`]);
+    setBuildLogs(prev => [...prev, `[FINALIZE] RELEASE SVN 1.5 READY FOR DISTRIBUTION.`]);
   };
 
   return (
