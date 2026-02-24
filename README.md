@@ -7,7 +7,7 @@ permalink: /
 # Conxius Wallet: The Sovereign Citadel for the Bitcoin Ecosystem
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests Passing](https://img.shields.io/badge/tests-149%2F149%20passing-brightgreen)](https://github.com/Conxian/Conxius_Wallet/actions)
+[![Tests Passing](https://img.shields.io/badge/tests-162%2F162%20passing-brightgreen)](https://github.com/Conxian/Conxius_Wallet/actions)
 [![Bitcoin-First](https://img.shields.io/badge/Bitcoin-First-orange.svg)](https://bitcoin.org)
 [![Security: TEE/StrongBox](https://img.shields.io/badge/Security-TEE%2FStrongBox-blue.svg)](https://developer.android.com/training/articles/keystore)
 
@@ -104,14 +104,14 @@ cd android && ./gradlew :app:installDebug
 We maintain a rigorous testing protocol to ensure cryptographic integrity and security.
 
 ```bash
-pnpm test          # Run Vitest suite (149+ tests)
+pnpm test          # Run Vitest suite (162+ tests)
 pnpm run lint      # Run ESLint for code quality
 pnpm run test:e2e  # Run Playwright E2E tests
 ```
 
 | Metric | Result |
 | :--- | :--- |
-| **Total Tests** | 149+ |
+| **Total Tests** | 162+ |
 | **Status** | 100% Passing |
 | **Security Layer** | Android StrongBox / TEE |
 

@@ -64,7 +64,7 @@ const Documentation: React.FC = () => {
               <div className={`p-3 rounded-2xl bg-zinc-900 border border-zinc-800 ${doc.color}`}><doc.icon size={20} /></div>
               <div>
                 <h4 className="font-bold text-zinc-100 group-hover:text-orange-500">{doc.title}</h4>
-                <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest mt-0.5">SVN 0.3 Specification</p>
+                <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest mt-0.5">SVN 1.5 Specification</p>
               </div>
             </button>
           ))}

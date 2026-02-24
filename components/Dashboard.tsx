@@ -84,8 +84,7 @@ const Dashboard: React.FC = () => {
             fetchTaprootAssets(taprootAddress, network)
         ]);
 
-        const [btcBal, stxAssets, liqBal, rskBal, runeAssets, bobAssets, rgbAssets, arkAssets, mavenAssets, scAssets, b2Assets, botAssets, mezoAssets, alpenAssets, zuluAssets, bisonAssets, hemiAssets, nubitAssets, lorenzoAssets, citreaAssets, babylonAssets, merlinAsset...bitlayerAssets,
-            ...taprootAssets, taprootAssets] = results;
+        const [btcBal, stxAssets, liqBal, rskBal, runeAssets, bobAssets, rgbAssets, arkAssets, mavenAssets, scAssets, b2Assets, botAssets, mezoAssets, alpenAssets, zuluAssets, bisonAssets, hemiAssets, nubitAssets, lorenzoAssets, citreaAssets, babylonAssets, merlinAssets, bitlayerAssets, taprootAssets] = results;
         const finalAssets: Asset[] = [
             { id: 'btc-main', name: 'Bitcoin', symbol: 'BTC', balance: btcBal, valueUsd: btcBal * btcPrice, layer: 'Mainnet', type: 'Native', address: btcAddress },
             ...stxAssets,
