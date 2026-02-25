@@ -50,6 +50,7 @@ This document tracks the ground-truth implementation status of every major featu
 | **Ordinals** | ✅ PRODUCTION | Hiro API integration for balance and metadata. |
 | **Runes** | ✅ PRODUCTION | Real-time balance fetch via Hiro Ordinals API. |
 | **RGB** | ✅ PRODUCTION | Taproot signer m/86' ready; On-chain anchor verification and transfer preparation implemented. |
+| **Taproot Assets** | ✅ PRODUCTION | Taproot signer m/86' ready; Integrated with indexer for asset discovery. |
 | **BRC-20** | ✅ PRODUCTION | Integrated with Ordinals fetcher. |
 
 ## V. INTEROPERABILITY & SWAPS
