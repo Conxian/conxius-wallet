@@ -41,4 +41,19 @@ describe('Security: Error Sanitization', () => {
     expect(sanitizeError(undefined)).toBe('Protocol Error');
     expect(sanitizeError('')).toBe('Protocol Error');
   });
+
+  it('should block BIP-39 mnemonic phrases (12 words)', () => {
+    const mnemonic = 'abandon ability able about above absent absorb abstract absurd abuse access accident';
+    expect(sanitizeError(`Failed to process: ${mnemonic}`)).toBe('Protocol Error');
+  });
+
+  it('should block 64-character hex private keys', () => {
+    const privKey = '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+    expect(sanitizeError(`Secret key leaked: ${privKey}`)).toBe('Protocol Error');
+  });
+
+  it('should block BIP32 extended private keys (xprv)', () => {
+    const xprv = 'xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKm2sEWWTip7z8Y9H9mK9v8f4m9qGjGjGjGjGjGjGjGjGj';
+    expect(sanitizeError(`Leaked root key: ${xprv}`)).toBe('Protocol Error');
+  });
 });

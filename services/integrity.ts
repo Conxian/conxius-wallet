@@ -1,5 +1,6 @@
 import { registerPlugin, Capacitor } from '@capacitor/core';
 import { notificationService } from './notifications';
+import { generateRandomString } from './random';
 
 interface PlayIntegrityPlugin {
     requestIntegrityToken(params: { nonce: string }): Promise<{ token: string }>;
@@ -74,7 +75,7 @@ export const verifyIntegrityToken = async (token: string): Promise<IntegrityVeri
  * Comprehensive check to ensure the device is safe for high-value operations.
  */
 export const ensureDeviceSafety = async (): Promise<boolean> => {
-    const nonce = Math.random().toString(36).substring(7);
+    const nonce = generateRandomString(12);
     const token = await requestDeviceAttestation(nonce);
 
     if (!token) {
