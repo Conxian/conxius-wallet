@@ -518,14 +518,14 @@ export const requestEnclaveSignature = async (
         pubkey: res.pubkey,
         timestamp: Date.now(),
       };
-    } else if (request.layer === "RGB") {
-      const path = "m/86'/0'/0'/0/0"; // RGB uses Taproot
+    } else if (request.layer === "RGB" || request.layer === "TaprootAssets") {
+      const path = "m/86'/0'/0'/0/0"; // Taproot-centric
       const res = await signNative({
         vault,
         pin,
         path,
         messageHash: request.payload?.hash || request.payload as string,
-        network: "rgb",
+        network: request.layer.toLowerCase(),
           payload: JSON.stringify(request.payload)
         });
       return {
@@ -735,6 +735,97 @@ export const requestEnclaveSignature = async (
             privKeyBuf.fill(0);
           }
       }
+    } else if ((request.layer === 'RGB' || request.layer === 'TaprootAssets' || request.layer === 'Runes' || request.layer === 'Ordinals') && seedBytes) {
+      const path = "m/86'/0'/0'/0/0";
+      const derived = await workerManager.derivePath(seedBytes, path);
+      pubkey = derived.publicKey;
+      if (derived.privateKey) {
+          const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
+          try {
+            let hashToSign: Buffer;
+            if (request.payload?.hash) {
+              hashToSign = Buffer.from(request.payload.hash, 'hex');
+            } else {
+              const cx = Buffer.from(JSON.stringify(request.payload));
+              hashToSign = Buffer.from(bitcoin.crypto.sha256(cx));
+            }
+            signature = Buffer.from(signSchnorr(hashToSign, privKeyBuf)).toString('hex');
+          } finally {
+            privKeyBuf.fill(0);
+          }
+      }
+    } else if (request.layer === 'Liquid' && seedBytes) {
+      const path = "m/84'/1776'/0'/0/0";
+      const derived = await workerManager.derivePath(seedBytes, path);
+      pubkey = derived.publicKey;
+      if (derived.privateKey) {
+          const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
+          try {
+            const child = bip32.fromPrivateKey(privKeyBuf, Buffer.alloc(32));
+            const hashToSign = request.payload?.hash ? Buffer.from(request.payload.hash, 'hex') : Buffer.from(bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload))));
+            signature = Buffer.from(child.sign(hashToSign)).toString('hex');
+          } finally {
+            privKeyBuf.fill(0);
+          }
+      }
+    } else if (request.layer === 'Ark' && seedBytes) {
+        const path = "m/84'/0'/0'/1/0";
+        const derived = await workerManager.derivePath(seedBytes, path);
+        pubkey = derived.publicKey;
+        if (derived.privateKey) {
+            const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
+            try {
+                const child = bip32.fromPrivateKey(privKeyBuf, Buffer.alloc(32));
+                const cx = Buffer.from(JSON.stringify(request.payload));
+                const hashToSign = Buffer.from(bitcoin.crypto.sha256(cx));
+                signature = Buffer.from(child.sign(hashToSign)).toString('hex');
+            } finally {
+                privKeyBuf.fill(0);
+            }
+        }
+    } else if (request.layer === 'StateChain' && seedBytes) {
+        const index = request.payload?.index || 0;
+        const path = `m/84'/0'/0'/2/${index}`;
+        const derived = await workerManager.derivePath(seedBytes, path);
+        pubkey = derived.publicKey;
+        if (derived.privateKey) {
+            const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
+            try {
+                const child = bip32.fromPrivateKey(privKeyBuf, Buffer.alloc(32));
+                const hashToSign = request.payload?.hash ? Buffer.from(request.payload.hash, 'hex') : Buffer.from(bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload))));
+                signature = Buffer.from(child.sign(hashToSign)).toString('hex');
+            } finally {
+                privKeyBuf.fill(0);
+            }
+        }
+    } else if (request.layer === 'Maven' && seedBytes) {
+        const path = "m/84'/0'/0'/3/0";
+        const derived = await workerManager.derivePath(seedBytes, path);
+        pubkey = derived.publicKey;
+        if (derived.privateKey) {
+            const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
+            try {
+                const child = bip32.fromPrivateKey(privKeyBuf, Buffer.alloc(32));
+                const hashToSign = Buffer.from(bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload))));
+                signature = Buffer.from(child.sign(hashToSign)).toString('hex');
+            } finally {
+                privKeyBuf.fill(0);
+            }
+        }
+    } else if (request.layer === 'BitVM' && seedBytes) {
+        const path = "m/84'/0'/0'/4/0";
+        const derived = await workerManager.derivePath(seedBytes, path);
+        pubkey = derived.publicKey;
+        if (derived.privateKey) {
+            const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
+            try {
+                const child = bip32.fromPrivateKey(privKeyBuf, Buffer.alloc(32));
+                const hashToSign = Buffer.from(bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload))));
+                signature = Buffer.from(child.sign(hashToSign)).toString('hex');
+            } finally {
+                privKeyBuf.fill(0);
+            }
+        }
     }
 
     return {

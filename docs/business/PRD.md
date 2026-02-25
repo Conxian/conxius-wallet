@@ -50,10 +50,12 @@ The architecture is built on a **Native Enclave Core** (Android Keystore + Stron
 - **BTC L1**: BIP-84 (Native Segwit), BIP-86 (Taproot)
 - **Stacks**: m/44'/5757'/0'/0/0
 - **Liquid**: m/84'/1776'/0'/0/0
-- **EVM (BOB/RSK/ETH)**: m/44'/60'/0'/0/0
-- **RGB**: m/86'/0'/0'/0/0 (Taproot-centric)
+- **EVM (BOB/RSK/ETH/B2/Botanix/Mezo/Phase 5 L2s)**: m/44'/60'/0'/0/0
+- **RGB / Taproot Assets**: m/86'/0'/0'/0/0 (Taproot-centric)
 - **Ark**: m/84'/0'/0'/1/0 (VTXO-specific)
-- **State Chains**: m/84'/0'/0'/2/0
+- **State Chains**: m/84'/0'/0'/2/index
+- **Maven**: m/84'/0'/0'/3/index
+- **BitVM**: m/84'/0'/0'/4/0
 
 ### 3.2. B2B Expansion via Conxian Gateway
 
@@ -129,6 +131,12 @@ The **Conxian Gateway** is the institutional portal:
 | **B2 Network** | PRODUCTION | ✅ EVM Path |
 | **Botanix** | PRODUCTION | ✅ Spiderchain |
 | **Mezo** | PRODUCTION | ✅ tBTC Bridge |
+| **Alpen / Citrea** | PRODUCTION | ✅ ZK-Rollup (EVM) |
+| **Zulu / Bison / Hemi** | PRODUCTION | ✅ EVM Compatible |
+| **Nubit / Lorenzo** | PRODUCTION | ✅ DA & Staking |
+| **Babylon** | PRODUCTION | ✅ BTC Staking |
+| **Merlin / Bitlayer** | PRODUCTION | ✅ EVM L2 |
+| **Taproot Assets** | PRODUCTION | ✅ Taproot Signer |
 
 ---
 

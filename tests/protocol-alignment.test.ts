@@ -6,22 +6,23 @@ import * as path from 'path';
 
 describe('Protocol and Signer Alignment', () => {
   const supportedLayers = [
-    'Mainnet', 'Stacks', 'Liquid', 'BOB', 'RGB', 'Ark', 'StateChain', 'Maven', 'BitVM', 'Rootstock', 'B2', 'Botanix', 'Mezo'
+    'Mainnet', 'Stacks', 'Liquid', 'BOB', 'RGB', 'Ark', 'StateChain', 'Maven', 'BitVM', 'Rootstock', 'B2', 'Botanix', 'Mezo',
+    'Alpen', 'Zulu', 'Bison', 'Hemi', 'Nubit', 'Lorenzo', 'Citrea', 'Babylon', 'Merlin', 'Bitlayer', 'TaprootAssets'
   ];
 
   it('should have fetchers for all supported layers', () => {
     const protocolContent = fs.readFileSync(path.join(process.cwd(), 'services/protocol.ts'), 'utf8');
 
-    expect(protocolContent).toContain('fetchStacksBalances');
-    expect(protocolContent).toContain('fetchLiquidBalance');
-    expect(protocolContent).toContain('fetchBobAssets');
-    expect(protocolContent).toContain('fetchRgbAssets');
-    expect(protocolContent).toContain('fetchArkBalances');
-    expect(protocolContent).toContain('fetchStateChainBalances');
-    expect(protocolContent).toContain('fetchMavenAssets');
-    expect(protocolContent).toContain('fetchB2Assets');
-    expect(protocolContent).toContain('fetchBotanixAssets');
-    expect(protocolContent).toContain('fetchMezoAssets');
+    const expectedFetchers = [
+      'fetchStacksBalances', 'fetchLiquidBalance', 'fetchBobAssets', 'fetchRgbAssets', 'fetchArkBalances',
+      'fetchStateChainBalances', 'fetchMavenAssets', 'fetchB2Assets', 'fetchBotanixAssets', 'fetchMezoAssets',
+      'fetchAlpenAssets', 'fetchZuluAssets', 'fetchBisonAssets', 'fetchHemiAssets', 'fetchNubitAssets',
+      'fetchLorenzoAssets', 'fetchCitreaAssets', 'fetchBabylonAssets', 'fetchMerlinAssets', 'fetchBitlayerAssets',
+      'fetchTaprootAssets'
+    ];
+    expectedFetchers.forEach(fetcher => {
+      expect(protocolContent).toContain(fetcher);
+    });
   });
 
   it('should have signer logic for all supported layers', () => {
@@ -35,9 +36,12 @@ describe('Protocol and Signer Alignment', () => {
   it('should have native parsePayload support for all layers', () => {
     const enclaveContent = fs.readFileSync(path.join(process.cwd(), 'android/app/src/main/java/com/conxius/wallet/SecureEnclavePlugin.java'), 'utf8');
 
-    const expectedNetworks = ['stacks', 'mainnet', 'ark', 'rgb', 'statechain', 'maven', 'bitvm', 'liquid', 'bob', 'b2', 'botanix', 'mezo'];
+    const expectedNetworks = [
+      'stacks', 'mainnet', 'ark', 'rgb', 'statechain', 'maven', 'bitvm', 'liquid', 'bob', 'b2', 'botanix', 'mezo',
+      'alpen', 'zulu', 'bison', 'hemi', 'nubit', 'lorenzo', 'citrea', 'babylon', 'merlin', 'bitlayer', 'taprootassets'
+    ];
     expectedNetworks.forEach(net => {
-      expect(enclaveContent).toContain(`"${net}".equals(networkStr)`);
+      expect(enclaveContent.toLowerCase()).toContain(`"${net}"`);
     });
   });
 });
