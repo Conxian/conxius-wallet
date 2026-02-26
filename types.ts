@@ -63,6 +63,7 @@ export interface WalletConfig {
   masterAddress?: string;
   taprootAddress?: string;
   stacksAddress?: string;
+  ethAddress?: string;
 }
 
 export interface Bounty {

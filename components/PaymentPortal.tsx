@@ -50,7 +50,7 @@ const PaymentPortal: React.FC = () => {
   useEffect(() => {
     const updateFees = async () => {
       if (amount && (method === "onchain" || recipient.includes(".btc"))) {
-        const est = await estimateFees(context?.state.network || "mainnet", "mainnet");
+        const est = await estimateFees(context?.state.network || "mainnet", "mainnet", amount);
         setFeeEstimation(est);
       } else {
         setFeeEstimation(null);

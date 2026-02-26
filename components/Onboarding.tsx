@@ -118,7 +118,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         backupVerified: true,
         masterAddress: roots.btc,
         taprootAddress: roots.taproot,
-        stacksAddress: roots.stx
+        stacksAddress: roots.stx, ethAddress: roots.eth
       }, pin);
     } finally {
       // Memory Hardening: scrubbing sensitive seed bytes from RAM

@@ -1,27 +1,22 @@
-import React, { useContext, useState, useMemo } from 'react';
+import React, { useContext, useState, useMemo, useEffect } from 'react';
 import { Shield, CheckCircle2, ArrowRight, Zap, Crown, Star, Medal, AlertTriangle } from 'lucide-react';
 import { AppContext } from '../context';
 import { getSecurityLevelNative } from "../services/enclave-storage";
 import { checkDeviceIntegrity } from "../services/device-integrity";
 import { calculatePrivacyScore } from '../services/privacy';
+import { getQuests } from "../services/sovereignty";
 import BackupAuditModal from './BackupAuditModal';
-
-interface Quest {
-  id: string;
-  label: string;
-  points: number;
-  completed: boolean;
-  category: 'Security' | 'Privacy' | 'Yield' | 'Community';
-}
 
 const SovereigntyMeter: React.FC = () => {
   const context = useContext(AppContext);
   const [nativeSecurity, setNativeSecurity] = useState<{ level: string; isStrongBox: boolean } | null>(null);
   const [integrity, setIntegrity] = useState<any>(null);
-  React.useEffect(() => {
+
+  useEffect(() => {
     getSecurityLevelNative().then(setNativeSecurity);
     checkDeviceIntegrity().then(setIntegrity);
   }, []);
+
   const [showBackupAudit, setShowBackupAudit] = useState(false);
 
   const state = context?.state;
@@ -32,20 +27,7 @@ const SovereigntyMeter: React.FC = () => {
     return calculatePrivacyScore(state);
   }, [state]);
 
-  // Dynamic quests based on wallet state
-  const ACTIVE_QUESTS: Quest[] = [
-    { id: 'wallet_setup', label: 'Initialize Wallet', points: 10, completed: true, category: 'Security' },
-    { id: 'backup_verified', label: 'Verify Master Backup', points: 40, completed: state?.walletConfig?.backupVerified ?? false, category: 'Security' },
-    { id: 'biometric_active', label: 'Enable Biometric Gate', points: 20, completed: state?.security?.biometricUnlock ?? false, category: 'Security' },
-    { id: 'node', label: 'Connect Local Node', points: 30, completed: !!(state?.lnBackend?.endpoint || state?.activeCitadel?.sharedRpcEndpoint), category: 'Security' },
-    { id: 'silent_pay', label: 'Execute Silent Payment', points: 25, completed: (state?.utxos ?? []).some(u => u.address.startsWith('sp1')), category: 'Privacy' },
-    { id: 'taproot_audit', label: 'Taproot Asset Audit', points: 15, completed: state?.walletConfig?.taprootAddress !== undefined, category: 'Privacy' },
-    { id: 'citadel', label: 'Join a Citadel', points: 20, completed: !!state?.activeCitadel, category: 'Community' },
-    { id: 'tor', label: 'Enable Tor Routing', points: 20, completed: state?.isTorEnabled ?? false, category: 'Privacy' },
-    { id: 'consolidation', label: 'Sovereign Consolidation', points: 50, completed: !!(state?.assets && state.assets.length > 0 && state.assets.every(a => a.symbol === 'BTC' || a.balance === 0)), category: 'Security' },
-    { id: 'fee_opt', label: 'Optimize Network Fees', points: 15, completed: false, category: 'Security' },
-    { id: 'l2_expansion', label: 'L2 Expansion: B2/Botanix/Mezo+', points: 30, completed: (state?.assets ?? []).some(a => ['B2', 'Botanix', 'Mezo', 'Alpen', 'Zulu', 'Bison', 'Hemi', 'Nubit', 'Lorenzo', 'Citrea', 'Babylon', 'Merlin', 'Bitlayer'].includes(a.layer)), category: 'Security' },
-  ];
+  const ACTIVE_QUESTS = state ? getQuests(state) : [];
 
   const currentXP = ACTIVE_QUESTS.reduce((acc, q) => q.completed ? acc + q.points : acc, 0);
   const totalXP = ACTIVE_QUESTS.reduce((acc, q) => acc + q.points, 0);
@@ -61,15 +43,11 @@ const SovereigntyMeter: React.FC = () => {
     if (isUpgrading) return;
     setIsUpgrading(true);
     context?.notify('info', 'Verifying Sovereign Credentials...');
-    
-    // Simulate network check
     await new Promise(r => setTimeout(r, 1500));
-
     if (currentXP < totalXP * 0.5) {
         context?.notify('error', 'Insufficient XP for Tier Upgrade. Complete more quests.');
     } else {
         context?.notify('success', `Pass Upgraded to ${rankName}. Metadata synced to Enclave.`);
-        // In real impl, this would mint/update a BRC-721 or Ordinal
     }
     setIsUpgrading(false);
   };
@@ -99,12 +77,12 @@ const SovereigntyMeter: React.FC = () => {
         <div className="space-y-2">
            <div className="flex justify-between items-end">
               <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Sovereignty Score</span>
-              <span className="text-[10px] font-mono font-bold text-orange-500">{Math.round((currentXP/totalXP)*100)}%</span>
+              <span className="text-[10px] font-mono font-bold text-orange-500">{totalXP > 0 ? Math.round((currentXP/totalXP)*100) : 0}%</span>
            </div>
            <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-900 p-0.5">
               <div
                 className="h-full bg-linear-to-r from-orange-600 to-yellow-500 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(249,115,22,0.4)]"
-                style={{ width: `${(currentXP / totalXP) * 100}%` }}
+                style={{ width: `${totalXP > 0 ? (currentXP / totalXP) * 100 : 0}%` }}
               />
            </div>
         </div>
@@ -123,7 +101,6 @@ const SovereigntyMeter: React.FC = () => {
         </div>
       </div>
 
-      {/* Warning for Hot Wallets */}
       {isHotWallet && (
          <div className="bg-orange-500/10 border border-orange-500/20 p-3 rounded-xl flex items-start gap-3">
             <AlertTriangle size={16} className="text-orange-500 shrink-0 mt-0.5" />
@@ -180,7 +157,7 @@ const SovereigntyMeter: React.FC = () => {
             <span className="text-[10px] font-mono font-bold text-orange-500/60 group-hover:text-orange-500">+{quest.points} XP</span>
           </div>
         ))}
-        {ACTIVE_QUESTS.every(q => q.completed) && (
+        {ACTIVE_QUESTS.length > 0 && ACTIVE_QUESTS.every(q => q.completed) && (
            <p className="text-center text-[10px] text-green-500 font-bold py-2">All Quests Complete. Max Sovereignty.</p>
         )}
       </div>
