@@ -148,7 +148,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     >
       <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-3xl md:rounded-[3rem] p-6 md:p-10 space-y-6 md:space-y-8 shadow-2xl animate-in fade-in zoom-in duration-500">
         
-        {step === 'start' && (
+                {step === 'start' && (
           <div className="space-y-8 animate-in fade-in">
             <div className="text-center space-y-4">
               <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center mx-auto text-orange-500 shadow-xl">
@@ -156,6 +156,21 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               </div>
               <h2 className="text-2xl md:text-3xl font-black tracking-tighter text-zinc-100 uppercase italic">Conxius Enclave</h2>
               <p className="text-zinc-500 text-sm">Initialize your sovereign interface.</p>
+            </div>
+
+            <div className="flex bg-zinc-950 p-1.5 rounded-2xl border border-zinc-800 mb-6">
+                <button
+                  onClick={() => setAppMode('sovereign')}
+                  className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${appMode === 'sovereign' ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-600 hover:text-zinc-400'}`}
+                >
+                  Sovereign
+                </button>
+                <button
+                  onClick={() => setAppMode('simulation')}
+                  className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${appMode === 'simulation' ? 'bg-orange-600 text-white shadow-lg' : 'text-zinc-600 hover:text-zinc-400'}`}
+                >
+                  Simulation
+                </button>
             </div>
 
             <div className="space-y-4">
