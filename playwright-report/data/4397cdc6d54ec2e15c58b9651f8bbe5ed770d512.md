@@ -1,0 +1,399 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - main [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img "Conxius" [ref=e8]
+        - generic [ref=e9]: Simulation Mode
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - paragraph [ref=e12]: Sovereignty
+          - paragraph [ref=e13]: 100/100
+        - generic "Lock Enclave" [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - generic [ref=e24]: ENCLAVE_SYNCHRONIZED
+          - generic [ref=e26]: BIP-84 • SIP-010 • PSBT Ready
+        - button "Refresh Layers" [ref=e27]:
+          - img [ref=e28]
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - img [ref=e37]
+            - paragraph [ref=e40]: Aggregate Sovereign Wealth
+          - generic [ref=e42]: $486,000
+          - button "Privacy Enclave Toggle" [ref=e43]:
+            - img [ref=e44]
+            - text: Privacy Enclave Toggle
+        - generic [ref=e49]:
+          - button "Transmit" [ref=e50]:
+            - img [ref=e51]
+            - text: Transmit
+          - button "Ingest" [ref=e54]:
+            - img [ref=e55]
+            - text: Ingest
+          - link "Spend" [ref=e56] [cursor=pointer]:
+            - /url: https://www.bitrefill.com/?ref=CONXIUS
+            - img [ref=e57]
+            - text: Spend
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - heading "Sovereign Key Topology" [level=3] [ref=e63]:
+              - img [ref=e64]
+              - text: Sovereign Key Topology
+            - generic [ref=e68]:
+              - generic [ref=e69]:
+                - generic [ref=e70]:
+                  - generic [ref=e71]: Mainnet (BIP-84)
+                  - generic [ref=e72]: Segwit
+                - paragraph [ref=e73]: bc1qr0cehfcgp9ryfery58kpgkumz7clfv4d6984ky
+              - generic [ref=e74]:
+                - generic [ref=e75]:
+                  - generic [ref=e76]: Taproot (BIP-86)
+                  - generic [ref=e77]: Schnorr
+                - paragraph [ref=e78]: bc1pegv3624s2vvkhka57ps5zfcyjnr6pm7nlm4vrlqzvvuh9qarf9vqex8msz
+          - generic [ref=e79]:
+            - generic [ref=e80]:
+              - heading "Verified Assets" [level=3] [ref=e81]
+              - generic [ref=e82]:
+                - textbox "Search Ledger..." [ref=e83]
+                - img [ref=e84]
+            - generic [ref=e87]:
+              - generic [ref=e88] [cursor=pointer]:
+                - generic [ref=e89]:
+                  - generic [ref=e90]: B
+                  - generic [ref=e91]:
+                    - generic [ref=e92]:
+                      - paragraph [ref=e93]: Bitcoin
+                      - generic [ref=e94]: Native
+                    - paragraph [ref=e95]: Mainnet
+                - generic [ref=e96]:
+                  - paragraph [ref=e97]: 1.50 BTC
+                  - paragraph [ref=e98]: $142,500
+              - generic [ref=e99] [cursor=pointer]:
+                - generic [ref=e100]:
+                  - generic [ref=e101]: S
+                  - generic [ref=e102]:
+                    - generic [ref=e103]:
+                      - paragraph [ref=e104]: Stacks
+                      - generic [ref=e105]: Native
+                    - paragraph [ref=e106]: Stacks
+                - generic [ref=e107]:
+                  - paragraph [ref=e108]: 50000.00 STX
+                  - paragraph [ref=e109]: $110,000
+              - generic [ref=e110] [cursor=pointer]:
+                - generic [ref=e111]:
+                  - generic [ref=e112]: L
+                  - generic [ref=e113]:
+                    - generic [ref=e114]:
+                      - paragraph [ref=e115]: Liquid BTC
+                      - generic [ref=e116]: Native
+                    - paragraph [ref=e117]: Liquid
+                - generic [ref=e118]:
+                  - paragraph [ref=e119]: 0.50000000 L-BTC
+                  - paragraph [ref=e120]: $47,500
+              - generic [ref=e121] [cursor=pointer]:
+                - generic [ref=e122]:
+                  - generic [ref=e123]: R
+                  - generic [ref=e124]:
+                    - generic [ref=e125]:
+                      - paragraph [ref=e126]: Rootstock BTC
+                      - generic [ref=e127]: Native
+                    - paragraph [ref=e128]: Rootstock
+                - generic [ref=e129]:
+                  - paragraph [ref=e130]: 0.10000000 RBTC
+                  - paragraph [ref=e131]: $9,500
+              - generic [ref=e132] [cursor=pointer]:
+                - generic [ref=e133]:
+                  - generic [ref=e134]: s
+                  - generic [ref=e135]:
+                    - generic [ref=e136]:
+                      - paragraph [ref=e137]: Sovereign Dollar
+                      - generic [ref=e138]: RGB
+                    - paragraph [ref=e139]: RGB
+                - generic [ref=e140]:
+                  - paragraph [ref=e141]: 100000.00 sUSD
+                  - paragraph [ref=e142]: $100,000
+              - generic [ref=e143] [cursor=pointer]:
+                - generic [ref=e144]:
+                  - generic [ref=e145]: B
+                  - generic [ref=e146]:
+                    - generic [ref=e147]:
+                      - paragraph [ref=e148]: BOB BTC
+                      - generic [ref=e149]: Native
+                    - paragraph [ref=e150]: BOB
+                - generic [ref=e151]:
+                  - paragraph [ref=e152]: 0.05000000 BOB-BTC
+                  - paragraph [ref=e153]: $4,750
+              - generic [ref=e154] [cursor=pointer]:
+                - generic [ref=e155]:
+                  - generic [ref=e156]: B
+                  - generic [ref=e157]:
+                    - generic [ref=e158]:
+                      - paragraph [ref=e159]: B2 BTC
+                      - generic [ref=e160]: Native
+                    - paragraph [ref=e161]: B2
+                - generic [ref=e162]:
+                  - paragraph [ref=e163]: 0.05000000 B2-BTC
+                  - paragraph [ref=e164]: $4,750
+              - generic [ref=e165] [cursor=pointer]:
+                - generic [ref=e166]:
+                  - generic [ref=e167]: B
+                  - generic [ref=e168]:
+                    - generic [ref=e169]:
+                      - paragraph [ref=e170]: Botanix BTC
+                      - generic [ref=e171]: Native
+                    - paragraph [ref=e172]: Botanix
+                - generic [ref=e173]:
+                  - paragraph [ref=e174]: 0.05000000 BOT-BTC
+                  - paragraph [ref=e175]: $4,750
+              - generic [ref=e176] [cursor=pointer]:
+                - generic [ref=e177]:
+                  - generic [ref=e178]: M
+                  - generic [ref=e179]:
+                    - generic [ref=e180]:
+                      - paragraph [ref=e181]: Mezo BTC
+                      - generic [ref=e182]: Native
+                    - paragraph [ref=e183]: Mezo
+                - generic [ref=e184]:
+                  - paragraph [ref=e185]: 0.05000000 MEZO-BTC
+                  - paragraph [ref=e186]: $4,750
+              - generic [ref=e187] [cursor=pointer]:
+                - generic [ref=e188]:
+                  - generic [ref=e189]: A
+                  - generic [ref=e190]:
+                    - generic [ref=e191]:
+                      - paragraph [ref=e192]: Alpen BTC
+                      - generic [ref=e193]: Native
+                    - paragraph [ref=e194]: Alpen
+                - generic [ref=e195]:
+                  - paragraph [ref=e196]: 0.05000000 ALP-BTC
+                  - paragraph [ref=e197]: $4,750
+              - generic [ref=e198] [cursor=pointer]:
+                - generic [ref=e199]:
+                  - generic [ref=e200]: Z
+                  - generic [ref=e201]:
+                    - generic [ref=e202]:
+                      - paragraph [ref=e203]: Zulu BTC
+                      - generic [ref=e204]: Native
+                    - paragraph [ref=e205]: Zulu
+                - generic [ref=e206]:
+                  - paragraph [ref=e207]: 0.05000000 ZULU-BTC
+                  - paragraph [ref=e208]: $4,750
+              - generic [ref=e209] [cursor=pointer]:
+                - generic [ref=e210]:
+                  - generic [ref=e211]: B
+                  - generic [ref=e212]:
+                    - generic [ref=e213]:
+                      - paragraph [ref=e214]: Bison BTC
+                      - generic [ref=e215]: Native
+                    - paragraph [ref=e216]: Bison
+                - generic [ref=e217]:
+                  - paragraph [ref=e218]: 0.05000000 BIS-BTC
+                  - paragraph [ref=e219]: $4,750
+              - generic [ref=e220] [cursor=pointer]:
+                - generic [ref=e221]:
+                  - generic [ref=e222]: H
+                  - generic [ref=e223]:
+                    - generic [ref=e224]:
+                      - paragraph [ref=e225]: Hemi BTC
+                      - generic [ref=e226]: Native
+                    - paragraph [ref=e227]: Hemi
+                - generic [ref=e228]:
+                  - paragraph [ref=e229]: 0.05000000 HEMI-BTC
+                  - paragraph [ref=e230]: $4,750
+              - generic [ref=e231] [cursor=pointer]:
+                - generic [ref=e232]:
+                  - generic [ref=e233]: "N"
+                  - generic [ref=e234]:
+                    - generic [ref=e235]:
+                      - paragraph [ref=e236]: Nubit BTC
+                      - generic [ref=e237]: Native
+                    - paragraph [ref=e238]: Nubit
+                - generic [ref=e239]:
+                  - paragraph [ref=e240]: 0.05000000 NUB-BTC
+                  - paragraph [ref=e241]: $4,750
+              - generic [ref=e242] [cursor=pointer]:
+                - generic [ref=e243]:
+                  - generic [ref=e244]: L
+                  - generic [ref=e245]:
+                    - generic [ref=e246]:
+                      - paragraph [ref=e247]: Lorenzo BTC
+                      - generic [ref=e248]: Native
+                    - paragraph [ref=e249]: Lorenzo
+                - generic [ref=e250]:
+                  - paragraph [ref=e251]: 0.05000000 LOR-BTC
+                  - paragraph [ref=e252]: $4,750
+              - generic [ref=e253] [cursor=pointer]:
+                - generic [ref=e254]:
+                  - generic [ref=e255]: C
+                  - generic [ref=e256]:
+                    - generic [ref=e257]:
+                      - paragraph [ref=e258]: Citrea BTC
+                      - generic [ref=e259]: Native
+                    - paragraph [ref=e260]: Citrea
+                - generic [ref=e261]:
+                  - paragraph [ref=e262]: 0.05000000 CIT-BTC
+                  - paragraph [ref=e263]: $4,750
+              - generic [ref=e264] [cursor=pointer]:
+                - generic [ref=e265]:
+                  - generic [ref=e266]: B
+                  - generic [ref=e267]:
+                    - generic [ref=e268]:
+                      - paragraph [ref=e269]: Babylon BTC
+                      - generic [ref=e270]: Native
+                    - paragraph [ref=e271]: Babylon
+                - generic [ref=e272]:
+                  - paragraph [ref=e273]: 0.05000000 BAB-BTC
+                  - paragraph [ref=e274]: $4,750
+              - generic [ref=e275] [cursor=pointer]:
+                - generic [ref=e276]:
+                  - generic [ref=e277]: M
+                  - generic [ref=e278]:
+                    - generic [ref=e279]:
+                      - paragraph [ref=e280]: Merlin BTC
+                      - generic [ref=e281]: Native
+                    - paragraph [ref=e282]: Merlin
+                - generic [ref=e283]:
+                  - paragraph [ref=e284]: 0.05000000 MER-BTC
+                  - paragraph [ref=e285]: $4,750
+              - generic [ref=e286] [cursor=pointer]:
+                - generic [ref=e287]:
+                  - generic [ref=e288]: B
+                  - generic [ref=e289]:
+                    - generic [ref=e290]:
+                      - paragraph [ref=e291]: Bitlayer BTC
+                      - generic [ref=e292]: Native
+                    - paragraph [ref=e293]: Bitlayer
+                - generic [ref=e294]:
+                  - paragraph [ref=e295]: 0.05000000 BIT-BTC
+                  - paragraph [ref=e296]: $4,750
+              - generic [ref=e297] [cursor=pointer]:
+                - generic [ref=e298]:
+                  - generic [ref=e299]: T
+                  - generic [ref=e300]:
+                    - generic [ref=e301]:
+                      - paragraph [ref=e302]: Taproot Asset
+                      - generic [ref=e303]: Native
+                    - paragraph [ref=e304]: TaprootAssets
+                - generic [ref=e305]:
+                  - paragraph [ref=e306]: 1000000.00 TAPT
+                  - paragraph [ref=e307]: $10,000
+        - generic [ref=e309]:
+          - generic [ref=e311]:
+            - generic [ref=e312]:
+              - img [ref=e314]
+              - generic [ref=e316]:
+                - 'heading "Pass Tier: Sovereign" [level=3] [ref=e317]'
+                - paragraph [ref=e318]: NFT Evolution Rank
+            - generic [ref=e320]: LVL 5
+          - generic [ref=e321]:
+            - generic [ref=e323]:
+              - generic [ref=e324]: Sovereignty Score
+              - generic [ref=e325]: 44%
+            - generic [ref=e329]:
+              - generic [ref=e330]: Privacy Score
+              - generic [ref=e331]: 100%
+          - generic [ref=e334]:
+            - generic [ref=e335]:
+              - generic [ref=e336]:
+                - generic [ref=e337]:
+                  - img [ref=e338]
+                  - text: Hardware Security
+                - generic [ref=e340]: WEB
+              - generic [ref=e341]:
+                - generic [ref=e342]:
+                  - img [ref=e343]
+                  - text: Device Integrity
+                - generic [ref=e346]: PASSED
+            - paragraph [ref=e347]: Active Quests
+            - generic [ref=e348] [cursor=pointer]:
+              - generic [ref=e349]:
+                - img [ref=e350]
+                - generic [ref=e352]:
+                  - generic [ref=e353]: Enable Biometric Gate
+                  - text: Security
+              - generic [ref=e354]: +20 XP
+            - generic [ref=e355] [cursor=pointer]:
+              - generic [ref=e356]:
+                - img [ref=e357]
+                - generic [ref=e359]:
+                  - generic [ref=e360]: Connect Local Node
+                  - text: Security
+              - generic [ref=e361]: +30 XP
+            - generic [ref=e362] [cursor=pointer]:
+              - generic [ref=e363]:
+                - img [ref=e364]
+                - generic [ref=e366]:
+                  - generic [ref=e367]: Execute Silent Payment
+                  - text: Privacy
+              - generic [ref=e368]: +25 XP
+          - button "Upgrade My Pass" [ref=e369]:
+            - img [ref=e370]
+            - text: Upgrade My Pass
+      - generic [ref=e373]:
+        - button "Close" [ref=e374]:
+          - img [ref=e375]
+        - generic [ref=e378]:
+          - img [ref=e380]
+          - heading "Transmit" [level=3] [ref=e383]
+          - paragraph [ref=e384]: Sovereign Transaction Construction
+        - generic [ref=e385]:
+          - generic [ref=e386]:
+            - text: Recipient Address
+            - textbox "bc1q..." [ref=e387]: bc1qtestrecipient
+          - generic [ref=e388]:
+            - text: Amount (SATS)
+            - spinbutton [ref=e389]: "10000"
+          - generic [ref=e390]:
+            - text: Fee Rate (sat/vB)
+            - generic [ref=e391]:
+              - spinbutton "Fee Rate (sat/vB)" [ref=e392]: "8"
+              - button "Set Fast Fee" [ref=e393]: Fast
+              - button "Set 30 minutes Fee" [ref=e394]: 30m
+              - button "Set 1 hour Fee" [ref=e395]: 1h
+              - button "Toggle RBF" [ref=e396]: RBF
+          - generic [ref=e397]:
+            - generic [ref=e398]:
+              - generic [ref=e399]: Coin Selection
+              - button "Coin Selection" [ref=e400]: Select All
+            - generic [ref=e401]:
+              - generic [ref=e402]:
+                - generic [ref=e403]:
+                  - checkbox "100000000 sats confirmed" [checked] [ref=e404]
+                  - generic [ref=e405]: 100000000 sats
+                - generic [ref=e406]: confirmed
+              - generic [ref=e407]:
+                - generic [ref=e408]:
+                  - checkbox "50000000 sats confirmed" [ref=e409]
+                  - generic [ref=e410]: 50000000 sats
+                - generic [ref=e411]: confirmed
+          - button "Construct PSBT" [active] [ref=e412]
+          - generic [ref=e413]:
+            - button "Export PSBT" [ref=e414]
+            - button "Import PSBT" [ref=e415]
+    - button "Open Satoshi AI Chat" [ref=e416]:
+      - img [ref=e417]
+    - navigation [ref=e420]:
+      - button "Wallet" [ref=e421]:
+        - img [ref=e422]
+        - generic [ref=e427]: Wallet
+      - button "Pay" [ref=e428]:
+        - img [ref=e429]
+        - generic [ref=e431]: Pay
+      - button "Bridge" [ref=e432]:
+        - img [ref=e433]
+        - generic [ref=e438]: Bridge
+      - button "Security" [ref=e439]:
+        - img [ref=e440]
+        - generic [ref=e442]: Security
+      - button "Menu" [ref=e443]:
+        - img [ref=e444]
+        - generic [ref=e446]: Menu
+  - generic [ref=e447]: "0"
+```
