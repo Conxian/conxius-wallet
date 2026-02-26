@@ -60,7 +60,7 @@ const NTTBridge: React.FC = () => {
   useEffect(() => {
     if (step === 2 && sourceLayer && targetLayer) {
       setIsEstimatingFees(true);
-      estimateFees(sourceLayer, targetLayer, autoSwap)
+      estimateFees(sourceLayer, targetLayer, amount, autoSwap)
         .then(setFeeEstimation)
         .catch(console.error)
         .finally(() => setIsEstimatingFees(false));
@@ -349,6 +349,14 @@ const NTTBridge: React.FC = () => {
                          <div className="p-5 flex justify-between items-center">
                             <span className="text-[10px] font-black uppercase text-zinc-600">Gas on {targetLayer}</span>
                             <span className="text-xs font-mono font-bold text-zinc-100">{feeEstimation.destinationNetworkFee.toFixed(5)} BTC</span>
+                        <div className="p-5 flex justify-between items-center">
+                            <span className="text-[10px] font-black uppercase text-zinc-600">Integrator Fee</span>
+                            <span className="text-xs font-mono font-bold text-zinc-100">{feeEstimation.integratorFee.toFixed(5)} BTC</span>
+                        </div>
+                        <div className="p-5 flex justify-between items-center">
+                            <span className="text-[10px] font-black uppercase text-zinc-600">Integrator Fee</span>
+                            <span className="text-xs font-mono font-bold text-zinc-100">{feeEstimation.integratorFee.toFixed(5)} BTC</span>
+                        </div>
                         </div>
                     </>
                 )}

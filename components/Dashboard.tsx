@@ -48,6 +48,7 @@ const Dashboard: React.FC = () => {
   const btcAddress = walletConfig?.masterAddress || '';
   const taprootAddress = walletConfig?.taprootAddress || '';
   const stxAddress = walletConfig?.stacksAddress || '';
+  const ethAddress = walletConfig?.ethAddress || '';
 
 
   const t = (key: string) => getTranslation(language, key);

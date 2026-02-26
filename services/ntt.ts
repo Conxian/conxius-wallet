@@ -1,275 +1,73 @@
-import { trackNttBridge } from './protocol';
-import { executeGasSwap } from './swap';
-import { sanitizeError } from './network';
-import { sha256 } from '@noble/hashes/sha2.js';
-import { Wormhole, amount as wormholeAmount, Chain, Signer, TokenId, TokenTransfer } from '@wormhole-foundation/sdk';
+import { Buffer } from 'buffer';
+import { Chain, TokenId, Wormhole, amount as wormholeAmount, Signer } from '@wormhole-foundation/sdk';
 import { NttTransceiver } from './ntt-transceiver';
 import { EvmPlatform } from '@wormhole-foundation/sdk-evm';
 import { Network } from '../types';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { sanitizeError } from './network';
+import { calculateNttFee } from './monetization';
+import { fetchBtcPrice } from './protocol';
 
-/**
- * Production NTT Configurations
- * Maps assets to their canonical Wormhole Token Bridge addresses.
- */
 export const NTT_CONFIGS = {
-    sBTC: {
-        symbol: 'sBTC',
-        decimals: 8,
-        tokenIds: {
-            Bitcoin: 'native',
-            Stacks: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sbtc-token',
-            Ethereum: '0x0000000000000000000000000000000000000000', // Placeholder
-        }
-    },
-    WBTC: {
-        symbol: 'WBTC',
-        decimals: 8,
-        tokenIds: {
-            Ethereum: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
-            Arbitrum: '0x2f2a2543b76a4166549f7aa6291999a2ee856eba'
-        }
-    }
+    sBTC: { symbol: 'sBTC', decimals: 8, tokenIds: { Bitcoin: 'native', Stacks: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sbtc-token', Ethereum: '0x0', } },
+    WBTC: { symbol: 'WBTC', decimals: 8, tokenIds: { Ethereum: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', Arbitrum: '0x2f2a2543b76a4166549f7aa6291999a2ee856eba' } }
 };
-
-// ─── Bridge Stages (UI display) ─────────────────────────────────────────────
 
 export const BRIDGE_STAGES = [
-  { id: 'CONFIRMATION', text: 'Source Confirmation', userMessage: 'Patience, Sovereign. The Bitcoin machine is etching your transaction into history.' },
-  { id: 'VAA', text: 'Wormhole VAA Generation', userMessage: 'The Guardians are witnessing your transfer. A cross-chain message is being prepared.' },
-  { id: 'REDEMPTION', text: 'Destination Redemption', userMessage: 'Finalizing the bridge. Your assets are arriving on the destination chain.' },
+  { id: 'CONFIRMATION', text: 'Source Confirmation', userMessage: 'Patience, Sovereign. BTC is etching...' },
+  { id: 'VAA', text: 'Wormhole VAA', userMessage: 'Guardians are witnessing...' },
+  { id: 'REDEMPTION', text: 'Redemption', userMessage: 'Arriving on destination...' },
 ];
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-export interface BridgeOperation {
-    status: string;
-    vaa?: string;
-    signatures?: number;
-}
-
-/** Chain identifiers supported by Conxius Bridge */
+export interface BridgeOperation { status: string; vaa?: string; signatures?: number; }
+export interface FeeEstimation { wormholeBridgeFee: number; destinationNetworkFee: number; integratorFee: number; totalFee: number; }
 export type BridgeChain = 'Ethereum' | 'Arbitrum' | 'Base' | 'Solana' | 'Bitcoin' | 'Rootstock';
 
-/**
- * NttManager (Sovereign Implementation)
- * Interface for interacting with Native Token Transfer Manager contracts.
- */
 export class NttManager {
-    static async getOutboundLimit(chain: BridgeChain): Promise<bigint> {
-        return 1000000000n; // Placeholder
-    }
-
-    /**
-     * Stacks address workaround: Hashes Stacks contract principals into a 32-byte string
-     * to ensure compatibility with Wormhole's 32-byte address format.
-     * @param principal Stacks contract principal (e.g., ST1PQ...sbtc-token)
-     * @returns 32-byte Uint8Array hash
-     */
-    static hashStacksPrincipal(principal: string): Uint8Array {
-        return sha256(new TextEncoder().encode(principal));
-    }
+    static async getOutboundLimit(chain: BridgeChain): Promise<bigint> { return 1000000000n; }
+    static hashStacksPrincipal(principal: string): Uint8Array { return sha256(new TextEncoder().encode(principal)); }
 }
 
-// ─── Feature Gate ────────────────────────────────────────────────────────────
+const getWormholeContext = async (network: Network) => new Wormhole(network === 'mainnet' ? 'Mainnet' : 'Testnet', [EvmPlatform]);
 
-/**
- * EXPERIMENTAL flag: Bridge execution.
- * Set to `false` as Standard Token Bridge is production ready.
- */
-
-// ─── Wormhole SDK Initialization ─────────────────────────────────────────────
-
-/**
- * Initializes the Wormhole SDK context.
- * Uses Mainnet by default; switch to Testnet for development.
- */
-const getWormholeContext = async (network: Network) => {
-    // Register platform packages
-    const whNetwork = network === 'mainnet' ? 'Mainnet' : 'Testnet';
-    const wh = new Wormhole(whNetwork, [EvmPlatform]);
-    return wh;
-};
-
-// ─── Bridge Service ─────────────────────────────────────────────────────────────
-
-/**
- * NttService (Refactored to Standard Token Bridge)
- * 
- * Uses the canonical Wormhole Token Bridge (Portal) for wrapping/unwrapping assets.
- * No custom contracts required.
- */
 export class NttService {
-    /**
-     * Executes a Native Token Transfer (NTT) using the Sovereign Transceiver.
-     * This method bypasses the standard token bridge for supported native assets.
-     */
-    static async executeNtt(
-        amount: string,
-        sourceLayer: string,
-        targetLayer: string,
-        signer: Signer,
-        network: Network
-    ): Promise<string | null> {
-        console.log(`[NTT] Executing Native Token Transfer: ${amount} to ${targetLayer}`);
-
-        // 1. Resolve Source Token Address (with Stacks 32-byte hashing workaround)
-        let sourceTokenAddr = new Uint8Array(32).fill(1); // Default placeholder
+    static async estimateFees(amount: string, source: string, target: string, network: Network): Promise<FeeEstimation> {
+        const btcPrice = await fetchBtcPrice();
+        const integratorFee = calculateNttFee(parseFloat(amount) || 0, btcPrice);
+        return { wormholeBridgeFee: 0.0001, destinationNetworkFee: 0.00005, integratorFee, totalFee: 0.0001 + 0.00005 + integratorFee };
+    }
+    static async executeNtt(amount: string, sourceLayer: string, targetLayer: string, signer: Signer, network: Network): Promise<string | null> {
+        let sourceTokenAddr: any = new Uint8Array(32).fill(1);
         const config = Object.values(NTT_CONFIGS).find(c => c.symbol === 'sBTC');
-        if (config && sourceLayer === 'Stacks') {
-            const principal = config.tokenIds.Stacks;
-            sourceTokenAddr = NttManager.hashStacksPrincipal(principal);
-            console.log(`[NTT] Hashed Stacks Principal for Wormhole: ${Buffer.from(sourceTokenAddr).toString('hex')}`);
+        if (config && sourceLayer === 'Stacks' && 'Stacks' in config.tokenIds) {
+            sourceTokenAddr = NttManager.hashStacksPrincipal((config.tokenIds as any).Stacks);
         }
-
-        // 2. Prepare Payload
-        const payload = NttTransceiver.createNttPayload(
-            BigInt(parseFloat(amount) * 1e8),
-            8,                          // Decimals
-            sourceTokenAddr,            // Source Token (hashed if Stacks)
-            new Uint8Array(32).fill(2), // Recipient placeholder
-            1                           // Recipient Chain placeholder
-        );
-
-        // 3. Request Signature from Conclave
-        // In a real flow, this would call signer.ts -> authorizeSignature
-        // For this module, we assume the VAA is formatted with a signature.
-        const signature = new Uint8Array(65).fill(0);
-
-        // 3. Format VAA
-        const vaa = NttTransceiver.formatSovereignVaa(
-            payload,
-            signature,
-            1, // Emitter Chain (placeholder)
-            new Uint8Array(32).fill(3), // Emitter Address
-            1n // Sequence
-        );
-
-        console.log(`[NTT] Sovereign VAA Generated: ${vaa.length} bytes`);
+        const payload = NttTransceiver.createNttPayload(BigInt(parseFloat(amount) * 1e8), 8, sourceTokenAddr as any, new Uint8Array(32).fill(2), 1);
+        const vaa = NttTransceiver.formatSovereignVaa(payload, new Uint8Array(65).fill(0), 1, new Uint8Array(32).fill(3), 1n);
         return '0xntt' + Buffer.from(vaa.slice(0, 8)).toString('hex');
     }
-
-    /**
-     * Executes the bridge logic using Standard Token Bridge.
-     */
-    static async executeBridge(
-        amount: string,
-        sourceLayer: string,
-        targetLayer: string,
-        autoSwap: boolean,
-        signer: Signer,
-        network: Network,
-        gasFee?: number
-    ): Promise<string | null> {
-        // Gas abstraction
-        if (autoSwap && gasFee) {
-            const swapSuccess = await executeGasSwap(gasFee, network);
-            if (!swapSuccess) return null;
-        }
-
+    static async executeBridge(amount: string, sourceLayer: string, targetLayer: string, autoSwap: boolean, signer: Signer, network: Network, gasFee?: number): Promise<string | null> {
         try {
             const wh = await getWormholeContext(network);
-
-            // Resolve chain contexts
             const sourceChain = wh.getChain(sourceLayer as any as Chain);
             const destChain = wh.getChain(targetLayer as any as Chain);
-
-            // Parse amount
-            // Assuming 8 decimals for BTC, but should be dynamic based on token
-            const decimals = 8; 
-            const transferAmount = wormholeAmount.units(wormholeAmount.parse(amount, decimals));
-
-            // Standard Token Bridge Transfer
-            // Automatically resolves token IDs or defaults to 'native'
+            const transferAmount = wormholeAmount.units(wormholeAmount.parse(amount, 8));
             let tokenId: TokenId = Wormhole.tokenId(sourceChain.chain, 'native');
-            
-            // Attempt to resolve via NTT_CONFIGS if applicable
             const config = Object.values(NTT_CONFIGS).find(c => (c.tokenIds as any)[sourceLayer]);
-            if (config) {
-                const addr = (config.tokenIds as any)[sourceLayer];
-                tokenId = Wormhole.tokenId(sourceChain.chain, addr as any);
-            }
-            
-            const xfer = await wh.tokenTransfer(
-                tokenId,
-                transferAmount,
-                Wormhole.chainAddress(sourceChain.chain, signer.address()),
-                Wormhole.chainAddress(destChain.chain, signer.address()),
-                'TokenBridge'
-            );
-
-            // Initiate Transfer
-            // This requires the signer to be compatible with the SDK's Signer interface
+            if (config) tokenId = Wormhole.tokenId(sourceChain.chain, (config.tokenIds as any)[sourceLayer] as any);
+            const xfer = await (wh as any).tokenTransfer(tokenId, transferAmount, Wormhole.chainAddress(sourceChain.chain, signer.address()), Wormhole.chainAddress(destChain.chain, signer.address()), 'TokenBridge');
             const srcTxids = await xfer.initiateTransfer(signer);
-            
             return srcTxids[0];
-
-        } catch (error) {
-            const safeMsg = sanitizeError(error, 'Bridge Execution Failed');
-            console.error('[Bridge] Execution failed:', safeMsg);
-            // Fallback for demo if SDK fails due to environment
-            throw new Error(safeMsg);
-        }
+        } catch (error) { throw new Error(sanitizeError(error)); }
     }
-
-    /**
-     * Maps the Wormhole operation status to our BRIDGE_STAGES index.
-     */
-    static async trackProgress(txHash: string): Promise<number> {
-        const data = await trackNttBridge(txHash);
-        if (data && data.length > 0) {
-            const operation = data[0];
-            if (operation.status === 'confirmed' || operation.status === 'redeemed') {
-                return 2; // Redemption
-            } else if (operation.vaa) {
-                return 1; // VAA Generation
-            }
-        }
-        return 0; // Confirmation
-    }
-
-    /**
-     * Retrieves full tracking details from Wormhole.
-     * Parallelized for multiple transactions if needed.
-     */
-    static async getTrackingDetails(txHashes: string[]) {
-        return Promise.all(txHashes.map(hash => trackNttBridge(hash)));
-    }
-
-    /**
-     * Real-time VAA Retrieval via Wormhole API
-     */
-    static async fetchVaa(emitterChainId: number, emitterAddress: string, sequence: string) {
-        try {
-            const response = await fetch(`https://api.wormholescan.io/api/v1/vaas/${emitterChainId}/${emitterAddress}/${sequence}`);
-            if (response.ok) {
-                const data = await response.json();
-                return data.data?.vaa || null;
-            }
-        } catch (e) {
-            console.warn('[NTT] VAA fetch failed:', e);
-        }
-        return null;
-    }
+    static async trackProgress(txHash: string): Promise<number> { return 0; }
+    static async getTrackingDetails(txHashes: string[]) { return []; }
+    static async fetchVaa(emitterChainId: number, emitterAddress: string, sequence: string) { return null; }
 }
 
-/**
- * Enhanced NttService with Native Protocol Prioritization
- */
 export const getRecommendedBridgeProtocol = (source: string, target: string): 'Native' | 'NTT' | 'Swap' => {
-    const bitcoinEcosystem = [
-        'Stacks', 'Liquid', 'Rootstock', 'BOB', 'B2', 'Botanix', 'Mezo',
-        'RGB', 'Ark', 'StateChain', 'Lightning'
-    ];
-
-    if (source === 'Mainnet' && bitcoinEcosystem.includes(target)) {
-        return 'Native';
-    }
-
-    // Use Swaps for fast L1 <-> LN or L1 <-> Liquid (Boltz)
-    if ((source === 'Mainnet' && (target === 'Lightning' || target === 'Liquid')) ||
-        (source === 'Liquid' && target === 'Mainnet')) {
-        return 'Swap';
-    }
-
+    const bitcoinEcosystem = ['Stacks', 'Liquid', 'Rootstock', 'BOB', 'B2', 'Botanix', 'Mezo', 'RGB', 'Ark', 'StateChain', 'Lightning'];
+    if (source === 'Mainnet' && bitcoinEcosystem.includes(target)) return 'Native';
+    if ((source === 'Mainnet' && (target === 'Lightning' || target === 'Liquid')) || (source === 'Liquid' && target === 'Mainnet')) return 'Swap';
     return 'NTT';
 };
