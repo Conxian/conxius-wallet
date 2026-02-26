@@ -865,7 +865,8 @@ export const signMultiSigPsbt = async (psbtBase64: string, network: Network, vau
  */
 export const parseBip322Message = (message: string) => {
     // Check if it's a domain-bound message (e.g., for login)
-    const domainMatch = message.match(/([a-zA-Z0-9.-]+\.[a-z]{2,})\s+wants you to sign in/i);
+    // SECURITY: Anchor regex to start of string to prevent spoofing via prepended content
+    const domainMatch = message.match(/^([a-zA-Z0-9.-]+\.[a-z]{2,})\s+wants you to sign in/i);
     const nonceMatch = message.match(/nonce:\s*([a-fA-F0-9]+)/i);
     const timestampMatch = message.match(/timestamp:\s*(\d+)/i);
 
