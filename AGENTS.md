@@ -86,3 +86,10 @@ The wallet has been expanded to support the full Bitcoin stack. When working on 
 - Use the established protocol fetchers in `services/protocol.ts`.
 - Maintain 'Zero-Leak' memory hardening (`.fill(0)`).
 - Prioritize TEE/StrongBox enforcement for all new layers.
+
+## 🧪 Full System Integration Testing (SVN 1.5)
+
+The wallet now includes a comprehensive E2E suite (`e2e/full_wallet_system.spec.ts`) that verifies the "Full Bitcoin Ecosystem" alignment.
+- Always ensure `MOCK_ASSETS` in `constants.tsx` provides enough balance for test simulations.
+- When adding new layers, update the navigation helpers in the E2E suite to include them.
+- Refer to `docs/testing/FULL_SYSTEM_TEST.md` for detailed coverage info.
