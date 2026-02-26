@@ -62,26 +62,26 @@ const Dashboard: React.FC = () => {
             fetchBtcBalance(btcAddress, network),
             fetchStacksBalances(stxAddress, network),
             fetchLiquidBalance(btcAddress, network),
-            fetchRskBalance(btcAddress, network),
+            fetchRskBalance(ethAddress, network),
             fetchRunesBalances(btcAddress),
-            fetchBobAssets(btcAddress),
+            fetchBobAssets(ethAddress),
             fetchRgbAssets(btcAddress),
             fetchArkBalances(btcAddress),
             fetchMavenAssets(btcAddress),
             fetchStateChainBalances(btcAddress),
-            fetchB2Assets(btcAddress, network),
-            fetchBotanixAssets(btcAddress, network),
-            fetchMezoAssets(btcAddress, network),
-            fetchAlpenAssets(btcAddress, network),
-            fetchZuluAssets(btcAddress, network),
-            fetchBisonAssets(btcAddress, network),
-            fetchHemiAssets(btcAddress, network),
-            fetchNubitAssets(btcAddress, network),
-            fetchLorenzoAssets(btcAddress, network),
-            fetchCitreaAssets(btcAddress, network),
-            fetchBabylonAssets(btcAddress, network),
-            fetchMerlinAssets(btcAddress, network),
-            fetchBitlayerAssets(btcAddress, network),
+            fetchB2Assets(ethAddress, network),
+            fetchBotanixAssets(ethAddress, network),
+            fetchMezoAssets(ethAddress, network),
+            fetchAlpenAssets(ethAddress, network),
+            fetchZuluAssets(ethAddress, network),
+            fetchBisonAssets(ethAddress, network),
+            fetchHemiAssets(ethAddress, network),
+            fetchNubitAssets(ethAddress, network),
+            fetchLorenzoAssets(ethAddress, network),
+            fetchCitreaAssets(ethAddress, network),
+            fetchBabylonAssets(ethAddress, network),
+            fetchMerlinAssets(ethAddress, network),
+            fetchBitlayerAssets(ethAddress, network),
             fetchTaprootAssets(taprootAddress, network)
         ]);
 
@@ -139,7 +139,7 @@ const Dashboard: React.FC = () => {
   // BIP-21 URI Generation
   const getBip21Uri = () => {
      if (receiveLayer === 'Mainnet') return `bitcoin:${btcAddress}?label=Conxius`;
-     if (receiveLayer === 'Stacks') return `stacks:${stxAddress}`;
+     if (receiveLayer === "Stacks") return `stacks:${stxAddress}`; if (["Rootstock", "BOB", "B2", "Botanix", "Mezo", "Alpen", "Zulu", "Bison", "Hemi", "Nubit", "Lorenzo", "Citrea", "Babylon", "Merlin", "Bitlayer"].includes(receiveLayer)) return ethAddress; if (receiveLayer === "RGB" || receiveLayer === "TaprootAssets") return taprootAddress;
      return btcAddress;
   };
 
@@ -521,8 +521,8 @@ const Dashboard: React.FC = () => {
                  <div className="w-full space-y-3">
                     <p className="text-[9px] font-black text-zinc-600 uppercase text-center">{receiveLayer} Root</p>
                     <div className="flex items-center gap-3 bg-zinc-950 p-4 rounded-xl border border-zinc-800">
-                       <p className="text-[10px] font-mono text-zinc-400 truncate flex-1">{receiveLayer === 'Stacks' ? stxAddress : (receiveLayer === 'RGB' ? taprootAddress : btcAddress)}</p>
-                       <button onClick={() => { navigator.clipboard.writeText(receiveLayer === 'Stacks' ? stxAddress : btcAddress); appContext.notify('info', 'Address Copied to Clipboard'); }} aria-label="Copy Address" className="text-orange-500"><Copy size={14} /></button>
+                       <p className="text-[10px] font-mono text-zinc-400 truncate flex-1">{["Rootstock", "BOB", "B2", "Botanix", "Mezo", "Alpen", "Zulu", "Bison", "Hemi", "Nubit", "Lorenzo", "Citrea", "Babylon", "Merlin", "Bitlayer"].includes(receiveLayer) ? ethAddress : (receiveLayer === "Stacks" ? stxAddress : (receiveLayer === "RGB" || receiveLayer === "TaprootAssets" ? taprootAddress : btcAddress))}</p>
+                       <button onClick={() => { navigator.clipboard.writeText(["Rootstock", "BOB", "B2", "Botanix", "Mezo", "Alpen", "Zulu", "Bison", "Hemi", "Nubit", "Lorenzo", "Citrea", "Babylon", "Merlin", "Bitlayer"].includes(receiveLayer) ? ethAddress : (receiveLayer === "Stacks" ? stxAddress : (receiveLayer === "RGB" || receiveLayer === "TaprootAssets" ? taprootAddress : btcAddress))); appContext.notify('info', 'Address Copied to Clipboard'); }} aria-label="Copy Address" className="text-orange-500"><Copy size={14} /></button>
                     </div>
                  </div>
               </div>
