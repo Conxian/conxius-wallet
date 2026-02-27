@@ -812,7 +812,28 @@ export const requestEnclaveSignature = async (
                 privKeyBuf.fill(0);
             }
         }
-    } else if (request.layer === 'BitVM' && seedBytes) {
+        } else if (request.layer === 'Musig2' && seedBytes) {
+        const path = "m/86'/0'/0'/0/0";
+        const derived = await workerManager.derivePath(seedBytes, path);
+        pubkey = derived.publicKey;
+        if (derived.privateKey) {
+            const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
+            try {
+                // Return partial signature for Musig2
+                const message = request.payload?.message ? Buffer.from(request.payload.message, 'hex') : Buffer.alloc(32);
+                const secretNonce = request.payload?.secretNonce ? Buffer.from(request.payload.secretNonce, 'hex') : new Uint8Array(64);
+                const aggregatedNonce = request.payload?.aggregatedNonce ? Buffer.from(request.payload.aggregatedNonce, 'hex') : new Uint8Array(33);
+                const aggregatedPubkey = request.payload?.aggregatedPubkey ? Buffer.from(request.payload.aggregatedPubkey, 'hex') : new Uint8Array(32);
+
+                if (request.payload?.action === 'signPartial') {
+                    const { signPartialMusig2 } = await import('./musig2');
+                    signature = Buffer.from(signPartialMusig2(privKeyBuf, secretNonce, aggregatedNonce, aggregatedPubkey, message)).toString('hex');
+                }
+            } finally {
+                privKeyBuf.fill(0);
+            }
+        }
+} else if (request.layer === 'BitVM' && seedBytes) {
         const path = "m/84'/0'/0'/4/0";
         const derived = await workerManager.derivePath(seedBytes, path);
         pubkey = derived.publicKey;
