@@ -56,4 +56,14 @@ describe('Security: Error Sanitization', () => {
     const xprv = 'xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKm2sEWWTip7z8Y9H9mK9v8f4m9qGjGjGjGjGjGjGjGjGj';
     expect(sanitizeError(`Leaked root key: ${xprv}`)).toBe('Protocol Error');
   });
+
+  it('should redact mnemonic hidden in custom object property', () => {
+    const error = { reason: 'abandon ability able about above absent absorb abstract absurd abuse access accident' };
+    expect(sanitizeError(error)).toBe('Protocol Error');
+  });
+
+  it('should extract and allow safe message from custom property while scanning whole object', () => {
+    const error = { reason: 'Safe error reason' };
+    expect(sanitizeError(error)).toBe('Safe error reason');
+  });
 });
