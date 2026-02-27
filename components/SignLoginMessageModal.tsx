@@ -35,46 +35,48 @@ const SignLoginMessageModal: React.FC<SignLoginMessageModalProps> = ({ message, 
                         </p>
                     </div>
 
-                    {parsed.isLogin && (
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 space-y-4">
-                            <div className="flex items-center gap-4 text-zinc-300">
-                                <Globe size={16} className="text-orange-500" />
-                                <div>
-                                    <p className="text-[10px] font-black uppercase text-zinc-600">Requesting Domain</p>
-                                    <p className="text-sm font-bold font-mono">{parsed.domain || 'Unknown Domain'}</p>
-                                </div>
-                            </div>
-
-                            {parsed.nonce && (
+                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 space-y-4">
+                        {parsed.isLogin ? (
+                            <>
                                 <div className="flex items-center gap-4 text-zinc-300">
-                                    <Fingerprint size={16} className="text-orange-500" />
+                                    <Globe size={16} className="text-orange-500" />
                                     <div>
-                                        <p className="text-[10px] font-black uppercase text-zinc-600">Session Nonce</p>
-                                        <p className="text-[10px] font-mono break-all">{parsed.nonce}</p>
+                                        <p className="text-[10px] font-black uppercase text-zinc-600">Requesting Domain</p>
+                                        <p className="text-sm font-bold font-mono">{parsed.domain || 'Unknown Domain'}</p>
                                     </div>
                                 </div>
-                            )}
 
-                            {parsed.timestamp && (
-                                <div className="flex items-center gap-4 text-zinc-300">
-                                    <Clock size={16} className="text-orange-500" />
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase text-zinc-600">Issued At</p>
-                                        <p className="text-[10px] font-mono">{new Date(parsed.timestamp).toLocaleString()}</p>
+                                {parsed.nonce && (
+                                    <div className="flex items-center gap-4 text-zinc-300">
+                                        <Fingerprint size={16} className="text-orange-500" />
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase text-zinc-600">Session Nonce</p>
+                                            <p className="text-[10px] font-mono break-all">{parsed.nonce}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                )}
 
-                    {!parsed.isLogin && (
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 space-y-2">
-                             <p className="text-[10px] font-black uppercase text-zinc-600">Raw Message Payload</p>
+                                {parsed.timestamp && (
+                                    <div className="flex items-center gap-4 text-zinc-300">
+                                        <Clock size={16} className="text-orange-500" />
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase text-zinc-600">Issued At</p>
+                                            <p className="text-[10px] font-mono">{new Date(parsed.timestamp).toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <p className="text-[10px] font-black uppercase text-zinc-400 italic">Unstructured Message Signature</p>
+                        )}
+
+                        <div className="pt-4 border-t border-zinc-800 space-y-2">
+                             <p className="text-[10px] font-black uppercase text-zinc-600">Full Message Payload (WYSIWYS)</p>
                              <div className="max-h-32 overflow-y-auto bg-zinc-950 p-4 rounded-xl border border-zinc-900">
                                 <p className="text-xs font-mono text-zinc-400 leading-relaxed whitespace-pre-wrap">{message}</p>
                              </div>
                         </div>
-                    )}
+                    </div>
 
                     <div className="flex items-start gap-3 p-4 bg-orange-600/5 border border-orange-500/10 rounded-2xl">
                         <AlertCircle size={14} className="text-orange-500 shrink-0 mt-0.5" />
