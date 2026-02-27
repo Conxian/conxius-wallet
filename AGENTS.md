@@ -93,3 +93,8 @@ The wallet now includes a comprehensive E2E suite (`e2e/full_wallet_system.spec.
 - Always ensure `MOCK_ASSETS` in `constants.tsx` provides enough balance for test simulations.
 - When adding new layers, update the navigation helpers in the E2E suite to include them.
 - Refer to `docs/testing/FULL_SYSTEM_TEST.md` for detailed coverage info.
+
+## Sprint 2026-02-18 Post-Mortem (Milestones M13-M15)
+- **Musig2:** Point aggregation requires specific handle on even-Y points for Taproot. The implementation in `services/musig2.ts` uses a negation logic if the Y-coordinate is odd.
+- **RGB:** Validation is now structured around a `stash` object, preparing for full WASM-based DAG verification.
+- **CoinJoin:** WabiSabi credential issuance and blinded registration are simulated via a unified state machine in `services/coinjoin.ts`.
