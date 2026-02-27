@@ -21,7 +21,7 @@ This document tracks the ground-truth implementation status of every major featu
 | **BIP-86 (Taproot)** | ✅ PRODUCTION | Signing & address derivation implemented. |
 | **BIP-352 (Silent Payments)** | ✅ PRODUCTION | Real shared secret & tweaked output computation implemented. |
 | **UTXO Manager** | ✅ PRODUCTION | Real-time tracking, dust sweeping, turbo boost. |
-| **2-of-3 Multi-Sig** | ✅ PRODUCTION | P2WSH multi-sig derivation and signing implemented. |
+| **2-of-3 Multi-Sig** | ✅ PRODUCTION | P2WSH and Taproot Musig2 (BIP-327) quorums implemented. |
 
 ## III. BITCOIN LAYERS & SIDECHAINS
 
@@ -70,7 +70,7 @@ This document tracks the ground-truth implementation status of every major featu
 | **Corporate Profiles** | ✅ PRODUCTION | Encrypted storage & SIWx signing. |
 | **Web5 DIDs (did:dht)** | ✅ PRODUCTION | Enclave-backed KeyManager bridge implemented. |
 | **Sovereignty Meter** | ✅ PRODUCTION | Dynamic scoring based on real security metrics. |
-| **CoinJoin (WabiSabi)** | ✅ PRODUCTION | Functional round registration and input selection. |
+| **CoinJoin (WabiSabi)** | ✅ PRODUCTION | Full WabiSabi protocol state machine with blinded registrations. |
 
 ---
 

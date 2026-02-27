@@ -6,7 +6,7 @@ import { Network } from '../types';
  * Bisq DEX integration.
  * Requires a running Bisq daemon with gRPC API enabled and a proxy backend.
  */
-export const BISQ_EXPERIMENTAL = false;
+export const BISQ_EXPERIMENTAL = true;
 
 /**
  * Backend proxy URL for Bisq gRPC bridge.
