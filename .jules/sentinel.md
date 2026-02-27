@@ -84,3 +84,8 @@ permalink: /sentinel
 **Vulnerability:** The `ensureDeviceSafety` function utilized `Math.random()` to generate nonces for Google Play Integrity attestation. Predictable nonces weaken the defense against replay attacks in remote attestation flows.
 **Learning:** Even if a service is "supporting" or "meta-security" (like device attestation), its internal entropy requirements must meet the same standards as the primary wallet logic. Furthermore, high-priority security logic (like the regex-based `sanitizeError` blacklist) requires explicit unit tests to prevent silent regressions during refactoring, even if the implementation appears correct.
 **Prevention:** Mandate the use of `generateRandomString` (backed by `crypto.getRandomValues`) for all nonces and identifiers. Always accompany security-critical regex patterns with comprehensive test suites that verify both positive matches (redaction) and negative matches (legitimate messages).
+
+## 2026-02-18 - [Blind Spots in Error Sanitization]
+**Vulnerability:** The centralized `sanitizeError` utility only inspected specific top-level properties (`message`, `statusText`), allowing sensitive material (mnemonics, keys) to leak if nested within custom error fields like `reason` or `error`.
+**Learning:** Partial inspection of error objects is insufficient for "Zero-Leak" security. Third-party SDKs and different RPC providers use non-standard property names for error details, which can bypass simple property-based filters.
+**Prevention:** Always serialize the entire error object (via `JSON.stringify`) to perform a full-text scan for sensitive patterns before allowing any part of the error to be returned to the UI or logs. Combine this with multi-field extraction for safe fallback display.
