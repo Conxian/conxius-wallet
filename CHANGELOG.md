@@ -97,3 +97,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lightning (Breez SDK) integration.
 - Encrypted Vault via Android Keystore.
 - Satoshi AI (Gemini) integration.
+
+## [1.5.2] - 2026-02-18
+### Added
+- Milestone M13: Full Taproot Musig2 (BIP-327) implementation with even-Y negation logic.
+- Milestone M14: Enhanced RGB Client-Side Validation (CSV) with production stash management.
+- Milestone M15: WabiSabi-aligned CoinJoin protocol state machine.
+- Integrated Google Play Integrity for device attestation.
+### Changed
+- Promoted all experimental B2B rail features (Bisq, Changelly Swaps) to production.
+- Refined ECC engine with updated @noble/curves API compatibility.

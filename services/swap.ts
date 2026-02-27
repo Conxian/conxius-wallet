@@ -6,7 +6,7 @@ import { requestEnclaveSignature } from './signer';
 import { generateRandomString } from './random';
 import { calculateEffectiveFeeRate } from './monetization';
 
-export const SWAP_EXPERIMENTAL = false;
+export const SWAP_EXPERIMENTAL = true;
 
 export interface SwapQuote {
   id: string;

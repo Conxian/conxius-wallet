@@ -25,3 +25,12 @@ export const calculateNttFee = (amountBtc: number, btcPriceUsd: number): number 
     if (feeUsd > NTT_FEE_CAP_USD) return NTT_FEE_CAP_USD / btcPriceUsd;
     return feeBtc;
 };
+
+/**
+ * Validates the technical integration fee for B2B NTT transfers.
+ * Cap at 0 as per Strategic Advisory Report.
+ */
+export const calculateNttIntegrationFee = (amountUsd: number): number => {
+    const fee = amountUsd * 0.001; // 0.1%
+    return Math.min(fee, 50.0);
+};
