@@ -1,11 +1,11 @@
 import * as bitcoin from 'bitcoinjs-lib';
-import * as ecc from 'tiny-secp256k1';
 import { Network, Asset } from '../types';
 import { endpointsFor, fetchWithRetry } from './network';
 import { fetchBtcPrice } from './prices';
+import { aggregatePubkeys as musig2Aggregate } from './musig2';
 
 /**
- * Multi-Sig Service (M6 Implementation)
+ * Multi-Sig Service (M6 & M13 Implementation)
  * Handles address derivation, balance fetching, and transaction building for multi-sig quorums.
  */
 
@@ -116,4 +116,23 @@ export const buildMultiSigPsbt = (
     }
 
     return psbt;
+};
+
+/**
+ * Musig2 Support (M13 Implementation)
+ */
+export const deriveMusig2TaprootAddress = (pubkeys: string[], network: Network): string => {
+    const net = network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
+    const aggregated = musig2Aggregate(pubkeys.map(hex => Buffer.from(hex, 'hex')));
+
+    try {
+        const { address } = bitcoin.payments.p2tr({
+            internalPubkey: aggregated,
+            network: net
+        });
+        return address!;
+    } catch (e) {
+        console.error("[MultiSig] P2TR Error:", e);
+        return "bc1p_musig2_derived_error";
+    }
 };
