@@ -170,10 +170,19 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
   if (!error) return defaultMsg;
 
   let message: string;
+  let fullScan: string;
+
   if (typeof error === 'string') {
     message = error;
+    fullScan = error;
   } else {
-    message = error.message || error.statusText || String(error) || defaultMsg;
+    // Defense-in-depth: Extract from more potential fields while scanning the whole object
+    message = error.message || error.reason || error.error || error.statusText || String(error) || defaultMsg;
+    try {
+      fullScan = JSON.stringify(error);
+    } catch {
+      fullScan = String(error);
+    }
   }
 
   // Blacklist of potentially sensitive words or patterns
@@ -185,10 +194,11 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     /\b[xtuvyz]prv[1-9A-HJ-NP-Za-km-z]{50,110}\b/i // BIP32 extended private keys (xprv, tprv, etc)
   ];
 
-  if (sensitivePatterns.some(p => p.test(message))) {
+  // Defensive: check the entire error object for ANY leakage
+  if (sensitivePatterns.some(p => p.test(fullScan)) || (typeof message === 'string' && sensitivePatterns.some(p => p.test(message)))) {
     return defaultMsg;
   }
 
   // Slice to avoid giant response bodies leaking
-  return message.substring(0, 100);
+  return typeof message === 'string' ? message.substring(0, 100) : defaultMsg;
 }
