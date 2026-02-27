@@ -106,7 +106,7 @@ We maintain a rigorous testing protocol to ensure cryptographic integrity and se
 ```bash
 pnpm test          # Run Vitest suite (162+ tests)
 pnpm run lint      # Run ESLint for code quality
-pnpm run test:e2e  # Run Playwright E2E tests
+pnpm run test:e2e  # Run Playwright E2E tests (including Full System Integration)
 ```
 
 | Metric | Result |
