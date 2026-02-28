@@ -46,6 +46,7 @@ android {
     }
     sourceSets {
         getByName("main") {
+            // "Clean Break": Use only Kotlin for the new native UI
             java.setSrcDirs(listOf("src/main/kotlin"))
         }
     }
@@ -56,6 +57,12 @@ dependencies {
     implementation(project(":core-bitcoin"))
     implementation(project(":core-database"))
 
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+
+    implementation("org.bitcoindevkit:bdk-android:0.30.0")
+
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
@@ -65,6 +72,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

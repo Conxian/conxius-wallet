@@ -6,10 +6,13 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface WalletDao {
     @Query("SELECT * FROM encrypted_seed WHERE id = 0")
-    fun getSeed(): EncryptedSeedEntity?
+    suspend fun getSeed(): EncryptedSeedEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSeed(seed: EncryptedSeedEntity)
+
+    @Query("DELETE FROM encrypted_seed")
+    suspend fun clearSeed()
 
     @Query("SELECT * FROM utxos")
     fun getAllUtxos(): Flow<List<UtxoEntity>>
@@ -22,9 +25,10 @@ interface WalletDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransactions(txs: List<TransactionEntity>)
-}
 
-@Database(entities = [EncryptedSeedEntity::class, UtxoEntity::class, TransactionEntity::class], version = 1)
-abstract class AppDatabase : RoomDatabase() {
-    abstract fun walletDao(): WalletDao
+    @Query("SELECT * FROM assets")
+    fun getAllAssets(): Flow<List<AssetEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAssets(assets: List<AssetEntity>)
 }
