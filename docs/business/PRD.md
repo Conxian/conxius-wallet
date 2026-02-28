@@ -4,7 +4,7 @@ layout: page
 permalink: /prd
 ---
 
-# Conxius Wallet PRD (Full Bitcoin Ecosystem)
+# Conxius Wallet PRD (Full Bitcoin Ecosystem) - SVN 1.5.0
 
 ## 1. Executive Summary
 
