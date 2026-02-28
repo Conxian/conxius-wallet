@@ -1,4 +1,5 @@
 import * as bitcoin from 'bitcoinjs-lib';
+import { bech32m } from 'bech32';
 import { notificationService } from './notifications';
 import { checkBtcTxStatus } from './protocol';
 import { requestEnclaveSignature } from './signer';
@@ -87,13 +88,23 @@ export const issueRgbAsset = async (
 export const validateConsignment = async (consignment: Consignment, network: any = 'mainnet'): Promise<boolean> => {
     notificationService.notify({ category: 'SYSTEM', type: 'info', title: 'RGB', message: 'Validating RGB Consignment...' });
 
-    // 1. Verify schema compliance
+    // 1. Structural checks
+    if (!consignment.id || !consignment.assetId || !consignment.witness) {
+        console.warn('Incomplete consignment data');
+        return false;
+    }
+
     if (!consignment.assetId.startsWith('rgb:')) {
         console.warn('Invalid RGB Asset ID format');
         return false;
     }
 
-    // 2. Structural & Anchor Validation
+    if (consignment.vouts.length === 0) {
+        console.warn('Consignment must have at least one vout');
+        return false;
+    }
+
+    // 2. Anchor Validation
     if (consignment.anchor) {
         if (consignment.anchor.amount < 546) {
              console.warn('Anchor amount below dust limit');
@@ -119,7 +130,9 @@ export const validateConsignment = async (consignment: Consignment, network: any
         return isValid;
     } catch (e) {
         console.warn('RGB WASM validation failed, falling back to structural check', e);
-        return consignment.witness.length >= 64;
+        // Fallback: Witness must be a hex string of at least 64 chars (32 bytes)
+        const hexRegex = /^[a-fA-F0-9]{64,}$/;
+        return hexRegex.test(consignment.witness);
     }
 };
 
@@ -180,15 +193,35 @@ async function verifyRgbProofWasm(witness: string): Promise<boolean> {
 
 /**
  * Parse an RGB Invoice (Bech32m encoded usually)
+ * Refined implementation using bech32m decoding.
  */
 export const parseRgbInvoice = (invoice: string): RgbInvoice | null => {
-    if (!invoice.startsWith('rgb:')) return null;
-    // Mock parsing
-    return {
-        assetId: 'rgb:mock-asset',
-        amount: 100,
-        beneficiary: 'blinded_utxo_mock'
-    };
+    try {
+        if (!invoice.startsWith('rgb:')) return null;
+
+        // Remove prefix
+        const encoded = invoice.slice(4);
+        const decoded = bech32m.decode(encoded);
+
+        if (decoded.prefix !== 'rgb') return null;
+
+        const data = bech32m.fromWords(decoded.words);
+        const hexData = Buffer.from(data).toString('hex');
+
+        // In a real RGB invoice, the data would contain:
+        // - Asset ID (32 bytes)
+        // - Amount (up to 8 bytes)
+        // - Beneficiary (Blinded UTXO hash, 32 bytes)
+
+        return {
+            assetId: 'rgb:' + hexData.substring(0, 32),
+            amount: parseInt(hexData.substring(32, 48), 16) || 0,
+            beneficiary: hexData.substring(48) || 'blinded_utxo'
+        };
+    } catch (e) {
+        console.warn('[RGB] Invoice parsing failed:', e);
+        return null;
+    }
 };
 
 /**
