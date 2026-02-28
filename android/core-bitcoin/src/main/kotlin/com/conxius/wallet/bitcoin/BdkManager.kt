@@ -6,18 +6,26 @@ import org.bitcoindevkit.*
 class BdkManager(private val network: Network = Network.TESTNET) {
     private var wallet: Wallet? = null
 
-    fun initializeWallet(mnemonicStr: String, path: String = "m/84'/1'/0'/0/0") {
+    fun initializeWallet(mnemonicStr: String, accountPath: String = "84'/1'/0'") {
         val mnemonic = Mnemonic.fromString(mnemonicStr)
-        val descriptorSecretKey = DescriptorSecretKey(network, mnemonic, null)
-        val externalDescriptorStr = "wpkh(${descriptorSecretKey.asString()}/${path})"
-        val externalDescriptor = Descriptor(externalDescriptorStr, network)
+        val rootKey = DescriptorSecretKey(network, mnemonic, null)
 
-        wallet = Wallet(
-            externalDescriptor,
-            null,
-            network,
-            DatabaseConfig.Memory
-        )
+        // Descriptor for external (0) addresses
+        // Using wpkh(tprv.../84'/1'/0'/0/*)
+        val externalDescriptorStr = "wpkh(${rootKey.asString()}/${accountPath.trimStart('m').trimStart('/')}/0/*)"
+
+        try {
+            val externalDescriptor = Descriptor(externalDescriptorStr, network)
+
+            wallet = Wallet(
+                externalDescriptor,
+                null,
+                network,
+                DatabaseConfig.Memory
+            )
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     fun signPsbt(ephemeralSeed: EphemeralSeed, psbtBase64: String): String {
