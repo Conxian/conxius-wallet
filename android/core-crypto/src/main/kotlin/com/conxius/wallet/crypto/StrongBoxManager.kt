@@ -2,6 +2,7 @@ package com.conxius.wallet.crypto
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.util.Log
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -11,6 +12,7 @@ import javax.crypto.spec.GCMParameterSpec
 class StrongBoxManager {
     private val keyStoreAlias = "ConxiusSeedKey"
     private val provider = "AndroidKeyStore"
+    private val TAG = "StrongBoxManager"
 
     init {
         val keyStore = KeyStore.getInstance(provider)
@@ -36,10 +38,13 @@ class StrongBoxManager {
             .setUserAuthenticationRequired(false)
 
         try {
+            // Attempt StrongBox for Pixel/high-end devices
             builder.setIsStrongBoxBacked(true)
             keyGenerator.init(builder.build())
             keyGenerator.generateKey()
+            Log.i(TAG, "Key generated successfully in StrongBox")
         } catch (e: Exception) {
+            Log.w(TAG, "StrongBox not available, falling back to TEE: ${e.message}")
             val fallbackBuilder = KeyGenParameterSpec.Builder(
                 keyStoreAlias,
                 KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
@@ -49,6 +54,7 @@ class StrongBoxManager {
                 .setKeySize(256)
             keyGenerator.init(fallbackBuilder.build())
             keyGenerator.generateKey()
+            Log.i(TAG, "Key generated successfully in TEE")
         }
     }
 
@@ -59,16 +65,26 @@ class StrongBoxManager {
     }
 
     fun encrypt(data: ByteArray): Pair<ByteArray, ByteArray> {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, getKey())
-        val encryptedData = cipher.doFinal(data)
-        return Pair(encryptedData, cipher.iv)
+        return try {
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.ENCRYPT_MODE, getKey())
+            val encryptedData = cipher.doFinal(data)
+            Pair(encryptedData, cipher.iv)
+        } catch (e: Exception) {
+            Log.e(TAG, "Encryption failed: ${e.message}")
+            throw e
+        }
     }
 
     fun decrypt(encryptedData: ByteArray, iv: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        val spec = GCMParameterSpec(128, iv)
-        cipher.init(Cipher.DECRYPT_MODE, getKey(), spec)
-        return cipher.doFinal(encryptedData)
+        return try {
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            val spec = GCMParameterSpec(128, iv)
+            cipher.init(Cipher.DECRYPT_MODE, getKey(), spec)
+            cipher.doFinal(encryptedData)
+        } catch (e: Exception) {
+            Log.e(TAG, "Decryption failed: ${e.message}")
+            throw e
+        }
     }
 }

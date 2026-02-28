@@ -31,12 +31,17 @@ permalink: /roadmap
 *   **Tech:** Wormhole NTT Transceiver Mainnet; Gas Abstraction.
 *   **Biz:** **"Unwrap Your Bitcoin"** Campaign Launch; Wormhole Ecosystem Grant execution.
 
-### Level 3: Sovereign Scaling (ACTIVE)
+### Level 3: Sovereign Scaling (COMPLETED)
 *   **Focus:** Infrastructure Deployment & Institutional Hardening.
 *   **Tech:** Changelly/Bisq Proxies, Taproot Musig2, RGB-WASM.
 *   **Biz:** **"The Real Rails"** Launch; Conxian Gateway Institutional Beta.
 
-### Level 4: Global Sovereignty (STRATEGIC)
+### Level 4: The Clean Break (ACTIVE)
+*   **Focus:** Pure Native Android Migration & Sovereign Persistence.
+*   **Tech:** BDK Kotlin, StrongBox-First Security, Jetpack Compose UI, Room DB.
+*   **Biz:** **"Citadel Native"** Launch; Transition from Capacitor to Pure Kotlin/Rust.
+
+### Level 5: Global Sovereignty (STRATEGIC)
 *   **Focus:** B2B SDK & Privacy-Preserving Treasury.
 *   **Tech:** Policy-gated Enclave, Multi-sig Quorum, ZK Verifier.
 *   **Biz:** **"The Corporate Citadel"** B2B Campaign; Conclave SDK Public Beta.
@@ -58,8 +63,8 @@ permalink: /roadmap
 | **M9: Asset Studio** | Q1 2026 | ✅ | Ordinals/Runes/RGB v1 | "Mint Your Legacy" |
 | **M10: ZK Verifier** | Q1 2026 | ✅ | On-device STARK Verifier | "Trust But Verify" |
 | **M11: BitVM** | Q2 2026 | ✅ | BitVM bridge verifier | "Turing-Complete Bitcoin" |
-| **M12: Real Rails** | Q2 2026 | 🚀 | **Infrastructure Deployment** | **"The Real Rails"** Sprint |
-| **M13: Musig2** | Q3 2026 | ⏳ | Taproot Musig2 Quorums | "Institutional Integrity" |
+| **M12: Real Rails** | Q2 2026 | ✅ | **Infrastructure Deployment** | **"The Real Rails"** Sprint |
+| **M13: Native Core** | Q3 2026 | 🚀 | **Kotlin/BDK Migration** | **"Citadel Native"** |
 | **M14: RGB Pro** | Q3 2026 | ⏳ | Full RGB-WASM Validation | "Native Client-Side Assets" |
 | **M15: Privacy Hub** | Q4 2026 | ⏳ | WabiSabi Coordinator | "Sovereign Privacy Standard" |
 
