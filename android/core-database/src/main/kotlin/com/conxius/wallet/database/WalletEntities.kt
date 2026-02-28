@@ -14,7 +14,8 @@ data class EncryptedSeedEntity(
 data class UtxoEntity(
     @PrimaryKey val outpoint: String,
     val value: Long,
-    val isSpent: Boolean
+    val scriptType: String,
+    val isSpent: Boolean = false
 )
 
 @Entity(tableName = "transactions")
@@ -23,5 +24,16 @@ data class TransactionEntity(
     val timestamp: Long,
     val received: Long,
     val sent: Long,
-    val fee: Long?
+    val fee: Long?,
+    val label: String? = null
+)
+
+@Entity(tableName = "assets")
+data class AssetEntity(
+    @PrimaryKey val id: String, // e.g. "BTC", "STX", "L-BTC"
+    val name: String,
+    val symbol: String,
+    val balance: String, // String to handle large numbers/precision safely
+    val type: String, // e.g. "L1", "L2", "Sidechain", "RGB"
+    val updatedAt: Long
 )
