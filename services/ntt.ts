@@ -4,6 +4,7 @@ import { NttTransceiver } from './ntt-transceiver';
 import { EvmPlatform } from '@wormhole-foundation/sdk-evm';
 import { Network } from '../types';
 import { sha256 } from '@noble/hashes/sha2.js';
+import { requestEnclaveSignature } from './signer';
 import { sanitizeError } from './network';
 import { calculateNttFee } from './monetization';
 import { fetchBtcPrice } from './protocol';
@@ -42,8 +43,36 @@ export class NttService {
         if (config && sourceLayer === 'Stacks' && 'Stacks' in config.tokenIds) {
             sourceTokenAddr = NttManager.hashStacksPrincipal((config.tokenIds as any).Stacks);
         }
-        const payload = NttTransceiver.createNttPayload(BigInt(parseFloat(amount) * 1e8), 8, sourceTokenAddr as any, new Uint8Array(32).fill(2), 1);
-        const vaa = NttTransceiver.formatSovereignVaa(payload, new Uint8Array(65).fill(0), 1, new Uint8Array(32).fill(3), 1n);
+
+        // Prepare NTT Payload
+        const payload = NttTransceiver.createNttPayload(
+            BigInt(Math.floor(parseFloat(amount) * 1e8)),
+            8,
+            sourceTokenAddr as any,
+            new Uint8Array(32).fill(2),
+            1
+        );
+
+        // Sovereign Signing via Conclave
+        const hash = sha256(payload);
+        const signResult = await requestEnclaveSignature({
+            type: 'transaction',
+            layer: (sourceLayer === 'Stacks' ? 'Stacks' : 'Ethereum') as any,
+            payload: { hash: Buffer.from(hash).toString('hex') },
+            description: `Authorize NTT Burn/Mint for ${amount} sBTC`
+        });
+
+        const signature = Buffer.from(signResult.signature, 'hex');
+
+        // Format Sovereign VAA
+        const vaa = NttTransceiver.formatSovereignVaa(
+            payload,
+            signature,
+            1, // Source Chain ID (Placeholder)
+            new Uint8Array(32).fill(3), // Emitter Address (Placeholder)
+            1n // Sequence
+        );
+
         return '0xntt' + Buffer.from(vaa.slice(0, 8)).toString('hex');
     }
     static async executeBridge(amount: string, sourceLayer: string, targetLayer: string, autoSwap: boolean, signer: Signer, network: Network, gasFee?: number): Promise<string | null> {

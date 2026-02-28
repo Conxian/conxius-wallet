@@ -13,6 +13,7 @@ import * as ecc from 'tiny-secp256k1';
 import * as bitcoin from 'bitcoinjs-lib';
 import { Buffer } from 'buffer';
 import { signSchnorr } from './ecc';
+import { keccak_256 } from '@noble/hashes/sha3.js';
 import { Capacitor } from "@capacitor/core";
 import { signNative, getWalletInfoNative, signBatchNative } from "./enclave-storage";
 import { getAddressFromPublicKey } from '@stacks/transactions';
@@ -320,9 +321,12 @@ export const deriveSovereignRoots = async (mnemonic: string, passphrase?: string
 };
 
 /**
- * Helper to convert pubkey to EVM address (Simplified)
+ * Helper to convert pubkey to EVM address (Standard Keccak-256)
  */
 function publicKeyToEvmAddress(pubkey: Buffer): string {
-    const hash = bitcoin.crypto.sha256(pubkey);
+    // Standard Ethereum address derivation: keccak256(pubkey.slice(1)).slice(-20)
+    // Strip the 0x04 prefix from the uncompressed public key
+    const uncompressed = pubkey.length === 65 ? pubkey.slice(1) : pubkey;
+    const hash = keccak_256(uncompressed);
     return '0x' + Buffer.from(hash.slice(-20)).toString('hex');
 }
