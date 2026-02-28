@@ -27,9 +27,9 @@ permalink: /prd
 - **[MARKET_FIT]:** [ORCHESTRATING]
 - **[RISK_COMPLIANCE]:** [ORCHESTRATING]
 - **[TOKENOMICS]:** [ORCHESTRATING]
-- **[ROADMAP]:** [ALIGNED - PHASE 4]
+- **[ROADMAP]:** [ALIGNED - PHASE 5]
 
-*Current Priority: Deploying the "Real Rails" (Changelly Proxy, Bisq Node, Wormhole Transceivers) to unblock production financial flows.*
+*Current Priority: Deploying the "Real Rails" (Changelly Proxy, Bisq Node, Wormhole Transceivers) and finalizing the "Clean Break" native migration.*
 
 ### 2.2. Industry Benchmarking (2025-2026 Analysis)
 
@@ -57,18 +57,19 @@ The architecture is built on a **Native Enclave Core** (Android Keystore + Stron
 - **Maven**: m/84'/0'/0'/3/index
 - **BitVM**: m/84'/0'/0'/4/0
 
-### 3.2. B2B Expansion via Conxian Gateway
+### 3.2. Native Migration (Phase 5: "Clean Break")
 
-The **Conxian Gateway** is the institutional portal:
-- **Corporate Profiles**: Multi-sig treasury management via Conxius.
-- **Shielded Payments**: Privacy-preserving B2B transactions.
-- **Institutional Launchpad**: Compliant tokenization on Bitcoin L2s.
+Conxius is migrating from a Capacitor hybrid model to a **pure native Android architecture** (Kotlin/Rust):
+- **Core Security**: StrongBox-backed AES-GCM encryption for BIP-39 seeds.
+- **Protocol Core**: BDK (Bitcoin Dev Kit) for on-chain management and PSBT signing.
+- **Persistence**: Room DB with KSP for reactive, encrypted data storage.
+- **UI/UX**: Jetpack Compose for a high-performance, strictly native interface.
 
 ### 3.3. Performance & Security Hardening
 
 - **Persistent Crypto Worker**: Eliminates worker spawning overhead; retains session secrets securely in memory.
 - **ECC Engine Fusion**: Hybrid approach using `@noble/curves` and `tiny-secp256k1` for optimized arithmetic and Taproot operations.
-- **Zero-Leak Memory**: Strict usage of `Uint8Array.fill(0)` and `try...finally` blocks for all sensitive material.
+- **Zero-Leak Memory**: Strict usage of `Uint8Array.fill(0)` (JS) and `Arrays.fill()` (Kotlin) for all sensitive material.
 
 ---
 

@@ -5,21 +5,29 @@ import org.bitcoindevkit.*
 
 class BdkManager(private val network: Network = Network.TESTNET) {
     private var wallet: Wallet? = null
+    private var externalDescriptor: Descriptor? = null
+    private var internalDescriptor: Descriptor? = null
 
     fun initializeWallet(mnemonicStr: String, accountPath: String = "84'/1'/0'") {
         val mnemonic = Mnemonic.fromString(mnemonicStr)
         val rootKey = DescriptorSecretKey(network, mnemonic, null)
 
-        // Descriptor for external (0) addresses
-        // Using wpkh(tprv.../84'/1'/0'/0/*)
-        val externalDescriptorStr = "wpkh(${rootKey.asString()}/${accountPath.trimStart('m').trimStart('/')}/0/*)"
+        val path = accountPath.trimStart('m').trimStart('/')
+
+        // Support for both Segwit (84) and Taproot (86)
+        val isTaproot = path.startsWith("86")
+        val prefix = if (isTaproot) "tr" else "wpkh"
+
+        val extDescStr = "${prefix}(${rootKey.asString()}/${path}/0/*)"
+        val intDescStr = "${prefix}(${rootKey.asString()}/${path}/1/*)"
 
         try {
-            val externalDescriptor = Descriptor(externalDescriptorStr, network)
+            externalDescriptor = Descriptor(extDescStr, network)
+            internalDescriptor = Descriptor(intDescStr, network)
 
             wallet = Wallet(
-                externalDescriptor,
-                null,
+                externalDescriptor!!,
+                internalDescriptor,
                 network,
                 DatabaseConfig.Memory
             )
@@ -45,5 +53,14 @@ class BdkManager(private val network: Network = Network.TESTNET) {
     fun getNewAddress(): String {
         return wallet?.getAddress(AddressIndex.New)?.address?.asString()
             ?: throw IllegalStateException("Wallet not initialized")
+    }
+
+    fun sync() {
+        // Placeholder for blockchain client sync logic
+        // In a real app, this would use an Electrum or Esplora client
+    }
+
+    fun getBalance(): ULong {
+        return wallet?.getBalance()?.total ?: 0u
     }
 }
