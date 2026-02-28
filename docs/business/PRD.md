@@ -8,7 +8,7 @@ permalink: /prd
 
 ## 1. Executive Summary
 
-**Product:** Conxius Wallet, the **Ultimate Sovereign Interface for the Full Bitcoin Ecosystem**. It is an offline-first Android wallet that provides native, hardware-level security for every layer of the Bitcoin stack: L1 (BTC), Lightning, Liquid, Stacks, Rootstock (RSK), BOB (Build On Bitcoin), RGB, Ordinals, Runes, Ark, BitVM, State Chains, and Maven.
+**Product:** Conxius Wallet, the **Ultimate Multi-Chain Sovereign Interface for the Full Bitcoin Ecosystem**. It is an offline-first Android wallet that provides native, hardware-level security for every layer of the Bitcoin stack: L1 (BTC), Lightning, Liquid, Stacks, Rootstock (RSK), BOB (Build On Bitcoin), RGB, Ordinals, Runes, Ark, BitVM, State Chains, and Maven.
 
 **Mission:** Empower users with sovereign control over the entire Bitcoin landscape through a unified, secure, and intuitive mobile interface.
 
@@ -97,6 +97,7 @@ Conxius is migrating from a Capacitor hybrid model to a **pure native Android ar
 - **FR-INT-03**: NTT Enhancements: Support for Stacks principal hashing and sBTC manager flow.
 - **FR-INT-04**: Atomic swaps via Boltz (Direct BTC-to-LN/Liquid) and Changelly (proxied).
 - **FR-INT-05**: **Outcome-Based UI** for bridging, abstracting technical complexity from the user.
+- **FR-INT-06**: **Sovereign Bridge Protocol**: All NTT (Native Token Transfer) assets are subservient to the BTC-root Conclave; bridge operations must be authorized via sovereign local proofs.
 
 ---
 

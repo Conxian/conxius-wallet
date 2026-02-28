@@ -23,6 +23,12 @@ import com.conxius.wallet.viewmodel.ViewModelFactory
 import com.conxius.wallet.repository.WalletRepository
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        init {
+            System.loadLibrary("conxius_core")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
