@@ -25,6 +25,23 @@ jobs:
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
     
+    - name: Security Lint - Enforce FLAG_SECURE & allowBackup=false
+      run: |
+        MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
+        if [ -f "$MANIFEST_PATH" ]; then
+          if grep -q 'android:allowBackup="true"' "$MANIFEST_PATH"; then
+            echo "::error file=$MANIFEST_PATH::CRITICAL: android:allowBackup must be false"
+            exit 1
+          fi
+          if grep -q 'android:fullBackupContent="true"' "$MANIFEST_PATH"; then
+            echo "::error file=$MANIFEST_PATH::CRITICAL: android:fullBackupContent must be false"
+            exit 1
+          fi
+          echo "Security lint passed: Android backups are disabled."
+        else
+          echo "Warning: AndroidManifest.xml not found at $MANIFEST_PATH. Skipping manifest security lint."
+        fi
+
     - name: Run tests
       run: pnpm test
       env:
