@@ -8,7 +8,7 @@
     "postinstall": "node -e \"const fs=require('fs'); const files=['node_modules/@capacitor/android/capacitor/build.gradle','node_modules/@capacitor/android/capacitor/bin/build.gradle','node_modules/@capacitor/browser/android/build.gradle']; for (const f of files){ if(!fs.existsSync(f)) continue; const s=fs.readFileSync(f,'utf8'); const n=s.replaceAll(\\\"getDefaultProguardFile('proguard-android.txt')\\\",\\\"getDefaultProguardFile('proguard-android-optimize.txt')\\\"); if(n!==s) fs.writeFileSync(f,n,'utf8'); } const sb='node_modules/@capacitor/android/capacitor/src/main/java/com/getcapacitor/plugin/SystemBars.java'; if(fs.existsSync(sb)){ const s=fs.readFileSync(sb,'utf8'); const n=s.replaceAll('Build.VERSION_CODES.VANILLA_ICE_CREAM','35'); if(n!==s) fs.writeFileSync(sb,n,'utf8'); }\"",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "android:build": "npm run build && npx cap sync && npx cap open android",
+    "android:build": "pnpm run build && pnpm cap sync && pnpm cap open android",
     "test": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
