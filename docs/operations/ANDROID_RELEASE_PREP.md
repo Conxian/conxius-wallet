@@ -133,12 +133,12 @@ Then update `DeviceIntegrityPlugin.java` to call Play Integrity API alongside lo
 
 ### Build Verification
 
-- [ ] `npm run build` succeeds
-- [ ] `npx cap sync` completes without errors
+- [ ] `pnpm run build` succeeds
+- [ ] `pnpm cap sync` completes without errors
 - [ ] `./gradlew assembleRelease` produces signed APK
 - [ ] APK size is reasonable (< 50MB target)
-- [ ] All unit tests pass (`npm test` — 106/106 ✅)
-- [ ] E2E tests pass (`npm run test:e2e`)
+- [ ] All unit tests pass (`pnpm test` — 106/106 ✅)
+- [ ] E2E tests pass (`pnpm run test:e2e`)
 
 ### Compliance
 
@@ -174,8 +174,8 @@ The existing `.github/workflows/ci.yml` handles build/test. For release:
    - `PLAY_SERVICE_ACCOUNT_JSON` — Google Play service account key
 
 2. Add a release workflow that:
-   - Builds production frontend: `npm run build`
-   - Syncs Capacitor: `npx cap sync`
+   - Builds production frontend: `pnpm run build`
+   - Syncs Capacitor: `pnpm cap sync`
    - Builds signed AAB: `./gradlew bundleRelease`
    - Uploads to Play Console via `r0adkll/upload-google-play`
 
@@ -185,10 +185,10 @@ The existing `.github/workflows/ci.yml` handles build/test. For release:
 
 ```bash
 # 1. Build frontend
-npm run build
+pnpm run build
 
 # 2. Sync to Android
-npx cap sync
+pnpm cap sync
 
 # 3. Build release AAB (requires signing config)
 cd android && ./gradlew bundleRelease
