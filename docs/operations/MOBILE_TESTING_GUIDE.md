@@ -26,13 +26,13 @@ To deploy the current code to your connected device:
 
 ```bash
 # 1. Build the web assets
-npm run build
+pnpm run build
 
 # 2. Sync web assets to the Android native project
-npx cap sync
+pnpm cap sync
 
 # 3. Run on the connected device (selects the first available device)
-npx cap run android
+pnpm cap run android
 ```
 
 *Note: If multiple devices/emulators are connected, you may need to select the target.*
@@ -40,7 +40,7 @@ npx cap run android
 Alternatively, to open the project in Android Studio and run from there (provides better logcat output):
 
 ```bash
-npx cap open android
+pnpm cap open android
 ```
 
 ## 3. Automated Instrumentation Tests
@@ -60,7 +60,7 @@ cd android
 Results will be generated in `android/app/build/reports/androidTests/connected/`.
 
 ### Running Tests (Android Studio)
-1. Open project (`npx cap open android`).
+1. Open project (`pnpm cap open android`).
 2. Navigate to `app > src > androidTest > java`.
 3. Right-click a test class (e.g., `ExampleInstrumentedTest`) and select **Run**.
 
@@ -91,7 +91,7 @@ Debug the JavaScript/React app running inside the Android WebView:
 
 ### Keystore/Signing Errors
 - **Symptom**: Build fails during `assembleRelease`.
-- **Fix**: Debug builds (`npx cap run android` uses debug by default) auto-sign with a debug key. For release testing, follow [Android Release Prep](./ANDROID_RELEASE_PREP.md) to set up signing environment variables.
+- **Fix**: Debug builds (`pnpm cap run android` uses debug by default) auto-sign with a debug key. For release testing, follow [Android Release Prep](./ANDROID_RELEASE_PREP.md) to set up signing environment variables.
 
 ### Biometric Auth Failing
 - **Symptom**: Biometric prompt doesn't appear or fails immediately.

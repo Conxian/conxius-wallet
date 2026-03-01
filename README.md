@@ -93,7 +93,7 @@ pnpm run dev # Launches with Mock Enclave for web testing
 
 **Android Production Build**
 ```bash
-npx cap sync android
+pnpm cap sync android
 cd android && ./gradlew :app:installDebug
 ```
 

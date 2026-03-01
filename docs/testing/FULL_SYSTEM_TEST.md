@@ -42,7 +42,7 @@ To run the full system integration test suite:
 pnpm test:e2e
 
 # Run specifically the full system test
-npx playwright test e2e/full_wallet_system.spec.ts
+pnpm playwright test e2e/full_wallet_system.spec.ts
 
 # Run with UI for debugging
 pnpm test:e2e:ui

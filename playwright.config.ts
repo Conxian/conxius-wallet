@@ -4,12 +4,12 @@ import { defineConfig, devices } from '@playwright/test';
  * Playwright E2E Test Configuration for Conxius Wallet.
  *
  * Run:
- *   npx playwright test              # Run all tests
- *   npx playwright test --ui         # Interactive UI mode
- *   npx playwright test --headed     # See the browser
+ *   pnpm playwright test              # Run all tests
+ *   pnpm playwright test --ui         # Interactive UI mode
+ *   pnpm playwright test --headed     # See the browser
  *
  * First time setup:
- *   npx playwright install            # Install browser binaries
+ *   pnpm playwright install            # Install browser binaries
  */
 export default defineConfig({
   testDir: './e2e',
