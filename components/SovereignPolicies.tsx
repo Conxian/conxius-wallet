@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { Shield, Clock, Heart, Users, ChevronRight, Info, Loader2, Sparkles, AlertTriangle, BookOpen, Fingerprint } from 'lucide-react';
+import { Shield, Clock, Heart, Users, ChevronRight, Info, Loader2, Sparkles, AlertTriangle, BookOpen, Fingerprint, Zap } from 'lucide-react';
 import { AppContext } from '../context';
 import { SpendingPolicy, DEFAULT_POLICIES, humanizeRule } from '../services/smart-wallet';
 import { auditSpendingPolicy } from '../services/ai';
@@ -53,6 +53,7 @@ const SovereignPolicies: React.FC = () => {
                           {policy.type === 'Inheritance' && <Heart size={24} />}
                           {policy.type === 'Threshold' && <Users size={24} />}
                           {policy.type === 'SocialRecovery' && <Shield size={24} />}
+                          {policy.type === 'VelocityLimit' && <Zap size={24} />}
                        </div>
                        <div>
                           <h4 className="font-bold text-lg text-zinc-100 uppercase tracking-tighter italic">{policy.name}</h4>
