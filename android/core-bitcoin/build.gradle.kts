@@ -1,11 +1,11 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace = "com.conxius.wallet.bitcoin"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24
@@ -13,11 +13,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "21"
+        jvmTarget = "17"
     }
     sourceSets {
         getByName("main") {
@@ -28,11 +28,11 @@ android {
 
 dependencies {
     implementation(project(":core-crypto"))
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("org.bitcoindevkit:bdk-android:0.30.0")
-    testImplementation("org.bitcoindevkit:bdk-jvm:0.30.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.bdk.android)
+    testImplementation(libs.bdk.jvm)
+    implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.espresso.core)
 }

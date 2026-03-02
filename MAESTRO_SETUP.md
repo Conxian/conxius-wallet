@@ -1,6 +1,7 @@
 # Maestro On-Device Testing Setup
 
-This document outlines the setup and usage of Maestro for automated UI testing of the Conxius Wallet on Android devices.
+This document outlines the setup and usage of Maestro for automated UI testing
+of the Conxius Wallet on Android devices.
 
 ## 1. Prerequisites
 
@@ -10,7 +11,8 @@ This document outlines the setup and usage of Maestro for automated UI testing o
 
 ## 2. Environment Setup
 
-We have created a helper script `run_maestro.bat` in the root directory to handle environment variables (`JAVA_HOME`, `PATH`) automatically.
+We have created a helper script `run_maestro.bat` in the root directory to
+handle environment variables (`JAVA_HOME`, `PATH`) automatically.
 
 **Usage:**
 
