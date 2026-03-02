@@ -1006,3 +1006,33 @@ export async function fetchTaprootAssets(address: string, network: Network = 'ma
         }));
     } catch { return []; }
 }
+
+/**
+ * Unified Balance Aggregator (v1.2)
+ * Merges L1 Bitcoin and Lightning balances for a seamless "Sats" UX.
+ */
+export const getUnifiedBitcoinBalance = (assets: Asset[]): number => {
+    return assets
+        .filter(a => a.layer === 'Mainnet' || a.layer === 'Lightning')
+        .reduce((acc, a) => acc + a.balance, 0);
+};
+
+/**
+ * Simplified Payment Verification (SPV) Skeleton (v1.2)
+ * Proof-of-concept for header-verifying light client.
+ */
+export class LightClient {
+    private headers: string[] = [];
+
+    public async syncHeaders(network: Network): Promise<number> {
+        console.log(`[SPV] Syncing block headers for ${network}...`);
+        // In a real implementation, this would connect to P2P nodes
+        // and download block headers (80 bytes each) via Neutrino/Compact Block Filters.
+        return 840000; // Mock tip
+    }
+
+    public async verifyTransaction(txid: string, merkleProof: string): Promise<boolean> {
+        console.log(`[SPV] Verifying Merkle Proof for tx ${txid}`);
+        return true;
+    }
+}
