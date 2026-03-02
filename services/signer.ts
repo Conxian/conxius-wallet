@@ -332,17 +332,38 @@ function publicKeyToEvmAddress(pubkey: Buffer): string {
 }
 
 /**
- * Parses a BIP-322 message to identify login requests.
+ * Parses a BIP-322 message to identify and extract structured login details.
+ * Security: Uses an anchored regex (^) to prevent spoofing via prepended content.
  */
-export const parseBip322Message = (message: string) => {
-    const isLogin = /^\[Conxius Login\]/.test(message);
-    const domainMatch = message.match(/Domain: ([a-zA-Z0-9.-]+)/);
-    const nonceMatch = message.match(/Nonce: ([a-zA-Z0-9]+)/);
-    const timestampMatch = message.match(/Timestamp: ([0-9]+)/);
+export function parseBip322Message(message: string): {
+    isLogin: boolean;
+    domain?: string;
+    nonce?: string;
+    timestamp?: string;
+} {
+    // Expected Format from IdentityService:
+    // <Domain> wants you to sign in with your Conxius Identity:
+    // <Address>
+    // URI: <DID>
+    // Web5: <Web5DID>
+    // Nonce: <Challenge>
+    // Issued At: <ISO Timestamp>
+
+    const loginRegex = /^(.+?) wants you to sign in with your Conxius Identity:/;
+    const match = message.match(loginRegex);
+
+    if (!match) {
+        return { isLogin: false };
+    }
+
+    const domain = match[1];
+    const nonceMatch = message.match(/Nonce: (.+)/);
+    const timestampMatch = message.match(/Issued At: (.+)/);
+
     return {
-        isLogin,
-        domain: domainMatch ? domainMatch[1] : undefined,
-        nonce: nonceMatch ? nonceMatch[1] : undefined,
-        timestamp: timestampMatch ? parseInt(timestampMatch[1]) : undefined
+        isLogin: true,
+        domain,
+        nonce: nonceMatch ? nonceMatch[1].trim() : undefined,
+        timestamp: timestampMatch ? timestampMatch[1].trim() : undefined
     };
-};
+}
