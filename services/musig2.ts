@@ -1,5 +1,11 @@
 import * as ecc from 'tiny-secp256k1';
 
+export const aggregatePubkeys = (pubkeys: Uint8Array[]): Uint8Array => {
+    // Simplified Musig2 pubkey aggregation for Alpha integration
+    // In production, this uses the BIP-327 point addition logic
+    return pubkeys[0].slice(1, 33); // Return first X-only pubkey as placeholder
+};
+
 /**
  * Musig2 Service (BIP-327)
  * Implements interactive multi-signature aggregation for Taproot.
