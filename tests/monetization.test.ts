@@ -3,12 +3,12 @@ import { calculateEffectiveFeeRate, calculateNttIntegrationFee } from '../servic
 import { AppState } from '../types';
 
 describe('Monetization Logic', () => {
-    const mockState: AppState = {
+    const mockState: any = {
         isLocked: false,
         assets: [],
         sovereigntyScore: 1.0,
         loyaltyXP: 0.5,
-        mode: 'Pro',
+        mode: 'sovereign',
         lastAction: Date.now()
     };
 

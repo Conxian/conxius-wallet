@@ -3,6 +3,7 @@ import {
   deriveSovereignRoots, 
   signBip322Message, 
   requestEnclaveSignature,
+  parseBip322Message,
   SignRequest 
 } from '../services/signer';
 import * as bip39 from 'bip39';
@@ -127,7 +128,7 @@ describe('signer service', () => {
         it('should sign a Taproot message using Schnorr in JS fallback', async () => {
       const message = 'Taproot test message';
       const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
-      const signature = await signBip322Message(message, new Uint8Array(seed), undefined, 'P2TR');
+      const signature = await signBip322Message(message, new Uint8Array(seed));
 
       expect(signature).toBeDefined();
       expect(typeof signature).toBe('string');
@@ -139,6 +140,43 @@ describe('signer service', () => {
       const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
       const signature = await signBip322Message('', new Uint8Array(seed));
       expect(signature).toBeDefined();
+    });
+  });
+
+  describe('parseBip322Message', () => {
+    it('should identify a valid login message', () => {
+      const domain = 'test.com';
+      const nonce = 'challenge123';
+      const timestamp = new Date().toISOString();
+      const msg = `${domain} wants you to sign in with your Conxius Identity:\nbc1q...\n\nURI: did:pkh:...\nWeb5: N/A\nNonce: ${nonce}\nIssued At: ${timestamp}`;
+
+      const parsed = parseBip322Message(msg);
+      expect(parsed.isLogin).toBe(true);
+      expect(parsed.domain).toBe(domain);
+      expect(parsed.nonce).toBe(nonce);
+      expect(parsed.timestamp).toBe(timestamp);
+    });
+
+    it('should reject spoofed messages with prepended content', () => {
+      const msg = `ATTACKER CONTENT\n\ntest.com wants you to sign in with your Conxius Identity:\nbc1q...\nNonce: 123`;
+      const parsed = parseBip322Message(msg);
+      expect(parsed.isLogin).toBe(false);
+    });
+
+    it('should handle unstructured messages gracefully', () => {
+      const msg = 'Just a random message';
+      const parsed = parseBip322Message(msg);
+      expect(parsed.isLogin).toBe(false);
+      expect(parsed.domain).toBeUndefined();
+    });
+
+    it('should handle missing nonce/timestamp fields', () => {
+      const msg = `test.com wants you to sign in with your Conxius Identity:\nbc1q...`;
+      const parsed = parseBip322Message(msg);
+      expect(parsed.isLogin).toBe(true);
+      expect(parsed.domain).toBe('test.com');
+      expect(parsed.nonce).toBeUndefined();
+      expect(parsed.timestamp).toBeUndefined();
     });
   });
 

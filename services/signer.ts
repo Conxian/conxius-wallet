@@ -330,3 +330,40 @@ function publicKeyToEvmAddress(pubkey: Buffer): string {
     const hash = keccak_256(uncompressed);
     return '0x' + Buffer.from(hash.slice(-20)).toString('hex');
 }
+
+/**
+ * Parses a BIP-322 message to identify and extract structured login details.
+ * Security: Uses an anchored regex (^) to prevent spoofing via prepended content.
+ */
+export function parseBip322Message(message: string): {
+    isLogin: boolean;
+    domain?: string;
+    nonce?: string;
+    timestamp?: string;
+} {
+    // Expected Format from IdentityService:
+    // <Domain> wants you to sign in with your Conxius Identity:
+    // <Address>
+    // URI: <DID>
+    // Web5: <Web5DID>
+    // Nonce: <Challenge>
+    // Issued At: <ISO Timestamp>
+
+    const loginRegex = /^(.+?) wants you to sign in with your Conxius Identity:/;
+    const match = message.match(loginRegex);
+
+    if (!match) {
+        return { isLogin: false };
+    }
+
+    const domain = match[1];
+    const nonceMatch = message.match(/Nonce: (.+)/);
+    const timestampMatch = message.match(/Issued At: (.+)/);
+
+    return {
+        isLogin: true,
+        domain,
+        nonce: nonceMatch ? nonceMatch[1].trim() : undefined,
+        timestamp: timestampMatch ? timestampMatch[1].trim() : undefined
+    };
+}
