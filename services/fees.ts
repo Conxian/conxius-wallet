@@ -1,4 +1,5 @@
 import { Network } from '../types';
+import { fetchWithRetry } from './network';
 
 export type FeeRecommendation = {
   fastestFee: number;
@@ -6,10 +7,13 @@ export type FeeRecommendation = {
   hourFee: number;
 };
 
+/**
+ * Fetches BTC (L1) fee recommendations.
+ */
 export async function getRecommendedFees(baseUrl: string): Promise<FeeRecommendation> {
   try {
     const url = `${baseUrl}/v1/fees/recommended`;
-    const res = await fetch(url);
+    const res = await fetchWithRetry(url);
     if (!res.ok) {
       return { fastestFee: 15, halfHourFee: 8, hourFee: 5 };
     }
@@ -24,7 +28,7 @@ export async function getRecommendedFees(baseUrl: string): Promise<FeeRecommenda
  */
 export async function getStacksFees(stxApiUrl: string): Promise<number> {
   try {
-    const response = await fetch(`${stxApiUrl}/v2/fees/transaction`, {
+    const response = await fetchWithRetry(`${stxApiUrl}/v2/fees/transaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ transaction_payload: '0x' }) // Generic payload for estimate
@@ -42,7 +46,7 @@ export async function getStacksFees(stxApiUrl: string): Promise<number> {
  */
 export async function getLiquidFees(liquidApiUrl: string): Promise<number> {
   try {
-    const response = await fetch(`${liquidApiUrl}/fee-estimates`);
+    const response = await fetchWithRetry(`${liquidApiUrl}/fee-estimates`);
     if (!response.ok) return 0.1; // sat/vB fallback
     const data = await response.json();
     // Liquid API returns fee estimates as map of { [blocks]: rate }
@@ -57,7 +61,7 @@ export async function getLiquidFees(liquidApiUrl: string): Promise<number> {
  */
 export async function getRskFees(rskApiUrl: string): Promise<number> {
   try {
-    const response = await fetch(rskApiUrl, {
+    const response = await fetchWithRetry(rskApiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

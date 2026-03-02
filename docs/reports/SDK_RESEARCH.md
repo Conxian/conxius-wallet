@@ -78,3 +78,51 @@ For privacy-preserving transactions, a real-world coordinator is needed.
 - **Integration Path:**
     - Use `services/coinjoin.ts` to handle the registration and signing phases.
     - Connect to the Wasabi or zkSNACKs coordinator.
+
+---
+
+## 6. AI Safety & Privacy (Sovereign AI v1.0)
+
+Conxius research into AI safety has led to the development of a custom security
+layer for the "Full Bitcoin Ecosystem" alignment.
+
+- **Capabilities:**
+    - Regex-based redaction of Bitcoin/EVM addresses, TxIDs, and Mnemonics.
+    - Intent detection to block prompt injection and security-related malicious
+      queries.
+    - "Zero-Leak" privacy model where sensitive identifiers never leave the
+      device.
+- **Implementation:**
+    - Integrated in `services/ai-security.ts` and enforced in
+      `services/gemini.ts`.
+    - Real-time UI feedback for sanitized prompts in
+      `components/SatoshiAIChat.tsx`.
+
+---
+
+## 7. Protocol Sovereignty & BYOS Alignment
+
+Conxius v1.1 implements a flexible, sovereign-first architecture for external
+service dependencies.
+
+- **BYOS AI Hooks:** Decouples the wallet from specific AI providers while
+  maintaining strict local privacy via regex-based redaction.
+- **RPC Selection Strategy:** Empowers users to run their own nodes (Bitcoin Core,
+  Stacks, etc.) and prioritize them for all on-chain data fetching.
+- **Zero-Trust Networking:** Ensures that even when using public RPCs, the wallet
+  is prepared to switch to sovereign infrastructure instantly.
+
+---
+
+## 8. Smart Wallet & Policy Engine Alignment
+
+Conxius v1.2 transitions from simple single-sig to policy-based UTXO management.
+
+- **Miniscript Integration:** Enables standardized, verifiable, and composable
+  spending conditions. Aligns with Bitcoin-native "Smart" capabilities without
+  needing sidechain-specific VMs for basic logic.
+- **Musig2 Interactive Signing:** Researching BIP-327 state management for
+  low-entropy threshold signatures that look like single-sig on-chain.
+- **Satoshi Policy Auditor:** Utilizes advanced LLMs (via BYOS) to explain
+  technical spending rules to non-technical users, ensuring they understand
+  their own inheritance or cold-storage protocols.

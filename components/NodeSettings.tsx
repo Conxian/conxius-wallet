@@ -103,6 +103,7 @@ const NodeSettings: React.FC = () => {
       status: 'online',
     };
     setNodes([...nodes, config]);
+    appContext?.setCustomNodes([...(appState?.customNodes || []), { ...config, isActive: true }]);
     setIsAddingNode(false);
     setNewNode({ layer: 'Bitcoin L1', endpoint: '', provider: '' });
   };
@@ -116,7 +117,7 @@ const NodeSettings: React.FC = () => {
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black tracking-tighter text-zinc-100 flex items-center gap-3 italic uppercase">
-            <Network className="text-orange-500" />
+            <div className="flex flex-col md:flex-row md:items-center gap-6"><Network className="text-orange-500" /><div><select value={appContext?.state.rpcStrategy || "Sovereign-First"} onChange={e => appContext?.setRpcStrategy(e.target.value as any)} className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest text-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 transition-all shadow-xl shadow-orange-600/10"><option value="Sovereign-First">Sovereign-First</option><option value="Mixed">Mixed Mode</option><option value="Public-Only">Public-Only</option></select><p className="text-[8px] text-zinc-500 mt-1 uppercase font-bold tracking-tighter">Current Routing Strategy</p></div></div>
             Sovereign Node Hub
           </h2>
           <p className="text-zinc-500 text-sm italic">Decentralize your source of truth. Don't trust, verify.</p>

@@ -1,5 +1,11 @@
-import { Network } from '../types';
+import { Network, AppState } from '../types';
 import { generateRandomString } from './random';
+
+let _globalAppState: AppState | undefined;
+
+export const setGlobalAppState = (state: AppState) => {
+  _globalAppState = state;
+};
 
 function envValue(key: string): string | undefined {
   const value = (import.meta as any).env?.[key];
@@ -24,16 +30,34 @@ export function getGatewayUrl(network: Network): string {
   }
 }
 
-export function endpointsFor(network: Network) {
+/**
+ * Sovereign-First Endpoint Resolver (v1.1)
+ * Prioritizes user nodes, then public RPCs, based on rpcStrategy.
+ */
+export function endpointsFor(network: Network, appState?: AppState) {
   const gateway = getGatewayUrl(network);
+  const state = appState || _globalAppState;
+  const strategy = state?.rpcStrategy || 'Sovereign-First';
+  const customNodes = state?.customNodes || [];
+
+  const getSovereignEndpoint = (layer: string, defaultPublic: string): string => {
+      if (strategy === 'Public-Only') return defaultPublic;
+
+      const custom = customNodes.find(n => n.layer === layer && n.isActive);
+
+      if (strategy === 'Sovereign-First') return custom?.endpoint || defaultPublic;
+      if (strategy === 'Mixed') return custom?.endpoint || defaultPublic; // Could be expanded for load balancing
+
+      return defaultPublic;
+  };
 
   switch (network) {
     case 'testnet':
       return {
-        BTC_API: "https://mempool.space/testnet/api",
-        STX_API: "https://api.testnet.hiro.so",
-        LIQUID_API: "https://blockstream.info/liquidtestnet/api",
-        RSK_API: "https://public-node.testnet.rsk.co",
+        BTC_API: getSovereignEndpoint('Bitcoin L1', "https://mempool.space/testnet/api"),
+        STX_API: getSovereignEndpoint('Stacks L2', "https://api.testnet.hiro.so"),
+        LIQUID_API: getSovereignEndpoint('Liquid', "https://blockstream.info/liquidtestnet/api"),
+        RSK_API: getSovereignEndpoint('Rootstock', "https://public-node.testnet.rsk.co"),
         BOB_API: "https://rpc.testnet.gobob.xyz",
         ARK_API: "https://asp.testnet.ark.org",
         MAVEN_API: "https://api.testnet.maven.org",
@@ -86,10 +110,10 @@ export function endpointsFor(network: Network) {
       };
     default:
       return {
-        BTC_API: "https://mempool.space/api",
-        STX_API: "https://api.mainnet.hiro.so",
-        LIQUID_API: "https://blockstream.info/liquid/api",
-        RSK_API: "https://public-node.rsk.co",
+        BTC_API: getSovereignEndpoint('Bitcoin L1', "https://mempool.space/api"),
+        STX_API: getSovereignEndpoint('Stacks L2', "https://api.mainnet.hiro.so"),
+        LIQUID_API: getSovereignEndpoint('Liquid', "https://blockstream.info/liquid/api"),
+        RSK_API: getSovereignEndpoint('Rootstock', "https://public-node.rsk.co"),
         BOB_API: "https://rpc.gobob.xyz",
         ARK_API: "https://asp.ark.org",
         MAVEN_API: "https://api.maven.org",

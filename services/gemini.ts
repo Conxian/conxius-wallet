@@ -1,242 +1,132 @@
-
-import { GoogleGenAI } from "@google/genai";
 import { Asset } from "../types";
+import { callAi } from './ai';
 
-// Note: Moving GoogleGenAI instantiation inside functions to follow best practices 
-// of creating a new instance right before making an API call.
-
-// SECURITY: API key is held in memory and synchronized from encrypted Enclave state.
-// No hardcoded keys are present in the source or build artifacts.
-let _apiKey: string | undefined;
-
-export const setGeminiApiKey = (key: string) => {
-  _apiKey = key;
-};
+/**
+ * Gemini-specific wrappers using the unified AI service.
+ */
 
 export const getBountyAudit = async (bountyTitle: string, description: string) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Perform a technical audit of the following development bounty:
-      Title: "${bountyTitle}"
-      Description: "${description}"
-      
-      Requirements:
-      1. Evaluate the technical feasibility within the Conxius Enclave architecture.
-      2. Identify potential security risks (e.g., side-channel attacks on local keys).
-      3. Recommend a fair reward in BTC/STX based on the complexity.
-      4. Suggest 3 specific acceptance criteria for the Conxius Treasury multisig to verify before release.`,
-      config: {
-        systemInstruction: "You are the Conxius Lead Auditor. You ensure all community contributions maintain the highest standards of sovereignty and security.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Bounty audit engine offline. Use local conservative risk heuristics.";
-  }
+  const prompt = `Perform a technical audit of the following development bounty:
+  Title: "${bountyTitle}"
+  Description: "${description}"
+
+  Requirements:
+  1. Evaluate the technical feasibility within the Conxius Enclave architecture.
+  2. Identify potential security risks (e.g., side-channel attacks on local keys).
+  3. Recommend a fair reward in BTC/STX based on the complexity.
+  4. Suggest 3 specific acceptance criteria for the Conxius Treasury multisig to verify before release.`;
+
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are the Conxius Lead Auditor. You ensure all community contributions maintain the highest standards of sovereignty and security.",
+    thinkingBudget: 32768
+  });
 };
 
 export const generateReleaseNotes = async (version: string) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Generate a high-density, professional 'Cypherpunk' style release report for Conxius Wallet SVN ${version}. 
-      Highlight:
-      - The transition to BSL 1.1 Licensing.
-      - Integrated System Health Sentinel.
-      - Native Wormhole NTT Bridge stabilization.
-      - Sovereign Studio expansion (Ordinals/Runes).
-      - DAO Bounty Integration for community devs.
-      The tone should be clinical, authoritative, and visionary.`,
-      config: {
-        systemInstruction: "You are the Chief Technical Evangelist at Conxian-Labs.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Release notes synthesis failed. Version status: Hardened Production.";
-  }
+  const prompt = `Generate a high-density, professional 'Cypherpunk' style release report for Conxius Wallet SVN ${version}.
+  Highlight:
+  - The transition to BSL 1.1 Licensing.
+  - Integrated System Health Sentinel.
+  - Native Wormhole NTT Bridge stabilization.
+  - Sovereign Studio expansion (Ordinals/Runes).
+  - DAO Bounty Integration for community devs.
+  The tone should be clinical, authoritative, and visionary.`;
+
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are the Chief Technical Evangelist at Conxian-Labs.",
+    thinkingBudget: 32768
+  });
 };
 
 export const getSystemHealthSummary = async (testResults: any[]) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const resultsStr = testResults.map(r => `${r.label}: ${r.status}`).join(', ');
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: `Provide a clinical, high-density system health summary for the Conxius Sovereign Enclave based on these diagnostic results: ${resultsStr}. 
-      Evaluate the risk level (Low/Medium/High) and provide a "Protocol Directive".`,
-      config: {
-        systemInstruction: "You are the Conxius Sentinel System.",
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Sentinel offline. Risk: Minimal.";
-  }
+  const resultsStr = testResults.map(r => `${r.label}: ${r.status}`).join(', ');
+  const prompt = `Provide a clinical, high-density system health summary for the Conxius Sovereign Enclave based on these diagnostic results: ${resultsStr}.
+  Evaluate the risk level (Low/Medium/High) and provide a "Protocol Directive".`;
+
+  return callAi(prompt, {
+    model: 'gemini-1.5-flash',
+    systemInstruction: "You are the Conxius Sentinel System."
+  });
 };
 
 export const getNetworkRPCResearch = async (layer: string) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: `Research into RPC infrastructure for: "${layer}". Identify top 3 providers and one Tor endpoint.`,
-      config: {
-        systemInstruction: "You are the Conxius Infrastructure Lead.",
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Network research engine throttled.";
-  }
+  const prompt = `Research into RPC infrastructure for: "${layer}". Identify top 3 providers and one Tor endpoint.`;
+  return callAi(prompt, {
+    model: 'gemini-1.5-flash',
+    systemInstruction: "You are the Conxius Infrastructure Lead."
+  });
 };
 
 export const getFinalSystemHardeningChecklist = async () => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: "Provide a 5-point 'Hardened Mainnet' checklist for a Bitcoin multi-layer wallet. Focus on cold storage, Tor V3, ZK identity, NTT immutability, and fallback.",
-      config: {
-        systemInstruction: "You are a cyber-security expert.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Hardening audit offline.";
-  }
+  const prompt = "Provide a 5-point 'Hardened Mainnet' checklist for a Bitcoin multi-layer wallet. Focus on cold storage, Tor V3, ZK identity, NTT immutability, and fallback.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are a cyber-security expert.",
+    thinkingBudget: 32768
+  });
 };
 
 export const getDeploymentReadinessAudit = async (state: any) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Final Go/No-Go audit. Node Sync: ${state.nodeSyncProgress}%, Sovereignty Score: ${state.sovereigntyScore}. Evaluate readiness for mainnet.`,
-      config: {
-        systemInstruction: "You are the Release Manager.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Readiness audit offline.";
-  }
+  const prompt = `Final Go/No-Go audit. Node Sync: ${state.nodeSyncProgress}%, Sovereignty Score: ${state.sovereigntyScore}. Evaluate readiness for mainnet.`;
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are the Release Manager.",
+    thinkingBudget: 32768
+  });
 };
 
 export const getNodeEthosAdvice = async (path: string) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: `Advise on the 'Sovereign Ethos' of: "${path}". Compare with custodial wallets.`,
-      config: {
-        systemInstruction: "You are the Satoshi Sovereign Researcher.",
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Ethos engine offline.";
-  }
+  const prompt = `Advise on the 'Sovereign Ethos' of: "${path}". Compare with custodial wallets.`;
+  return callAi(prompt, {
+    model: 'gemini-1.5-flash',
+    systemInstruction: "You are the Satoshi Sovereign Researcher."
+  });
 };
 
 export const getRiskProfileAudit = async (assets: Asset[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Risk audit for: ${assetsSummary}. Evaluate counterparty, liquidity, regulatory, and technical risks.`,
-      config: {
-        systemInstruction: "You are the Chief Risk Officer.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Risk audit engine offline.";
-  }
+  const prompt = `Risk audit for: ${assetsSummary}. Evaluate counterparty, liquidity, regulatory, and technical risks.`;
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are the Chief Risk Officer.",
+    thinkingBudget: 32768
+  });
 };
 
 export const getAssetInsight = async (asset: Asset) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: `Technical analysis for ${asset.name} (${asset.symbol}) on ${asset.layer}.`,
-      config: {
-        systemInstruction: "You are Satoshi Pro AI.",
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Insight engine re-indexing.";
-  }
+  const prompt = `Technical analysis for ${asset.name} (${asset.symbol}) on ${asset.layer}.`;
+  return callAi(prompt, {
+    model: 'gemini-1.5-flash',
+    systemInstruction: "You are Satoshi Pro AI."
+  });
 };
 
 export const performDeepScan = async (assets: any[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Deep Scan: ${assetsSummary}. Provide risk scores, tax opportunities, and alpha.`,
-      config: {
-        systemInstruction: "You are Satoshi Pro AI.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Deep Scan offline.";
-  }
+  const prompt = `Deep Scan: ${assetsSummary}. Provide risk scores, tax opportunities, and alpha.`;
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are Satoshi Pro AI.",
+    thinkingBudget: 32768
+  });
 };
 
 export const getDIDInsight = async (did: string) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Audit Bitcoin DID: "${did}". Explain DPKI shift, PoW immutability, and sovereignty implications.`,
-      config: {
-        systemInstruction: "You are Satoshi AI.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Identity graph re-indexing.";
-  }
+  const prompt = `Audit Bitcoin DID: "${did}". Explain DPKI shift, PoW immutability, and sovereignty implications.`;
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are Satoshi AI.",
+    thinkingBudget: 32768
+  });
 };
 
 export const analyzePortfolio = async (assets: any[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: `Analyze portfolio: ${assetsSummary}.`,
-    });
-    return response.text;
-  } catch (error) {
-    return "Analysis error.";
-  }
+  const prompt = `Analyze portfolio: ${assetsSummary}.`;
+  return callAi(prompt, {
+    model: 'gemini-1.5-flash',
+    systemInstruction: "You are the Portfolio Architect."
+  });
 };

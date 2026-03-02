@@ -6,13 +6,7 @@
  */
 
 import { Network } from '../types';
-
-const HIRO_MAINNET = 'https://api.mainnet.hiro.so';
-const HIRO_TESTNET = 'https://api.testnet.hiro.so';
-
-const getApiUrl = (network: Network) => {
-  return network === 'testnet' ? HIRO_TESTNET : HIRO_MAINNET;
-};
+import { endpointsFor, fetchWithRetry } from './network';
 
 export interface PoxCycleInfo {
   currentCycle: number;
@@ -39,31 +33,13 @@ export interface RewardEntry {
   date: string;
 }
 
-const FETCH_TIMEOUT = 10000; // 10 seconds
-
-async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal
-    });
-    clearTimeout(id);
-    return response;
-  } catch (error) {
-    clearTimeout(id);
-    throw error;
-  }
-}
-
 /**
  * Fetches the current PoX cycle information from the Hiro API.
  */
 export async function fetchPoxInfo(network: Network = 'mainnet'): Promise<PoxCycleInfo> {
   try {
-    const baseUrl = getApiUrl(network);
-    const response = await fetchWithTimeout(`${baseUrl}/v2/pox`);
+    const { STX_API } = endpointsFor(network);
+    const response = await fetchWithRetry(`${STX_API}/v2/pox`);
     if (!response.ok) throw new Error(`Hiro PoX API error: ${response.status}`);
     const data = await response.json();
 
@@ -102,8 +78,8 @@ export async function fetchPoxInfo(network: Network = 'mainnet'): Promise<PoxCyc
  */
 export async function fetchStackerInfo(stxAddress: string, network: Network = 'mainnet'): Promise<StackerInfo> {
   try {
-    const baseUrl = getApiUrl(network);
-    const response = await fetch(`${baseUrl}/extended/v1/address/${stxAddress}/stacking`);
+    const { STX_API } = endpointsFor(network);
+    const response = await fetchWithRetry(`${STX_API}/extended/v1/address/${stxAddress}/stacking`);
     if (!response.ok) {
       // Address might not be stacking — that's normal
       return { isStacking: false, amountStacked: 0, lockPeriod: 0, unlockHeight: 0, poxAddress: '', rewardCycleStart: 0 };
@@ -137,9 +113,9 @@ export async function fetchRewardHistory(btcRewardAddress: string, network: Netw
   if (!btcRewardAddress) return [];
   
   try {
-    const baseUrl = getApiUrl(network);
-    const response = await fetchWithTimeout(
-      `${baseUrl}/extended/v1/burnchain/rewards/${btcRewardAddress}?limit=${limit}`
+    const { STX_API } = endpointsFor(network);
+    const response = await fetchWithRetry(
+      `${STX_API}/extended/v1/burnchain/rewards/${btcRewardAddress}?limit=${limit}`
     );
     if (!response.ok) return [];
     const data = await response.json();
@@ -167,8 +143,8 @@ export async function estimateStackingApy(network: Network = 'mainnet'): Promise
     const poxInfo = await fetchPoxInfo(network);
     if (poxInfo.totalStacked === 0) return 0;
 
-    // Fetch current prices
-    const priceResp = await fetchWithTimeout(
+    // Fetch current prices via CoinGecko or prices service
+    const priceResp = await fetchWithRetry(
       'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,stacks&vs_currencies=usd'
     );
     if (!priceResp.ok) return 0;

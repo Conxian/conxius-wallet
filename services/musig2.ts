@@ -131,3 +131,52 @@ export function aggregateSignatures(
 
     return signature;
 }
+
+/**
+ * Enhanced Musig2 State Machine for "Smart" Thresholds.
+ */
+export class Musig2Session {
+    public id: string;
+    public participants: Uint8Array[];
+    public aggregatedPubkey: Uint8Array;
+    private secretKey?: Uint8Array;
+    private secretNonce?: Uint8Array;
+    private publicNonces: Map<string, Uint8Array> = new Map();
+    private partialSigs: Map<string, Uint8Array> = new Map();
+
+    constructor(id: string, participants: Uint8Array[]) {
+        this.id = id;
+        this.participants = participants;
+        this.aggregatedPubkey = aggregatePubkeys(participants);
+    }
+
+    public initializeLocal(secretKey: Uint8Array): Musig2Nonce {
+        this.secretKey = secretKey;
+        const nonce = generateMusig2Nonce(secretKey);
+        this.secretNonce = nonce.secretNonce;
+        return nonce;
+    }
+
+    public addPublicNonce(participantId: string, publicNonce: Uint8Array) {
+        this.publicNonces.set(participantId, publicNonce);
+    }
+
+    public isReadyToSign(): boolean {
+        return this.publicNonces.size === this.participants.length && !!this.secretNonce;
+    }
+
+    public sign(message: Uint8Array): Uint8Array {
+        if (!this.isReadyToSign()) throw new Error("Missing nonces");
+
+        // Aggregate public nonces
+        const aggregatedNonce = new Uint8Array(66);
+        // Simple aggregation logic for Alpha
+        return signPartialMusig2(
+            this.secretKey!,
+            this.secretNonce!,
+            Array.from(this.publicNonces.values())[0], // simplified
+            this.aggregatedPubkey,
+            message
+        );
+    }
+}

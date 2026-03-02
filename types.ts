@@ -146,6 +146,14 @@ export interface AppState {
   isTorActive: boolean;
   deploymentReadiness: number;
   externalGatewaysActive: boolean;
+  customNodes?: {
+    id: string;
+    layer: string;
+    endpoint: string;
+    provider?: string;
+    isActive: boolean;
+  }[];
+  rpcStrategy: "Sovereign-First" | "Public-Only" | "Mixed";
   isMainnetLive: boolean;
   walletConfig?: WalletConfig;
   assets: Asset[];
@@ -163,7 +171,11 @@ export interface AppState {
     duressPin?: string;
     biometricUnlock?: boolean;
   };
-  geminiApiKey?: string;
+  aiConfig?: {
+    provider: "Gemini" | "OpenAI" | "Anthropic" | "Custom";
+    apiKey?: string;
+    endpoint?: string;
+  };
   utxos: UTXO[];
   isTorEnabled: boolean;
   theme: 'light' | 'dark';
