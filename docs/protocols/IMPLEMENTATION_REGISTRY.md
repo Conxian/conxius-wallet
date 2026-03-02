@@ -12,6 +12,7 @@ This document tracks the ground-truth implementation status of every major featu
 | **Zero-Leak Memory** | ✅ PRODUCTION | Strict .fill(0) and try...finally enforcement. |
 | **Device Integrity Plugin** | ✅ PRODUCTION | Multi-layer heuristics for root/emulator detection. **Verified on Samsung A10.** |
 | **Maestro UI Testing** | ✅ PRODUCTION | Automated on-device UI flows for Android verification. |
+| **SPV Light Client** | 🛠️ ENHANCED | Header-verifying skeleton implemented in `services/protocol.ts`. |
 
 ## II. BITCOIN L1 (BTC)
 
@@ -19,7 +20,7 @@ This document tracks the ground-truth implementation status of every major featu
 | :--- | :--- | :--- |
 | **BIP-84 (Segwit)** | ✅ PRODUCTION | Full PSBT signing & broadcast. |
 | **BIP-86 (Taproot)** | ✅ PRODUCTION | Signing & address derivation implemented. |
-| **BIP-352 (Silent Payments)** | ✅ PRODUCTION | Real shared secret & tweaked output computation implemented. |
+| **BIP-352 (Silent Payments)** | ✅ PRODUCTION | Real shared secret & tweaked output computation implemented. Integrated UI. |
 | **UTXO Manager** | ✅ PRODUCTION | Real-time tracking, dust sweeping, turbo boost. |
 | **2-of-3 Multi-Sig** | ✅ PRODUCTION | P2WSH and Taproot Musig2 (BIP-327) quorums implemented. |
 
@@ -83,6 +84,13 @@ This document tracks the ground-truth implementation status of every major featu
 3. **Done**: Sprint 2026-02-18 System-wide Review & Refinement. Enhanced sBTC Nakamoto monitoring, production-grade Ark boarding logic, and TEE-backed Governance persistence. Standardized Gateway domain alignment across the ecosystem.
 4. **Done**: Sprint 2026-02-18 Milestone M10 (ZK Verifier) & M11 (BitVM) Verification. Verified functional cryptographic STARK verifier in Labs Explorer.
 5. **Done**: Sprint 2026-02-18 Maestro On-Device Testing. Setup and verified automated UI testing flows for Android hardware.
+6. **Done**: Sprint 2026-02-18 Advanced Sovereignty Implementation.
+   - Programmable Custody: Decaying Multisig & Velocity Limits via Miniscript.
+   - Threshold Sovereignty: Musig2/FROST session management.
+   - Silent Payments (BIP-352) UI & Protocol alignment.
+   - Abstracted Lightning & Unified Balances.
+   - SPV Light Client foundation.
+   - Business Alignment: Monetization discounts, affiliate hardening, and technical integration fee caps ($50).
 
 ---
 

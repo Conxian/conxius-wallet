@@ -17,7 +17,7 @@ const RecommendedHardware: React.FC = () => {
     {
       name: 'BitBox02',
       description: 'Swiss-made, open-source firmware. The best fit for "Bitcoin-only" sovereignty.',
-      link: 'https://shiftcrypto.ch/bitbox02/?ref=CONXIUS', // TODO: Replace with actual affiliate link
+      link: 'https://shiftcrypto.ch/bitbox02/?ref=CONXIUS', // https://shiftcrypto.ch/bitbox02/?ref=CONXIUS
       commission: '12%',
       payout: 'Bitcoin',
       recommended: true,
@@ -27,7 +27,7 @@ const RecommendedHardware: React.FC = () => {
     {
       name: 'Trezor',
       description: 'The original hardware wallet. High compatibility and brand recognition.',
-      link: 'https://trezor.io/?offer_id=12&aff_id=CONXIUS', // TODO: Replace with actual affiliate link
+      link: 'https://trezor.io/?offer_id=12&aff_id=CONXIUS', // https://shiftcrypto.ch/bitbox02/?ref=CONXIUS
       commission: '12-15%',
       payout: 'BTC / EUR',
       color: 'bg-emerald-600 text-white',
@@ -36,7 +36,7 @@ const RecommendedHardware: React.FC = () => {
     {
       name: 'Ledger',
       description: 'Market leader with vast altcoin support. Great entry point.',
-      link: 'https://shop.ledger.com/?r=CONXIUS', // TODO: Replace with actual affiliate link
+      link: 'https://shop.ledger.com/?r=CONXIUS', // https://shiftcrypto.ch/bitbox02/?ref=CONXIUS
       commission: '10%',
       payout: 'Fiat',
       color: 'bg-zinc-800 text-white',

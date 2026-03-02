@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Repeat, Settings, Shield, Zap, Info, UserCheck, Coins, CreditCard, Network, Lock, Crown, TrendingUp, Trophy, BarChart3, Briefcase, Terminal, FlaskConical, Medal, Gavel, Landmark, BookOpen, Package, Rocket, Layers, Castle, Binary, Palette, ShoppingBag, Activity, Globe, Ghost } from 'lucide-react';
+import { Fingerprint, LayoutDashboard, Repeat, Settings, Shield, Zap, Info, UserCheck, Coins, CreditCard, Network, Lock, Crown, TrendingUp, Trophy, BarChart3, Briefcase, Terminal, FlaskConical, Medal, Gavel, Landmark, BookOpen, Package, Rocket, Layers, Castle, Binary, Palette, ShoppingBag, Activity, Globe, Ghost } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;

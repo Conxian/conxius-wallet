@@ -1,4 +1,5 @@
 import { Network } from '../types';
+import { fetchWithRetry } from './network';
 
 // ─── Feature Gate ────────────────────────────────────────────────────────────
 
@@ -81,7 +82,7 @@ const bisqProxy = async <T>(
     );
   }
 
-  const response = await fetch(`${BISQ_PROXY_URL}${endpoint}`, {
+  const response = await fetchWithRetry(`${BISQ_PROXY_URL}${endpoint}`, {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,

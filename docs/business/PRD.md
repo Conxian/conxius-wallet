@@ -154,3 +154,10 @@ Conxius reduces the complexity of the Bitcoin ecosystem into a single, unified "
 - **Native Security**: Daily diagnostics via `DeviceIntegrityPlugin`.
 - **Physical Audit**: Verified on real Pixel hardware for TEE/StrongBox compliance.
 - **E2E Readiness**: Comprehensive Playwright suite for cross-chain "Rails" validation.
+
+### 3.4. Smart Wallet & Policy Engine (v1.2)
+
+Conxius v1.2 expands into a **Smart Sovereign Wallet**, utilizing UTXO-native scripting to enable complex treasury management on-device.
+- **Miniscript Integration:** Standardization of spending policies including Time-Locks, Thresholds, and Inheritance.
+- **Musig2 Thresholds:** Interactive BIP-327 signature aggregation for privacy-preserving multisig.
+- **Sovereign Audit Layer:** Local pre-flight audit of all spending policies by Satoshi AI to ensure mathematical soundness and sovereignty.

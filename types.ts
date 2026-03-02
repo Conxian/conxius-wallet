@@ -1,5 +1,5 @@
 
-export type BitcoinLayer = 'Mainnet' | 'Stacks' | 'Rootstock' | 'Ethereum' | 'Lightning' | 'Liquid' | 'Runes' | 'Ordinals' | 'BOB' | 'RGB' | 'Ark' | 'BitVM' | 'StateChain' | 'Maven' | 'B2' | 'Botanix' | 'Mezo' | 'Alpen' | 'Zulu' | 'Bison' | 'Hemi' | 'Nubit' | 'Lorenzo' | 'Citrea' | 'Babylon' | 'Merlin' | 'Bitlayer' | 'TaprootAssets';
+export type BitcoinLayer = 'Mainnet' | 'Stacks' | 'Rootstock' | 'Ethereum' | 'Lightning' | 'Liquid' | 'Runes' | 'Ordinals' | 'BOB' | 'RGB' | 'Ark' | 'BitVM' | 'StateChain' | 'Maven' | 'B2' | 'Botanix' | 'Mezo' | 'Alpen' | 'Zulu' | 'Bison' | 'Hemi' | 'Nubit' | 'Lorenzo' | 'Citrea' | 'Babylon' | 'Merlin' | 'Bitlayer' | 'TaprootAssets' | 'Silent';
 export type AppMode = 'sovereign' | 'simulation';
 export type Network = 'mainnet' | 'testnet' | 'regtest' | 'devnet';
 export type LnBackendType = "None" | "LND" | "Breez" | "Greenlight";
@@ -146,6 +146,14 @@ export interface AppState {
   isTorActive: boolean;
   deploymentReadiness: number;
   externalGatewaysActive: boolean;
+  customNodes?: {
+    id: string;
+    layer: string;
+    endpoint: string;
+    provider?: string;
+    isActive: boolean;
+  }[];
+  rpcStrategy: "Sovereign-First" | "Public-Only" | "Mixed";
   isMainnetLive: boolean;
   walletConfig?: WalletConfig;
   assets: Asset[];
@@ -163,7 +171,11 @@ export interface AppState {
     duressPin?: string;
     biometricUnlock?: boolean;
   };
-  geminiApiKey?: string;
+  aiConfig?: {
+    provider: "Gemini" | "OpenAI" | "Anthropic" | "Custom";
+    apiKey?: string;
+    endpoint?: string;
+  };
   utxos: UTXO[];
   isTorEnabled: boolean;
   theme: 'light' | 'dark';

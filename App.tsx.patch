@@ -1,0 +1,11 @@
+<<<<<<< SEARCH
+  const setAiConfig = (config: AppState["aiConfig"]) => { setAiServiceConfig(config); setState(prev => ({ ...prev, aiConfig: config })); };
+
+  const getWormholeSigner = (chain: any) => {
+=======
+  const setAiConfig = (config: AppState["aiConfig"]) => { setAiServiceConfig(config); setState(prev => ({ ...prev, aiConfig: config })); };
+  const setCustomNodes = (nodes: AppState["customNodes"]) => { setState(prev => ({ ...prev, customNodes: nodes })); };
+  const setRpcStrategy = (strategy: AppState["rpcStrategy"]) => { setState(prev => ({ ...prev, rpcStrategy: strategy })); };
+
+  const getWormholeSigner = (chain: any) => {
+>>>>>>> REPLACE
