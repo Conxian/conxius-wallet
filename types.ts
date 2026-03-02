@@ -27,6 +27,7 @@ export interface UTXO {
   vout: number;
   amount: number;
   address: string;
+  script?: string;
   label?: string;
   status: 'confirmed' | 'pending';
   isFrozen: boolean;
@@ -166,6 +167,9 @@ export interface AppState {
   utxos: UTXO[];
   isTorEnabled: boolean;
   theme: 'light' | 'dark';
+  isLocked?: boolean;
+  loyaltyXP?: number;
+  lastAction?: number;
 }
 
 export interface DIDProfile {

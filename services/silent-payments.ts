@@ -138,7 +138,7 @@ export const scanTransactionForOutputs = (
         // Taproot output script is 0x51 0x20 <32-byte-x-only-pubkey>
         if (output.script.length === 34 && output.script[0] === 0x51 && output.script[1] === 0x20) {
             const outputXOnly = output.script.slice(2);
-            if (outputXOnly.equals(tweakedXOnly)) {
+            if (Buffer.from(outputXOnly).equals(Buffer.from(tweakedXOnly))) {
                 foundOutputs.push({
                     vout: index,
                     amount: output.value,
