@@ -127,7 +127,7 @@ describe('signer service', () => {
         it('should sign a Taproot message using Schnorr in JS fallback', async () => {
       const message = 'Taproot test message';
       const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
-      const signature = await signBip322Message(message, new Uint8Array(seed), undefined, 'P2TR');
+      const signature = await signBip322Message(message, new Uint8Array(seed));
 
       expect(signature).toBeDefined();
       expect(typeof signature).toBe('string');

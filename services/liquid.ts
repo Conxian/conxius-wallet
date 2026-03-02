@@ -132,7 +132,7 @@ export const createPegOutTransaction = async (
   changeAddress: string
 ): Promise<string> => {
   const liquidNet = getLiquidNetwork(network);
-  const psbt = new liquid.Psbt({ network: liquidNet });
+  const psbt = new (liquid as any).Psbt({ network: liquidNet });
 
   const assetBuffer = Buffer.concat([
     Buffer.alloc(1, 1),
@@ -141,24 +141,24 @@ export const createPegOutTransaction = async (
 
   let totalInput = 0;
   for (const utxo of utxos) {
-    psbt.addInput({
+    (psbt as any).addInput({
       hash: utxo.txid,
       index: utxo.vout,
       witnessUtxo: {
         script: Buffer.from(utxo.script || '', 'hex'),
-        value: liquid.confidential.satoshiToConfidentialValue(utxo.value),
+        value: liquid.confidential.satoshiToConfidentialValue(utxo.amount),
         asset: assetBuffer,
         nonce: Buffer.alloc(1, 0),
       }
     });
-    totalInput += utxo.value;
+    totalInput += utxo.amount;
   }
 
   // 1. Peg-out Output (Burn to Federation)
   // Typically involves a specific script or OP_RETURN with BTC address
   const pegoutScript = liquid.payments.embed({ data: [Buffer.from(btcDestAddress, 'utf8')] }).output;
   
-  psbt.addOutput({
+  (psbt as any).addOutput({
     script: pegoutScript!,
     value: liquid.confidential.satoshiToConfidentialValue(amountSats),
     asset: assetBuffer,
@@ -169,7 +169,7 @@ export const createPegOutTransaction = async (
   const fee = 500;
   const change = totalInput - amountSats - fee;
   if (change > 546) {
-    psbt.addOutput({
+    (psbt as any).addOutput({
       address: changeAddress,
       value: liquid.confidential.satoshiToConfidentialValue(change),
       asset: assetBuffer,
@@ -178,11 +178,11 @@ export const createPegOutTransaction = async (
   }
 
   // 3. Fee Output
-  psbt.addOutput({
+  (psbt as any).addOutput({
     value: liquid.confidential.satoshiToConfidentialValue(fee),
     asset: assetBuffer,
     nonce: Buffer.alloc(1, 0),
   });
 
-  return psbt.toBase64();
+  return (psbt as any).toBase64();
 };

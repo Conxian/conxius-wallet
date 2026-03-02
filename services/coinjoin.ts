@@ -60,7 +60,7 @@ export const registerInputs = async (
 
     // Simulate WabiSabi Zero-Knowledge credential issuance
     const credentials = utxos.map(utxo => ({
-        amount: utxo.value,
+        amount: utxo.amount,
         weight: 68,
         presentation: 'blinded_' + generateRandomString(32)
     }));

@@ -330,3 +330,19 @@ function publicKeyToEvmAddress(pubkey: Buffer): string {
     const hash = keccak_256(uncompressed);
     return '0x' + Buffer.from(hash.slice(-20)).toString('hex');
 }
+
+/**
+ * Parses a BIP-322 message to identify login requests.
+ */
+export const parseBip322Message = (message: string) => {
+    const isLogin = /^\[Conxius Login\]/.test(message);
+    const domainMatch = message.match(/Domain: ([a-zA-Z0-9.-]+)/);
+    const nonceMatch = message.match(/Nonce: ([a-zA-Z0-9]+)/);
+    const timestampMatch = message.match(/Timestamp: ([0-9]+)/);
+    return {
+        isLogin,
+        domain: domainMatch ? domainMatch[1] : undefined,
+        nonce: nonceMatch ? nonceMatch[1] : undefined,
+        timestamp: timestampMatch ? parseInt(timestampMatch[1]) : undefined
+    };
+};
