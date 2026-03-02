@@ -121,3 +121,47 @@ alignment.
   full WASM-based DAG verification.
 - **CoinJoin:** WabiSabi credential issuance and blinded registration are
   simulated via a unified state machine in `services/coinjoin.ts`.
+
+## 🤖 Sovereign AI & Zero-Leak Privacy (v1.0)
+
+Conxius implements a strict AI security layer to ensure no sensitive
+cryptographic identifiers (addresses, keys, mnemonics) leave the device.
+
+- **Sanitization:** All outgoing prompts to LLMs are passed through
+  `services/ai-security.ts` to redact Bitcoin/EVM addresses, hex strings,
+  and mnemonics.
+- **Audit:** The `secureAuditPrompt` function checks for malicious intent and
+  prompt injection before any external API call.
+- **Transparency:** The UI provides clear indicators (badges/icons) when a
+  prompt has been sanitized or when the AI is running in local simulation mode.
+- **Hardened Gemini Service:** All Gemini interactions in `services/gemini.ts`
+  now use the central `callGemini` wrapper for mandatory security auditing.
+
+## 🌐 Protocol Sovereignty & BYOS Nodes (v1.1)
+
+Conxius has been enhanced to allow users to "Bring Your Own" services, including
+AI and RPC nodes, ensuring full alignment with the Bitcoin-First hierarchy.
+
+- **BYOS AI Hooks:** Users can configure custom AI endpoints (OpenAI-compatible)
+  in Settings. All interactions still pass through the local Sovereign Audit.
+- **Sovereign-First RPC:** The network layer now prefers user-defined nodes
+  over public RPCs.
+- **Routing Strategy:** Users can toggle between "Sovereign-First", "Mixed",
+  and "Public-Only" modes in the Node Hub.
+- **Global Alignment:** Non-React services are synchronized with the UI state
+  via `setGlobalAppState`, ensuring protocol fetchers always respect the
+  user's sovereignty choices.
+
+## 🔐 Smart Wallet & Miniscript Sovereignty (v1.2)
+
+Conxius has evolved into a full Smart Sovereign Wallet, implementing
+UTXO-native spending policies via Miniscript and Musig2.
+
+- **Miniscript Support:** Define complex spending rules (TimeLocks,
+  Inheritance, Thresholds) in the `SovereignPolicies` hub.
+- **Interactive Thresholds:** The `Musig2Session` service handles the
+  multi-step signature aggregation required for privacy-preserving multisig.
+- **AI Policy Auditor:** Satoshi AI (`services/ai.ts`) is now equipped to
+  audit Miniscript descriptors for risk, key loss, and sovereignty maturity.
+- **Unified Network Layer:** Every module in the app (Fees, DEX, Stacking)
+  is now hard-aligned with the user's sovereign RPC and Tor settings.
