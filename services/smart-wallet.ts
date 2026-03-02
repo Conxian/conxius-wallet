@@ -98,8 +98,8 @@ export const humanizeRule = (rules: string): string => {
     return rules
         .replace(/and\(/g, "ALL OF (")
         .replace(/or\(/g, "EITHER (")
-        .replace(/pk\((.*?)\)/g, "Key []")
-        .replace(/older\((.*?)\)/g, "Wait  Blocks")
+        .replace(/pk\((.*?)\)/g, "Key [$1]")
+        .replace(/older\((.*?)\)/g, "Wait $1 Blocks")
         .replace(/thresh\((\d+),(.*?)\)/g, (match, n, ks) => `THRESHOLD ${n} OF [${ks}]`)
         .replace(/\)/g, ")");
 };
