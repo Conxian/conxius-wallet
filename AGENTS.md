@@ -136,3 +136,18 @@ cryptographic identifiers (addresses, keys, mnemonics) leave the device.
   prompt has been sanitized or when the AI is running in local simulation mode.
 - **Hardened Gemini Service:** All Gemini interactions in `services/gemini.ts`
   now use the central `callGemini` wrapper for mandatory security auditing.
+
+## 🌐 Protocol Sovereignty & BYOS Nodes (v1.1)
+
+Conxius has been enhanced to allow users to "Bring Your Own" services, including
+AI and RPC nodes, ensuring full alignment with the Bitcoin-First hierarchy.
+
+- **BYOS AI Hooks:** Users can configure custom AI endpoints (OpenAI-compatible)
+  in Settings. All interactions still pass through the local Sovereign Audit.
+- **Sovereign-First RPC:** The network layer now prefers user-defined nodes
+  over public RPCs.
+- **Routing Strategy:** Users can toggle between "Sovereign-First", "Mixed",
+  and "Public-Only" modes in the Node Hub.
+- **Global Alignment:** Non-React services are synchronized with the UI state
+  via `setGlobalAppState`, ensuring protocol fetchers always respect the
+  user's sovereignty choices.

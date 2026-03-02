@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { Terminal, Send, Bot, Loader2, X, ChevronRight, ShieldCheck, ShieldAlert } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 import { AppContext } from '../context';
 import { calculatePrivacyScore } from '../services/privacy';
 import { getRandomInt } from '../services/random';
-import { secureAuditPrompt, rehydrateResponse } from '../services/ai-security';
+import { secureAuditPrompt } from '../services/ai-security';
+import { callAi } from '../services/ai';
 
 const SatoshiAIChat: React.FC = () => {
   const appContext = useContext(AppContext);
@@ -28,27 +28,23 @@ const SatoshiAIChat: React.FC = () => {
     const userMessage = input;
     setInput('');
 
-    // SOVEREIGN AI AUDIT: Sanitize user message
-    const { sanitized, isBlocked, reason } = secureAuditPrompt(userMessage);
+    // SOVEREIGN AI AUDIT: Sanitize user message for UI feedback
+    const { sanitized: uiSanitized } = secureAuditPrompt(userMessage);
 
     setMessages(prev => [...prev, {
         role: 'user',
         content: userMessage,
-        isSanitized: sanitized !== userMessage
+        isSanitized: uiSanitized !== userMessage
     }]);
 
-    if (isBlocked) {
-        setMessages(prev => [...prev, { role: 'ai', content: `[Audit Blocked]: ${reason}` }]);
-        return;
-    }
-
     setIsLoading(true);
-    setLastSanitized(sanitized !== userMessage);
+    setLastSanitized(uiSanitized !== userMessage);
 
     try {
       let responseText = "";
       
-      if (!appContext.state.geminiApiKey) {
+      const config = appContext.state.aiConfig;
+      if (!config || (!config.apiKey && config.provider !== 'Custom')) {
          // Simulation Mode Response
          await new Promise(r => setTimeout(r, 1000)); // Simulate think time
          const responses = [
@@ -61,12 +57,8 @@ const SatoshiAIChat: React.FC = () => {
          ];
          responseText = responses[getRandomInt(responses.length)] + " [SIMULATION]";
       } else {
-          const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
-          const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
-            contents: sanitized,
-            config: {
-              systemInstruction: `You are Satoshi AI, a master of Bitcoin technology and sovereign finance.
+          responseText = await callAi(userMessage, {
+            systemInstruction: `You are Satoshi AI, a master of Bitcoin technology and sovereign finance.
 You are concise, technical, and prioritize user privacy.
 You help users understand Bitcoin layers and risk.
 Current Wallet Context:
@@ -75,11 +67,7 @@ Current Wallet Context:
 - Tor Routing: ${appContext.state.isTorEnabled ? 'ENABLED' : 'DISABLED'}
 Use a terminal-style tone.
 NOTE: Some sensitive identifiers in user messages may be replaced with placeholders like [BTC_ADDR_XXXX]. Always refer to them by their placeholders.`,
-            }
           });
-
-          // Rehydrate the AI response if it contains placeholders
-          responseText = rehydrateResponse(response.text || "");
       }
 
       setMessages(prev => [...prev, { role: 'ai', content: responseText || "Connection to the network lost." }]);
@@ -103,6 +91,8 @@ NOTE: Some sensitive identifiers in user messages may be replaced with placehold
       </button>
     );
   }
+
+  const isAiActive = appContext.state.aiConfig?.apiKey || (appContext.state.aiConfig?.provider === 'Custom' && appContext.state.aiConfig?.endpoint);
 
   return (
     <div className="fixed bottom-24 right-4 md:bottom-8 md:right-8 w-[calc(100vw-2rem)] md:w-96 h-[500px] bg-zinc-950 border border-zinc-800 rounded-[2.5rem] shadow-2xl z-70 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-300">
@@ -183,9 +173,9 @@ NOTE: Some sensitive identifiers in user messages may be replaced with placehold
                 {lastSanitized ? "⚠️ Sensitive identifiers redacted for privacy." : "✓ Zero-Leak Privacy Active"}
             </p>
             <div className="flex items-center gap-1">
-                 <div className={`w-1.5 h-1.5 rounded-full ${appContext.state.geminiApiKey ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`}></div>
+                 <div className={`w-1.5 h-1.5 rounded-full ${isAiActive ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`}></div>
                  <span className="text-[9px] text-zinc-600 uppercase tracking-tighter font-bold">
-                    {appContext.state.geminiApiKey ? 'Remote-AI' : 'Local-Sim'}
+                    {isAiActive ? `Remote-${appContext.state.aiConfig?.provider}` : 'Local-Sim'}
                  </span>
             </div>
         </div>

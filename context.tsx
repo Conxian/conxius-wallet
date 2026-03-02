@@ -23,6 +23,8 @@ export const AppContext = createContext<{
   setMode: (mode: AppMode) => void;
   setLnBackend: (cfg: LnBackendConfig) => void;
   setSecurity: (s: Partial<AppState['security']>) => void;
-  setGeminiApiKey: (key: string) => void;
+  setAiConfig: (config: AppState["aiConfig"]) => void;
+  setCustomNodes: (nodes: AppState["customNodes"]) => void;
+  setRpcStrategy: (strategy: AppState["rpcStrategy"]) => void;
   getWormholeSigner: (chain: any) => any; // Typed as any to avoid circular deps in context, or import types
 } | null>(null);

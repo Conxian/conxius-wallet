@@ -1,38 +1,9 @@
-import { GoogleGenAI } from "@google/genai";
 import { Asset } from "../types";
-import { secureAuditPrompt } from './ai-security';
+import { callAi } from './ai';
 
-// SECURITY: API key is held in memory and synchronized from encrypted Enclave state.
-// No hardcoded keys are present in the source or build artifacts.
-let _apiKey: string | undefined;
-
-export const setGeminiApiKey = (key: string) => {
-  _apiKey = key;
-};
-
-const callGemini = async (model: string, prompt: string, systemInstruction: string, thinkingBudget?: number) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-
-    // SOVEREIGN AI AUDIT: Sanitize outgoing prompt
-    const { sanitized, isBlocked, reason } = secureAuditPrompt(prompt);
-    if (isBlocked) return `[Sovereign Audit Blocked]: ${reason}`;
-
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: sanitized,
-      config: {
-        systemInstruction: systemInstruction,
-        ...(thinkingBudget ? { thinkingConfig: { thinkingBudget } } : {})
-      }
-    });
-    return response.text;
-  } catch (error) {
-    console.error("[Gemini] Engine failure", error);
-    return null;
-  }
-};
+/**
+ * Gemini-specific wrappers using the unified AI service.
+ */
 
 export const getBountyAudit = async (bountyTitle: string, description: string) => {
   const prompt = `Perform a technical audit of the following development bounty:
@@ -45,8 +16,11 @@ export const getBountyAudit = async (bountyTitle: string, description: string) =
   3. Recommend a fair reward in BTC/STX based on the complexity.
   4. Suggest 3 specific acceptance criteria for the Conxius Treasury multisig to verify before release.`;
 
-  const res = await callGemini('gemini-1.5-pro', prompt, "You are the Conxius Lead Auditor. You ensure all community contributions maintain the highest standards of sovereignty and security.", 32768);
-  return res || "Bounty audit engine offline. Use local conservative risk heuristics.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are the Conxius Lead Auditor. You ensure all community contributions maintain the highest standards of sovereignty and security.",
+    thinkingBudget: 32768
+  });
 };
 
 export const generateReleaseNotes = async (version: string) => {
@@ -59,8 +33,11 @@ export const generateReleaseNotes = async (version: string) => {
   - DAO Bounty Integration for community devs.
   The tone should be clinical, authoritative, and visionary.`;
 
-  const res = await callGemini('gemini-1.5-pro', prompt, "You are the Chief Technical Evangelist at Conxian-Labs.", 32768);
-  return res || "Release notes synthesis failed. Version status: Hardened Production.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are the Chief Technical Evangelist at Conxian-Labs.",
+    thinkingBudget: 32768
+  });
 };
 
 export const getSystemHealthSummary = async (testResults: any[]) => {
@@ -68,63 +45,88 @@ export const getSystemHealthSummary = async (testResults: any[]) => {
   const prompt = `Provide a clinical, high-density system health summary for the Conxius Sovereign Enclave based on these diagnostic results: ${resultsStr}.
   Evaluate the risk level (Low/Medium/High) and provide a "Protocol Directive".`;
 
-  const res = await callGemini('gemini-1.5-flash', prompt, "You are the Conxius Sentinel System.");
-  return res || "Sentinel offline. Risk: Minimal.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-flash',
+    systemInstruction: "You are the Conxius Sentinel System."
+  });
 };
 
 export const getNetworkRPCResearch = async (layer: string) => {
   const prompt = `Research into RPC infrastructure for: "${layer}". Identify top 3 providers and one Tor endpoint.`;
-  const res = await callGemini('gemini-1.5-flash', prompt, "You are the Conxius Infrastructure Lead.");
-  return res || "Network research engine throttled.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-flash',
+    systemInstruction: "You are the Conxius Infrastructure Lead."
+  });
 };
 
 export const getFinalSystemHardeningChecklist = async () => {
   const prompt = "Provide a 5-point 'Hardened Mainnet' checklist for a Bitcoin multi-layer wallet. Focus on cold storage, Tor V3, ZK identity, NTT immutability, and fallback.";
-  const res = await callGemini('gemini-1.5-pro', prompt, "You are a cyber-security expert.", 32768);
-  return res || "Hardening audit offline.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are a cyber-security expert.",
+    thinkingBudget: 32768
+  });
 };
 
 export const getDeploymentReadinessAudit = async (state: any) => {
   const prompt = `Final Go/No-Go audit. Node Sync: ${state.nodeSyncProgress}%, Sovereignty Score: ${state.sovereigntyScore}. Evaluate readiness for mainnet.`;
-  const res = await callGemini('gemini-1.5-pro', prompt, "You are the Release Manager.", 32768);
-  return res || "Readiness audit offline.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are the Release Manager.",
+    thinkingBudget: 32768
+  });
 };
 
 export const getNodeEthosAdvice = async (path: string) => {
   const prompt = `Advise on the 'Sovereign Ethos' of: "${path}". Compare with custodial wallets.`;
-  const res = await callGemini('gemini-1.5-flash', prompt, "You are the Satoshi Sovereign Researcher.");
-  return res || "Ethos engine offline.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-flash',
+    systemInstruction: "You are the Satoshi Sovereign Researcher."
+  });
 };
 
 export const getRiskProfileAudit = async (assets: Asset[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
   const prompt = `Risk audit for: ${assetsSummary}. Evaluate counterparty, liquidity, regulatory, and technical risks.`;
-  const res = await callGemini('gemini-1.5-pro', prompt, "You are the Chief Risk Officer.", 32768);
-  return res || "Risk audit engine offline.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are the Chief Risk Officer.",
+    thinkingBudget: 32768
+  });
 };
 
 export const getAssetInsight = async (asset: Asset) => {
   const prompt = `Technical analysis for ${asset.name} (${asset.symbol}) on ${asset.layer}.`;
-  const res = await callGemini('gemini-1.5-flash', prompt, "You are Satoshi Pro AI.");
-  return res || "Insight engine re-indexing.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-flash',
+    systemInstruction: "You are Satoshi Pro AI."
+  });
 };
 
 export const performDeepScan = async (assets: any[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
   const prompt = `Deep Scan: ${assetsSummary}. Provide risk scores, tax opportunities, and alpha.`;
-  const res = await callGemini('gemini-1.5-pro', prompt, "You are Satoshi Pro AI.", 32768);
-  return res || "Deep Scan offline.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are Satoshi Pro AI.",
+    thinkingBudget: 32768
+  });
 };
 
 export const getDIDInsight = async (did: string) => {
   const prompt = `Audit Bitcoin DID: "${did}". Explain DPKI shift, PoW immutability, and sovereignty implications.`;
-  const res = await callGemini('gemini-1.5-pro', prompt, "You are Satoshi AI.", 32768);
-  return res || "Identity graph re-indexing.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-pro',
+    systemInstruction: "You are Satoshi AI.",
+    thinkingBudget: 32768
+  });
 };
 
 export const analyzePortfolio = async (assets: any[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
   const prompt = `Analyze portfolio: ${assetsSummary}.`;
-  const res = await callGemini('gemini-1.5-flash', prompt, "You are the Portfolio Architect.");
-  return res || "Analysis error.";
+  return callAi(prompt, {
+    model: 'gemini-1.5-flash',
+    systemInstruction: "You are the Portfolio Architect."
+  });
 };

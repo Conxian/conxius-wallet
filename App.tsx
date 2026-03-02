@@ -54,7 +54,7 @@ import { evaluateSecurityPosture } from './services/device-integrity';
 import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
 import { notificationService } from './services/notifications';
 import { sanitizeError } from './services/network';
-import { setGeminiApiKey as setGeminiServiceKey } from './services/gemini';
+import { setAiConfig as setGeminiServiceKey } from './services/gemini';
 import { IdentityService } from './services/identity';
 import { Web5Service } from './services/web5';
 
@@ -78,6 +78,8 @@ const DEFAULT_STATE: AppState & { language: Language } = {
   isTorActive: true,
   deploymentReadiness: 100,
   externalGatewaysActive: false,
+  rpcStrategy: "Sovereign-First",
+  customNodes: [],
   isMainnetLive: false,
   walletConfig: undefined,
   assets: [], // Default to empty, load mocks only if explicit simulation
@@ -103,6 +105,7 @@ const App: React.FC = () => {
   const [bootStep, setBootStep] = useState(0);
   const [isBooting, setIsBooting] = useState(true);
   const [state, setState] = useState<AppState & { language: Language }>(DEFAULT_STATE);
+  useEffect(() => { setGlobalAppState(state); }, [state]);
   
   // Security & UX State
   const [isLocked, setIsLocked] = useState(false);
@@ -340,7 +343,9 @@ const App: React.FC = () => {
   }));
   const setLnBackend = (cfg: LnBackendConfig) => setState(prev => ({ ...prev, lnBackend: cfg }));
   const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } as any }));
-  const setGeminiApiKey = (key: string) => { setGeminiServiceKey(key); setState(prev => ({ ...prev, geminiApiKey: key })); };
+  const setAiConfig = (config: AppState["aiConfig"]) => { setAiServiceConfig(config); setState(prev => ({ ...prev, aiConfig: config })); };
+  const setCustomNodes = (nodes: AppState["customNodes"]) => { setState(prev => ({ ...prev, customNodes: nodes })); };
+  const setRpcStrategy = (strategy: AppState["rpcStrategy"]) => { setState(prev => ({ ...prev, rpcStrategy: strategy })); };
 
   const performLock = () => {
      currentPinRef.current = null;
@@ -552,7 +557,7 @@ const App: React.FC = () => {
       );
     }
     return (
-      <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setGeminiApiKey, getWormholeSigner }}>
+      <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, getWormholeSigner }}>
         <Onboarding onComplete={(config, pin) => { if (config) setWalletConfig(config as any, pin); }} />
         <ToastContainer toasts={toasts} removeToast={removeToast} />
       </AppContext.Provider>
@@ -560,7 +565,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setGeminiApiKey, getWormholeSigner }}>
+    <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, getWormholeSigner }}>
       <div className={`flex bg-[var(--bg)] text-[var(--text)] min-h-screen selection:bg-[rgba(247,147,26,0.35)] overflow-hidden`}>
         <div className="hidden md:block">
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />

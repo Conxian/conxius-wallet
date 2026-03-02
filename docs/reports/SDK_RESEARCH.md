@@ -97,3 +97,17 @@ layer for the "Full Bitcoin Ecosystem" alignment.
       `services/gemini.ts`.
     - Real-time UI feedback for sanitized prompts in
       `components/SatoshiAIChat.tsx`.
+
+---
+
+## 7. Protocol Sovereignty & BYOS Alignment
+
+Conxius v1.1 implements a flexible, sovereign-first architecture for external
+service dependencies.
+
+- **BYOS AI Hooks:** Decouples the wallet from specific AI providers while
+  maintaining strict local privacy via regex-based redaction.
+- **RPC Selection Strategy:** Empowers users to run their own nodes (Bitcoin Core,
+  Stacks, etc.) and prioritize them for all on-chain data fetching.
+- **Zero-Trust Networking:** Ensures that even when using public RPCs, the wallet
+  is prepared to switch to sovereign infrastructure instantly.
