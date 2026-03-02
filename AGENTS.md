@@ -121,3 +121,18 @@ alignment.
   full WASM-based DAG verification.
 - **CoinJoin:** WabiSabi credential issuance and blinded registration are
   simulated via a unified state machine in `services/coinjoin.ts`.
+
+## 🤖 Sovereign AI & Zero-Leak Privacy (v1.0)
+
+Conxius implements a strict AI security layer to ensure no sensitive
+cryptographic identifiers (addresses, keys, mnemonics) leave the device.
+
+- **Sanitization:** All outgoing prompts to LLMs are passed through
+  `services/ai-security.ts` to redact Bitcoin/EVM addresses, hex strings,
+  and mnemonics.
+- **Audit:** The `secureAuditPrompt` function checks for malicious intent and
+  prompt injection before any external API call.
+- **Transparency:** The UI provides clear indicators (badges/icons) when a
+  prompt has been sanitized or when the AI is running in local simulation mode.
+- **Hardened Gemini Service:** All Gemini interactions in `services/gemini.ts`
+  now use the central `callGemini` wrapper for mandatory security auditing.

@@ -78,3 +78,22 @@ For privacy-preserving transactions, a real-world coordinator is needed.
 - **Integration Path:**
     - Use `services/coinjoin.ts` to handle the registration and signing phases.
     - Connect to the Wasabi or zkSNACKs coordinator.
+
+---
+
+## 6. AI Safety & Privacy (Sovereign AI v1.0)
+
+Conxius research into AI safety has led to the development of a custom security
+layer for the "Full Bitcoin Ecosystem" alignment.
+
+- **Capabilities:**
+    - Regex-based redaction of Bitcoin/EVM addresses, TxIDs, and Mnemonics.
+    - Intent detection to block prompt injection and security-related malicious
+      queries.
+    - "Zero-Leak" privacy model where sensitive identifiers never leave the
+      device.
+- **Implementation:**
+    - Integrated in `services/ai-security.ts` and enforced in
+      `services/gemini.ts`.
+    - Real-time UI feedback for sanitized prompts in
+      `components/SatoshiAIChat.tsx`.

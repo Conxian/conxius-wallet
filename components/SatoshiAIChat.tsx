@@ -1,18 +1,20 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { Terminal, Send, Bot, Loader2, X, ChevronRight } from 'lucide-react';
+import { Terminal, Send, Bot, Loader2, X, ChevronRight, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { AppContext } from '../context';
 import { calculatePrivacyScore } from '../services/privacy';
 import { getRandomInt } from '../services/random';
+import { secureAuditPrompt, rehydrateResponse } from '../services/ai-security';
 
 const SatoshiAIChat: React.FC = () => {
   const appContext = useContext(AppContext);
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([
+  const [messages, setMessages] = useState<{ role: 'user' | 'ai'; content: string; isSanitized?: boolean }[]>([
     { role: 'ai', content: "I am Satoshi AI. Ask me about your sovereign risk, L2 alpha, or the genesis block secrets." }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [lastSanitized, setLastSanitized] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,8 +27,23 @@ const SatoshiAIChat: React.FC = () => {
 
     const userMessage = input;
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+
+    // SOVEREIGN AI AUDIT: Sanitize user message
+    const { sanitized, isBlocked, reason } = secureAuditPrompt(userMessage);
+
+    setMessages(prev => [...prev, {
+        role: 'user',
+        content: userMessage,
+        isSanitized: sanitized !== userMessage
+    }]);
+
+    if (isBlocked) {
+        setMessages(prev => [...prev, { role: 'ai', content: `[Audit Blocked]: ${reason}` }]);
+        return;
+    }
+
     setIsLoading(true);
+    setLastSanitized(sanitized !== userMessage);
 
     try {
       let responseText = "";
@@ -47,7 +64,7 @@ const SatoshiAIChat: React.FC = () => {
           const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
           const response = await ai.models.generateContent({
             model: 'gemini-1.5-flash',
-            contents: userMessage,
+            contents: sanitized,
             config: {
               systemInstruction: `You are Satoshi AI, a master of Bitcoin technology and sovereign finance.
 You are concise, technical, and prioritize user privacy.
@@ -56,10 +73,13 @@ Current Wallet Context:
 - Privacy Score: ${calculatePrivacyScore(appContext.state).score}/100
 - Privacy Recommendations: ${calculatePrivacyScore(appContext.state).recommendations.join(', ')}
 - Tor Routing: ${appContext.state.isTorEnabled ? 'ENABLED' : 'DISABLED'}
-Use a terminal-style tone.`,
+Use a terminal-style tone.
+NOTE: Some sensitive identifiers in user messages may be replaced with placeholders like [BTC_ADDR_XXXX]. Always refer to them by their placeholders.`,
             }
           });
-          responseText = response.text || "";
+
+          // Rehydrate the AI response if it contains placeholders
+          responseText = rehydrateResponse(response.text || "");
       }
 
       setMessages(prev => [...prev, { role: 'ai', content: responseText || "Connection to the network lost." }]);
@@ -91,26 +111,37 @@ Use a terminal-style tone.`,
           <Terminal size={18} className="text-orange-500" />
           <h3 className="font-bold text-sm tracking-tight">Satoshi Terminal</h3>
         </div>
-        <button 
-            onClick={() => setIsOpen(false)} 
-            className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-500"
-            aria-label="Close Chat"
-            title="Close Chat"
-        >
-          <X size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-zinc-800/50 px-2 py-0.5 rounded-full border border-zinc-700/50">
+                <ShieldCheck size={10} className="text-green-500" />
+                <span className="text-[9px] text-zinc-400 font-mono uppercase tracking-widest">Sovereign-Audit-v1.0</span>
+            </div>
+            <button
+                onClick={() => setIsOpen(false)}
+                className="p-1 hover:bg-zinc-800 rounded-lg text-zinc-500"
+                aria-label="Close Chat"
+                title="Close Chat"
+            >
+            <X size={18} />
+            </button>
+        </div>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-[radial-gradient(circle_at_center,#09090b_0%,#000000_100%)]">
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed ${
+            <div className={`relative max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed ${
               m.role === 'user' 
                 ? 'bg-orange-600 text-white shadow-lg' 
                 : 'bg-zinc-900 border border-zinc-800 text-zinc-300 font-mono'
             }`}>
               {m.role === 'ai' && <ChevronRight size={12} className="inline mr-1 text-orange-500" />}
               {m.content}
+              {m.isSanitized && (
+                  <div className="absolute -top-1 -right-1 bg-zinc-950 rounded-full p-0.5 border border-orange-400" title="Sensitive data redacted from outgoing prompt">
+                      <ShieldAlert size={8} className="text-orange-400" />
+                  </div>
+              )}
             </div>
           </div>
         ))}
@@ -124,27 +155,40 @@ Use a terminal-style tone.`,
         )}
       </div>
 
-      <form onSubmit={handleSend} className="p-4 bg-zinc-950 border-t border-zinc-900 flex gap-2">
-        <input 
-          autoFocus
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck="false"
-          placeholder="Ask Satoshi anything..."
-          className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-500/50 text-zinc-200"
-        />
-        <button 
-          disabled={isLoading || !input.trim()}
-          type="submit" 
-          className="w-10 h-10 bg-orange-600 text-white rounded-xl flex items-center justify-center disabled:opacity-50 hover:bg-orange-500 transition-colors"
-          aria-label="Send Message"
-          title="Send Message"
-        >
-          <Send size={16} />
-        </button>
+      <form onSubmit={handleSend} className="p-4 bg-zinc-950 border-t border-zinc-900 flex flex-col gap-2">
+        <div className="flex gap-2">
+            <input
+            autoFocus
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
+            placeholder="Ask Satoshi anything..."
+            className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-500/50 text-zinc-200"
+            />
+            <button
+            disabled={isLoading || !input.trim()}
+            type="submit"
+            className="w-10 h-10 bg-orange-600 text-white rounded-xl flex items-center justify-center disabled:opacity-50 hover:bg-orange-500 transition-colors"
+            aria-label="Send Message"
+            title="Send Message"
+            >
+            <Send size={16} />
+            </button>
+        </div>
+        <div className="flex items-center justify-between px-1">
+            <p className="text-[9px] text-zinc-500 font-mono">
+                {lastSanitized ? "⚠️ Sensitive identifiers redacted for privacy." : "✓ Zero-Leak Privacy Active"}
+            </p>
+            <div className="flex items-center gap-1">
+                 <div className={`w-1.5 h-1.5 rounded-full ${appContext.state.geminiApiKey ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`}></div>
+                 <span className="text-[9px] text-zinc-600 uppercase tracking-tighter font-bold">
+                    {appContext.state.geminiApiKey ? 'Remote-AI' : 'Local-Sim'}
+                 </span>
+            </div>
+        </div>
       </form>
     </div>
   );

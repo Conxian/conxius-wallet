@@ -1,9 +1,6 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { Asset } from "../types";
-
-// Note: Moving GoogleGenAI instantiation inside functions to follow best practices 
-// of creating a new instance right before making an API call.
+import { secureAuditPrompt } from './ai-security';
 
 // SECURITY: API key is held in memory and synchronized from encrypted Enclave state.
 // No hardcoded keys are present in the source or build artifacts.
@@ -13,230 +10,121 @@ export const setGeminiApiKey = (key: string) => {
   _apiKey = key;
 };
 
-export const getBountyAudit = async (bountyTitle: string, description: string) => {
+const callGemini = async (model: string, prompt: string, systemInstruction: string, thinkingBudget?: number) => {
   try {
     if (!_apiKey) throw new Error("API Key not configured");
+
+    // SOVEREIGN AI AUDIT: Sanitize outgoing prompt
+    const { sanitized, isBlocked, reason } = secureAuditPrompt(prompt);
+    if (isBlocked) return `[Sovereign Audit Blocked]: ${reason}`;
+
     const ai = new GoogleGenAI({ apiKey: _apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Perform a technical audit of the following development bounty:
-      Title: "${bountyTitle}"
-      Description: "${description}"
-      
-      Requirements:
-      1. Evaluate the technical feasibility within the Conxius Enclave architecture.
-      2. Identify potential security risks (e.g., side-channel attacks on local keys).
-      3. Recommend a fair reward in BTC/STX based on the complexity.
-      4. Suggest 3 specific acceptance criteria for the Conxius Treasury multisig to verify before release.`,
+      model: model,
+      contents: sanitized,
       config: {
-        systemInstruction: "You are the Conxius Lead Auditor. You ensure all community contributions maintain the highest standards of sovereignty and security.",
-        thinkingConfig: { thinkingBudget: 32768 }
+        systemInstruction: systemInstruction,
+        ...(thinkingBudget ? { thinkingConfig: { thinkingBudget } } : {})
       }
     });
     return response.text;
   } catch (error) {
-    return "Bounty audit engine offline. Use local conservative risk heuristics.";
+    console.error("[Gemini] Engine failure", error);
+    return null;
   }
+};
+
+export const getBountyAudit = async (bountyTitle: string, description: string) => {
+  const prompt = `Perform a technical audit of the following development bounty:
+  Title: "${bountyTitle}"
+  Description: "${description}"
+
+  Requirements:
+  1. Evaluate the technical feasibility within the Conxius Enclave architecture.
+  2. Identify potential security risks (e.g., side-channel attacks on local keys).
+  3. Recommend a fair reward in BTC/STX based on the complexity.
+  4. Suggest 3 specific acceptance criteria for the Conxius Treasury multisig to verify before release.`;
+
+  const res = await callGemini('gemini-1.5-pro', prompt, "You are the Conxius Lead Auditor. You ensure all community contributions maintain the highest standards of sovereignty and security.", 32768);
+  return res || "Bounty audit engine offline. Use local conservative risk heuristics.";
 };
 
 export const generateReleaseNotes = async (version: string) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Generate a high-density, professional 'Cypherpunk' style release report for Conxius Wallet SVN ${version}. 
-      Highlight:
-      - The transition to BSL 1.1 Licensing.
-      - Integrated System Health Sentinel.
-      - Native Wormhole NTT Bridge stabilization.
-      - Sovereign Studio expansion (Ordinals/Runes).
-      - DAO Bounty Integration for community devs.
-      The tone should be clinical, authoritative, and visionary.`,
-      config: {
-        systemInstruction: "You are the Chief Technical Evangelist at Conxian-Labs.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Release notes synthesis failed. Version status: Hardened Production.";
-  }
+  const prompt = `Generate a high-density, professional 'Cypherpunk' style release report for Conxius Wallet SVN ${version}.
+  Highlight:
+  - The transition to BSL 1.1 Licensing.
+  - Integrated System Health Sentinel.
+  - Native Wormhole NTT Bridge stabilization.
+  - Sovereign Studio expansion (Ordinals/Runes).
+  - DAO Bounty Integration for community devs.
+  The tone should be clinical, authoritative, and visionary.`;
+
+  const res = await callGemini('gemini-1.5-pro', prompt, "You are the Chief Technical Evangelist at Conxian-Labs.", 32768);
+  return res || "Release notes synthesis failed. Version status: Hardened Production.";
 };
 
 export const getSystemHealthSummary = async (testResults: any[]) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const resultsStr = testResults.map(r => `${r.label}: ${r.status}`).join(', ');
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: `Provide a clinical, high-density system health summary for the Conxius Sovereign Enclave based on these diagnostic results: ${resultsStr}. 
-      Evaluate the risk level (Low/Medium/High) and provide a "Protocol Directive".`,
-      config: {
-        systemInstruction: "You are the Conxius Sentinel System.",
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Sentinel offline. Risk: Minimal.";
-  }
+  const resultsStr = testResults.map(r => `${r.label}: ${r.status}`).join(', ');
+  const prompt = `Provide a clinical, high-density system health summary for the Conxius Sovereign Enclave based on these diagnostic results: ${resultsStr}.
+  Evaluate the risk level (Low/Medium/High) and provide a "Protocol Directive".`;
+
+  const res = await callGemini('gemini-1.5-flash', prompt, "You are the Conxius Sentinel System.");
+  return res || "Sentinel offline. Risk: Minimal.";
 };
 
 export const getNetworkRPCResearch = async (layer: string) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: `Research into RPC infrastructure for: "${layer}". Identify top 3 providers and one Tor endpoint.`,
-      config: {
-        systemInstruction: "You are the Conxius Infrastructure Lead.",
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Network research engine throttled.";
-  }
+  const prompt = `Research into RPC infrastructure for: "${layer}". Identify top 3 providers and one Tor endpoint.`;
+  const res = await callGemini('gemini-1.5-flash', prompt, "You are the Conxius Infrastructure Lead.");
+  return res || "Network research engine throttled.";
 };
 
 export const getFinalSystemHardeningChecklist = async () => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: "Provide a 5-point 'Hardened Mainnet' checklist for a Bitcoin multi-layer wallet. Focus on cold storage, Tor V3, ZK identity, NTT immutability, and fallback.",
-      config: {
-        systemInstruction: "You are a cyber-security expert.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Hardening audit offline.";
-  }
+  const prompt = "Provide a 5-point 'Hardened Mainnet' checklist for a Bitcoin multi-layer wallet. Focus on cold storage, Tor V3, ZK identity, NTT immutability, and fallback.";
+  const res = await callGemini('gemini-1.5-pro', prompt, "You are a cyber-security expert.", 32768);
+  return res || "Hardening audit offline.";
 };
 
 export const getDeploymentReadinessAudit = async (state: any) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Final Go/No-Go audit. Node Sync: ${state.nodeSyncProgress}%, Sovereignty Score: ${state.sovereigntyScore}. Evaluate readiness for mainnet.`,
-      config: {
-        systemInstruction: "You are the Release Manager.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Readiness audit offline.";
-  }
+  const prompt = `Final Go/No-Go audit. Node Sync: ${state.nodeSyncProgress}%, Sovereignty Score: ${state.sovereigntyScore}. Evaluate readiness for mainnet.`;
+  const res = await callGemini('gemini-1.5-pro', prompt, "You are the Release Manager.", 32768);
+  return res || "Readiness audit offline.";
 };
 
 export const getNodeEthosAdvice = async (path: string) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: `Advise on the 'Sovereign Ethos' of: "${path}". Compare with custodial wallets.`,
-      config: {
-        systemInstruction: "You are the Satoshi Sovereign Researcher.",
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Ethos engine offline.";
-  }
+  const prompt = `Advise on the 'Sovereign Ethos' of: "${path}". Compare with custodial wallets.`;
+  const res = await callGemini('gemini-1.5-flash', prompt, "You are the Satoshi Sovereign Researcher.");
+  return res || "Ethos engine offline.";
 };
 
 export const getRiskProfileAudit = async (assets: Asset[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Risk audit for: ${assetsSummary}. Evaluate counterparty, liquidity, regulatory, and technical risks.`,
-      config: {
-        systemInstruction: "You are the Chief Risk Officer.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Risk audit engine offline.";
-  }
+  const prompt = `Risk audit for: ${assetsSummary}. Evaluate counterparty, liquidity, regulatory, and technical risks.`;
+  const res = await callGemini('gemini-1.5-pro', prompt, "You are the Chief Risk Officer.", 32768);
+  return res || "Risk audit engine offline.";
 };
 
 export const getAssetInsight = async (asset: Asset) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: `Technical analysis for ${asset.name} (${asset.symbol}) on ${asset.layer}.`,
-      config: {
-        systemInstruction: "You are Satoshi Pro AI.",
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Insight engine re-indexing.";
-  }
+  const prompt = `Technical analysis for ${asset.name} (${asset.symbol}) on ${asset.layer}.`;
+  const res = await callGemini('gemini-1.5-flash', prompt, "You are Satoshi Pro AI.");
+  return res || "Insight engine re-indexing.";
 };
 
 export const performDeepScan = async (assets: any[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Deep Scan: ${assetsSummary}. Provide risk scores, tax opportunities, and alpha.`,
-      config: {
-        systemInstruction: "You are Satoshi Pro AI.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Deep Scan offline.";
-  }
+  const prompt = `Deep Scan: ${assetsSummary}. Provide risk scores, tax opportunities, and alpha.`;
+  const res = await callGemini('gemini-1.5-pro', prompt, "You are Satoshi Pro AI.", 32768);
+  return res || "Deep Scan offline.";
 };
 
 export const getDIDInsight = async (did: string) => {
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
-      contents: `Audit Bitcoin DID: "${did}". Explain DPKI shift, PoW immutability, and sovereignty implications.`,
-      config: {
-        systemInstruction: "You are Satoshi AI.",
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  } catch (error) {
-    return "Identity graph re-indexing.";
-  }
+  const prompt = `Audit Bitcoin DID: "${did}". Explain DPKI shift, PoW immutability, and sovereignty implications.`;
+  const res = await callGemini('gemini-1.5-pro', prompt, "You are Satoshi AI.", 32768);
+  return res || "Identity graph re-indexing.";
 };
 
 export const analyzePortfolio = async (assets: any[]) => {
   const assetsSummary = assets.map(a => `${a.name} (${a.symbol}) on ${a.layer}`).join(', ');
-  try {
-    if (!_apiKey) throw new Error("API Key not configured");
-    const ai = new GoogleGenAI({ apiKey: _apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: `Analyze portfolio: ${assetsSummary}.`,
-    });
-    return response.text;
-  } catch (error) {
-    return "Analysis error.";
-  }
+  const prompt = `Analyze portfolio: ${assetsSummary}.`;
+  const res = await callGemini('gemini-1.5-flash', prompt, "You are the Portfolio Architect.");
+  return res || "Analysis error.";
 };
