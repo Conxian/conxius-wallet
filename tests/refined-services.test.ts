@@ -20,7 +20,7 @@ describe('Refined Services Production Alignment', () => {
             const rounds = await fetchActiveRounds('mainnet');
             expect(rounds[0].phase).toBeDefined();
 
-            const utxos = [{ txid: '00'.repeat(32), vout: 0, value: 100000, address: 'addr1' }];
+            const utxos: any = [{ txid: '00'.repeat(32), vout: 0, amount: 100000, address: 'addr1', status: 'confirmed', isFrozen: false, derivationPath: 'm/84/0/0/0/0', privacyRisk: 'Low' }];
             const result = await registerInputs('round1', utxos, 'change', 'mainnet');
             expect(result.credentials.length).toBe(1);
             expect(result.credentials[0].amount).toBe(100000);
