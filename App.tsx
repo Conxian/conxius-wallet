@@ -55,7 +55,7 @@ import { evaluateSecurityPosture } from './services/device-integrity';
 import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
 import { notificationService } from './services/notifications';
 import { sanitizeError } from './services/network';
-import { setAiConfig as setGeminiServiceKey } from './services/gemini';
+import { setAiConfig as setGeminiServiceKey } from './services/ai';
 import { IdentityService } from './services/identity';
 import { Web5Service } from './services/web5';
 
@@ -174,7 +174,7 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    setGeminiServiceKey(state.geminiApiKey || '');
+    setGeminiServiceKey(state.aiConfig || { provider: 'Gemini', apiKey: state.geminiApiKey || '' });
   }, [state.geminiApiKey]);
 
   useEffect(() => {
@@ -255,7 +255,7 @@ const App: React.FC = () => {
         localStorage.clear();
         sessionStorage.clear();
         clearEnclaveBiometricSession();
-        setGeminiServiceKey('');
+        setGeminiServiceKey({ provider: 'Gemini', apiKey: '' });
         workerManager.clearCache();
         IdentityService.clearCache();
         Web5Service.getInstance().clearSession();
@@ -344,14 +344,18 @@ const App: React.FC = () => {
   }));
   const setLnBackend = (cfg: LnBackendConfig) => setState(prev => ({ ...prev, lnBackend: cfg }));
   const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } as any }));
-  const setAiConfig = (config: AppState["aiConfig"]) => { setAiServiceConfig(config); setState(prev => ({ ...prev, aiConfig: config })); };
+  const setAiConfig = (config: AppState["aiConfig"]) => {
+    setAiServiceConfig(config);
+    setGeminiServiceKey(config);
+    setState(prev => ({ ...prev, aiConfig: config }));
+  };
   const setCustomNodes = (nodes: AppState["customNodes"]) => { setState(prev => ({ ...prev, customNodes: nodes })); };
   const setRpcStrategy = (strategy: AppState["rpcStrategy"]) => { setState(prev => ({ ...prev, rpcStrategy: strategy })); };
 
   const performLock = () => {
      currentPinRef.current = null;
      clearEnclaveBiometricSession();
-     setGeminiServiceKey('');
+     setGeminiServiceKey({ provider: 'Gemini', apiKey: '' });
      workerManager.clearCache();
      IdentityService.clearCache();
      Web5Service.getInstance().clearSession();
