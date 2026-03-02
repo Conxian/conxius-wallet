@@ -151,3 +151,17 @@ AI and RPC nodes, ensuring full alignment with the Bitcoin-First hierarchy.
 - **Global Alignment:** Non-React services are synchronized with the UI state
   via `setGlobalAppState`, ensuring protocol fetchers always respect the
   user's sovereignty choices.
+
+## 🔐 Smart Wallet & Miniscript Sovereignty (v1.2)
+
+Conxius has evolved into a full Smart Sovereign Wallet, implementing
+UTXO-native spending policies via Miniscript and Musig2.
+
+- **Miniscript Support:** Define complex spending rules (TimeLocks,
+  Inheritance, Thresholds) in the `SovereignPolicies` hub.
+- **Interactive Thresholds:** The `Musig2Session` service handles the
+  multi-step signature aggregation required for privacy-preserving multisig.
+- **AI Policy Auditor:** Satoshi AI (`services/ai.ts`) is now equipped to
+  audit Miniscript descriptors for risk, key loss, and sovereignty maturity.
+- **Unified Network Layer:** Every module in the app (Fees, DEX, Stacking)
+  is now hard-aligned with the user's sovereign RPC and Tor settings.

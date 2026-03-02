@@ -111,3 +111,18 @@ service dependencies.
   Stacks, etc.) and prioritize them for all on-chain data fetching.
 - **Zero-Trust Networking:** Ensures that even when using public RPCs, the wallet
   is prepared to switch to sovereign infrastructure instantly.
+
+---
+
+## 8. Smart Wallet & Policy Engine Alignment
+
+Conxius v1.2 transitions from simple single-sig to policy-based UTXO management.
+
+- **Miniscript Integration:** Enables standardized, verifiable, and composable
+  spending conditions. Aligns with Bitcoin-native "Smart" capabilities without
+  needing sidechain-specific VMs for basic logic.
+- **Musig2 Interactive Signing:** Researching BIP-327 state management for
+  low-entropy threshold signatures that look like single-sig on-chain.
+- **Satoshi Policy Auditor:** Utilizes advanced LLMs (via BYOS) to explain
+  technical spending rules to non-technical users, ensuring they understand
+  their own inheritance or cold-storage protocols.

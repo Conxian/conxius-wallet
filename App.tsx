@@ -33,6 +33,7 @@ const SilentPayments = lazy(() => import('./components/SilentPayments'));
 const Studio = lazy(() => import('./components/Studio'));
 const Marketplace = lazy(() => import('./components/Marketplace'));
 const SystemDiagnostics = lazy(() => import('./components/SystemDiagnostics'));
+const SovereignPolicies = lazy(() => import('./components/SovereignPolicies'));
 import SignLoginMessageModal from "./components/SignLoginMessageModal";
 const Web3Browser = lazy(() => import('./components/Web3Browser'));
 import LockScreen from './components/LockScreen';
@@ -485,6 +486,7 @@ const App: React.FC = () => {
       case 'nodes': return <NodeSettings />;
       case 'privacy': return <PrivacyEnclave />;
       case 'security': return <Security />;
+      case 'policies': return <SovereignPolicies />;
       case 'settings': return <Settings />;
       default: return <Dashboard />;
     }

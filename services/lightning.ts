@@ -1,6 +1,7 @@
 import { bech32 } from 'bech32';
 import bolt11 from 'light-bolt11-decoder';
 import { Buffer } from 'buffer';
+import { fetchWithRetry } from './network';
 
 export type LnurlPayParams = {
   callback: string;
@@ -33,7 +34,7 @@ export function decodeLnurl(input: string) {
 }
 
 export async function fetchLnurlParams(url: string): Promise<LnurlPayParams | LnurlWithdrawParams> {
-  const res = await fetch(url);
+  const res = await fetchWithRetry(url);
   if (!res.ok) throw new Error('LNURL fetch failed');
   return await res.json();
 }
