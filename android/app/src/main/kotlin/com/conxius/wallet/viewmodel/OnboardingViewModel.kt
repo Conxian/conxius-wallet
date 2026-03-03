@@ -8,6 +8,8 @@ import com.conxius.wallet.crypto.StrongBoxManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.bitcoindevkit.Mnemonic
 import org.bitcoindevkit.WordCount
 
@@ -33,11 +35,13 @@ class OnboardingViewModel(
                 val mnemonicStr = newMnemonic.asString()
                 _mnemonic.value = mnemonicStr
 
-                // Initialize BDK to verify
-                bdkManager.initializeWallet(mnemonicStr)
+                withContext(Dispatchers.IO) {
+                    bdkManager.initializeWallet(mnemonicStr)
+                }
 
-                // Encrypt and save
-                val (encrypted, iv) = strongBoxManager.encrypt(mnemonicStr.toByteArray())
+                // Encrypt and save (StrongBoxManager.encrypt will zero out the input)
+                val mnemonicBytes = mnemonicStr.toByteArray()
+                val (encrypted, iv) = strongBoxManager.encrypt(mnemonicBytes)
                 repository.saveSeed(encrypted, iv)
 
                 _isWalletCreated.value = true
@@ -53,11 +57,13 @@ class OnboardingViewModel(
                 // Validate mnemonic
                 Mnemonic.fromString(mnemonicStr)
 
-                // Initialize BDK
-                bdkManager.initializeWallet(mnemonicStr)
+                withContext(Dispatchers.IO) {
+                    bdkManager.initializeWallet(mnemonicStr)
+                }
 
                 // Encrypt and save
-                val (encrypted, iv) = strongBoxManager.encrypt(mnemonicStr.toByteArray())
+                val mnemonicBytes = mnemonicStr.toByteArray()
+                val (encrypted, iv) = strongBoxManager.encrypt(mnemonicBytes)
                 repository.saveSeed(encrypted, iv)
 
                 _isWalletCreated.value = true
