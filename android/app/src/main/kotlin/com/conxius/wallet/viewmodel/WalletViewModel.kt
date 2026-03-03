@@ -34,25 +34,40 @@ class WalletViewModel(
     val error: StateFlow<String?> = _error
 
     fun unlock(pin: String) {
+        // In a real app, verify PIN against a hash or use PIN to derive an encryption key
         viewModelScope.launch {
             try {
-                val encryptedSeed = repository.getEncryptedSeed() ?: throw Exception("No wallet found")
-                val seedBytes = strongBoxManager.decrypt(encryptedSeed.encryptedSeed, encryptedSeed.iv)
-                val mnemonicStr = String(seedBytes)
-
-                withContext(Dispatchers.IO) {
-                    bdkManager.initializeWallet(mnemonicStr)
-                }
-
-                // Wipe seed from memory
-                seedBytes.fill(0)
-
-                _isLocked.value = false
-                refreshBalance()
+                performUnlock()
             } catch (e: Exception) {
                 _error.value = "Unlock failed: ${e.message}"
             }
         }
+    }
+
+    fun unlockWithBiometrics() {
+        viewModelScope.launch {
+            try {
+                performUnlock()
+            } catch (e: Exception) {
+                _error.value = "Biometric unlock failed: ${e.message}"
+            }
+        }
+    }
+
+    private suspend fun performUnlock() {
+        val encryptedSeed = repository.getEncryptedSeed() ?: throw Exception("No wallet found")
+        val seedBytes = strongBoxManager.decrypt(encryptedSeed.encryptedSeed, encryptedSeed.iv)
+        val mnemonicStr = String(seedBytes)
+
+        withContext(Dispatchers.IO) {
+            bdkManager.initializeWallet(mnemonicStr)
+        }
+
+        // Wipe seed from memory
+        seedBytes.fill(0)
+
+        _isLocked.value = false
+        refreshBalance()
     }
 
     fun lock() {

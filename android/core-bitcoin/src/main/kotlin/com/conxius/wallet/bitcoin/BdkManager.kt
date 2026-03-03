@@ -19,6 +19,7 @@ class BdkManager(private val network: Network = Network.TESTNET) {
         val isTaproot = path.startsWith("86")
         val prefix = if (isTaproot) "tr" else "wpkh"
 
+        // Construct standard descriptors based on path
         val extDescStr = "${prefix}(${rootKey.asString()}/${path}/0/*)"
         val intDescStr = "${prefix}(${rootKey.asString()}/${path}/1/*)"
 
@@ -44,6 +45,13 @@ class BdkManager(private val network: Network = Network.TESTNET) {
         } catch (e: Exception) {
             throw e
         }
+    }
+
+    /**
+     * Re-initializes wallet with a specific descriptor (e.g. for switching between Segwit and Taproot)
+     */
+    fun switchDescriptor(mnemonicStr: String, path: String) {
+        initializeWallet(mnemonicStr, path)
     }
 
     fun signPsbt(ephemeralSeed: EphemeralSeed, psbtBase64: String): String {
@@ -75,4 +83,6 @@ class BdkManager(private val network: Network = Network.TESTNET) {
     fun getBalance(): ULong {
         return wallet?.getBalance()?.total ?: 0u
     }
+
+    fun isInitialized(): Boolean = wallet != null
 }

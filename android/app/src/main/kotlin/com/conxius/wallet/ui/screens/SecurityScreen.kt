@@ -4,13 +4,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
+import com.conxius.wallet.BiometricHelper
 import com.conxius.wallet.viewmodel.WalletViewModel
 
 @Composable
@@ -18,10 +22,25 @@ fun SecurityScreen(viewModel: WalletViewModel, onUnlockSuccess: () -> Unit) {
     var pin by remember { mutableStateOf("") }
     val error by viewModel.error.collectAsState()
     val isLocked by viewModel.isLocked.collectAsState()
+    val context = LocalContext.current
+    val biometricHelper = remember { BiometricHelper(context as FragmentActivity) }
 
     LaunchedEffect(isLocked) {
         if (!isLocked) {
             onUnlockSuccess()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (biometricHelper.canAuthenticate()) {
+            biometricHelper.showBiometricPrompt(
+                "Unlock Wallet",
+                "Authenticate to access your enclave",
+                onSuccess = {
+                    viewModel.unlockWithBiometrics()
+                },
+                onError = { _, _ -> }
+            )
         }
     }
 
@@ -64,7 +83,26 @@ fun SecurityScreen(viewModel: WalletViewModel, onUnlockSuccess: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             enabled = pin.length >= 4
         ) {
-            Text("Unlock")
+            Text("Unlock with PIN")
+        }
+
+        if (biometricHelper.canAuthenticate()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = {
+                    biometricHelper.showBiometricPrompt(
+                        "Unlock Wallet",
+                        "Authenticate to access your enclave",
+                        onSuccess = { viewModel.unlockWithBiometrics() },
+                        onError = { _, _ -> }
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Face, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Unlock with Biometrics")
+            }
         }
 
         error?.let {

@@ -2,7 +2,7 @@ package com.conxius.wallet
 
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
+import androidx.activity.androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +22,7 @@ import com.conxius.wallet.viewmodel.WalletViewModel
 import com.conxius.wallet.viewmodel.ViewModelFactory
 import com.conxius.wallet.repository.WalletRepository
 
-class MainActivity : ComponentActivity() {
+class MainActivity : androidx.fragment.app.FragmentActivity() {
     companion object {
         init {
             System.loadLibrary("conxius_core")
