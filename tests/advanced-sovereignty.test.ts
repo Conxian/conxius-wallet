@@ -9,8 +9,8 @@ describe('Advanced Sovereignty Features', () => {
     describe('Smart Wallet Policies', () => {
         it('enforces Velocity Limits correctly', () => {
             const policy = DEFAULT_POLICIES.find(p => p.type === 'VelocityLimit')!;
-            const highValueUtxos = [{ balance: 2000000, address: 'bc1...', status: 'confirmed', isFrozen: false } as any];
-            const lowValueUtxos = [{ balance: 500000, address: 'bc1...', status: 'confirmed', isFrozen: false } as any];
+            const highValueUtxos = [{ amount: 2000000, address: 'bc1...', status: 'confirmed', isFrozen: false } as any];
+            const lowValueUtxos = [{ amount: 500000, address: 'bc1...', status: 'confirmed', isFrozen: false } as any];
 
             expect(checkPolicyCompliance(highValueUtxos, policy)).toBe(false);
             expect(checkPolicyCompliance(lowValueUtxos, policy)).toBe(true);
