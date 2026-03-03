@@ -71,7 +71,7 @@ export const checkPolicyCompliance = (utxos: UTXO[], policy: SpendingPolicy): bo
     console.log(`[Smart-Wallet] Auditing UTXOs against policy: ${policy.name}`);
 
     if (policy.type === 'VelocityLimit') {
-        const totalValue = utxos.reduce((acc, u) => acc + u.balance, 0);
+        const totalValue = utxos.reduce((acc, u) => acc + u.amount, 0);
         const limit = policy.metadata?.limitSats || 1000000;
         if (totalValue > limit) {
             console.warn(`[Smart-Wallet] Velocity Limit Exceeded: ${totalValue} > ${limit}. Enforcement Required.`);

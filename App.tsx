@@ -54,8 +54,8 @@ import { ConxiusWormholeSigner } from './services/wormhole-signer';
 import { evaluateSecurityPosture } from './services/device-integrity';
 import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
 import { notificationService } from './services/notifications';
-import { sanitizeError } from './services/network';
-import { setAiConfig as setGeminiServiceKey } from './services/ai';
+import { sanitizeError, setGlobalAppState } from './services/network';
+import { setAiConfig as setAiServiceConfig } from './services/ai';
 import { IdentityService } from './services/identity';
 import { Web5Service } from './services/web5';
 
@@ -94,7 +94,6 @@ const DEFAULT_STATE: AppState & { language: Language } = {
   security: {
     autoLockMinutes: 5
   },
-  geminiApiKey: undefined,
   utxos: [],
   isTorEnabled: true,
   theme: 'dark'
@@ -174,8 +173,8 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    setGeminiServiceKey(state.aiConfig || { provider: 'Gemini', apiKey: state.geminiApiKey || '' });
-  }, [state.geminiApiKey]);
+    setAiServiceConfig(state.aiConfig || { provider: 'Gemini', apiKey: (state as any).geminiApiKey || '' });
+  }, [(state as any).geminiApiKey]);
 
   useEffect(() => {
     if (state.walletConfig && currentPinRef.current) {
@@ -255,7 +254,7 @@ const App: React.FC = () => {
         localStorage.clear();
         sessionStorage.clear();
         clearEnclaveBiometricSession();
-        setGeminiServiceKey({ provider: 'Gemini', apiKey: '' });
+        setAiServiceConfig({ provider: 'Gemini', apiKey: '' });
         workerManager.clearCache();
         IdentityService.clearCache();
         Web5Service.getInstance().clearSession();
@@ -346,7 +345,6 @@ const App: React.FC = () => {
   const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } as any }));
   const setAiConfig = (config: AppState["aiConfig"]) => {
     setAiServiceConfig(config);
-    setGeminiServiceKey(config);
     setState(prev => ({ ...prev, aiConfig: config }));
   };
   const setCustomNodes = (nodes: AppState["customNodes"]) => { setState(prev => ({ ...prev, customNodes: nodes })); };
@@ -355,7 +353,7 @@ const App: React.FC = () => {
   const performLock = () => {
      currentPinRef.current = null;
      clearEnclaveBiometricSession();
-     setGeminiServiceKey({ provider: 'Gemini', apiKey: '' });
+     setAiServiceConfig({ provider: 'Gemini', apiKey: '' });
      workerManager.clearCache();
      IdentityService.clearCache();
      Web5Service.getInstance().clearSession();
