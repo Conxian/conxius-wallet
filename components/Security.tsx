@@ -49,7 +49,7 @@ const Security: React.FC = () => {
     const sanitizedState = JSON.parse(JSON.stringify(context.state));
 
     // Remove sensitive fields if they exist
-    if (sanitizedState.geminiApiKey) delete sanitizedState.geminiApiKey;
+    if (sanitizedState.aiConfig) delete sanitizedState.aiConfig.apiKey;
     if (sanitizedState.security?.duressPin) delete sanitizedState.security.duressPin;
     if (sanitizedState.lnBackend?.apiKey) delete sanitizedState.lnBackend.apiKey;
 

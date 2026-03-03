@@ -51,6 +51,8 @@ const SatoshiAIChat: React.FC = () => {
       reason,
     } = secureAuditPrompt(userMessage);
 
+    const config = appContext?.state.aiConfig;
+
     if (isBlocked) {
       setMessages((prev) => [
         ...prev,
@@ -75,8 +77,7 @@ const SatoshiAIChat: React.FC = () => {
     try {
       let responseText = "";
 
-      const config = appContext.state.aiConfig;
-      if (!config || (!config.apiKey && config.provider !== "Custom")) {
+      if (!appContext || !config || (!config.apiKey && config.provider !== "Custom")) {
         // Simulation Mode Response
         await new Promise((r) => setTimeout(r, 1000)); // Simulate think time
         const responses = [
@@ -85,7 +86,7 @@ const SatoshiAIChat: React.FC = () => {
           "Stacks sBTC peg-in is approaching activation. Keep an eye on the Signer set.",
           "Reminder: Not your keys, not your coins. The Enclave is secure.",
           "Layer 2 liquidity is deepening. Arbitrage opportunities detected between Liquid and Rootstock.",
-          `Privacy Audit: ${calculatePrivacyScore(appContext.state).score}/100. ${calculatePrivacyScore(appContext.state).recommendations[0] || "Maintain vigilance."}`,
+          `Privacy Audit: ${appContext ? calculatePrivacyScore(appContext.state).score : 0}/100. ${appContext ? (calculatePrivacyScore(appContext.state).recommendations[0] || "Maintain vigilance.") : ""}`,
         ];
         responseText =
           responses[getRandomInt(responses.length)] + " [SIMULATION]";
@@ -138,9 +139,9 @@ NOTE: Some sensitive identifiers in user messages may be replaced with placehold
   }
 
   const isAiActive =
-    appContext.state.aiConfig?.apiKey ||
-    (appContext.state.aiConfig?.provider === "Custom" &&
-      appContext.state.aiConfig?.endpoint);
+    appContext?.state.aiConfig?.apiKey ||
+    (appContext?.state.aiConfig?.provider === "Custom" &&
+      appContext?.state.aiConfig?.endpoint);
 
   return (
     <div className="fixed bottom-24 right-4 md:bottom-8 md:right-8 w-[calc(100vw-2rem)] md:w-96 h-[500px] bg-zinc-950 border border-zinc-800 rounded-[2.5rem] shadow-2xl z-70 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-300">
@@ -251,7 +252,7 @@ NOTE: Some sensitive identifiers in user messages may be replaced with placehold
             ></div>
             <span className="text-[9px] text-zinc-600 uppercase tracking-tighter font-bold">
               {isAiActive
-                ? `Remote-${appContext.state.aiConfig?.provider}`
+                ? `Remote-${appContext?.state.aiConfig?.provider}`
                 : "Local-Sim"}
             </span>
           </div>

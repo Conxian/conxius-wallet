@@ -42,14 +42,30 @@ export const sanitizePrompt = (
   });
 
   // 4. Redact Transaction IDs / Private Keys (64-char hex)
-  const hex64Regex = /\b([a-fA-F0-9]{64})\b/g;
+  const hex64Regex = /\b((?:0x)?[a-fA-F0-9]{64})\b/g;
   sanitized = sanitized.replace(hex64Regex, (match) => {
     const id = `[HEX64_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
-  // 5. Redact BIP32 Extended Keys (xpub/xprv etc)
+  // 5. Redact Stacks Addresses (SP..., ST...)
+  const stxRegex = /\b(S[PST][0-9A-Z]{28,41})\b/g;
+  sanitized = sanitized.replace(stxRegex, (match) => {
+    const id = `[STX_ADDR_${generateRandomString(4)}]`;
+    redactionMap[id] = match;
+    return id;
+  });
+
+  // 6. Redact Liquid Addresses (lq1..., tlq1..., elq1...)
+  const liquidRegex = /\b((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})\b/g;
+  sanitized = sanitized.replace(liquidRegex, (match) => {
+    const id = `[LIQUID_ADDR_${generateRandomString(4)}]`;
+    redactionMap[id] = match;
+    return id;
+  });
+
+  // 7. Redact BIP32 Extended Keys (xpub/xprv etc)
   const xkeyRegex = /\b([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})\b/g;
   sanitized = sanitized.replace(xkeyRegex, (match) => {
     const id = `[EXT_KEY_${generateRandomString(4)}]`;
