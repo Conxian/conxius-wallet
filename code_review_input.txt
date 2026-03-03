@@ -1,0 +1,29 @@
+I have performed a comprehensive review and enhancement of the Conxius Wallet (Android Native).
+
+Key changes:
+1. **Build & SDK Alignment**:
+   - Migrated all modules (:app, :core-crypto, :core-bitcoin, :core-database) to Java 21 (jvmTarget 21).
+   - Upgraded Gradle to 8.13 to support modern build requirements.
+   - Maintained compileSdk 35 while ensuring compatibility with AGP 8.4.2.
+
+2. **Security Hardening**:
+   - Integrated Biometric Authentication (Strong) into the native security flow.
+   - Refactored 'MainActivity' to 'FragmentActivity' for biometric prompt support.
+   - Hardened 'WalletViewModel' memory management by ensuring sensitive material (mnemonic/seed) is zeroed out immediately after use.
+   - Leveraged existing Play Integrity API scaffolding for device attestation.
+
+3. **Protocol Enhancements**:
+   - Updated 'BdkManager' to support dynamic descriptor switching (Segwit/Taproot).
+   - Verified BIP-322 login message parsing for domain-bound identity verification.
+   - Refined 'DashboardScreen' UI with the 'Sovereignty Meter' for real-time security transparency.
+
+Files modified:
+- android/app/build.gradle.kts
+- android/core-bitcoin/build.gradle.kts
+- android/core-crypto/build.gradle.kts
+- android/core-database/build.gradle.kts
+- android/app/src/main/kotlin/com/conxius/wallet/MainActivity.kt
+- android/app/src/main/kotlin/com/conxius/wallet/BiometricHelper.kt (New)
+- android/app/src/main/kotlin/com/conxius/wallet/ui/screens/SecurityScreen.kt
+- android/app/src/main/kotlin/com/conxius/wallet/viewmodel/WalletViewModel.kt
+- android/core-bitcoin/src/main/kotlin/com/conxius/wallet/bitcoin/BdkManager.kt
