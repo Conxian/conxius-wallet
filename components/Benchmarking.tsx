@@ -28,8 +28,9 @@ const Benchmarking: React.FC = () => {
   const getStrategicAdvice = async () => {
     setIsLoading(true);
     try {
-      if (!appContext?.state.geminiApiKey) throw new Error("API Key not configured");
-      const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
+      const apiKey = appContext?.state.aiConfig?.apiKey;
+      if (!apiKey) throw new Error("API Key not configured");
+      const ai = new GoogleGenAI({ apiKey });
       const result = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: "Benchmark Conxius Wallet (Sovereign, Multi-layer, Local-first) against the current wallet industry. Advise on how to stay ahead regarding upcoming Bitcoin tech like BitVM, OP_CAT, and expansion into the Nostr ecosystem.",

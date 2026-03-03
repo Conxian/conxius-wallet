@@ -72,6 +72,7 @@ export const LAYER_COLORS: Record<BitcoinLayer, string> = {
   'Merlin': 'bg-fuchsia-800',
   'Bitlayer': 'bg-stone-600',
   'TaprootAssets': 'bg-orange-400',
+  'Silent': 'bg-ghost-white',
 };
 
 export const MOCK_TRANSACTIONS: any[] = [

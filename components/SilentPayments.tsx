@@ -19,9 +19,13 @@ const SilentPayments: React.FC = () => {
         const mockSeed = Buffer.alloc(64).fill(0xac);
         const keys = deriveSilentPaymentKeys(mockSeed);
         const addr = encodeSilentPaymentAddress(keys.scanPub, keys.spendPub, network === 'testnet' ? 'testnet' : 'mainnet');
-        setSilentAddress(addr);
-        setScanPub(keys.scanPub.toString('hex'));
-        setSpendPub(keys.spendPub.toString('hex'));
+
+        // Wrap in timeout to avoid synchronous setState in effect warning
+        setTimeout(() => {
+            setSilentAddress(addr);
+            setScanPub(keys.scanPub.toString('hex'));
+            setSpendPub(keys.spendPub.toString('hex'));
+        }, 0);
     }
   }, [walletConfig, network]);
 

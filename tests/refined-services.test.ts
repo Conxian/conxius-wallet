@@ -10,8 +10,8 @@ describe('Sovereign Protocol Refinement', () => {
     it('validates smart wallet policies for velocity and decay', () => {
         const velocity = DEFAULT_POLICIES.find(p => p.type === 'VelocityLimit')!;
         expect(velocity.isActive).toBe(true);
-        expect(checkPolicyCompliance([{ balance: 500000 }] as any, velocity)).toBe(true);
-        expect(checkPolicyCompliance([{ balance: 1500000 }] as any, velocity)).toBe(false);
+        expect(checkPolicyCompliance([{ amount: 500000 }] as any, velocity)).toBe(true);
+        expect(checkPolicyCompliance([{ amount: 1500000 }] as any, velocity)).toBe(false);
     });
 
     it('aggregates L1 and LN balances', () => {

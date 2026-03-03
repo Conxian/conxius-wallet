@@ -24,8 +24,9 @@ const RewardsHub: React.FC = () => {
   const runSovereignAudit = async () => {
     setIsAuditing(true);
     try {
-      if (!appContext?.state.geminiApiKey) throw new Error("API Key not configured");
-      const ai = new GoogleGenAI({ apiKey: appContext.state.geminiApiKey });
+      const apiKey = appContext?.state.aiConfig?.apiKey;
+      if (!apiKey) throw new Error("API Key not configured");
+      const ai = new GoogleGenAI({ apiKey });
       const result = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: "Perform an economic audit for a Conxius Wallet user. Explain how the 0.05% integrator fee supports Conxian-Labs R&D. Compare this to CEX spreads (1-2%). Highlight that this fee builds a whole ecosystem of sovereign tools. Use technical institutional tone.",
