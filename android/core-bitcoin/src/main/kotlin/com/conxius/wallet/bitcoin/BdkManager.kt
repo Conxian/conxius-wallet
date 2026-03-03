@@ -5,6 +5,7 @@ import org.bitcoindevkit.*
 
 class BdkManager(private val network: Network = Network.TESTNET) {
     private var wallet: Wallet? = null
+    private var blockchain: Blockchain? = null
     private var externalDescriptor: Descriptor? = null
     private var internalDescriptor: Descriptor? = null
 
@@ -31,6 +32,15 @@ class BdkManager(private val network: Network = Network.TESTNET) {
                 network,
                 DatabaseConfig.Memory
             )
+
+            // Initialize Esplora client for the given network
+            val url = if (network == Network.BITCOIN)
+                "https://blockstream.info/api"
+            else
+                "https://blockstream.info/testnet/api"
+
+            blockchain = Blockchain(BlockchainConfig.Esplora(EsploraConfig(url, null, 5u, 20u, null)))
+
         } catch (e: Exception) {
             throw e
         }
@@ -56,8 +66,10 @@ class BdkManager(private val network: Network = Network.TESTNET) {
     }
 
     fun sync() {
-        // Placeholder for blockchain client sync logic
-        // In a real app, this would use an Electrum or Esplora client
+        val currentWallet = wallet ?: throw IllegalStateException("Wallet not initialized")
+        val currentBlockchain = blockchain ?: throw IllegalStateException("Blockchain not initialized")
+
+        currentWallet.sync(currentBlockchain, null)
     }
 
     fun getBalance(): ULong {

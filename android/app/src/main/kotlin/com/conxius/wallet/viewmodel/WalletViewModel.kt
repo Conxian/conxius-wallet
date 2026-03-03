@@ -5,10 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.conxius.wallet.repository.WalletRepository
 import com.conxius.wallet.bitcoin.BdkManager
 import com.conxius.wallet.crypto.StrongBoxManager
-import com.conxius.wallet.crypto.EphemeralSeed
 import com.conxius.wallet.database.AssetEntity
+import com.conxius.wallet.database.TransactionEntity
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class WalletViewModel(
     private val repository: WalletRepository,
@@ -25,6 +27,9 @@ class WalletViewModel(
     private val _isLocked = MutableStateFlow(true)
     val isLocked: StateFlow<Boolean> = _isLocked
 
+    private val _isSyncing = MutableStateFlow(false)
+    val isSyncing: StateFlow<Boolean> = _isSyncing
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
@@ -35,12 +40,15 @@ class WalletViewModel(
                 val seedBytes = strongBoxManager.decrypt(encryptedSeed.encryptedSeed, encryptedSeed.iv)
                 val mnemonicStr = String(seedBytes)
 
-                bdkManager.initializeWallet(mnemonicStr)
+                withContext(Dispatchers.IO) {
+                    bdkManager.initializeWallet(mnemonicStr)
+                }
 
                 // Wipe seed from memory
                 seedBytes.fill(0)
 
                 _isLocked.value = false
+                refreshBalance()
             } catch (e: Exception) {
                 _error.value = "Unlock failed: ${e.message}"
             }
@@ -49,27 +57,43 @@ class WalletViewModel(
 
     fun lock() {
         _isLocked.value = true
-        // Additional cleanup here
     }
 
     fun refreshBalance() {
+        if (_isSyncing.value) return
+
         viewModelScope.launch {
-            // Logic to fetch from BDK and update database
+            _isSyncing.value = true
             try {
-                val address = bdkManager.getNewAddress()
-                // In a real app, we would sync BDK wallet here
-                // For now, let's just update the BTC asset with a mock balance if it's new
+                withContext(Dispatchers.IO) {
+                    bdkManager.sync()
+                }
+
+                val balance = bdkManager.getBalance()
                 val btcAsset = AssetEntity(
                     id = "BTC",
                     name = "Bitcoin",
                     symbol = "BTC",
-                    balance = "0.00", // Mock for now
+                    balance = (balance.toDouble() / 100_000_000.0).toString(),
                     type = "L1",
                     updatedAt = System.currentTimeMillis()
                 )
-                repository.updateAssets(listOf(btcAsset))
+
+                // Discover other Bitcoin L2s or Protocols (Mock discovery for now)
+                val liquidAsset = AssetEntity(
+                    id = "LBTC",
+                    name = "Liquid Bitcoin",
+                    symbol = "L-BTC",
+                    balance = "0.00",
+                    type = "L2",
+                    updatedAt = System.currentTimeMillis()
+                )
+
+                repository.updateAssets(listOf(btcAsset, liquidAsset))
             } catch (e: Exception) {
                 _error.value = "Refresh failed: ${e.message}"
+            } finally {
+                _isSyncing.value = false
             }
         }
     }

@@ -4,6 +4,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
 import java.security.KeyStore
+import java.util.Arrays
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -73,6 +74,9 @@ class StrongBoxManager {
         } catch (e: Exception) {
             Log.e(TAG, "Encryption failed: ${e.message}")
             throw e
+        } finally {
+            // Zero out source data after encryption for safety
+            Arrays.fill(data, 0.toByte())
         }
     }
 
