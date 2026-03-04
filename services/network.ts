@@ -218,7 +218,9 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     /\b([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})\b/i, // BIP32 extended keys (pub/prv)
     /\b(bc1[qp][a-z0-9]{38,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{38,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/i, // BTC
     /\b(S[PST][0-9A-Z]{28,41})\b/i, // Stacks
-    /\b((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})\b/i // Liquid
+    /\b((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})\b/i, // Liquid
+    /\b(nsec1[a-z0-9]{50,110}|npub1[a-z0-9]{50,110})\b/i, // Nostr
+    /\b(sp1[a-z0-9]{50,120})\b/i // Silent Payments
   ];
 
   // Defensive: check the entire error object for ANY leakage
