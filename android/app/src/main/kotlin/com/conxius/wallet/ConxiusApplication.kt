@@ -6,8 +6,8 @@ import com.conxius.wallet.crypto.StrongBoxManager
 import com.conxius.wallet.bitcoin.BdkManager
 
 class ConxiusApplication : Application() {
-    val database by lazy { AppDatabase.getDatabase(this) }
-    val strongBoxManager by lazy { StrongBoxManager() }
+    val strongBoxManager by lazy { StrongBoxManager(this) }
+    val database by lazy { AppDatabase.getDatabase(this, strongBoxManager.getDatabasePassphrase()) }
     val bdkManager by lazy { BdkManager() }
 
     override fun onCreate() {

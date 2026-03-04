@@ -9,17 +9,15 @@ class BdkManager(private val network: Network = Network.TESTNET) {
     private var externalDescriptor: Descriptor? = null
     private var internalDescriptor: Descriptor? = null
 
-    fun initializeWallet(mnemonicStr: String, accountPath: String = "84'/1'/0'") {
+    fun initializeWallet(mnemonicStr: String, accountPath: String = "84'/1'/0'", proxyUrl: String? = null) {
         val mnemonic = Mnemonic.fromString(mnemonicStr)
         val rootKey = DescriptorSecretKey(network, mnemonic, null)
 
         val path = accountPath.trimStart('m').trimStart('/')
 
-        // Support for both Segwit (84) and Taproot (86)
         val isTaproot = path.startsWith("86")
         val prefix = if (isTaproot) "tr" else "wpkh"
 
-        // Construct standard descriptors based on path
         val extDescStr = "${prefix}(${rootKey.asString()}/${path}/0/*)"
         val intDescStr = "${prefix}(${rootKey.asString()}/${path}/1/*)"
 
@@ -34,24 +32,39 @@ class BdkManager(private val network: Network = Network.TESTNET) {
                 DatabaseConfig.Memory
             )
 
-            // Initialize Esplora client for the given network
             val url = if (network == Network.BITCOIN)
                 "https://blockstream.info/api"
             else
                 "https://blockstream.info/testnet/api"
 
-            blockchain = Blockchain(BlockchainConfig.Esplora(EsploraConfig(url, null, 5u, 20u, null)))
+            blockchain = Blockchain(BlockchainConfig.Esplora(EsploraConfig(url, proxyUrl, 5u, 20u, null)))
 
         } catch (e: Exception) {
             throw e
         }
     }
 
-    /**
-     * Re-initializes wallet with a specific descriptor (e.g. for switching between Segwit and Taproot)
-     */
-    fun switchDescriptor(mnemonicStr: String, path: String) {
-        initializeWallet(mnemonicStr, path)
+    fun initializeWithCustomDescriptor(descriptor: String, changeDescriptor: String?, proxyUrl: String? = null) {
+        try {
+            externalDescriptor = Descriptor(descriptor, network)
+            internalDescriptor = changeDescriptor?.let { Descriptor(it, network) }
+
+            wallet = Wallet(
+                externalDescriptor!!,
+                internalDescriptor,
+                network,
+                DatabaseConfig.Memory
+            )
+
+            val url = if (network == Network.BITCOIN)
+                "https://blockstream.info/api"
+            else
+                "https://blockstream.info/testnet/api"
+
+            blockchain = Blockchain(BlockchainConfig.Esplora(EsploraConfig(url, proxyUrl, 5u, 20u, null)))
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     fun signPsbt(ephemeralSeed: EphemeralSeed, psbtBase64: String): String {
