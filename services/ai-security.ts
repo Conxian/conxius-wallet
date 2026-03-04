@@ -73,6 +73,22 @@ export const sanitizePrompt = (
     return id;
   });
 
+  // 8. Redact Nostr Keys (nsec1, npub1)
+  const nostrRegex = /\b(nsec1[a-z0-9]{50,110}|npub1[a-z0-9]{50,110})\b/gi;
+  sanitized = sanitized.replace(nostrRegex, (match) => {
+    const id = `[NOSTR_KEY_${generateRandomString(4)}]`;
+    redactionMap[id] = match;
+    return id;
+  });
+
+  // 9. Redact Silent Payment Addresses (sp1...)
+  const spRegex = /\b(sp1[a-z0-9]{50,120})\b/gi;
+  sanitized = sanitized.replace(spRegex, (match) => {
+    const id = `[SP_ADDR_${generateRandomString(4)}]`;
+    redactionMap[id] = match;
+    return id;
+  });
+
   return { sanitized, redactionMap };
 };
 
