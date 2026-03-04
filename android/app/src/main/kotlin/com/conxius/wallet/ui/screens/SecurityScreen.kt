@@ -5,6 +5,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +23,7 @@ fun SecurityScreen(viewModel: WalletViewModel, onUnlockSuccess: () -> Unit) {
     var pin by remember { mutableStateOf("") }
     val error by viewModel.error.collectAsState()
     val isLocked by viewModel.isLocked.collectAsState()
+    val integrityResultSecure by viewModel.integrityResultSecure.collectAsState()
     val context = LocalContext.current
     val biometricHelper = remember { BiometricHelper(context as FragmentActivity) }
 
@@ -32,6 +34,7 @@ fun SecurityScreen(viewModel: WalletViewModel, onUnlockSuccess: () -> Unit) {
     }
 
     LaunchedEffect(Unit) {
+        viewModel.checkIntegrity()
         if (biometricHelper.canAuthenticate()) {
             biometricHelper.showBiometricPrompt(
                 "Unlock Wallet",
@@ -51,6 +54,23 @@ fun SecurityScreen(viewModel: WalletViewModel, onUnlockSuccess: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        if (integrityResultSecure == false) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                modifier = Modifier.padding(bottom = 24.dp)
+            ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Warning, contentDescription = "Security Alert", tint = MaterialTheme.colorScheme.error)
+                    Spacer(Modifier.width(16.dp))
+                    Text(
+                        "SECURITY ALERT: Your device integrity is compromised. Enclave access is restricted.",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+
         Icon(
             imageVector = Icons.Default.Lock,
             contentDescription = "Lock",
@@ -81,7 +101,7 @@ fun SecurityScreen(viewModel: WalletViewModel, onUnlockSuccess: () -> Unit) {
         Button(
             onClick = { viewModel.unlock(pin) },
             modifier = Modifier.fillMaxWidth(),
-            enabled = pin.length >= 4
+            enabled = pin.length >= 4 && (integrityResultSecure != false)
         ) {
             Text("Unlock with PIN")
         }
@@ -97,7 +117,8 @@ fun SecurityScreen(viewModel: WalletViewModel, onUnlockSuccess: () -> Unit) {
                         onError = { _, _ -> }
                     )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = integrityResultSecure != false
             ) {
                 Icon(Icons.Default.Face, contentDescription = null)
                 Spacer(Modifier.width(8.dp))

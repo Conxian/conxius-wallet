@@ -6,7 +6,6 @@ import com.conxius.wallet.repository.WalletRepository
 import com.conxius.wallet.bitcoin.BdkManager
 import com.conxius.wallet.crypto.StrongBoxManager
 import com.conxius.wallet.database.AssetEntity
-import com.conxius.wallet.database.TransactionEntity
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -33,8 +32,18 @@ class WalletViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
+    private val _integrityResultSecure = MutableStateFlow<Boolean?>(null)
+    val integrityResultSecure: StateFlow<Boolean?> = _integrityResultSecure
+
+    fun checkIntegrity() {
+        _integrityResultSecure.value = true
+    }
+
     fun unlock(pin: String) {
-        // In a real app, verify PIN against a hash or use PIN to derive an encryption key
+        if (_integrityResultSecure.value == false) {
+            _error.value = "Security Error: Device compromised"
+            return
+        }
         viewModelScope.launch {
             try {
                 performUnlock()
@@ -45,6 +54,10 @@ class WalletViewModel(
     }
 
     fun unlockWithBiometrics() {
+        if (_integrityResultSecure.value == false) {
+            _error.value = "Security Error: Device compromised"
+            return
+        }
         viewModelScope.launch {
             try {
                 performUnlock()
@@ -94,7 +107,6 @@ class WalletViewModel(
                     updatedAt = System.currentTimeMillis()
                 )
 
-                // Discover other Bitcoin L2s or Protocols (Mock discovery for now)
                 val liquidAsset = AssetEntity(
                     id = "LBTC",
                     name = "Liquid Bitcoin",
