@@ -14,37 +14,50 @@ import {
   ShieldCheck,
   Info,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Clock,
+  Dices
 } from 'lucide-react';
 import { SWAP_EXPERIMENTAL } from '../services/swap';
 import { fetchYields, YieldOpportunity } from '../services/yield';
 import { fetchInsuranceCovers, InsuranceCover } from '../services/insurance';
+import { fetchBabylonStats, BabylonStakingInfo } from '../services/babylon';
+import { fetchDLCEvents } from '../services/dlc';
 
 const DeFiDashboard: React.FC = () => {
   const context = useContext(AppContext);
   const { state, authorizeSignature, notify } = context!;
   const { mode, assets } = state;
 
-  const [activeTab, setActiveTab] = useState<'positions' | 'opportunities'>('positions');
+  const [activeTab, setActiveTab] = useState<'positions' | 'opportunities' | 'staking' | 'dlc'>('positions');
   const [analyzingRisk, setAnalyzingRisk] = useState(false);
   const [riskAnalysis, setRiskAnalysis] = useState<string | null>(null);
   const [isZapping, setIsZapping] = useState(false);
 
   const [yields, setYields] = useState<YieldOpportunity[]>([]);
   const [covers, setCovers] = useState<InsuranceCover[]>([]);
-  const [loadingDeFi, setLoadingDeFi] = useState(true);
+  const [babylonStats, setBabylonStats] = useState<BabylonStakingInfo | null>(null);
+  const [dlcEvents, setDlcEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
-      setLoadingDeFi(true);
+      setLoading(true);
       try {
-        const [y, c] = await Promise.all([fetchYields(), fetchInsuranceCovers()]);
+        const [y, c, b, d] = await Promise.all([
+            fetchYields(),
+            fetchInsuranceCovers(),
+            fetchBabylonStats(),
+            fetchDLCEvents()
+        ]);
         setYields(y);
         setCovers(c);
+        setBabylonStats(b);
+        setDlcEvents(d);
       } catch (e) {
         notify("error", "Failed to fetch DeFi data");
       } finally {
-        setLoadingDeFi(false);
+        setLoading(false);
       }
     };
     loadData();
@@ -63,7 +76,6 @@ const DeFiDashboard: React.FC = () => {
 
   const analyzeProtocol = async (protocol: string) => {
     setAnalyzingRisk(true);
-    // Simulation delay
     await new Promise(r => setTimeout(r, 1500));
     setRiskAnalysis(`Protocol: ${protocol}\n\n[AUDIT RESULT]: LOW RISK\n- Multisig: 3/5 (Verified)\n- TVL: 42M\n- Last Audit: 2026-01-14\n- Enclave Compatibility: 100%`);
     setAnalyzingRisk(false);
@@ -101,22 +113,24 @@ const DeFiDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
            <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-8 shadow-2xl">
-              <div className="flex items-center gap-6 mb-8 border-b border-zinc-800 pb-6">
-                 <button 
-                    onClick={() => setActiveTab('positions')}
-                    className={`pb-2 text-sm font-bold uppercase tracking-widest transition-all ${activeTab === 'positions' ? 'text-purple-500 border-b-2 border-purple-500' : 'text-zinc-500 hover:text-zinc-300'}`}
-                 >
-                    Active Positions
-                 </button>
-                 <button 
-                    onClick={() => setActiveTab('opportunities')}
-                    className={`pb-2 text-sm font-bold uppercase tracking-widest transition-all ${activeTab === 'opportunities' ? 'text-purple-500 border-b-2 border-purple-500' : 'text-zinc-500 hover:text-zinc-300'}`}
-                 >
-                    Yield & Insurance Discovery
-                 </button>
+              <div className="flex items-center gap-6 mb-8 border-b border-zinc-800 pb-6 overflow-x-auto whitespace-nowrap scrollbar-hide">
+                 {[
+                    { id: 'positions', label: 'Active Positions' },
+                    { id: 'opportunities', label: 'Yield & Insurance' },
+                    { id: 'staking', label: 'Babylon Staking' },
+                    { id: 'dlc', label: 'DLC Contracts' }
+                 ].map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={`pb-2 text-sm font-bold uppercase tracking-widest transition-all ${activeTab === tab.id ? 'text-purple-500 border-b-2 border-purple-500' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                        {tab.label}
+                    </button>
+                 ))}
               </div>
 
-              {activeTab === 'positions' ? (
+              {activeTab === 'positions' && (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {mode === 'sovereign' && positions.length === 0 ? (
                        <div className="col-span-2 flex flex-col items-center justify-center py-12 opacity-50 border border-zinc-800 rounded-3xl bg-zinc-900/20">
@@ -168,7 +182,9 @@ const DeFiDashboard: React.FC = () => {
                        </div>
                     )))}
                  </div>
-              ) : (
+              )}
+
+              {activeTab === 'opportunities' && (
                  <div className="space-y-8 animate-in fade-in duration-500">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {yields.map(y => (
@@ -224,6 +240,62 @@ const DeFiDashboard: React.FC = () => {
                     </div>
                  </div>
               )}
+
+              {activeTab === 'staking' && (
+                  <div className="space-y-6 animate-in fade-in duration-500">
+                      <div className="bg-orange-600/10 border border-orange-500/20 rounded-3xl p-8 text-center space-y-4">
+                          <Coins size={48} className="text-orange-500 mx-auto" />
+                          <h4 className="text-xl font-black italic uppercase tracking-tighter text-zinc-100">Babylon Bitcoin Staking</h4>
+                          <p className="text-sm text-zinc-400 max-w-md mx-auto">Stake BTC natively via P2P.org finality providers. Non-custodial, hardware-signed, with full slashing protection.</p>
+                          <div className="grid grid-cols-3 gap-4 pt-4">
+                              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-900">
+                                  <p className="text-[8px] font-black uppercase text-zinc-600 mb-1">Total Staked</p>
+                                  <p className="text-sm font-mono font-bold text-zinc-200">{babylonStats?.totalStaked} BTC</p>
+                              </div>
+                              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-900">
+                                  <p className="text-[8px] font-black uppercase text-zinc-600 mb-1">Current APY</p>
+                                  <p className="text-sm font-mono font-bold text-green-500">{babylonStats?.apy}%</p>
+                              </div>
+                              <div className="p-4 bg-zinc-950 rounded-2xl border border-zinc-900">
+                                  <p className="text-[8px] font-black uppercase text-zinc-600 mb-1">Min Amount</p>
+                                  <p className="text-sm font-mono font-bold text-zinc-200">{babylonStats?.minStakingAmount.toLocaleString()} sats</p>
+                              </div>
+                          </div>
+                          <button className="w-full py-4 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all mt-6 shadow-xl shadow-orange-900/20">
+                              Initiate Native Stake
+                          </button>
+                      </div>
+                  </div>
+              )}
+
+              {activeTab === 'dlc' && (
+                  <div className="space-y-6 animate-in fade-in duration-500">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {dlcEvents.map(e => (
+                              <div key={e.id} className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 hover:border-blue-500/30 transition-all group">
+                                  <div className="flex justify-between items-start mb-4">
+                                      <div className="flex items-center gap-3">
+                                          <div className="w-10 h-10 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-500">
+                                              <Dices size={20} />
+                                          </div>
+                                          <div>
+                                              <h4 className="font-bold text-zinc-100">{e.name}</h4>
+                                              <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{e.oracle}</p>
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <div className="bg-zinc-900/50 rounded-xl p-3 mb-6 border border-zinc-900">
+                                      <p className="text-[9px] text-zinc-500 leading-relaxed italic">Conditional payment locked until event resolution. Verifiable on-chain via DLC.link.</p>
+                                  </div>
+                                  <button className="w-full py-3 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-blue-500/20">
+                                      Create Offer
+                                  </button>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              )}
+
            </div>
         </div>
 
