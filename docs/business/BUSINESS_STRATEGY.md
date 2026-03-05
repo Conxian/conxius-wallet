@@ -51,3 +51,13 @@ We partner with the full spectrum of Bitcoin layers (Stacks, Liquid, BOB, B2, RG
 To become the **Universal Signing Layer** for the internet. Conxius will power the "Citadel" of every Bitcoin-native institution, from startups to sovereign states.
 
 ---
+
+## 5. Phase 1.6: The Service Super-App
+With the core protocol stack (L1/L2) stabilized, Conxius scales via turnkey integrations.
+- **Revenue without Custody:** Every swap, stake, and booking generates micro-fees.
+- **Sovereign Ecosystem Lock-in:** By providing all financial tools in one hardware-secured app, user retention is guaranteed by the difficulty of migrating secure keys.
+
+## 5. Phase 1.6: The Service Super-App
+With the core protocol stack (L1/L2) stabilized, Conxius scales via turnkey integrations.
+- **Revenue without Custody:** Every swap, stake, and booking generates micro-fees.
+- **Sovereign Ecosystem Lock-in:** By providing all financial tools in one hardware-secured app, user retention is guaranteed by the difficulty of migrating secure keys.

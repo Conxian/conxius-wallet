@@ -165,3 +165,17 @@ UTXO-native spending policies via Miniscript and Musig2.
   audit Miniscript descriptors for risk, key loss, and sovereignty maturity.
 - **Unified Network Layer:** Every module in the app (Fees, DEX, Stacking)
   is now hard-aligned with the user's sovereign RPC and Tor settings.
+
+## 🚀 Service Super-App Expansion (v1.6.0)
+
+The wallet has transitioned into a "Service Super-App", integrating non-custodial
+DeFi and real-world utilities while maintaining localized signing.
+
+- **Payload Constructors**: Modules like `services/yield.ts` and `services/babylon.ts`
+  must strictly act as unsigned transaction constructors. Final signing MUST be
+  performed via `requestEnclaveSignature`.
+- **NIP-47 (NWC)**: Support for KIND 23124/23125 events for remote control.
+- **DLC (Discreet Log)**: Support for conditional on-chain payments via oracle
+  attestations.
+- **Sandboxed Marketplace**: Real-world service web-views must be isolated from
+  the core wallet state, using BIP21 intents for payment hand-offs.

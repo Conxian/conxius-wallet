@@ -11,6 +11,7 @@ permalink: /whitepaper
 Conxius is the definitive sovereign interface for the entire Bitcoin ecosystem. It bridges the gap between Bitcoin L1 and the burgeoning landscape of Layer 2s, sidechains, and asset protocols. By utilizing an Android-native Secure Enclave model, Conxius provides hardware-level security for BTC, Lightning, Liquid, Stacks, RSK, BOB, RGB, Ordinals, Runes, Ark, BitVM, and State Chains—all within a single, unified mobile application.
 
 ## 1. The Full Ecosystem Vision
+- **Connectivity Sovereignty**: Remote wallet control via NIP-47 (Nostr Wallet Connect).
 
 Bitcoin is no longer just a store of value; it is a multi-layered programmable ecosystem. Conxius is designed to be the central hub for this "New Bitcoin City," providing:
 - **Security Sovereignty**: Keys are generated and protected by hardware-backed TEE and StrongBox.
@@ -54,6 +55,9 @@ Conxius treats Bitcoin-backed EVM layers as first-class citizens, using standard
 - **Ordinals/Runes**: Native inscription management and balance tracking integrated into the core UTXO manager.
 
 ### 3.5. Ark & State Chains
+### 3.6. Babylon Staking & DLCs
+- **Babylon**: Native Bitcoin staking protocol integration enabling yield generation directly from L1 UTXOs while maintaining self-custody.
+- **DLCs**: Discrete Log Contracts for executable agreements on Bitcoin, settled via oracle attestations without intermediary risk.
 - **Ark**: Support for shared UTXOs (VTXOs) via the Ark protocol, enabling instant payments without the liquidity constraints of Lightning.
 - **State Chains**: Sequential derivation for off-chain UTXO transfers, providing high-throughput, low-cost Bitcoin mobility.
 

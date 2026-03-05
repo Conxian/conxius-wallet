@@ -16,8 +16,9 @@ export interface SwapQuote {
   toAmount: number;
   fee: number;
   effectiveFeeRate: number;
-  provider: 'Changelly' | 'THORChain' | 'Boltz';
+  provider: 'Changelly' | 'THORChain' | 'Boltz' | 'LI.FI' | '1inch';
   estimatedTime: number;
+  transactionRequest?: any;
 }
 
 export const isChangellyReady = (): boolean => !!(import.meta as any).env?.VITE_CHANGELLY_PROXY_URL;
@@ -42,6 +43,62 @@ export const fetchChangellyQuote = async (from: string, to: string, amount: numb
         fee: parseFloat(result.networkFee || '0') + (amount * rate),
         effectiveFeeRate: rate,
         provider: 'Changelly', estimatedTime: 15
+    };
+};
+
+export const fetchLifiQuote = async (
+    fromChain: number,
+    toChain: number,
+    fromToken: string,
+    toToken: string,
+    fromAmount: string,
+    fromAddress: string,
+    state: AppState
+): Promise<SwapQuote> => {
+    const url = `https://li.quest/v1/quote?fromChain=${fromChain}&toChain=${toChain}&fromToken=${fromToken}&toToken=${toToken}&fromAmount=${fromAmount}&fromAddress=${fromAddress}&referrer=conxius`;
+    const response = await fetchWithRetry(url, { headers: { 'accept': 'application/json' } });
+    const data = await response.json();
+    const rate = calculateEffectiveFeeRate(state);
+    const fee = (parseFloat(data.estimate.gasCosts?.[0]?.amount || '0') / 1e18) + (parseFloat(fromAmount) / 1e18 * rate);
+    return {
+        id: 'lifi_' + data.transactionId,
+        fromAsset: fromToken,
+        toAsset: toToken,
+        fromAmount: parseFloat(fromAmount) / 1e18,
+        toAmount: parseFloat(data.estimate.toAmount) / 1e18,
+        fee,
+        effectiveFeeRate: rate,
+        provider: 'LI.FI',
+        estimatedTime: Math.floor(data.estimate.executionDuration / 60) || 5,
+        transactionRequest: data.transactionRequest
+    };
+};
+
+export const fetch1inchQuote = async (
+    chainId: number,
+    fromToken: string,
+    toToken: string,
+    amount: string,
+    fromAddress: string,
+    state: AppState
+): Promise<SwapQuote> => {
+    const gateway = (import.meta as any).env?.VITE_GATEWAY_URL || 'https://gateway.conxianlabs.com';
+    const url = `${gateway}/1inch/v6.0/${chainId}/swap?src=${fromToken}&dst=${toToken}&amount=${amount}&from=${fromAddress}&slippage=1&disableEstimate=true&includeTokensInfo=true&includeProtocols=true&includeGas=true`;
+    const response = await fetchWithRetry(url, { headers: { 'accept': 'application/json' } });
+    const data = await response.json();
+    const rate = calculateEffectiveFeeRate(state);
+    const fee = (parseFloat(data.gasPrice) * parseFloat(data.tx.gas) / 1e18) + (parseFloat(amount) / 1e18 * rate);
+    return {
+        id: '1inch_' + generateRandomString(10),
+        fromAsset: fromToken,
+        toAsset: toToken,
+        fromAmount: parseFloat(amount) / 1e18,
+        toAmount: parseFloat(data.toAmount) / 1e18,
+        fee,
+        effectiveFeeRate: rate,
+        provider: '1inch',
+        estimatedTime: 2,
+        transactionRequest: data.tx
     };
 };
 

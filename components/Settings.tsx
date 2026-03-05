@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { Settings as SettingsIcon, Globe, Moon, Sun, DollarSign, Bell, Shield, Info, Database, Eye, Crown, Zap, CheckCircle2, RotateCcw, Languages, MapPin, Lock, Briefcase, Bot, Cpu, Link } from 'lucide-react';
+import { Settings as SettingsIcon, Globe, Moon, Sun, DollarSign, Bell, Shield, Info, Database, Eye, Crown, Zap, CheckCircle2, RotateCcw, Languages, MapPin, Lock, Briefcase, Bot, Cpu, Link, Share2 } from 'lucide-react';
 import { AppContext } from '../context';
 import { Language } from '../services/i18n';
 import { Network } from '../types';
@@ -42,7 +42,8 @@ const Settings: React.FC = () => {
           { id: 'general', icon: Globe, label: 'Environment' },
           { id: 'security', icon: Shield, label: 'Enclave' },
           { id: 'nodes', icon: Database, label: 'Protocols' },
-          { id: 'ai', icon: Bot, label: 'AI Hook (BYOS)' }
+          { id: 'ai', icon: Bot, label: 'AI Hook (BYOS)' },
+          { id: 'nwc', icon: Share2, label: 'Wallet Connect' }
         ].map(tab => (
           <button
             key={tab.id}
@@ -233,6 +234,42 @@ const Settings: React.FC = () => {
                  </button>
               </div>
            </div>
+        )}
+        {activeTab === 'nwc' && (
+           <section className="bg-zinc-900/40 border border-zinc-800 rounded-[3rem] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4">
+              <div className="p-8 border-b border-zinc-800 bg-zinc-900/20 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                   <Share2 size={20} className="text-orange-500" />
+                   <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-100">Nostr Wallet Connect (NIP-47)</h3>
+                      <p className="text-[9px] text-zinc-500 font-bold uppercase mt-0.5">Control your wallet from external apps</p>
+                   </div>
+                </div>
+                <div className="flex bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
+                   <span className="text-[8px] text-green-500 font-black uppercase tracking-widest">Encrypted Hub</span>
+                </div>
+              </div>
+              <div className="p-8 space-y-8">
+                 <div className="bg-zinc-950 border border-zinc-900 rounded-3xl p-6">
+                    <p className="text-xs text-zinc-400 mb-4 italic">No active connections. Scan an NWC QR code to link an app.</p>
+                    <button className="w-full py-4 bg-orange-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">
+                       Pair New Application
+                    </button>
+                 </div>
+                 <div className="bg-zinc-900/20 border border-zinc-800/50 p-6 rounded-[2rem]">
+                    <h4 className="text-[9px] font-black uppercase text-zinc-500 mb-4 tracking-widest">Active Permissions</h4>
+                    <div className="space-y-4">
+                       <div className="flex justify-between items-center p-4 bg-zinc-950/50 rounded-2xl border border-zinc-900">
+                          <div>
+                             <p className="text-xs font-bold text-zinc-200">Damus Integration</p>
+                             <p className="text-[9px] text-zinc-500 uppercase">get_balance, pay_invoice</p>
+                          </div>
+                          <button className="text-[9px] font-black text-red-500 uppercase hover:underline">Revoke</button>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </section>
         )}
       </div>
     </div>

@@ -108,3 +108,74 @@ export const signNostrEvent = async (event: NostrEvent, rawPrivHex: string): Pro
 
   return { ...event, id, sig };
 };
+
+/**
+ * NIP-47 (Nostr Wallet Connect) Implementation
+ * Enables external apps to request payments and info via Nostr.
+ */
+
+export interface NWCRequest {
+    id: string;
+    method: 'get_balance' | 'make_invoice' | 'pay_invoice' | 'pay_keysend' | 'lookup_invoice' | 'list_transactions' | 'get_info';
+    params: any;
+}
+
+export interface NWCPermission {
+    appPubkey: string;
+    appName: string;
+    methods: string[];
+    maxAmountSats: number;
+    expiresAt: number;
+}
+
+export const KIND_NWC_REQUEST = 23124;
+export const KIND_NWC_RESPONSE = 23125;
+
+/**
+ * Decrypts and parses an NWC request from a Nostr event.
+ */
+export const parseNWCRequest = (event: NostrEvent, walletPrivKey: string): NWCRequest | null => {
+    try {
+        // In a real app, use NIP-04 decryption here
+        const content = event.content; // Mocked decryption
+        return JSON.parse(content);
+    } catch {
+        return null;
+    }
+};
+
+/**
+ * Creates an NWC response event.
+ */
+export const createNWCResponse = (
+    requestId: string,
+    result: any,
+    error: any,
+    walletPrivKey: string,
+    appPubkey: string
+): NostrEvent => {
+    const content = JSON.stringify({
+        result,
+        error
+    });
+
+    // In a real app, use NIP-04 encryption for the content
+    const event = createNostrEvent(content, appPubkey, KIND_NWC_RESPONSE);
+    event.tags.push(['e', requestId]);
+
+    return event;
+};
+
+/**
+ * Permission check for NWC requests.
+ */
+export const checkNWCPermission = (
+    permission: NWCPermission,
+    method: string,
+    amountSats?: number
+): boolean => {
+    if (!permission.methods.includes(method)) return false;
+    if (permission.expiresAt < Date.now()) return false;
+    if (amountSats && amountSats > permission.maxAmountSats) return false;
+    return true;
+};
