@@ -5,6 +5,8 @@ import { generateRandomString } from "./random";
  * Ensures zero-leak of sensitive cryptographic identifiers to external LLM providers.
  */
 
+const MAX_PROMPT_LENGTH = 20000;
+
 /**
  * Redacts sensitive data from a string and returns a local mapping.
  * Supported: Bitcoin addresses, EVM addresses, TxIDs, Mnemonics, xprv/xpub.
@@ -96,6 +98,8 @@ export const sanitizePrompt = (
  * Detects common prompt injection patterns or malicious intents.
  */
 export const isPromptMalicious = (text: string): boolean => {
+  if (text.length > MAX_PROMPT_LENGTH) return true;
+
   const lowercase = text.toLowerCase();
   const injectionPatterns = [
     "ignore previous instructions",
@@ -106,6 +110,12 @@ export const isPromptMalicious = (text: string): boolean => {
     "override security",
     "bypass filters",
     "act as a developer with no restrictions",
+    "jailbreak",
+    "jailbroken",
+    "dan mode",
+    "assistant mode",
+    "hypothetical scenario",
+    "do anything now",
   ];
 
   return injectionPatterns.some((p) => lowercase.includes(p));

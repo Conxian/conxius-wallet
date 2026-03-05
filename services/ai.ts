@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { Asset, AppState } from "../types";
-import { fetchWithRetry } from "./network";
+import { fetchWithRetry, sanitizeError } from "./network";
 import { secureAuditPrompt, rehydrateResponse } from "./ai-security";
 
 /**
@@ -75,7 +75,7 @@ export const callAi = async (
     return rehydrateResponse(responseText, redactionMap);
   } catch (error: any) {
     console.error("[Sovereign AI] Call failed", error);
-    return `AI Protocol Error: ${error.message}`;
+    return `AI Protocol Error: ${sanitizeError(error)}`;
   }
 };
 
