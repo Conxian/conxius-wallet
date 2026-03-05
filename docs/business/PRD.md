@@ -91,6 +91,9 @@ Conxius is migrating from a Capacitor hybrid model to a **pure native Android ar
 - **FR-KEY-05**: **Taproot Musig2** support for aggregated institutional multi-sig quorums.
 
 ### 4.3. Cross-Chain Interoperability
+- **FR-INT-07**: **Babylon Staking**: Non-custodial BTC staking via finality providers with StrongBox signing.
+- **FR-INT-08**: **NIP-47 (NWC)**: Support for remote wallet control via encrypted Nostr channels.
+- **FR-INT-09**: **DLC Support**: Trustless conditional payments using Discreet Log Contracts.
 
 - **FR-INT-01**: Native 2nd-way pegs for Liquid and Stacks sBTC ((1)$ efficiency).
 - **FR-INT-02**: Native-First Interoperability: Direct Bitcoin L1-to-L2 transfers for sovereign ecosystems; NTT reserved for non-Bitcoin satellites.

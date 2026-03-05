@@ -1,105 +1,19 @@
-# Conxius Implementation Registry (Real vs Mocked vs Missing)
+# Conxius Implementation Registry (v1.6.0)
 
-This document tracks the ground-truth implementation status of every major feature across the Conxius ecosystem.
-
-## I. CORE INFRASTRUCTURE
+## I. CORE PROTOCOLS
 
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
-| **Android Enclave (StrongBox)** | ✅ PRODUCTION | Real TEE/StrongBox key generation, ECDSA & Schnorr signing. Fully implemented SecureEnclavePlugin. **Verified on Samsung A10.** |
-| **Persistent Crypto Worker** | ✅ PRODUCTION | Singleton worker with session-level secret retention. |
-| **ECC Engine Fusion** | ✅ PRODUCTION | Hybrid @noble/curves + tiny-secp256k1. |
-| **Zero-Leak Memory** | ✅ PRODUCTION | Strict .fill(0) and try...finally enforcement. |
-| **Device Integrity Plugin** | ✅ PRODUCTION | Multi-layer heuristics for root/emulator detection. **Verified on Samsung A10.** |
-| **Maestro UI Testing** | ✅ PRODUCTION | Automated on-device UI flows for Android verification. |
-| **SPV Light Client** | 🛠️ ENHANCED | Header-verifying skeleton implemented in `services/protocol.ts`. |
+| **Babylon Staking** | ✅ PRODUCTION | P2P.org integration for unsigned staking payloads. |
+| **NIP-47 (NWC)** | ✅ PRODUCTION | Kind 23124/23125 support in services/nostr.ts. |
+| **DLC (Discreet Log)** | ✅ PRODUCTION | Offer/Accept/Settle flow implemented in services/dlc.ts. |
+| **Yield (Yield.xyz)** | ✅ PRODUCTION | Multi-network yield discovery and entry. |
+| **Insurance (Parametric)**| ✅ PRODUCTION | Neptune Mutual & InsurAce cover purchase. |
 
-## II. BITCOIN L1 (BTC)
+## II. INTEROPERABILITY
 
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
-| **BIP-84 (Segwit)** | ✅ PRODUCTION | Full PSBT signing & broadcast. |
-| **BIP-86 (Taproot)** | ✅ PRODUCTION | Signing & address derivation implemented. |
-| **BIP-352 (Silent Payments)** | ✅ PRODUCTION | Real shared secret & tweaked output computation implemented. Integrated UI. |
-| **UTXO Manager** | ✅ PRODUCTION | Real-time tracking, dust sweeping, turbo boost. |
-| **2-of-3 Multi-Sig** | ✅ PRODUCTION | P2WSH and Taproot Musig2 (BIP-327) quorums implemented. |
+| **1inch / LI.FI** | ✅ PRODUCTION | Aggregated swaps and cross-chain bridging. |
+| **CoinsPaid Gateway** | ✅ PRODUCTION | Merchant invoice generation for B2B. |
 
-## III. BITCOIN LAYERS & SIDECHAINS
-
-| Protocol | Status | Enclave Support |
-| :--- | :--- | :--- |
-| **Stacks (sBTC)** | ✅ PRODUCTION | Native m/44'/5757' support; real Hiro API. |
-| **Liquid (L-BTC)** | ✅ PRODUCTION | Native m/84'/1776' support; liquidjs-lib. |
-| **Rootstock (RBTC)** | ✅ PRODUCTION | EVM derivation m/44'/60'; real RPC. |
-| **BOB (EVM L2)** | ✅ PRODUCTION | EVM path integrated; fetcher uses eth_getBalance RPC. |
-| **Ark Protocol** | ✅ PRODUCTION | VTXO path m/84'/0'/0'/1' integrated; Full VTXO lifecycle (Forfeit/Redeem) implemented with Enclave signing. |
-| **State Chains** | ✅ PRODUCTION | Seq. path m/84'/0'/0'/2' integrated; Full transfer API with Coordinator sync implemented. |
-| **Maven** | ✅ PRODUCTION | Multi-asset fetcher and transfer preparation implemented. |
-| **BitVM** | ✅ PRODUCTION | Enhanced functional cryptographic verifier implemented with TEE-aligned checks. |
-| **B2 Network** | ✅ PRODUCTION | EVM path integrated; fetcher uses eth_getBalance RPC. |
-| **Botanix** | ✅ PRODUCTION | Spiderchain EVM path integrated; real RPC. |
-| **Mezo** | ✅ PRODUCTION | tBTC-based EVM path integrated; real RPC. |
-| **Alpen / Citrea / Bitlayer** | ✅ PRODUCTION | ZK-rollup EVM path integrated; real RPC. |
-| **Zulu / Bison / Hemi** | ✅ PRODUCTION | EVM path integrated; real RPC. |
-| **Nubit / Lorenzo / Babylon** | ✅ PRODUCTION | BTC staking & DA integration ready; fetchers implemented. |
-| **Merlin Chain** | ✅ PRODUCTION | EVM path integrated; real RPC. |
-
-## IV. ASSET PROTOCOLS
-
-| Feature | Status | Notes |
-| :--- | :--- | :--- |
-| **Ordinals** | ✅ PRODUCTION | Hiro API integration for balance and metadata. |
-| **Runes** | ✅ PRODUCTION | Real-time balance fetch via Hiro Ordinals API. |
-| **RGB** | ✅ PRODUCTION | Taproot signer m/86' ready; On-chain anchor verification and transfer preparation implemented. |
-| **Taproot Assets** | ✅ PRODUCTION | Taproot signer m/86' ready; Integrated with indexer for asset discovery. |
-| **BRC-20** | ✅ PRODUCTION | Integrated with Ordinals fetcher. |
-
-## V. INTEROPERABILITY & SWAPS
-
-| Feature | Status | Notes |
-| :--- | :--- | :--- |
-| **NTT Bridge (Wormhole)** | ✅ PRODUCTION | Real Sovereign Transceiver & NTT SDK signing. |
-| **Boltz Swaps** | ✅ PRODUCTION | Real submarine and reverse swap execution. |
-| **Changelly Swaps** | ✅ PRODUCTION | High-fidelity flow with functional fallbacks. |
-| **THORChain** | ✅ PRODUCTION | Real memo builder and affiliate tracking. |
-
-## VI. B2B & IDENTITY
-
-| Feature | Status | Notes |
-| :--- | :--- | :--- |
-| **Conxian Gateway** | ✅ PRODUCTION | Full institutional portal integration. |
-| **Corporate Profiles** | ✅ PRODUCTION | Encrypted storage & SIWx signing. |
-| **Web5 DIDs (did:dht)** | ✅ PRODUCTION | Enclave-backed KeyManager bridge implemented. |
-| **Sovereignty Meter** | ✅ PRODUCTION | Dynamic scoring based on real security metrics. |
-| **CoinJoin (WabiSabi)** | ✅ PRODUCTION | Full WabiSabi protocol state machine with blinded registrations. |
-
----
-
-## VII. REPAIR & UPGRADE PRIORITY
-
-### 🟢 ALL CORE PROTOCOLS ENHANCED
-
-1. **Done**: Sprint 2026-02-18 Root-to-Leaf Audit & Repair completed. Refined native signing for 14+ layers, hardened Web5 enclave bridge, and synchronized Dashboard receive flows.
-2. **Done**: Sprint 2026-02-18 Milestone M6 (Multi-Sig) & M7 (Privacy v2) implemented. Hardened Silent Payments and added CoinJoin & Tor simulation.
-3. **Done**: Sprint 2026-02-18 System-wide Review & Refinement. Enhanced sBTC Nakamoto monitoring, production-grade Ark boarding logic, and TEE-backed Governance persistence. Standardized Gateway domain alignment across the ecosystem.
-4. **Done**: Sprint 2026-02-18 Milestone M10 (ZK Verifier) & M11 (BitVM) Verification. Verified functional cryptographic STARK verifier in Labs Explorer.
-5. **Done**: Sprint 2026-02-18 Maestro On-Device Testing. Setup and verified automated UI testing flows for Android hardware.
-6. **Done**: Sprint 2026-02-18 Advanced Sovereignty Implementation.
-   - Programmable Custody: Decaying Multisig & Velocity Limits via Miniscript.
-   - Threshold Sovereignty: Musig2/FROST session management.
-   - Silent Payments (BIP-352) UI & Protocol alignment.
-   - Abstracted Lightning & Unified Balances.
-   - SPV Light Client foundation.
-   - Business Alignment: Monetization discounts, affiliate hardening, and technical integration fee caps ($50).
-
----
-
-*Last Updated: 2026-02-18*
-
-### 🔵 REPOSITORY MAINTENANCE (2026-02-18)
-
-1. **Done**: Full Repo Maintenance Protocol.
-   - Standardized documentation via GitHub templates.
-   - Initialized baseline linting (ESLint 10) and fixed high-priority hook bugs.
-   - Synchronized `pnpm` lockfile and removed technical debt (backup files).
-   - Harmonized ecosystem versioning to 1.5.0.
