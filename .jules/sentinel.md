@@ -89,3 +89,8 @@ permalink: /sentinel
 **Vulnerability:** The centralized `sanitizeError` utility only inspected specific top-level properties (`message`, `statusText`), allowing sensitive material (mnemonics, keys) to leak if nested within custom error fields like `reason` or `error`.
 **Learning:** Partial inspection of error objects is insufficient for "Zero-Leak" security. Third-party SDKs and different RPC providers use non-standard property names for error details, which can bypass simple property-based filters.
 **Prevention:** Always serialize the entire error object (via `JSON.stringify`) to perform a full-text scan for sensitive patterns before allowing any part of the error to be returned to the UI or logs. Combine this with multi-field extraction for safe fallback display.
+
+### Service Super-App Alignment (v1.6.0)
+- **Requirement**: All third-party payloads (Yield.xyz, 1inch, Babylon) must be construction-only.
+- **Verification**: Playwright tests must assert that the Enclave signature modal appears before any external execution.
+- **Privacy**: Sentinel AI must redact PII from Travala/Silent.Link web-view hand-offs.

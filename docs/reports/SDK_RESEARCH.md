@@ -126,3 +126,53 @@ Conxius v1.2 transitions from simple single-sig to policy-based UTXO management.
 - **Satoshi Policy Auditor:** Utilizes advanced LLMs (via BYOS) to explain
   technical spending rules to non-technical users, ensuring they understand
   their own inheritance or cold-storage protocols.
+
+---
+
+## 9. Babylon Staking (P2P.org)
+
+### Recommended SDK:  + P2P API
+Integration for native Bitcoin staking.
+
+- **Capabilities:**
+    - Finality provider delegation.
+    - Unsigned staking transaction construction.
+    - Slashing protection parameters.
+- **Integration Path:** Integrated in `services/babylon.ts`.
+
+---
+
+## 10. Nostr Wallet Connect (NIP-47)
+
+### Recommended SDK:
+Standardized remote wallet control.
+
+- **Capabilities:**
+    - KIND 23124 (Request) and 23125 (Response).
+    - Permissioned budget management.
+- **Integration Path:** Integrated in `services/nostr.ts`.
+
+---
+
+## 9. Babylon Staking (P2P.org)
+
+### Recommended SDK: `btc-staking-ts` + P2P API
+Integration for native Bitcoin staking.
+
+- **Capabilities:**
+    - Finality provider delegation.
+    - Unsigned staking transaction construction.
+    - Slashing protection parameters.
+- **Integration Path:** Integrated in `services/babylon.ts`.
+
+---
+
+## 10. Nostr Wallet Connect (NIP-47)
+
+### Recommended SDK: `@nostr-dev-kit/ndk`
+Standardized remote wallet control.
+
+- **Capabilities:**
+    - KIND 23124 (Request) and 23125 (Response).
+    - Permissioned budget management.
+- **Integration Path:** Integrated in `services/nostr.ts`.

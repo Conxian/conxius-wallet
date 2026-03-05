@@ -55,3 +55,15 @@ pnpm test:e2e:ui
 
 ---
 *Last Updated: 2026-02-18*
+
+## 7. Advanced Service Verification (v1.6.0)
+*   **Yield Entry:** Verify unsigned payload matches the selected APR.
+*   **Swap Routing:** Assert LI.FI/1inch path selection is optimized.
+*   **DLC Lifecycle:** Test Offer -> Accept -> Settle simulation.
+*   **NWC Auth:** Confirm Damus/external apps can request balances via Nostr.
+
+## 7. Advanced Service Verification (v1.6.0)
+*   **Yield Entry:** Verify unsigned payload matches the selected APR.
+*   **Swap Routing:** Assert LI.FI/1inch path selection is optimized.
+*   **DLC Lifecycle:** Test Offer -> Accept -> Settle simulation.
+*   **NWC Auth:** Confirm Damus/external apps can request balances via Nostr.
