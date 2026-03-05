@@ -27,3 +27,11 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 
 ## [1.5.0] - 2026-02-18
 ... (previous entries)
+
+## [1.5.1] - 2026-03-05
+### Enhanced
+- Refactored NTT support to use official @wormhole-foundation/sdk v4+ abstractions.
+- Implemented dynamic public NTT asset discovery via Wormholescan API.
+- Enhanced NTTBridge UI with real-time Guardian attestation tracking (X/19 signatures).
+- Aligned ConxiusWormholeSigner with standard SDK interfaces for multi-chain support (Ethereum, Base, Arbitrum, Stacks).
+- Integrated sBTC public NTT placeholders for mainnet readiness.

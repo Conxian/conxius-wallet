@@ -6,8 +6,8 @@ permalink: /docs/sovereign-bridge-strategy
 
 # Sovereign Bridge & Interoperability Strategy
 
-**Date:** 2026-02-18
-**Status:** DRAFT
+**Date:** 2026-03-05
+**Status:** ENHANCED
 **Context:** Research findings on Wormhole availability and native ethos-aligned bridging mechanisms.
 
 ---
@@ -109,7 +109,7 @@ To solve UX without sacrificing sovereignty, we should integrate **Boltz**.
 
 **Next Step:**
 
-1.  **Refactor `ntt.ts`** to use Standard Token Bridge SDK. [COMPLETED]
+1.  **Refactor `ntt.ts`** to use official Wormhole SDK v4 abstractions and public NTT discovery. [COMPLETED]
 2.  **Implement Native Token Transfer (NTT) Transceiver** module for sovereign bridging. [COMPLETED]
 3.  **Integrate Boltz SDK** (to unlock Liquid/Lightning). [IN PROGRESS]
 4.  **Implement sBTC Scripting** (to unlock Stacks). [COMPLETED]
@@ -134,11 +134,6 @@ To ensure the best UX for the "Digital Citadelist," the Conxius NTT Bridge imple
     3. A **Conxian Relayer** (or authorized Solver) receives the NTT message and the Gas Payment.
     4. The Relayer submits the VAA to the destination chain, paying the gas in ETH/Native token.
 * **Ethos Alignment:** Eliminates the "Gas Token Requirement" bottleneck, making Bitcoin layers feel like a single, unified network.
-
-## 4. Aggregated Satellite Bridges (v1.6.0)
-While NTT handles core Bitcoin layer transfers, LI.FI and 1inch act as satellite aggregators for broad ecosystem liquidity.
-- **Policy:** Aggregated bridges are restricted to non-core assets.
-- **Signing:** All satellite payloads must be processed via the Sovereign signing enclave.
 
 ## 4. Aggregated Satellite Bridges (v1.6.0)
 While NTT handles core Bitcoin layer transfers, LI.FI and 1inch act as satellite aggregators for broad ecosystem liquidity.
