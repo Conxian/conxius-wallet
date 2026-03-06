@@ -43,10 +43,10 @@ export const sanitizePrompt = (
     return id;
   });
 
-  // 4. Redact Transaction IDs / Private Keys (64-char hex)
-  const hex64Regex = /\b((?:0x)?[a-fA-F0-9]{64})\b/g;
-  sanitized = sanitized.replace(hex64Regex, (match) => {
-    const id = `[HEX64_${generateRandomString(4)}]`;
+  // 4. Redact Transaction IDs / Private Keys / Node IDs (64 or 66-char hex)
+  const hexRegex = /\b((?:0x)?[a-fA-F0-9]{64,66})\b/g;
+  sanitized = sanitized.replace(hexRegex, (match) => {
+    const id = `[HEX_SEC_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
@@ -91,6 +91,22 @@ export const sanitizePrompt = (
     return id;
   });
 
+  // 10. Redact Bitcoin WIF Private Keys (Mainnet & Testnet)
+  const wifRegex = /\b[5KL9c][1-9A-HJ-NP-Za-km-z]{50,51}\b/g;
+  sanitized = sanitized.replace(wifRegex, (match) => {
+    const id = `[WIF_KEY_${generateRandomString(4)}]`;
+    redactionMap[id] = match;
+    return id;
+  });
+
+  // 11. Redact Lightning BOLT11 Invoices
+  const bolt11Regex = /\bln(?:bc|tb|bcrt|dev)[0-9a-z]+\b/gi;
+  sanitized = sanitized.replace(bolt11Regex, (match) => {
+    const id = `[BOLT11_${generateRandomString(4)}]`;
+    redactionMap[id] = match;
+    return id;
+  });
+
   return { sanitized, redactionMap };
 };
 
@@ -129,12 +145,17 @@ export const rehydrateResponse = (
   text: string,
   redactionMap: Record<string, string>,
 ): string => {
-  let rehydrated = text;
-  Object.keys(redactionMap).forEach((id) => {
-    // Only replace if the ID is explicitly present in the response
-    rehydrated = rehydrated.split(id).join(redactionMap[id]);
-  });
-  return rehydrated;
+  const ids = Object.keys(redactionMap);
+  if (ids.length === 0) return text;
+
+  // Single-pass rehydration: Prevents double-substitution and improves performance.
+  // Escapes special regex characters in the redaction IDs.
+  const pattern = new RegExp(
+    ids.map((id) => id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"),
+    "g",
+  );
+
+  return text.replace(pattern, (matched) => redactionMap[matched] || matched);
 };
 
 /**

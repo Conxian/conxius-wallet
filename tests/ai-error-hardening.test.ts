@@ -31,4 +31,14 @@ describe("AI Error Hardening", () => {
     // It should fallback to the default "Protocol Error" if sensitive patterns are found
     expect(result).toBe("AI Protocol Error: Protocol Error");
   });
+
+  it("should redact WIF and BOLT11 in sanitizeError", async () => {
+    const { sanitizeError } = await import("../services/network");
+
+    const leakyWif = "Error: WIF key 5Kb8kLf9zgWQand97Fv2U5qW4U1uF5wB9A6t9G5wB9A6t9G5wB9 leaked";
+    expect(sanitizeError(leakyWif)).toBe("Protocol Error");
+
+    const leakyBolt11 = "Error: Invoice lnbc10u1pwjqyuzpp5w6v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v leaked";
+    expect(sanitizeError(leakyBolt11)).toBe("Protocol Error");
+  });
 });
