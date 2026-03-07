@@ -18,7 +18,7 @@ export const sanitizePrompt = (
   let sanitized = text;
 
   // 1. Redact BIP-39 Mnemonics (12-24 words)
-  const mnemonicRegex = /\b([a-z]{3,}\s){11,23}[a-z]{3,}\b/gi;
+  const mnemonicRegex = /\b([a-z]{3,}\s+){11,23}[a-z]{3,}\b/gi;
   sanitized = sanitized.replace(mnemonicRegex, (match) => {
     const id = `[MNEMONIC_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -76,7 +76,7 @@ export const sanitizePrompt = (
   });
 
   // 8. Redact Nostr Keys (nsec1, npub1)
-  const nostrRegex = /\b(nsec1[a-z0-9]{50,110}|npub1[a-z0-9]{50,110})\b/gi;
+  const nostrRegex = /\b(nsec1[a-z0-9]{50,200}|npub1[a-z0-9]{50,200})\b/gi;
   sanitized = sanitized.replace(nostrRegex, (match) => {
     const id = `[NOSTR_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -84,7 +84,7 @@ export const sanitizePrompt = (
   });
 
   // 9. Redact Silent Payment Addresses (sp1...)
-  const spRegex = /\b(sp1[a-z0-9]{50,120})\b/gi;
+  const spRegex = /\b(sp1[a-z0-9]{50,200})\b/gi;
   sanitized = sanitized.replace(spRegex, (match) => {
     const id = `[SP_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
