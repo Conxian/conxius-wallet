@@ -1,3 +1,9 @@
+---
+title: Native Bitcoin Bridge Research
+layout: page
+permalink: /docs/native-bridge-research
+---
+
 # Native Bitcoin Bridge Research
 
 This document summarizes the native bridge mechanisms for the 15+ Bitcoin layers supported by Conxius.
@@ -8,6 +14,28 @@ This document summarizes the native bridge mechanisms for the 15+ Bitcoin layers
 - **Peg-In Mechanism:** Bitcoin L1 transaction to the sBTC Wallet Address.
 - **Data Requirement:** OP_RETURN output containing the user's Stacks Address.
 - **Discovery:** Fetch sBTC Wallet Address from `/v2/sbtc/wallet`.
+
+### Clarity 4.0 Contract API (`stacks-bridge.clar`)
+
+The Stacks bridge utilizes the following public functions for sBTC management:
+
+#### `deposit-sbtc`
+- **Description:** Acknowledges a successful peg-in and records the sBTC deposit.
+- **Complexity:** $O(1)$
+- **Gas Formula:** $G_{deposit} = c_{base} + c_{event}$
+- **Parameters:**
+    - `amount`: `uint` - The amount of sBTC minted.
+    - `recipient`: `principal` - The recipient of sBTC.
+
+#### `withdraw-sbtc`
+- **Description:** Initiates a peg-out request by locking sBTC and emitting a withdrawal event.
+- **Complexity:** $O(1)$
+- **Gas Formula:** $G_{withdraw} = c_{base} + c_{verify} + c_{map\_set}$
+- **Parameters:**
+    - `amount`: `uint` - The amount of sBTC to burn/lock.
+    - `btc-address`: `(buff 20)` - The destination Bitcoin L1 address hash.
+    - `signature`: `(buff 65)` - The Conclave-signed authorization.
+    - `pubkey`: `(buff 33)` - The public key of the signer.
 
 ## 2. Liquid (L-BTC)
 - **Layer Type:** Sidechain

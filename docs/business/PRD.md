@@ -158,9 +158,35 @@ Conxius reduces the complexity of the Bitcoin ecosystem into a single, unified "
 - **Physical Audit**: Verified on real Pixel hardware for TEE/StrongBox compliance.
 - **E2E Readiness**: Comprehensive Playwright suite for cross-chain "Rails" validation.
 
+---
+
+## 9. Performance Benchmarks (Vitest 4.0)
+
+| Metric | Result |
+| :--- | :--- |
+| **Stacks Bridge (Clarity 4)** | 7ms (3 tests) |
+| **AI Security Redaction** | 14ms (20 tests) |
+| **Total Test Execution** | 21ms |
+| **Total Suite Duration** | 740ms |
+
 ### 3.4. Smart Wallet & Policy Engine (v1.2)
 
 Conxius v1.2 expands into a **Smart Sovereign Wallet**, utilizing UTXO-native scripting to enable complex treasury management on-device.
 - **Miniscript Integration:** Standardization of spending policies including Time-Locks, Thresholds, and Inheritance.
 - **Musig2 Thresholds:** Interactive BIP-327 signature aggregation for privacy-preserving multisig.
 - **Sovereign Audit Layer:** Local pre-flight audit of all spending policies by Satoshi AI to ensure mathematical soundness and sovereignty.
+
+### 3.5. Operational Logic (Levels 0-4)
+
+The Conxius evolution follows a structured hierarchy of sovereignty:
+
+```mermaid
+graph TD
+    L0[Level 0: Root - Strategy] --> L1[Level 1: Foundation - Secure Enclave]
+    L1 --> L2[Level 2: Interoperability - Bridge & L2]
+    L2 --> L3[Level 3: Sovereign Scaling - Multi-Chain Assets]
+    L3 --> L4[Level 4: Clean Break - Pure Native Android]
+    L4 -.-> L5[Level 5: Global Sovereignty - B2B & DLCs]
+    classDef active fill:#f96,stroke:#333,stroke-width:2px;
+    class L4 active;
+```
