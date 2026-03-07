@@ -213,14 +213,16 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
   const sensitivePatterns = [
     /stack/i, /at /i, /node_modules/i, /0x[a-fA-F0-9]{40}/i, // stack traces and hex addresses
     /rpc/i, /internal/i, /database/i, /query/i, /connect/i, /__/,
-    /\b([a-z]{3,}\s){11,23}[a-z]{3,}\b/i, // BIP-39 mnemonic phrases
-    /\b(0x)?[a-fA-F0-9]{64}\b/i,           // 64-char hex (private keys or TxIDs)
+    /\b([a-z]{3,}\s+){11,23}[a-z]{3,}\b/i, // BIP-39 mnemonic phrases
+    /\b(0x)?[a-fA-F0-9]{64,66}\b/i,         // Hex secrets (Private Keys, TxIDs, Node IDs)
     /\b([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})\b/i, // BIP32 extended keys (pub/prv)
     /\b(bc1[qp][a-z0-9]{38,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{38,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/i, // BTC
     /\b(S[PST][0-9A-Z]{28,41})\b/i, // Stacks
     /\b((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})\b/i, // Liquid
-    /\b(nsec1[a-z0-9]{50,110}|npub1[a-z0-9]{50,110})\b/i, // Nostr
-    /\b(sp1[a-z0-9]{50,120})\b/i // Silent Payments
+    /\b(nsec1[a-z0-9]{50,200}|npub1[a-z0-9]{50,200})\b/i, // Nostr
+    /\b(sp1[a-z0-9]{50,200})\b/i, // Silent Payments
+    /\b[5KL9c][1-9A-HJ-NP-Za-km-z]{50,51}\b/i, // WIF Private Keys
+    /\bln(?:bc|tb|bcrt|dev)[0-9a-z]+\b/i      // BOLT11 Invoices
   ];
 
   // Defensive: check the entire error object for ANY leakage

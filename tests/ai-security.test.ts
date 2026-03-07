@@ -31,7 +31,7 @@ describe("AI Security: Prompt Sanitization", () => {
     const prompt =
       "Analyze transaction 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
     const { sanitized } = sanitizePrompt(prompt);
-    expect(sanitized).toContain("[HEX64_");
+    expect(sanitized).toContain("[HEX_SEC_");
     expect(sanitized).not.toContain(
       "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
     );
@@ -68,6 +68,27 @@ describe("AI Security: Prompt Sanitization", () => {
     const { sanitized } = sanitizePrompt(prompt);
     expect(sanitized).toContain("[BTC_ADDR_");
     expect(sanitized).not.toContain("mmpH76v99WvG9U1YyUeZ5v5z5z5z5z5z5z");
+  });
+
+  it("should redact WIF private keys", () => {
+    const prompt = "My WIF key is 5Kb8kLf9zgWQand97Fv2U5qW4U1uF5wB9A6t9G5wB9A6t9G5wB9";
+    const { sanitized } = sanitizePrompt(prompt);
+    expect(sanitized).toContain("[WIF_KEY_");
+    expect(sanitized).not.toContain("5Kb8kLf9zgWQand97Fv2U5qW4U1uF5wB9A6t9G5wB9A6t9G5wB9");
+  });
+
+  it("should redact BOLT11 invoices", () => {
+    const prompt = "Pay this invoice: lnbc10u1pwjqyuzpp5w6v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v";
+    const { sanitized } = sanitizePrompt(prompt);
+    expect(sanitized).toContain("[BOLT11_");
+    expect(sanitized).not.toContain("lnbc10u1pwjqyuzpp5w6v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v");
+  });
+
+  it("should redact 66-char Node IDs", () => {
+    const prompt = "My Node ID is 02abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
+    const { sanitized } = sanitizePrompt(prompt);
+    expect(sanitized).toContain("[HEX_SEC_");
+    expect(sanitized).not.toContain("02abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890");
   });
 });
 
@@ -148,5 +169,19 @@ describe("AI Security: Secure Audit Prompt & Rehydration Isolation", () => {
 
     expect(rehydrated).toContain("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh");
     expect(rehydrated).not.toContain(id!);
+  });
+
+  it("should prevent double-substitution in rehydrateResponse", () => {
+    const redactionMap = {
+      "[ID1]": "Secret1",
+      "[ID2]": "This contains [ID1]"
+    };
+    const response = "AI says: [ID1] and [ID2]";
+    const rehydrated = rehydrateResponse(response, redactionMap);
+
+    // [ID1] should be Secret1
+    // [ID2] should be "This contains [ID1]"
+    // It should NOT become "This contains Secret1"
+    expect(rehydrated).toBe("AI says: Secret1 and This contains [ID1]");
   });
 });
