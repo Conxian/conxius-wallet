@@ -1,69 +1,53 @@
+---
+title: Full System Integration Testing
+layout: page
+permalink: /docs/full-system-test
+---
+
 # Full Wallet System Integration Testing
 
 This document outlines the comprehensive E2E testing strategy for the Conxius Wallet, ensuring full ecosystem alignment and functional integrity.
 
 ## Overview
 
-The "Full System Integration" test (located in `e2e/full_wallet_system.spec.ts`) simulates a complete user journey from first boot to advanced protocol interactions. This test runs in **Simulation Mode**, which bypasses real on-chain constraints while using high-fidelity mock data and real service logic where possible.
+We utilize a multi-layered testing approach to verify the security, performance, and functionality of the Conxius Wallet across all supported Bitcoin layers and services.
 
-## Test Coverage
+## 1. Unit Testing (Vitest 4.0)
 
-The suite verifies the following critical paths:
+- **Scope:** Core logic, utility functions, and cryptographic primitives.
+- **Location:** `/tests`
+- **Command:** `pnpm test`
+- **Key Suites:**
+    - `tests/enclave-storage.test.ts`: TEE/StrongBox abstraction verification.
+    - `tests/ai-security.test.ts`: Redaction and sanitization logic.
+    - `tests/stacks-bridge.test.ts`: Clarity 4.0 contract interaction.
 
-1.  **Onboarding & Enclave Initialization**
-    *   Boot sequence and branding.
-    *   Simulation mode selection.
-    *   Hardware-level entropy gathering simulation.
-    *   Secure Enclave PIN encryption and confirm.
-    *   BIP-39 Master Seed backup and verification.
-2.  **Funded State & Asset Discovery**
-    *   Verification of "Funded" state (balances > 1M satoshis equivalent).
-    *   Multi-layer asset display (Bitcoin, Stacks, Liquid, Phase 5 L2s).
-3.  **Cross-Layer Navigation**
-    *   **DeFi Enclave**: Liquidity pools and yield views.
-    *   **NTT Bridge**: Wormhole integration and transceiver status.
-    *   **Stacking (PoX)**: Real-time APY estimation and stacking status.
-    *   **Governance (Senate)**: Proposal voting and council participation.
-    *   **Labs Discovery**: BitVM and ZK-STARK verification.
-4.  **Transaction Lifecycle**
-    *   Address entry and validation.
-    *   Fee estimation and review.
-    *   Signing and "Broadcast" simulation.
-5.  **Security & Session Management**
-    *   TEE-backed session locking.
-    *   Vault unlocking via PIN.
+## 2. E2E Functional Testing (Playwright)
 
-## Running the Tests
+- **Scope:** Cross-chain user flows, onboarding, and UI state consistency.
+- **Location:** `/e2e`
+- **Command:** `pnpm test:e2e`
+- **Strategy:** Uses the unified `e2e/full_system_strict.spec.ts` for strict functional validation.
 
-To run the full system integration test suite:
+## 3. Native Plugin Verification
 
-```bash
-# Run all E2E tests
-pnpm test:e2e
+- **Scope:** Kotlin native plugins (SecureEnclave, DeviceIntegrity, NativeCrypto).
+- **Location:** `android/app/src/test/` and `tests/protocol-alignment.test.ts`.
+- **Command:** `./gradlew test` (within `android` directory).
 
-# Run specifically the full system test
-pnpm playwright test e2e/full_wallet_system.spec.ts
+## 4. Manual Verification (Real Devices)
 
-# Run with UI for debugging
-pnpm test:e2e:ui
-```
+- **Scope:** Hardware-specific features (StrongBox, Biometrics) and performance on Tier 2 devices.
+- **Checklist:**
+    - Biometric auth prompt appears and functions.
+    - StrongBox key generation succeeds on supported hardware.
+    - Lightning node sync completes on mobile network.
 
-## Maintenance
+## 5. Continuous Integration (GitHub Actions)
 
-*   **Funded State**: The funded state is controlled via `MOCK_ASSETS` in `constants.tsx`.
-*   **Navigation**: The test uses a `navigateTo` helper that handles both Desktop (Sidebar) and Mobile (Bottom Nav + Menu) viewports.
-
----
-*Last Updated: 2026-02-18*
-
-## 7. Advanced Service Verification (v1.6.0)
-*   **Yield Entry:** Verify unsigned payload matches the selected APR.
-*   **Swap Routing:** Assert LI.FI/1inch path selection is optimized.
-*   **DLC Lifecycle:** Test Offer -> Accept -> Settle simulation.
-*   **NWC Auth:** Confirm Damus/external apps can request balances via Nostr.
-
-## 7. Advanced Service Verification (v1.6.0)
-*   **Yield Entry:** Verify unsigned payload matches the selected APR.
-*   **Swap Routing:** Assert LI.FI/1inch path selection is optimized.
-*   **DLC Lifecycle:** Test Offer -> Accept -> Settle simulation.
-*   **NWC Auth:** Confirm Damus/external apps can request balances via Nostr.
+Every Pull Request triggers a full suite of checks:
+- **Lint:** `pnpm run lint`
+- **Build:** `pnpm run build`
+- **Test:** `pnpm test`
+- **E2E:** `pnpm test:e2e`
+- **Android:** `cd android && ./gradlew assembleDebug`

@@ -1,3 +1,9 @@
+---
+title: Conxius Wallet README
+layout: page
+permalink: /
+---
+
 # Conxius Wallet: The Sovereign Bitcoin Command Center (v1.6.0)
 
 Conxius is a non-custodial, "Sovereign-First" financial command center for the full Bitcoin ecosystem. It bridges the security of a hardware-isolated environment (Android StrongBox/TEE) with the utility of modern DeFi, cross-chain interoperability, and real-world services.
