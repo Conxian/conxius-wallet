@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="dashboard_padding">32dp</dimen>
+    <dimen name="balance_text_size">32sp</dimen>
+    <dimen name="card_elevation">8dp</dimen>
+</resources>
