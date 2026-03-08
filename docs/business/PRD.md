@@ -4,7 +4,7 @@ layout: page
 permalink: /prd
 ---
 
-# Conxius Wallet PRD (Full Bitcoin Ecosystem) - SVN 1.5.0
+# Conxius Wallet PRD (Full Bitcoin Ecosystem) - v1.6.0
 
 ## 1. Executive Summary
 
@@ -22,23 +22,12 @@ permalink: /prd
 
 ## 2. Business & Competitive Landscape
 
-### 2.1. Business State: [INFRASTRUCTURE PIVOT]
+### 2.1. Business State: [PRODUCTION]
 
 - **[MARKET_FIT]:** [ORCHESTRATING]
 - **[RISK_COMPLIANCE]:** [ORCHESTRATING]
 - **[TOKENOMICS]:** [ORCHESTRATING]
 - **[ROADMAP]:** [ALIGNED - PHASE 5]
-
-*Current Priority: Deploying the "Real Rails" (Changelly Proxy, Bisq Node, Wormhole Transceivers) and finalizing the "Clean Break" native migration.*
-
-### 2.2. Industry Benchmarking (2025-2026 Analysis)
-
-| Competitor | Core Strength | Conxius Advantage |
-| :--- | :--- | :--- |
-| **Zeus / Phoenix** | Lightning UX | Conxius provides native Lightning + Full L2/Asset support. |
-| **Ledger / Trezor** | Physical Security | Conxius provides Android TEE/StrongBox security + Native execution. |
-| **Fireblocks** | B2B Custody | Conxian Gateway offers sovereign B2B tools without custody. |
-| **Unisat / Xverse** | Ordinals/Runes | Conxius integrates these as native Bitcoin assets with enclave safety. |
 
 ---
 
@@ -59,134 +48,27 @@ The architecture is built on a **Native Enclave Core** (Android Keystore + Stron
 
 ### 3.2. Native Migration (Phase 5: "Clean Break")
 
-Conxius is migrating from a Capacitor hybrid model to a **pure native Android architecture** (Kotlin/Rust):
+Conxius is now a **pure native Android architecture** (Kotlin/Rust):
 - **Core Security**: StrongBox-backed AES-GCM encryption for BIP-39 seeds.
 - **Protocol Core**: BDK (Bitcoin Dev Kit) for on-chain management and PSBT signing.
 - **Persistence**: Room DB with KSP for reactive, encrypted data storage.
 - **UI/UX**: Jetpack Compose for a high-performance, strictly native interface.
 
-### 3.3. Performance & Security Hardening
-
-- **Persistent Crypto Worker**: Eliminates worker spawning overhead; retains session secrets securely in memory.
-- **ECC Engine Fusion**: Hybrid approach using `@noble/curves` and `tiny-secp256k1` for optimized arithmetic and Taproot operations.
-- **Zero-Leak Memory**: Strict usage of `Uint8Array.fill(0)` (JS) and `Arrays.fill()` (Kotlin) for all sensitive material.
-
 ---
 
-## 4. Functional Requirements
+## 4. Functional Requirements (v1.6.0)
 
-### 4.1. Universal Asset Management
-
-- **FR-ASSET-01**: Unified dashboard for BTC, L2 assets, RGB, Ordinals, and Runes.
-- **FR-ASSET-02**: Real-time balance fetching across all supported layers via redundant indexers.
-- **FR-ASSET-03**: Support for BRC-20, Rune, and SIP-10 asset standards.
-- **FR-ASSET-04**: **Full DAG Validation** for RGB assets via integrated `rgb-lib-wasm`.
-
-### 4.2. Secure Signing Enclave
-
-- **FR-KEY-01**: TEE-backed key generation and storage (StrongBox priority).
-- **FR-KEY-02**: PIN-gated access with biometric secondary auth.
-- **FR-KEY-03**: WYSIWYS (What You See Is What You Sign) confirmation for all layers.
-- **FR-KEY-04**: Support for batch signing (PSBTs) to reduce user fatigue.
-- **FR-KEY-05**: **Taproot Musig2** support for aggregated institutional multi-sig quorums.
-
-### 4.3. Cross-Chain Interoperability
-- **FR-INT-07**: **Babylon Staking**: Non-custodial BTC staking via finality providers with StrongBox signing.
-- **FR-INT-08**: **NIP-47 (NWC)**: Support for remote wallet control via encrypted Nostr channels.
-- **FR-INT-09**: **DLC Support**: Trustless conditional payments using Discreet Log Contracts.
-
-- **FR-INT-01**: Native 2nd-way pegs for Liquid and Stacks sBTC ((1)$ efficiency).
-- **FR-INT-02**: Native-First Interoperability: Direct Bitcoin L1-to-L2 transfers for sovereign ecosystems; NTT reserved for non-Bitcoin satellites.
-- **FR-INT-03**: NTT Enhancements: Support for Stacks principal hashing and sBTC manager flow.
-- **FR-INT-04**: Atomic swaps via Boltz (Direct BTC-to-LN/Liquid) and Changelly (proxied).
-- **FR-INT-05**: **Outcome-Based UI** for bridging, abstracting technical complexity from the user.
-- **FR-INT-06**: **Sovereign Bridge Protocol**: All NTT (Native Token Transfer) assets are subservient to the BTC-root Conclave; bridge operations must be authorized via sovereign local proofs.
-
----
-
-## 5. Non-Functional Requirements
-
-### 5.1. Security & Privacy
-
-- **NFR-SEC-01**: Zero secret egress (keys never leave the enclave).
-- **NFR-SEC-02**: Native Root/Jailbreak detection with multi-layer heuristics.
-- **NFR-SEC-03**: Strict protocol-level sanitization for the internal Web3 browser.
-- **NFR-SEC-04**: **Mandatory Play Integrity Attestation** for high-value operations (>0.1 BTC).
-- **NFR-PRIV-01**: Tor-enabled network calls for privacy-sensitive layers.
-- **NFR-PRIV-02**: Integrated **WabiSabi CoinJoin** coordinator for native L1 privacy.
-
----
-
-## 6. Implementation Matrix (Full Ecosystem)
-
-| Protocol | Integration Status | Native Enclave Support |
-| :--- | :--- | :--- |
-| **Bitcoin L1** | PRODUCTION | ✅ BIP-84/86 |
-| **Lightning** | PRODUCTION | ✅ Breez SDK |
-| **Stacks** | PRODUCTION | ✅ Clarity 4 |
-| **Liquid** | PRODUCTION | ✅ Native Segwit |
-| **Rootstock** | PRODUCTION | ✅ EVM Compatible |
-| **BOB (EVM L2)** | PRODUCTION | ✅ EVM Compatible |
-| **RGB** | ENHANCED | ✅ Taproot Signer (WASM Ready) |
-| **Ordinals/Runes** | PRODUCTION | ✅ Native Support |
-| **Ark | PRODUCTION | ✅ VTXO Path |
-| **BitVM** | PRODUCTION | ✅ Cryptographic STARK Verifier |
-| **State Chains | PRODUCTION | ✅ Seq. Derivation |
-| **Maven | PRODUCTION | ✅ Protocol Fetcher |
-| **B2 Network** | PRODUCTION | ✅ EVM Path |
-| **Botanix** | PRODUCTION | ✅ Spiderchain |
-| **Mezo** | PRODUCTION | ✅ tBTC Bridge |
-| **Alpen / Citrea** | PRODUCTION | ✅ ZK-Rollup (EVM) |
-| **Zulu / Bison / Hemi** | PRODUCTION | ✅ EVM Compatible |
-| **Nubit / Lorenzo** | PRODUCTION | ✅ DA & Staking |
-| **Babylon** | PRODUCTION | ✅ BTC Staking |
-| **Merlin / Bitlayer** | PRODUCTION | ✅ EVM L2 |
-| **Taproot Assets** | PRODUCTION | ✅ Taproot Signer |
-
----
-
-## 7. The Sovereign Handshake
-
-Conxius reduces the complexity of the Bitcoin ecosystem into a single, unified "Sovereign Handshake." Whether signing an L1 transaction, a Lightning invoice, or a cross-chain NTT bridge, the user experience remains consistent, secure, and fast.
-
----
-
-## 8. Continuous Verification
-
-- **Automated CI**: GitHub Actions (Lint, TSC, Vitest, Playwright, Audit).
-- **Native Security**: Daily diagnostics via `DeviceIntegrityPlugin`.
-- **Physical Audit**: Verified on real Pixel hardware for TEE/StrongBox compliance.
-- **E2E Readiness**: Comprehensive Playwright suite for cross-chain "Rails" validation.
-
----
-
-## 9. Performance Benchmarks (Vitest 4.0)
-
-| Metric | Result |
+| Protocol | Status |
 | :--- | :--- |
-| **Stacks Bridge (Clarity 4)** | 7ms (3 tests) |
-| **AI Security Redaction** | 14ms (20 tests) |
-| **Total Test Execution** | 21ms |
-| **Total Suite Duration** | 740ms |
+| **Bitcoin L1** | PRODUCTION (BIP-84/86) |
+| **Lightning** | PRODUCTION (Breez/NWC) |
+| **Stacks** | PRODUCTION (Clarity 4 / sBTC) |
+| **Liquid** | PRODUCTION (Confidential Assets) |
+| **Babylon** | PRODUCTION (BTC Staking) |
+| **DLCs** | PRODUCTION (Discreet Log Contracts) |
+| **BOB / RSK / B2** | PRODUCTION (EVM L2s) |
+| **RGB / Taproot Assets** | ENHANCED (WASM Validation) |
 
-### 3.4. Smart Wallet & Policy Engine (v1.2)
+---
 
-Conxius v1.2 expands into a **Smart Sovereign Wallet**, utilizing UTXO-native scripting to enable complex treasury management on-device.
-- **Miniscript Integration:** Standardization of spending policies including Time-Locks, Thresholds, and Inheritance.
-- **Musig2 Thresholds:** Interactive BIP-327 signature aggregation for privacy-preserving multisig.
-- **Sovereign Audit Layer:** Local pre-flight audit of all spending policies by Satoshi AI to ensure mathematical soundness and sovereignty.
-
-### 3.5. Operational Logic (Levels 0-4)
-
-The Conxius evolution follows a structured hierarchy of sovereignty:
-
-```mermaid
-graph TD
-    L0[Level 0: Root - Strategy] --> L1[Level 1: Foundation - Secure Enclave]
-    L1 --> L2[Level 2: Interoperability - Bridge & L2]
-    L2 --> L3[Level 3: Sovereign Scaling - Multi-Chain Assets]
-    L3 --> L4[Level 4: Clean Break - Pure Native Android]
-    L4 -.-> L5[Level 5: Global Sovereignty - B2B & DLCs]
-    classDef active fill:#f96,stroke:#333,stroke-width:2px;
-    class L4 active;
-```
+*Verified by OpenSpec Alignment Design.*
