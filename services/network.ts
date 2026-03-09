@@ -209,6 +209,12 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     }
   }
 
+  // Security: Normalize inputs by stripping non-printable and zero-width characters to prevent obfuscated leaks
+  // We exclude common whitespace (0x09, 0x0A, 0x0D) to preserve formatting.
+  const normalize = (str: string) => str.replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, "");
+  message = typeof message === 'string' ? normalize(message) : message;
+  fullScan = normalize(fullScan);
+
   // Blacklist of potentially sensitive words or patterns
   const sensitivePatterns = [
     /stack/i, /at /i, /node_modules/i, /0x[a-fA-F0-9]{40}/i, // stack traces and hex addresses
