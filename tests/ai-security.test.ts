@@ -17,6 +17,27 @@ describe("AI Security: Prompt Sanitization", () => {
     );
   });
 
+  it("should redact obfuscated Bitcoin addresses (Zero-Width Characters)", () => {
+    // Interspersing a Bitcoin address with zero-width characters (U+200B)
+    const obfuscated = "bc1\u200Bqxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh";
+    const { sanitized } = sanitizePrompt(`Balance of ${obfuscated}`);
+
+    // It should strip the ZWC and THEN redact the address
+    expect(sanitized).toContain("[BTC_ADDR_");
+    expect(sanitized).not.toContain("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh");
+    expect(sanitized).not.toContain("\u200B");
+  });
+
+  it("should preserve legitimate whitespace (Tabs, Newlines) while stripping ZWCs", () => {
+    const complexPrompt = "Line 1\nLine 2\tTabbed\u200BSecret";
+    const { sanitized } = sanitizePrompt(complexPrompt);
+
+    expect(sanitized).toContain("Line 1\n");
+    expect(sanitized).toContain("Line 2\t");
+    expect(sanitized).toContain("TabbedSecret");
+    expect(sanitized).not.toContain("\u200B");
+  });
+
   it("should redact EVM addresses", () => {
     const prompt =
       "Audit this contract: 0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
