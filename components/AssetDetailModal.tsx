@@ -21,7 +21,7 @@ const AssetDetailModal: React.FC<AssetDetailModalProps> = ({ asset, onClose, onS
       try {
         const res = await getAssetInsight(asset);
         setInsight(res || "No insight available.");
-      } catch (e) {
+      } catch {
         setInsight("Insight unavailable at this time.");
       } finally {
         setIsLoadingInsight(false);

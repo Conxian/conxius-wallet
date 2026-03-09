@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { ShieldCheck, X, Loader2, AlertTriangle, RefreshCcw } from 'lucide-react';
 import { AppContext } from '../context';
 import { decryptSeed } from '../services/seed';
+import { AppState } from '../types';
 
 interface BackupAuditModalProps {
   onClose: () => void;
@@ -33,7 +34,7 @@ const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
       // Test PIN by attempting to decrypt
       testDecrypt = await decryptSeed(appContext.state.walletConfig.mnemonicVault, pin);
       setStep('mnemonic');
-    } catch (err) {
+    } catch {
       setError("Invalid Enclave PIN");
     } finally {
       // Memory Hardening: Clear test decryption buffer
@@ -65,7 +66,7 @@ const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
         setPin('');
         setMnemonicInput('');
 
-        appContext?.setSecurity({ ...appContext.state.security, ...{ backupVerified: true } } as any);
+        appContext?.setSecurity({ ...(appContext.state.security as AppState['security']), backupVerified: true });
         // We also want to update the walletConfig itself
         if (appContext?.state.walletConfig) {
            appContext.setWalletConfig({
@@ -76,7 +77,7 @@ const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
       } else {
         setStep('failure');
       }
-    } catch (err) {
+    } catch {
       setError("Verification failed. Ensure your phrase is correct.");
     } finally {
       // Memory Hardening: scrubbing sensitive seed bytes from RAM
