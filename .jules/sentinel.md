@@ -94,3 +94,7 @@ permalink: /sentinel
 - **Requirement**: All third-party payloads (Yield.xyz, 1inch, Babylon) must be construction-only.
 - **Verification**: Playwright tests must assert that the Enclave signature modal appears before any external execution.
 - **Privacy**: Sentinel AI must redact PII from Travala/Silent.Link web-view hand-offs.
+## 2025-05-23 - [Obfuscated Prompt Injection Bypass]
+**Vulnerability:** AI security filters using keyword matching (like 'ignore previous instructions') can be bypassed by inserting non-printable or zero-width characters (e.g., U+200B) between letters.
+**Learning:** LLMs often ignore these hidden characters while security regexes/string checks might fail to match them, creating an obfuscation vector.
+**Prevention:** Normalize security-critical inputs by stripping non-printable and zero-width characters before performing pattern matching.

@@ -28,7 +28,7 @@ export const sanitizePrompt = (
   // 2. Redact Bitcoin Addresses (Legacy, Segwit, Taproot, Testnet)
   // bc1q..., bc1p..., 1..., 3..., tb1..., m/n...
   const btcRegex =
-    /\b(bc1[qp][a-z0-9]{38,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{38,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/g;
+    /\b(bc1[qp][a-z0-9]{37,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{37,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/gi;
   sanitized = sanitized.replace(btcRegex, (match) => {
     const id = `[BTC_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -52,7 +52,7 @@ export const sanitizePrompt = (
   });
 
   // 5. Redact Stacks Addresses (SP..., ST...)
-  const stxRegex = /\b(S[PST][0-9A-Z]{28,41})\b/g;
+  const stxRegex = /\b(S[PST][0-9A-Z]{28,41})\b/gi;
   sanitized = sanitized.replace(stxRegex, (match) => {
     const id = `[STX_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -60,7 +60,7 @@ export const sanitizePrompt = (
   });
 
   // 6. Redact Liquid Addresses (lq1..., tlq1..., elq1...)
-  const liquidRegex = /\b((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})\b/g;
+  const liquidRegex = /\b((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})\b/gi;
   sanitized = sanitized.replace(liquidRegex, (match) => {
     const id = `[LIQUID_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -116,7 +116,9 @@ export const sanitizePrompt = (
 export const isPromptMalicious = (text: string): boolean => {
   if (text.length > MAX_PROMPT_LENGTH) return true;
 
-  const lowercase = text.toLowerCase();
+  // Security: Strip non-printable and zero-width characters to prevent obfuscated injection
+  const normalized = text.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, "");
+  const lowercase = normalized.toLowerCase();
   const injectionPatterns = [
     "ignore previous instructions",
     "system prompt",
