@@ -1,3 +1,8 @@
 {
-  "mcpServers": {}
+  "mcpServers": {
+    "gateway": {
+      "port": 8080,
+      "proxy": true
+    }
+  }
 }

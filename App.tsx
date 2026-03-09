@@ -38,7 +38,7 @@ import SignLoginMessageModal from "./components/SignLoginMessageModal";
 const Web3Browser = lazy(() => import('./components/Web3Browser'));
 import LockScreen from './components/LockScreen';
 import ToastContainer, { ToastMessage, ToastType } from './components/Toast';
-import { Shield as ShieldIcon, Loader2, Zap, FlaskConical, ShieldCheck, Lock, Terminal, Cpu, CheckCircle2, RotateCcw, Database } from 'lucide-react';
+import { Shield as ShieldIcon, Loader2, FlaskConical, Lock, Cpu, CheckCircle2 } from 'lucide-react';
 import './styles/progress.css';
 import { AppState, WalletConfig, Asset, Bounty, AppMode, Network, LnBackendConfig } from './types';
 import { AppContext } from './context';
@@ -60,6 +60,14 @@ import { IdentityService } from './services/identity';
 import { Web5Service } from './services/web5';
 
 const STORAGE_KEY = 'conxius_enclave_v3_encrypted';
+
+interface CapacitorWindow extends Window {
+  Capacitor?: {
+    isNativePlatform: () => boolean;
+  };
+}
+
+type PossiblyLegacyState = AppState & { language: Language; geminiApiKey?: string };
 
 const INITIAL_BOUNTIES: Bounty[] = [
   { id: 'B-402', title: 'Implement BitVM Fraud Proofs', description: 'Port the L2 verification logic to the Conxius Enclave.', reward: '0.042 BTC', category: 'Core', status: 'Open', difficulty: 'Elite', expiry: 'Dec 12' },
@@ -117,7 +125,7 @@ const App: React.FC = () => {
 
   // Auto-lock timer
   useEffect(() => {
-    let timer: any;
+    let timer: NodeJS.Timeout;
     const resetTimer = () => {
       if (timer) clearTimeout(timer);
       const minutes = state.security?.autoLockMinutes ?? 5;
@@ -145,8 +153,8 @@ const App: React.FC = () => {
       .finally(() => setEnclaveChecked(true));
   }, []);
 
-  const sanitizeStateForPersistence = (s: any) => {
-    const next: any = { ...s };
+  const sanitizeStateForPersistence = (s: AppState & { language: Language }) => {
+    const next = { ...s };
     if (next.walletConfig) {
       next.walletConfig = { ...next.walletConfig };
       delete next.walletConfig.mnemonic;
@@ -158,12 +166,12 @@ const App: React.FC = () => {
     return next;
   };
 
-  const persistState = async (newState: any, pin: string) => {
+  const persistState = async (newState: AppState & { language: Language }, pin: string) => {
     try {
       const encrypted = await encryptState(sanitizeStateForPersistence(newState), pin);
       await setEnclaveBlob(STORAGE_KEY, encrypted, { requireBiometric: !!newState.security?.biometricUnlock });
     } catch (e) {
-      const msg = typeof (e as any)?.message === 'string' ? (e as any).message : '';
+      const msg = e instanceof Error ? e.message : '';
       if (msg.toLowerCase().includes('auth required')) {
         notify('warning', 'Re-authenticate to keep state in biometric vault');
       } else {
@@ -173,8 +181,9 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    setAiServiceConfig(state.aiConfig || { provider: 'Gemini', apiKey: (state as any).geminiApiKey || '' });
-  }, [(state as any).geminiApiKey]);
+    const legacyState = state as PossiblyLegacyState;
+    setAiServiceConfig(legacyState.aiConfig || { provider: 'Gemini', apiKey: legacyState.geminiApiKey || '' });
+  }, [(state as PossiblyLegacyState).geminiApiKey, state.aiConfig]);
 
   useEffect(() => {
     if (state.walletConfig && currentPinRef.current) {
@@ -267,9 +276,9 @@ const App: React.FC = () => {
         return;
       }
       const decryptedState = await decryptState(saved, pin);
-      const nextState: any = { ...DEFAULT_STATE, ...decryptedState };
+      const nextState: AppState & { language: Language } = { ...DEFAULT_STATE, ...decryptedState };
       if (nextState.walletConfig) {
-        const walletConfig: any = { ...nextState.walletConfig };
+        const walletConfig: WalletConfig = { ...nextState.walletConfig };
 
         // Migration/Upgrade: Ensure seedVault and mnemonicVault exist
         if (typeof walletConfig.mnemonic === 'string') {
@@ -285,7 +294,7 @@ const App: React.FC = () => {
               walletConfig.mnemonicVault = await encryptSeed(mnemonicBuf, pin);
             }
           } finally {
-            if (seedBytes) (seedBytes as any).fill(0);
+            if (seedBytes) seedBytes.fill(0);
             if (mnemonicBuf) mnemonicBuf.fill(0);
           }
         }
@@ -310,7 +319,7 @@ const App: React.FC = () => {
       }
       
       // Phase 3: Optimize Session - Unlock Cache
-      if ((window as any).Capacitor?.isNativePlatform() && nextState.walletConfig?.seedVault) {
+      if ((window as CapacitorWindow).Capacitor?.isNativePlatform() && nextState.walletConfig?.seedVault) {
           SecureEnclave.unlockSession({ 
               vault: nextState.walletConfig.seedVault, 
               pin 
@@ -320,7 +329,7 @@ const App: React.FC = () => {
       notify('success', 'Enclave Decrypted Successfully');
     } catch (e) {
       setLockError(true);
-      const msg = typeof (e as any)?.message === 'string' ? (e as any).message : '';
+      const msg = e instanceof Error ? e.message : '';
       if (msg.toLowerCase().includes('auth required')) {
         notify('error', 'Biometric authentication required');
       } else {
@@ -342,7 +351,7 @@ const App: React.FC = () => {
     assets: mode === 'simulation' ? MOCK_ASSETS : []
   }));
   const setLnBackend = (cfg: LnBackendConfig) => setState(prev => ({ ...prev, lnBackend: cfg }));
-  const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } as any }));
+  const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } as AppState['security'] }));
   const setAiConfig = (config: AppState["aiConfig"]) => {
     setAiServiceConfig(config);
     setState(prev => ({ ...prev, aiConfig: config }));
@@ -391,12 +400,12 @@ const App: React.FC = () => {
     }
     
     // Check if running on Android/iOS native runtime
-    const isNative = (window as any).Capacitor?.isNativePlatform();
+    const isNative = (window as CapacitorWindow).Capacitor?.isNativePlatform();
 
     if (isNative) {
        try {
           return await requestEnclaveSignature(request, seedVault, undefined); 
-       } catch (e: any) {
+       } catch (e: unknown) {
           console.warn("Session Native Cache Miss/Expired, falling back to explicit PIN", e);
           return await requestEnclaveSignature(request, seedVault, pin);
        }
@@ -411,7 +420,7 @@ const App: React.FC = () => {
   };
 
   
-  const getWormholeSigner = (chain: any) => {
+  const getWormholeSigner = (chain: string) => {
     // Assuming 'chain' is compatible or we map it. 
     // The signer needs the auth callback which we already have: authorizeSignature
     // We use a placeholder address because the actual address is derived/verified by the enclave during signing
@@ -459,6 +468,16 @@ const App: React.FC = () => {
   };
 
   const t = (key: string) => getTranslation(state.language, key);
+
+  const getPayloadMessage = (payload: unknown): string => {
+    if (typeof payload === 'string') {
+      return payload;
+    }
+    if (payload && typeof (payload as { message?: string }).message === 'string') {
+      return (payload as { message: string }).message;
+    }
+    return JSON.stringify(payload);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -562,7 +581,7 @@ const App: React.FC = () => {
     }
     return (
       <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, getWormholeSigner }}>
-        <Onboarding onComplete={(config, pin) => { if (config) setWalletConfig(config as any, pin); }} />
+        <Onboarding onComplete={(config, pin) => { if (config) setWalletConfig(config as WalletConfig, pin); }} />
         <ToastContainer toasts={toasts} removeToast={removeToast} />
       </AppContext.Provider>
     );
@@ -620,7 +639,7 @@ const App: React.FC = () => {
 
           {pendingSignRequest && (
             <SignLoginMessageModal
-                message={typeof pendingSignRequest.request.payload === 'string' ? pendingSignRequest.request.payload : (pendingSignRequest.request.payload as any).message || JSON.stringify(pendingSignRequest.request.payload)}
+                message={getPayloadMessage(pendingSignRequest.request.payload)}
                 onConfirm={() => pendingSignRequest.resolve(true)}
                 onCancel={() => pendingSignRequest.resolve(false)}
             />

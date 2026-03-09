@@ -122,6 +122,7 @@ export const isPromptMalicious = (text: string): boolean => {
 
   // Security: Strip non-printable and zero-width characters to prevent obfuscated injection
   // We exclude common whitespace (0x09, 0x0A, 0x0D) to preserve formatting.
+  // eslint-disable-next-line no-control-regex
   const normalized = text.replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, "");
   const lowercase = normalized.toLowerCase();
   const injectionPatterns = [
