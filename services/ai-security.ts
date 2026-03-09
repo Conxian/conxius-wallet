@@ -15,7 +15,11 @@ export const sanitizePrompt = (
   text: string,
 ): { sanitized: string; redactionMap: Record<string, string> } => {
   const redactionMap: Record<string, string> = {};
-  let sanitized = text;
+
+  // Security: Normalize inputs by stripping non-printable and zero-width characters to prevent obfuscated leaks
+  // We exclude common whitespace (0x09, 0x0A, 0x0D) to preserve formatting.
+  const normalized = text.replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, "");
+  let sanitized = normalized;
 
   // 1. Redact BIP-39 Mnemonics (12-24 words)
   const mnemonicRegex = /\b([a-z]{3,}\s+){11,23}[a-z]{3,}\b/gi;
@@ -117,7 +121,8 @@ export const isPromptMalicious = (text: string): boolean => {
   if (text.length > MAX_PROMPT_LENGTH) return true;
 
   // Security: Strip non-printable and zero-width characters to prevent obfuscated injection
-  const normalized = text.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, "");
+  // We exclude common whitespace (0x09, 0x0A, 0x0D) to preserve formatting.
+  const normalized = text.replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, "");
   const lowercase = normalized.toLowerCase();
   const injectionPatterns = [
     "ignore previous instructions",
