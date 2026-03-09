@@ -1,6 +1,6 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
@@ -8,7 +8,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -19,20 +19,15 @@ android {
     kotlinOptions {
         jvmTarget = "21"
     }
-    sourceSets {
-        getByName("main") {
-            java.setSrcDirs(listOf("src/main/kotlin"))
-        }
-    }
 }
 
 dependencies {
     implementation(project(":core-crypto"))
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("org.bitcoindevkit:bdk-android:0.30.0")
-    testImplementation("org.bitcoindevkit:bdk-jvm:0.30.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.bdk.android)
+    implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.bdk.jvm)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.espresso.core)
 }
