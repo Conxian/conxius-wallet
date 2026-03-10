@@ -40,7 +40,7 @@ export const sanitizePrompt = (
   });
 
   // 3. Redact EVM Addresses (0x...)
-  const evmRegex = /\b(0x[a-fA-F0-9]{40})\b/g;
+  const evmRegex = /\b(0x[a-fA-F0-9]{40})\b/gi;
   sanitized = sanitized.replace(evmRegex, (match) => {
     const id = `[EVM_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -48,7 +48,7 @@ export const sanitizePrompt = (
   });
 
   // 4. Redact Transaction IDs / Private Keys / Node IDs (64 or 66-char hex)
-  const hexRegex = /\b((?:0x)?[a-fA-F0-9]{64,66})\b/g;
+  const hexRegex = /\b((?:0x)?[a-fA-F0-9]{64,66})\b/gi;
   sanitized = sanitized.replace(hexRegex, (match) => {
     const id = `[HEX_SEC_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -72,7 +72,7 @@ export const sanitizePrompt = (
   });
 
   // 7. Redact BIP32 Extended Keys (xpub/xprv etc)
-  const xkeyRegex = /\b([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})\b/g;
+  const xkeyRegex = /\b([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})\b/gi;
   sanitized = sanitized.replace(xkeyRegex, (match) => {
     const id = `[EXT_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
