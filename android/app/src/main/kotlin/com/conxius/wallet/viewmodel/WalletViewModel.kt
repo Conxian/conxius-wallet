@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.conxius.wallet.DeviceIntegrityPlugin
 import com.conxius.wallet.repository.WalletRepository
 import com.conxius.wallet.bitcoin.BdkManager
+import com.conxius.wallet.bitcoin.BabylonManager
+import com.conxius.wallet.bitcoin.DlcManager
+import com.conxius.wallet.bitcoin.NwcManager
 import com.conxius.wallet.crypto.StrongBoxManager
 import com.conxius.wallet.database.AssetEntity
 import kotlinx.coroutines.flow.*
@@ -15,7 +18,10 @@ import kotlinx.coroutines.withContext
 class WalletViewModel(
     private val repository: WalletRepository,
     private val bdkManager: BdkManager,
-    private val strongBoxManager: StrongBoxManager
+    private val strongBoxManager: StrongBoxManager,
+    private val babylonManager: BabylonManager,
+    private val dlcManager: DlcManager,
+    private val nwcManager: NwcManager
 ) : ViewModel() {
 
     private val integrityPlugin = DeviceIntegrityPlugin()
@@ -111,20 +117,24 @@ class WalletViewModel(
                     updatedAt = System.currentTimeMillis()
                 )
 
-                val liquidAsset = AssetEntity(
-                    id = "LBTC",
-                    name = "Liquid Bitcoin",
-                    symbol = "L-BTC",
-                    balance = "0.00",
-                    type = "L2",
-                    updatedAt = System.currentTimeMillis()
-                )
-
-                repository.updateAssets(listOf(btcAsset, liquidAsset))
+                repository.updateAssets(listOf(btcAsset))
             } catch (e: Exception) {
                 _error.value = "Refresh failed: ${e.message}"
             } finally {
                 _isSyncing.value = false
+            }
+        }
+    }
+
+    // Native Protocol Actions (Bridged from Enclave)
+
+    fun createStakingTx(amount: Long) {
+        viewModelScope.launch {
+            try {
+                val tx = babylonManager.createStakingTx("staker_pk", amount, 100, org.bitcoindevkit.Network.TESTNET)
+                _error.value = "Staking Tx Created: $tx"
+            } catch (e: Exception) {
+                _error.value = "Staking failed: ${e.message}"
             }
         }
     }
