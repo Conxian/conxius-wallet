@@ -24,10 +24,25 @@ class ProtocolManagerTest {
     @Test
     fun nwcRequestParsing() {
         val manager = NwcManager()
-        // NwcManager now just gets the "content" field directly from JSON
         val eventJson = """{"content":"pay_invoice"}"""
         val parsed = manager.parseRequest(eventJson, "secret_key")
         assertNotNull(parsed)
         assertEquals("pay_invoice", parsed)
+    }
+
+    @Test
+    fun arkLiftConstruction() {
+        val manager = ArkManager()
+        val lift = manager.createLiftRequest(listOf("utxo1"), "asp_pk")
+        assertNotNull(lift)
+        assertTrue(lift.contains("ark_lift"))
+    }
+
+    @Test
+    fun stateChainTransferSigning() {
+        val manager = StateChainManager()
+        val sig = manager.signTransfer("utxo1", "recipient_pk", 0)
+        assertNotNull(sig)
+        assertTrue(sig.contains("statechain"))
     }
 }

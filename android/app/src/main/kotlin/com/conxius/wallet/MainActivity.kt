@@ -28,7 +28,10 @@ class MainActivity : FragmentActivity() {
             app.strongBoxManager,
             app.babylonManager,
             app.dlcManager,
-            app.nwcManager
+            app.nwcManager,
+            app.arkManager,
+            app.stateChainManager,
+            app.mavenManager
         )
 
         setContent {

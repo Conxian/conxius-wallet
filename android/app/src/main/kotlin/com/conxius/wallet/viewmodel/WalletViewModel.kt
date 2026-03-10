@@ -4,10 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.conxius.wallet.DeviceIntegrityPlugin
 import com.conxius.wallet.repository.WalletRepository
-import com.conxius.wallet.bitcoin.BdkManager
-import com.conxius.wallet.bitcoin.BabylonManager
-import com.conxius.wallet.bitcoin.DlcManager
-import com.conxius.wallet.bitcoin.NwcManager
+import com.conxius.wallet.bitcoin.*
 import com.conxius.wallet.crypto.StrongBoxManager
 import com.conxius.wallet.database.AssetEntity
 import kotlinx.coroutines.flow.*
@@ -21,7 +18,10 @@ class WalletViewModel(
     private val strongBoxManager: StrongBoxManager,
     private val babylonManager: BabylonManager,
     private val dlcManager: DlcManager,
-    private val nwcManager: NwcManager
+    private val nwcManager: NwcManager,
+    private val arkManager: ArkManager,
+    private val stateChainManager: StateChainManager,
+    private val mavenManager: MavenManager
 ) : ViewModel() {
 
     private val integrityPlugin = DeviceIntegrityPlugin()
@@ -126,7 +126,7 @@ class WalletViewModel(
         }
     }
 
-    // Native Protocol Actions (Bridged from Enclave)
+    // Bridged Protocol Actions (M5/M6)
 
     fun createStakingTx(amount: Long) {
         viewModelScope.launch {
@@ -135,6 +135,28 @@ class WalletViewModel(
                 _error.value = "Staking Tx Created: $tx"
             } catch (e: Exception) {
                 _error.value = "Staking failed: ${e.message}"
+            }
+        }
+    }
+
+    fun performArkLift(amount: Long) {
+        viewModelScope.launch {
+            try {
+                val lift = arkManager.createLiftRequest(listOf("utxo1"), "asp_pk")
+                _error.value = "Ark Lift Initiated: $lift"
+            } catch (e: Exception) {
+                _error.value = "Ark Lift failed: ${e.message}"
+            }
+        }
+    }
+
+    fun transferStateChain(utxoId: String, recipientPk: String) {
+        viewModelScope.launch {
+            try {
+                val sig = stateChainManager.signTransfer(utxoId, recipientPk, 0)
+                _error.value = "StateChain Transfer Signed: $sig"
+            } catch (e: Exception) {
+                _error.value = "StateChain failed: ${e.message}"
             }
         }
     }

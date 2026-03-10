@@ -14,6 +14,9 @@ permalink: /docs/implementation-registry
 | **NIP-47 (NWC)** | ✅ BRIDGED | Native Kotlin Manager + TS event support. |
 | **DLC (Discreet Log)** | ✅ BRIDGED | Native Kotlin Manager + TS offer/settle flow. |
 | **sBTC Bridge** | ✅ PRODUCTION | Clarity 4.0 contract in core/stacks-bridge.clar. |
+| **Ark** | ✅ BRIDGED | Native Ark Manager + TS Simulation. |
+| **StateChain** | ✅ BRIDGED | Native StateChain Manager + TS Simulation. |
+| **Maven** | ✅ BRIDGED | Native Maven Manager + TS Simulation. |
 | **Yield (Yield.xyz)** | ✅ TS-ONLY | Multi-network yield discovery and entry. |
 | **Insurance (Parametric)**| ✅ TS-ONLY | Neptune Mutual & InsurAce cover purchase. |
 
