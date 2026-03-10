@@ -10,19 +10,22 @@ permalink: /docs/implementation-registry
 
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
-| **Babylon Staking** | ✅ PRODUCTION | Native Kotlin stub & TS payload constructors. |
-| **NIP-47 (NWC)** | ✅ PRODUCTION | Native Kotlin stub & TS event support. |
-| **DLC (Discreet Log)** | ✅ PRODUCTION | Native Kotlin stub & TS offer/settle flow. |
+| **Babylon Staking** | ✅ BRIDGED | Native Kotlin Manager + TS payload constructors. |
+| **NIP-47 (NWC)** | ✅ BRIDGED | Native Kotlin Manager + TS event support. |
+| **DLC (Discreet Log)** | ✅ BRIDGED | Native Kotlin Manager + TS offer/settle flow. |
 | **sBTC Bridge** | ✅ PRODUCTION | Clarity 4.0 contract in core/stacks-bridge.clar. |
-| **Yield (Yield.xyz)** | ✅ PRODUCTION | Multi-network yield discovery and entry. |
-| **Insurance (Parametric)**| ✅ PRODUCTION | Neptune Mutual & InsurAce cover purchase. |
+| **Ark** | ✅ BRIDGED | Native Ark Manager + TS Simulation. |
+| **StateChain** | ✅ BRIDGED | Native StateChain Manager + TS Simulation. |
+| **Maven** | ✅ BRIDGED | Native Maven Manager + TS Simulation. |
+| **Yield (Yield.xyz)** | ✅ TS-ONLY | Multi-network yield discovery and entry. |
+| **Insurance (Parametric)**| ✅ TS-ONLY | Neptune Mutual & InsurAce cover purchase. |
 
 ## II. INTEROPERABILITY
 
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
-| **1inch / LI.FI** | ✅ PRODUCTION | Aggregated swaps and cross-chain bridging. |
-| **CoinsPaid Gateway** | ✅ PRODUCTION | Merchant invoice generation for B2B. |
+| **1inch / LI.FI** | ✅ TS-ONLY | Aggregated swaps and cross-chain bridging. |
+| **CoinsPaid Gateway** | ✅ TS-ONLY | Merchant invoice generation for B2B. |
 
 ## III. ASSET PROTOCOLS
 
@@ -41,3 +44,11 @@ permalink: /docs/implementation-registry
 | **Bitcoin Logic** | ✅ NATIVE | BDK Kotlin (v0.30.0) |
 | **Database** | ✅ NATIVE | Room + SQLCipher (Encrypted) |
 | **Integrity** | ✅ NATIVE | Root/Emulator Detection |
+
+---
+
+*Status Definitions:*
+- **PRODUCTION:** Fully implemented in the native Android layer.
+- **BRIDGED:** Core logic in native Kotlin, high-level UI/API in TS/React.
+- **TS-ONLY:** Logic resides solely in the legacy/companion TS service layer.
+- **ENHANCED:** Experimental/In-development features with partial implementation.

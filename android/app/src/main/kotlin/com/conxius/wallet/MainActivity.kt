@@ -22,7 +22,17 @@ class MainActivity : FragmentActivity() {
 
         val app = application as ConxiusApplication
         val repository = WalletRepository(app.database.walletDao())
-        val factory = ViewModelFactory(repository, app.bdkManager, app.strongBoxManager)
+        val factory = ViewModelFactory(
+            repository,
+            app.bdkManager,
+            app.strongBoxManager,
+            app.babylonManager,
+            app.dlcManager,
+            app.nwcManager,
+            app.arkManager,
+            app.stateChainManager,
+            app.mavenManager
+        )
 
         setContent {
             ConxiusTheme {
