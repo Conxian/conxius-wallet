@@ -1,17 +1,14 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace = "com.conxius.wallet"
-    // Targeting API 35 (Vanilla Ice Cream) to leverage latest security/performance features
     compileSdk = 35
 
     defaultConfig {
         applicationId = "com.conxius.wallet"
-        // Min API 26 (Android 8.0 Oreo) - Required for modern crypto/security features
-        // and better hardware-backed Keystore reliability. API 26 covers ~90%+ of active devices.
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -25,8 +22,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true // Enabled for production
-            isShrinkResources = true // Remove unused resources to reduce APK size
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -42,7 +39,7 @@ android {
         viewBinding = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"
+        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
     packaging {
         resources {
@@ -56,23 +53,29 @@ dependencies {
     implementation(project(":core-bitcoin"))
     implementation(project(":core-database"))
 
-    // Jetpack Libraries for Backward Compatibility
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("androidx.biometric:biometric:1.1.0")
-    implementation("androidx.security:security-crypto:1.1.0-alpha06") // For EncryptedSharedPreferences
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.security.crypto)
+    implementation(libs.androidx.navigation.compose)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
 
-    // UI components
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation(libs.bdk.android)
+    implementation(libs.androidx.room.runtime)
+
     implementation("com.google.android.material:material:1.12.0")
 
-    // Compose
-    implementation("androidx.activity:activity-compose:1.9.1")
-    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

@@ -2,6 +2,7 @@ package com.conxius.wallet.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.conxius.wallet.DeviceIntegrityPlugin
 import com.conxius.wallet.repository.WalletRepository
 import com.conxius.wallet.bitcoin.BdkManager
 import com.conxius.wallet.crypto.StrongBoxManager
@@ -16,6 +17,8 @@ class WalletViewModel(
     private val bdkManager: BdkManager,
     private val strongBoxManager: StrongBoxManager
 ) : ViewModel() {
+
+    private val integrityPlugin = DeviceIntegrityPlugin()
 
     val assets: StateFlow<List<AssetEntity>> = repository.allAssets
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -36,7 +39,8 @@ class WalletViewModel(
     val integrityResultSecure: StateFlow<Boolean?> = _integrityResultSecure
 
     fun checkIntegrity() {
-        _integrityResultSecure.value = true
+        val result = integrityPlugin.checkIntegrity()
+        _integrityResultSecure.value = result
     }
 
     fun unlock(pin: String) {

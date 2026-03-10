@@ -1,7 +1,7 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -9,7 +9,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -19,11 +19,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = "21"
-    }
-    sourceSets {
-        getByName("main") {
-            java.setSrcDirs(listOf("src/main/kotlin"))
-        }
     }
 }
 
