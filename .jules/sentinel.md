@@ -98,3 +98,8 @@ permalink: /sentinel
 **Vulnerability:** AI security filters using keyword matching (like 'ignore previous instructions') can be bypassed by inserting non-printable or zero-width characters (e.g., U+200B) between letters.
 **Learning:** LLMs often ignore these hidden characters while security regexes/string checks might fail to match them, creating an obfuscation vector.
 **Prevention:** Normalize security-critical inputs by stripping non-printable and zero-width characters before performing pattern matching.
+
+## 2026-03-09 - [Case-Sensitive Redaction Bypass in Sovereign AI]
+**Vulnerability:** The `sanitizePrompt` regexes for EVM addresses, Hex secrets, and BIP32 Extended Keys were case-sensitive, allowing redaction bypasses via uppercase variants (e.g., `0X...` instead of `0x...` or `XPUB...` instead of `xpub...`).
+**Learning:** While some cryptographic identifiers are case-sensitive (like Bitcoin WIF or legacy addresses), others are commonly represented in various cases or have case-insensitive prefixes. Security filters must account for these variations to prevent accidental leakage when users or AI agents use non-canonical casing.
+**Prevention:** Always use the case-insensitive (`i`) flag for regexes matching identifiers that have known case variations or common uppercase representations (like hex prefixes and extended key headers), while being careful not to apply it to strictly case-sensitive formats like Base58.
