@@ -209,11 +209,13 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     }
   }
 
-  // Security: Normalize inputs by stripping non-printable and zero-width characters to prevent obfuscated leaks
-  // We exclude common whitespace (0x09, 0x0A, 0x0D) to preserve formatting.
-  const normalize = (str: string) => str.replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, "");
-  message = typeof message === 'string' ? normalize(message) : message;
-  fullScan = normalize(fullScan);
+  // Security: Normalize inputs to prevent obfuscated leaks.
+  // We perform two scans:
+  // 1. ZWCs stripped (standard normalization)
+  // 2. ZWCs replaced with spaces (to catch mnemonics/phrases joined by ZWCs)
+  const zwcRegex = /[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g;
+  const strippedScan = fullScan.replace(zwcRegex, "");
+  const spacedScan = fullScan.replace(zwcRegex, " ");
 
   // Blacklist of potentially sensitive words or patterns
   const sensitivePatterns = [
@@ -222,7 +224,7 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     /\b([a-z]{3,}\s+){11,23}[a-z]{3,}\b/i, // BIP-39 mnemonic phrases
     /\b(0x)?[a-fA-F0-9]{64,66}\b/i,         // Hex secrets (Private Keys, TxIDs, Node IDs)
     /\b([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})\b/i, // BIP32 extended keys (pub/prv)
-    /\b(bc1[qp][a-z0-9]{38,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{38,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/i, // BTC
+    /\b(bc1[qp][a-z0-9]{38,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{37,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/i, // BTC
     /\b(S[PST][0-9A-Z]{28,41})\b/i, // Stacks
     /\b((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})\b/i, // Liquid
     /\b(nsec1[a-z0-9]{50,200}|npub1[a-z0-9]{50,200})\b/i, // Nostr
@@ -232,10 +234,16 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
   ];
 
   // Defensive: check the entire error object for ANY leakage
-  if (sensitivePatterns.some(p => p.test(fullScan)) || (typeof message === 'string' && sensitivePatterns.some(p => p.test(message)))) {
+  if (
+    sensitivePatterns.some((p) => p.test(strippedScan)) ||
+    sensitivePatterns.some((p) => p.test(spacedScan))
+  ) {
     return defaultMsg;
   }
 
+  // Security: Clean the returned message of non-printable characters for UI/Log hygiene
+  const cleanMessage = typeof message === 'string' ? message.replace(zwcRegex, "") : defaultMsg;
+
   // Slice to avoid giant response bodies leaking
-  return typeof message === 'string' ? message.substring(0, 100) : defaultMsg;
+  return typeof cleanMessage === 'string' ? cleanMessage.substring(0, 100) : defaultMsg;
 }
