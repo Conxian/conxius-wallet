@@ -9,7 +9,11 @@ module.exports = {
     "./styles/**/*.css",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'ghost-white': '#F8F8FF',
+      },
+    },
   },
   plugins: [],
 };
