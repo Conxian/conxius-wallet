@@ -124,7 +124,6 @@ export const isPromptMalicious = (text: string): boolean => {
   // We exclude common whitespace (0x09, 0x0A, 0x0D) to preserve formatting.
   // eslint-disable-next-line no-control-regex
   const normalized = text.replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, "");
-  const lowercase = normalized.toLowerCase();
   const injectionPatterns = [
     "ignore previous instructions",
     "system prompt",
@@ -142,7 +141,16 @@ export const isPromptMalicious = (text: string): boolean => {
     "do anything now",
   ];
 
-  return injectionPatterns.some((p) => lowercase.includes(p));
+  return injectionPatterns.some((p) => {
+    // Create a regex that allows any amount of whitespace between words (handles newlines/tabs)
+    // and also handles cases where words are mashed together after ZWC stripping.
+    const pattern = p
+      .split(/\s+/)
+      .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("\\s*");
+    const regex = new RegExp(pattern, "i");
+    return regex.test(normalized);
+  });
 };
 
 /**
