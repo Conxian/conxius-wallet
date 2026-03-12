@@ -6,8 +6,8 @@ import * as path from 'path';
 
 describe('Protocol and Signer Alignment', () => {
   const supportedLayers = [
-    'Mainnet', 'Stacks', 'Liquid', 'BOB', 'RGB', 'Ark', 'StateChain', 'Maven', 'BitVM', 'Rootstock', 'B2', 'Botanix', 'Mezo',
-    'Alpen', 'Zulu', 'Bison', 'Hemi', 'Nubit', 'Lorenzo', 'Citrea', 'Babylon', 'Merlin', 'Bitlayer', 'TaprootAssets'
+    'Mainnet', 'Stacks', 'Rootstock', 'Ethereum', 'Lightning', 'Liquid', 'Runes', 'Ordinals', 'BOB', 'RGB', 'Ark', 'BitVM', 'StateChain', 'Maven', 'B2', 'Botanix', 'Mezo',
+    'Alpen', 'Zulu', 'Bison', 'Hemi', 'Nubit', 'Lorenzo', 'Citrea', 'Babylon', 'Merlin', 'Bitlayer', 'TaprootAssets', 'Silent'
   ];
 
   it('should have fetchers for all supported layers', () => {

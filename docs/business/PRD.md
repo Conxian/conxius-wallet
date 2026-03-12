@@ -36,9 +36,9 @@ permalink: /prd
 ### 3.1. Bridged Sovereign Architecture
 
 Conxius utilizes a **Bridged Sovereign Architecture** to balance rapid protocol support with hardware-level security:
-- **Native Enclave Core**: All private keys and seeds are managed by the Android Keystore + StrongBox. Signing occurs exclusively in the native layer.
+- **Native Enclave Core**: All private keys and seeds are managed by the Android Keystore + StrongBox. Signing occurs exclusively in the native layer via dedicated Kotlin managers.
 - **TypeScript Protocol Layer**: High-level protocol logic (payload construction, API interaction) is handled in a secure TS environment.
-- **Native Bridge Managers**: Dedicated Kotlin managers bridge the TS layer to native Rust/Kotlin libraries for critical operations.
+- **Native Bridge Managers**: A full suite of 20+ Kotlin managers (e.g., `BdkManager`, `YieldManager`) bridge the TS layer to native Rust/Kotlin libraries for critical operations.
 
 ### 3.2. Native Migration (Phase 5: "Clean Break")
 
@@ -56,14 +56,16 @@ The project is transitioning to a **pure native Android architecture** (Kotlin/R
 | :--- | :--- | :--- |
 | **Bitcoin L1** | PRODUCTION | Native BDK (BIP-84/86) |
 | **Lightning** | BRIDGED | Breez SDK (TS) + Native Breez Manager |
-| **Stacks** | BRIDGED | Stacks.js (TS) + sBTC Bridge (Clarity) |
+| **Stacks** | BRIDGED | Stacks.js (TS) + Native Stacks Manager |
 | **Liquid** | BRIDGED | Liquidjs (TS) + Native Liquid Manager |
-| **Babylon** | BRIDGED | TS Payload + Native Staking Manager |
-| **DLCs** | BRIDGED | TS Offer Flow + Native DLC Manager |
-| **BOB / RSK / B2** | BRIDGED | TS Ethers + Native EVM Manager |
-| **RGB / Taproot Assets** | ENHANCED | WASM Validation (TS) |
-| **Ark / StateChain** | BRIDGED | Native Manager Stubs + TS Simulation |
-| **Maven** | BRIDGED | Native Maven Manager + TS AI Marketplace |
+| **Babylon** | BRIDGED | TS Payload + Native Babylon Manager |
+| **DLCs** | BRIDGED | TS Offer Flow + Native DlcManager |
+| **BOB / RSK** | BRIDGED | TS Ethers + Native EVM Manager |
+| **RGB / BitVM** | BRIDGED | WASM/Simulation (TS) + Native Managers |
+| **Ark / StateChain** | BRIDGED | TS Simulation + Native Managers |
+| **Web5** | BRIDGED | Web5 API (TS) + Native Web5 Manager |
+| **Yield / Insurance** | BRIDGED | TS Protocol Entry + Native Managers |
+| **Swap / B2B** | BRIDGED | TS Aggregator + Native Managers |
 
 ---
 

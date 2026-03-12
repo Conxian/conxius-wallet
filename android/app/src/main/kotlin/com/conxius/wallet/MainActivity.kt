@@ -35,7 +35,17 @@ class MainActivity : FragmentActivity() {
             app.liquidManager,
             app.evmManager,
             app.lightningManager,
-            app.breezManager
+            app.breezManager,
+            app.stacksManager,
+            app.rgbManager,
+            app.bitVmManager,
+            app.web5Manager,
+            app.musig2Manager,
+            app.silentPaymentManager,
+            app.yieldManager,
+            app.insuranceManager,
+            app.interoperabilityManager,
+            app.b2bManager
         )
 
         setContent {

@@ -12,35 +12,34 @@ permalink: /docs/implementation-registry
 | :--- | :--- | :--- |
 | **Bitcoin L1** | ✅ PRODUCTION | Native BDK (BIP-84/86) integration. |
 | **Lightning** | ✅ BRIDGED | Native Breez Manager + TS Breez SDK. |
-| **Babylon Staking** | ✅ BRIDGED | Native Kotlin Manager + TS payload constructors. |
-| **NIP-47 (NWC)** | ✅ BRIDGED | Native Kotlin Manager + TS event support. |
-| **DLC (Discreet Log)** | ✅ BRIDGED | Native Kotlin Manager + TS offer/settle flow. |
+| **Babylon Staking** | ✅ BRIDGED | Native Babylon Manager + TS payload constructors. |
+| **NIP-47 (NWC)** | ✅ BRIDGED | Native NwcManager + TS event support. |
+| **DLC (Discreet Log)** | ✅ BRIDGED | Native DlcManager + TS offer/settle flow. |
 | **sBTC Bridge** | ✅ PRODUCTION | Clarity 4.0 contract in core/stacks-bridge.clar. |
-| **Ark** | ✅ BRIDGED | Native Ark Manager + TS Simulation. |
-| **StateChain** | ✅ BRIDGED | Native StateChain Manager + TS Simulation. |
-| **Maven** | ✅ BRIDGED | Native Maven Manager + TS AI Marketplace. |
-| **Liquid** | ✅ BRIDGED | Native Liquid Manager + TS Liquidjs support. |
-| **EVM (BOB/RSK)** | ✅ BRIDGED | Native EVM Manager + TS Ethers support. |
-| **Musig2** | ✅ BRIDGED | TS Aggregation logic + Native signing bridge. |
-| **Yield (Yield.xyz)** | ✅ TS-ONLY | Multi-network yield discovery and entry. |
-| **Insurance (Parametric)**| ✅ TS-ONLY | Neptune Mutual & InsurAce cover purchase. |
-
-## II. INTEROPERABILITY
-
-| Feature | Status | Notes |
-| :--- | :--- | :--- |
-| **1inch / LI.FI** | ✅ TS-ONLY | Aggregated swaps and cross-chain bridging. |
-| **CoinsPaid Gateway** | ✅ TS-ONLY | Merchant invoice generation for B2B. |
+| **Ark** | ✅ BRIDGED | Native ArkManager + TS Simulation. |
+| **StateChain** | ✅ BRIDGED | Native StateChainManager + TS Simulation. |
+| **Maven** | ✅ BRIDGED | Native MavenManager + TS AI Marketplace. |
+| **Liquid** | ✅ BRIDGED | Native LiquidManager + TS Liquidjs support. |
+| **EVM (BOB/RSK)** | ✅ BRIDGED | Native EvmManager + TS Ethers support. |
+| **Musig2** | ✅ BRIDGED | Native Musig2Manager + TS session management. |
+| **Stacks** | ✅ BRIDGED | Native StacksManager + Stacks.js (TS). |
+| **RGB** | ✅ BRIDGED | Native RgbManager + WASM-based validation (TS). |
+| **BitVM** | ✅ BRIDGED | Native BitVmManager + Optimistic logic (TS). |
+| **Web5** | ✅ BRIDGED | Native Web5Manager + Web5 API (TS). |
+| **Yield (Yield.xyz)** | ✅ BRIDGED | Native Yield Manager + TS yield discovery. |
+| **Insurance (Parametric)**| ✅ BRIDGED | Native Insurance Manager + TS cover purchase. |
+| **Interoperability** | ✅ BRIDGED | Native Interoperability Manager + 1inch/LI.FI (TS). |
+| **B2B Gateway** | ✅ BRIDGED | Native B2bManager + CoinsPaid (TS). |
 
 ## III. ASSET PROTOCOLS
 
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
 | **Ordinals / Runes** | ✅ PRODUCTION | Native inscription and transfer support via BDK. |
-| **RGB** | 🚀 ENHANCED | WASM-based validation integrated (TS). |
-| **Taproot Assets** | 🚀 ENHANCED | Initial mint/transfer flow support (TS). |
+| **RGB Assets** | 🚀 ENHANCED | Initial mint/transfer flow support (TS). |
+| **Taproot Assets** | 🚀 ENHANCED | Initial discovery support (TS). |
 
-## IV. NATIVE ARCHITECTURE (PHASE 4)
+## IV. NATIVE ARCHITECTURE (PHASE 4/5)
 
 | Component | Status | Tech Stack |
 | :--- | :--- | :--- |

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.conxius.wallet.repository.WalletRepository
 import com.conxius.wallet.bitcoin.*
 import com.conxius.wallet.crypto.StrongBoxManager
+import com.conxius.wallet.crypto.Web5Manager
 
 class ViewModelFactory(
     private val repository: WalletRepository,
@@ -19,7 +20,17 @@ class ViewModelFactory(
     private val liquidManager: LiquidManager,
     private val evmManager: EvmManager,
     private val lightningManager: LightningManager,
-    private val breezManager: BreezManager
+    private val breezManager: BreezManager,
+    private val stacksManager: StacksManager,
+    private val rgbManager: RgbManager,
+    private val bitVmManager: BitVmManager,
+    private val web5Manager: Web5Manager,
+    private val musig2Manager: Musig2Manager,
+    private val silentPaymentManager: SilentPaymentManager,
+    private val yieldManager: YieldManager,
+    private val insuranceManager: InsuranceManager,
+    private val interoperabilityManager: InteroperabilityManager,
+    private val b2bManager: B2bManager
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(OnboardingViewModel::class.java)) {
@@ -41,7 +52,17 @@ class ViewModelFactory(
                 liquidManager,
                 evmManager,
                 lightningManager,
-                breezManager
+                breezManager,
+                stacksManager,
+                rgbManager,
+                bitVmManager,
+                web5Manager,
+                musig2Manager,
+                silentPaymentManager,
+                yieldManager,
+                insuranceManager,
+                interoperabilityManager,
+                b2bManager
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
