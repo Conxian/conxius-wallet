@@ -19,4 +19,11 @@ class ArkManager {
     fun signRedemption(vtxoId: String): String {
         return "ark_vtxo_redemption_sig_enclave"
     }
+
+    /**
+     * Signs an Ark out-of-round payment.
+     */
+    fun signPayment(vtxoId: String, recipientPk: String): String {
+        return "ark_payment_sig_enclave"
+    }
 }

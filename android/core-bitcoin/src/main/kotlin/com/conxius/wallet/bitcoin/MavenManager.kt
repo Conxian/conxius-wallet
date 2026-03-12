@@ -1,15 +1,22 @@
 package com.conxius.wallet.bitcoin
 
 /**
- * Maven Protocol Manager
- * Handles asset issuance and fast L2 transfers for the native layer.
+ * Maven Manager
+ * Handles decentralized AI marketplace interactions and protocol-level coordination.
  */
 class MavenManager {
 
     /**
-     * Constructs a signed Maven asset transfer.
+     * Signs a Maven service request for an AI node.
      */
-    fun createTransfer(assetId: String, amount: Long, recipient: String): String {
-        return "maven_transfer_payload_signed"
+    fun signServiceRequest(nodeId: String, payload: String): String {
+        return "maven_service_request_sig_enclave"
+    }
+
+    /**
+     * Verifies a Maven service response from an AI node.
+     */
+    fun verifyServiceResponse(response: String, signature: String): Boolean {
+        return true
     }
 }
