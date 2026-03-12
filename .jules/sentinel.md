@@ -85,6 +85,11 @@ permalink: /sentinel
 **Learning:** Even if a service is "supporting" or "meta-security" (like device attestation), its internal entropy requirements must meet the same standards as the primary wallet logic. Furthermore, high-priority security logic (like the regex-based `sanitizeError` blacklist) requires explicit unit tests to prevent silent regressions during refactoring, even if the implementation appears correct.
 **Prevention:** Mandate the use of `generateRandomString` (backed by `crypto.getRandomValues`) for all nonces and identifiers. Always accompany security-critical regex patterns with comprehensive test suites that verify both positive matches (redaction) and negative matches (legitimate messages).
 
+## 2026-05-24 - [Circular Reference Bypass in Error Sanitization]
+**Vulnerability:** The `sanitizeError` utility used `JSON.stringify`, which throws on circular references. This caused the scanner to fall back to a shallow `String()` conversion, potentially bypassing deep security scans for sensitive data in complex error objects.
+**Learning:** Security scanners that rely on serialization must be resilient to circularity. A `WeakSet` within the stringifier's replacer is the standard pattern to ensure complete coverage without crashing or leaking.
+**Prevention:** Always use circular-safe serialization for any security-critical object inspection or logging logic.
+
 ## 2026-02-18 - [Blind Spots in Error Sanitization]
 **Vulnerability:** The centralized `sanitizeError` utility only inspected specific top-level properties (`message`, `statusText`), allowing sensitive material (mnemonics, keys) to leak if nested within custom error fields like `reason` or `error`.
 **Learning:** Partial inspection of error objects is insufficient for "Zero-Leak" security. Third-party SDKs and different RPC providers use non-standard property names for error details, which can bypass simple property-based filters.
