@@ -10,6 +10,7 @@ permalink: /docs/implementation-registry
 
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
+| **Bitcoin L1** | ✅ PRODUCTION | Native BDK (BIP-84/86) integration. |
 | **Babylon Staking** | ✅ BRIDGED | Native Kotlin Manager + TS payload constructors. |
 | **NIP-47 (NWC)** | ✅ BRIDGED | Native Kotlin Manager + TS event support. |
 | **DLC (Discreet Log)** | ✅ BRIDGED | Native Kotlin Manager + TS offer/settle flow. |
@@ -17,6 +18,8 @@ permalink: /docs/implementation-registry
 | **Ark** | ✅ BRIDGED | Native Ark Manager + TS Simulation. |
 | **StateChain** | ✅ BRIDGED | Native StateChain Manager + TS Simulation. |
 | **Maven** | ✅ BRIDGED | Native Maven Manager + TS Simulation. |
+| **Liquid** | ✅ BRIDGED | Native Liquid Manager + TS Liquidjs support. |
+| **Musig2** | ✅ BRIDGED | TS Aggregation logic + Native signing bridge. |
 | **Yield (Yield.xyz)** | ✅ TS-ONLY | Multi-network yield discovery and entry. |
 | **Insurance (Parametric)**| ✅ TS-ONLY | Neptune Mutual & InsurAce cover purchase. |
 
@@ -32,8 +35,8 @@ permalink: /docs/implementation-registry
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
 | **Ordinals / Runes** | ✅ PRODUCTION | Native inscription and transfer support via BDK. |
-| **RGB** | 🚀 ENHANCED | WASM-based validation integrated. |
-| **Taproot Assets** | 🚀 ENHANCED | Initial mint/transfer flow support. |
+| **RGB** | 🚀 ENHANCED | WASM-based validation integrated (TS). |
+| **Taproot Assets** | 🚀 ENHANCED | Initial mint/transfer flow support (TS). |
 
 ## IV. NATIVE ARCHITECTURE (PHASE 4)
 
