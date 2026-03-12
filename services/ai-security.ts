@@ -32,7 +32,7 @@ export const sanitizePrompt = (
   // 2. Redact Bitcoin Addresses (Legacy, Segwit, Taproot, Testnet)
   // bc1q..., bc1p..., 1..., 3..., tb1..., m/n...
   const btcRegex =
-    /\b(bc1[qp][a-z0-9]{37,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{37,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/gi;
+    /\b(bc1[qp][a-z0-9]{33,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/gi;
   sanitized = sanitized.replace(btcRegex, (match) => {
     const id = `[BTC_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;

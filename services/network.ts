@@ -203,7 +203,15 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     // Defense-in-depth: Extract from more potential fields while scanning the whole object
     message = error.message || error.reason || error.error || error.statusText || String(error) || defaultMsg;
     try {
-      fullScan = JSON.stringify(error);
+      // Circular-safe serialization for deep security scan
+      const seen = new WeakSet();
+      fullScan = JSON.stringify(error, (key, value) => {
+        if (typeof value === "object" && value !== null) {
+          if (seen.has(value)) return "[Circular]";
+          seen.add(value);
+        }
+        return value;
+      });
     } catch {
       fullScan = String(error);
     }
@@ -224,7 +232,7 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     /\b([a-z]{3,}\s+){11,23}[a-z]{3,}\b/i, // BIP-39 mnemonic phrases
     /\b(0x)?[a-fA-F0-9]{64,66}\b/i,         // Hex secrets (Private Keys, TxIDs, Node IDs)
     /\b([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})\b/i, // BIP32 extended keys (pub/prv)
-    /\b(bc1[qp][a-z0-9]{38,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{37,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/i, // BTC
+    /\b(bc1[qp][a-z0-9]{33,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/i, // BTC
     /\b(S[PST][0-9A-Z]{28,41})\b/i, // Stacks
     /\b((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})\b/i, // Liquid
     /\b(nsec1[a-z0-9]{50,200}|npub1[a-z0-9]{50,200})\b/i, // Nostr
