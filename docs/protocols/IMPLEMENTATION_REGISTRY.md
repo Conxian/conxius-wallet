@@ -11,14 +11,16 @@ permalink: /docs/implementation-registry
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
 | **Bitcoin L1** | ✅ PRODUCTION | Native BDK (BIP-84/86) integration. |
+| **Lightning** | ✅ BRIDGED | Native Breez Manager + TS Breez SDK. |
 | **Babylon Staking** | ✅ BRIDGED | Native Kotlin Manager + TS payload constructors. |
 | **NIP-47 (NWC)** | ✅ BRIDGED | Native Kotlin Manager + TS event support. |
 | **DLC (Discreet Log)** | ✅ BRIDGED | Native Kotlin Manager + TS offer/settle flow. |
 | **sBTC Bridge** | ✅ PRODUCTION | Clarity 4.0 contract in core/stacks-bridge.clar. |
 | **Ark** | ✅ BRIDGED | Native Ark Manager + TS Simulation. |
 | **StateChain** | ✅ BRIDGED | Native StateChain Manager + TS Simulation. |
-| **Maven** | ✅ BRIDGED | Native Maven Manager + TS Simulation. |
+| **Maven** | ✅ BRIDGED | Native Maven Manager + TS AI Marketplace. |
 | **Liquid** | ✅ BRIDGED | Native Liquid Manager + TS Liquidjs support. |
+| **EVM (BOB/RSK)** | ✅ BRIDGED | Native EVM Manager + TS Ethers support. |
 | **Musig2** | ✅ BRIDGED | TS Aggregation logic + Native signing bridge. |
 | **Yield (Yield.xyz)** | ✅ TS-ONLY | Multi-network yield discovery and entry. |
 | **Insurance (Parametric)**| ✅ TS-ONLY | Neptune Mutual & InsurAce cover purchase. |
@@ -46,7 +48,7 @@ permalink: /docs/implementation-registry
 | **Secure Enclave** | ✅ NATIVE | StrongBox, TEE-backed Keystore |
 | **Bitcoin Logic** | ✅ NATIVE | BDK Kotlin (v0.30.0) |
 | **Database** | ✅ NATIVE | Room + SQLCipher (Encrypted) |
-| **Integrity** | ✅ NATIVE | Root/Emulator Detection |
+| **Integrity** | ✅ NATIVE | Play Integrity API + Root/Emulator Detection |
 
 ---
 

@@ -15,7 +15,11 @@ class ViewModelFactory(
     private val nwcManager: NwcManager,
     private val arkManager: ArkManager,
     private val stateChainManager: StateChainManager,
-    private val mavenManager: MavenManager
+    private val mavenManager: MavenManager,
+    private val liquidManager: LiquidManager,
+    private val evmManager: EvmManager,
+    private val lightningManager: LightningManager,
+    private val breezManager: BreezManager
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(OnboardingViewModel::class.java)) {
@@ -33,7 +37,11 @@ class ViewModelFactory(
                 nwcManager,
                 arkManager,
                 stateChainManager,
-                mavenManager
+                mavenManager,
+                liquidManager,
+                evmManager,
+                lightningManager,
+                breezManager
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

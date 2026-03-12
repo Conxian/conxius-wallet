@@ -31,7 +31,11 @@ class MainActivity : FragmentActivity() {
             app.nwcManager,
             app.arkManager,
             app.stateChainManager,
-            app.mavenManager
+            app.mavenManager,
+            app.liquidManager,
+            app.evmManager,
+            app.lightningManager,
+            app.breezManager
         )
 
         setContent {

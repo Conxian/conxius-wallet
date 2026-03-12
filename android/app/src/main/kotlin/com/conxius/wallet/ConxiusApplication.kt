@@ -17,6 +17,10 @@ class ConxiusApplication : Application() {
     val arkManager by lazy { ArkManager() }
     val stateChainManager by lazy { StateChainManager() }
     val mavenManager by lazy { MavenManager() }
+    val liquidManager by lazy { LiquidManager() }
+    val evmManager by lazy { EvmManager() }
+    val lightningManager by lazy { LightningManager() }
+    val breezManager by lazy { BreezManager() }
 
     override fun onCreate() {
         super.onCreate()

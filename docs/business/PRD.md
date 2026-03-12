@@ -38,7 +38,7 @@ permalink: /prd
 Conxius utilizes a **Bridged Sovereign Architecture** to balance rapid protocol support with hardware-level security:
 - **Native Enclave Core**: All private keys and seeds are managed by the Android Keystore + StrongBox. Signing occurs exclusively in the native layer.
 - **TypeScript Protocol Layer**: High-level protocol logic (payload construction, API interaction) is handled in a secure TS environment.
-- **Native Bridge Managers**: Dedicated Kotlin managers (e.g., `BdkManager`, `BabylonManager`) bridge the TS layer to native Rust/Kotlin libraries for critical operations.
+- **Native Bridge Managers**: Dedicated Kotlin managers bridge the TS layer to native Rust/Kotlin libraries for critical operations.
 
 ### 3.2. Native Migration (Phase 5: "Clean Break")
 
@@ -55,14 +55,15 @@ The project is transitioning to a **pure native Android architecture** (Kotlin/R
 | Protocol | Status | Implementation Details |
 | :--- | :--- | :--- |
 | **Bitcoin L1** | PRODUCTION | Native BDK (BIP-84/86) |
-| **Lightning** | BRIDGED | Breez SDK (TS) + NWC (Native Bridge) |
+| **Lightning** | BRIDGED | Breez SDK (TS) + Native Breez Manager |
 | **Stacks** | BRIDGED | Stacks.js (TS) + sBTC Bridge (Clarity) |
 | **Liquid** | BRIDGED | Liquidjs (TS) + Native Liquid Manager |
 | **Babylon** | BRIDGED | TS Payload + Native Staking Manager |
 | **DLCs** | BRIDGED | TS Offer Flow + Native DLC Manager |
-| **BOB / RSK** | TS-ONLY | Ethers.js via Companion Service |
+| **BOB / RSK / B2** | BRIDGED | TS Ethers + Native EVM Manager |
 | **RGB / Taproot Assets** | ENHANCED | WASM Validation (TS) |
 | **Ark / StateChain** | BRIDGED | Native Manager Stubs + TS Simulation |
+| **Maven** | BRIDGED | Native Maven Manager + TS AI Marketplace |
 
 ---
 

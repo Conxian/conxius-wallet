@@ -3,6 +3,7 @@ package com.conxius.wallet.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.conxius.wallet.DeviceIntegrityPlugin
+import com.conxius.wallet.PlayIntegrityPlugin
 import com.conxius.wallet.repository.WalletRepository
 import com.conxius.wallet.bitcoin.*
 import com.conxius.wallet.crypto.StrongBoxManager
@@ -21,10 +22,15 @@ class WalletViewModel(
     private val nwcManager: NwcManager,
     private val arkManager: ArkManager,
     private val stateChainManager: StateChainManager,
-    private val mavenManager: MavenManager
+    private val mavenManager: MavenManager,
+    private val liquidManager: LiquidManager,
+    private val evmManager: EvmManager,
+    private val lightningManager: LightningManager,
+    private val breezManager: BreezManager
 ) : ViewModel() {
 
     private val integrityPlugin = DeviceIntegrityPlugin()
+    private val playIntegrityPlugin = PlayIntegrityPlugin()
 
     val assets: StateFlow<List<AssetEntity>> = repository.allAssets
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -49,6 +55,10 @@ class WalletViewModel(
         _integrityResultSecure.value = result
     }
 
+    fun requestPlayIntegrityToken(nonce: String): String {
+        return playIntegrityPlugin.requestIntegrityToken(nonce)
+    }
+
     fun unlock(pin: String) {
         if (_integrityResultSecure.value == false) {
             _error.value = "Security Error: Device compromised"
@@ -59,20 +69,6 @@ class WalletViewModel(
                 performUnlock()
             } catch (e: Exception) {
                 _error.value = "Unlock failed: ${e.message}"
-            }
-        }
-    }
-
-    fun unlockWithBiometrics() {
-        if (_integrityResultSecure.value == false) {
-            _error.value = "Security Error: Device compromised"
-            return
-        }
-        viewModelScope.launch {
-            try {
-                performUnlock()
-            } catch (e: Exception) {
-                _error.value = "Biometric unlock failed: ${e.message}"
             }
         }
     }
@@ -126,7 +122,7 @@ class WalletViewModel(
         }
     }
 
-    // Bridged Protocol Actions (M5/M6)
+    // --- Bridged Protocol Actions ---
 
     fun createStakingTx(amount: Long) {
         viewModelScope.launch {
@@ -157,6 +153,50 @@ class WalletViewModel(
                 _error.value = "StateChain Transfer Signed: $sig"
             } catch (e: Exception) {
                 _error.value = "StateChain failed: ${e.message}"
+            }
+        }
+    }
+
+    fun deriveLiquidAddress() {
+        viewModelScope.launch {
+            try {
+                val addr = liquidManager.deriveConfidentialAddress(byteArrayOf(1, 2, 3), byteArrayOf(4, 5, 6))
+                _error.value = "Liquid Confidential Address: $addr"
+            } catch (e: Exception) {
+                _error.value = "Liquid address derivation failed: ${e.message}"
+            }
+        }
+    }
+
+    fun signEvmTransaction(data: ByteArray) {
+        viewModelScope.launch {
+            try {
+                val sig = evmManager.signTransaction(data, 1)
+                _error.value = "EVM Transaction Signed: $sig"
+            } catch (e: Exception) {
+                _error.value = "EVM signing failed: ${e.message}"
+            }
+        }
+    }
+
+    fun connectLightningPeer(peerId: String) {
+        viewModelScope.launch {
+            try {
+                val success = lightningManager.connectPeer(peerId, "localhost", 9735)
+                if (success) _error.value = "Lightning Peer Connected: $peerId"
+            } catch (e: Exception) {
+                _error.value = "Lightning connection failed: ${e.message}"
+            }
+        }
+    }
+
+    fun startBreezNode(apiKey: String, mnemonic: String) {
+        viewModelScope.launch {
+            try {
+                val id = breezManager.startNode(apiKey, mnemonic)
+                _error.value = "Breez Node Started: $id"
+            } catch (e: Exception) {
+                _error.value = "Breez start failed: ${e.message}"
             }
         }
     }
