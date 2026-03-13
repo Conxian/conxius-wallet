@@ -111,6 +111,20 @@ describe("AI Security: Prompt Sanitization", () => {
     expect(sanitized).toContain("[HEX_SEC_");
     expect(sanitized).not.toContain("02abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890");
   });
+
+  it("should redact Google API keys", () => {
+    const prompt = "My Google key is AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+    const { sanitized } = sanitizePrompt(prompt);
+    expect(sanitized).toContain("[API_KEY_");
+    expect(sanitized).not.toContain("AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+  });
+
+  it("should redact OpenAI-style secret keys", () => {
+    const prompt = "My OpenAI key is sk-0000000000000000000000000000000000000000";
+    const { sanitized } = sanitizePrompt(prompt);
+    expect(sanitized).toContain("[API_KEY_");
+    expect(sanitized).not.toContain("sk-0000000000000000000000000000000000000000");
+  });
 });
 
 describe("AI Security: Malicious Intent Detection", () => {
