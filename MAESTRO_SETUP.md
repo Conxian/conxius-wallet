@@ -1,3 +1,9 @@
+---
+title: Maestro Setup
+layout: page
+permalink: /./MAESTRO_SETUP
+---
+
 # Maestro On-Device Testing Setup
 
 This document outlines the setup and usage of Maestro for automated UI testing

@@ -1,3 +1,9 @@
+---
+title: Modules
+layout: page
+permalink: /./openspec/specs/modules
+---
+
 # Module Specification (v1.6.0)
 
 ## Android Native Modules

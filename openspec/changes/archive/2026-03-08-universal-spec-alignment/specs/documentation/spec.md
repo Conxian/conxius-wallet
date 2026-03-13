@@ -1,3 +1,9 @@
+---
+title: Spec
+layout: page
+permalink: /./openspec/changes/archive/2026-03-08-universal-spec-alignment/specs/documentation/spec
+---
+
 # Documentation Alignment Spec
 
 ## ADDED Requirements
