@@ -238,7 +238,9 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     /\b(nsec1[a-z0-9]{50,200}|npub1[a-z0-9]{50,200})\b/i, // Nostr
     /\b(sp1[a-z0-9]{50,200})\b/i, // Silent Payments
     /\b[5KL9c][1-9A-HJ-NP-Za-km-z]{50,51}\b/i, // WIF Private Keys
-    /\bln(?:bc|tb|bcrt|dev)[0-9a-z]+\b/i      // BOLT11 Invoices
+    /\bln(?:bc|tb|bcrt|dev)[0-9a-z]+\b/i,      // BOLT11 Invoices
+    /\bAIzaSy[a-zA-Z0-9_-]{33}\b/i,            // Google API Keys
+    /\bsk-[a-zA-Z0-9_-]{20,}\b/i               // Generic Secret Keys (OpenAI, etc.)
   ];
 
   // Defensive: check the entire error object for ANY leakage

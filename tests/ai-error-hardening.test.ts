@@ -40,5 +40,11 @@ describe("AI Error Hardening", () => {
 
     const leakyBolt11 = "Error: Invoice lnbc10u1pwjqyuzpp5w6v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v leaked";
     expect(sanitizeError(leakyBolt11)).toBe("Protocol Error");
+
+    const leakyApiKey = "Error: API key AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q leaked";
+    expect(sanitizeError(leakyApiKey)).toBe("Protocol Error");
+
+    const leakyOpenAiKey = "Error: Secret key sk-proj-1234567890abcdef1234567890abcdef1234567890abcdef leaked";
+    expect(sanitizeError(leakyOpenAiKey)).toBe("Protocol Error");
   });
 });
