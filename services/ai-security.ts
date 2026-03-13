@@ -111,6 +111,14 @@ export const sanitizePrompt = (
     return id;
   });
 
+  // 12. Redact AI Service API Keys (Google Gemini, OpenAI, etc.)
+  const apiKeyRegex = /\b(AIzaSy[a-zA-Z0-9_-]{33}|sk-[a-zA-Z0-9_-]{20,})\b/g;
+  sanitized = sanitized.replace(apiKeyRegex, (match) => {
+    const id = `[API_KEY_${generateRandomString(4)}]`;
+    redactionMap[id] = match;
+    return id;
+  });
+
   return { sanitized, redactionMap };
 };
 
