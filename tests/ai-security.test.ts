@@ -113,17 +113,17 @@ describe("AI Security: Prompt Sanitization", () => {
   });
 
   it("should redact Google API keys", () => {
-    const prompt = "My Google key is AIzaSyDUMMY-API-KEY-FOR-TESTING-PURPOSE";
+    const prompt = "My Google key is AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     const { sanitized } = sanitizePrompt(prompt);
     expect(sanitized).toContain("[API_KEY_");
-    expect(sanitized).not.toContain("AIzaSyDUMMY-API-KEY-FOR-TESTING-PURPOSE");
+    expect(sanitized).not.toContain("AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
   });
 
   it("should redact OpenAI-style secret keys", () => {
-    const prompt = "My OpenAI key is sk-TEST-SECRET-KEY-THAT-IS-NOT-REAL-12345";
+    const prompt = "My OpenAI key is sk-0000000000000000000000000000000000000000";
     const { sanitized } = sanitizePrompt(prompt);
     expect(sanitized).toContain("[API_KEY_");
-    expect(sanitized).not.toContain("sk-TEST-SECRET-KEY-THAT-IS-NOT-REAL-12345");
+    expect(sanitized).not.toContain("sk-0000000000000000000000000000000000000000");
   });
 });
 

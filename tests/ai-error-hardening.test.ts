@@ -12,7 +12,7 @@ describe("AI Error Hardening", () => {
 
     // 2. Mock fetch to throw an error containing sensitive data
     const leakyError = {
-      message: "Failed to connect to database at secret-db-v1.conxian.internal with key 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      message: "Failed to connect to database at secret-db-v1.conxian.internal with key 0x0000000000000000000000000000000000000000000000000000000000000000",
       stack: "Error at /node_modules/leaky-lib/index.js:10:5"
     };
 
@@ -25,7 +25,7 @@ describe("AI Error Hardening", () => {
     expect(result).toContain("AI Protocol Error:");
     // The sanitized output should NOT contain the secret database URL, the private key, or the stack trace
     expect(result).not.toContain("secret-db-v1.conxian.internal");
-    expect(result).not.toContain("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
+    expect(result).not.toContain("0x0000000000000000000000000000000000000000000000000000000000000000");
     expect(result).not.toContain("node_modules");
 
     // It should fallback to the default "Protocol Error" if sensitive patterns are found
@@ -41,10 +41,10 @@ describe("AI Error Hardening", () => {
     const leakyBolt11 = "Error: Invoice lnbc10u1pwjqyuzpp5w6v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v5v leaked";
     expect(sanitizeError(leakyBolt11)).toBe("Protocol Error");
 
-    const leakyApiKey = "Error: API key AIzaSyDUMMY-API-KEY-FOR-TESTING-PURPOSE leaked";
+    const leakyApiKey = "Error: API key AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA leaked";
     expect(sanitizeError(leakyApiKey)).toBe("Protocol Error");
 
-    const leakyOpenAiKey = "Error: Secret key sk-TEST-SECRET-KEY-THAT-IS-NOT-REAL-12345 leaked";
+    const leakyOpenAiKey = "Error: Secret key sk-0000000000000000000000000000000000000000 leaked";
     expect(sanitizeError(leakyOpenAiKey)).toBe("Protocol Error");
   });
 });
