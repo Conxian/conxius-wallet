@@ -1,3 +1,9 @@
+---
+title: Maintenance Report
+layout: page
+permalink: /./archive/MAINTENANCE_REPORT
+---
+
 # Repository Maintenance Report - 2026-02-18
 
 ## Accomplishments
