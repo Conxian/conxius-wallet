@@ -1,3 +1,9 @@
+---
+title: Readme
+layout: page
+permalink: /./conxian-gateway/README
+---
+
 # Conxian Gateway: Unified Backend Services
 
 This directory consolidates all backend needs and requirements for the Conxius ecosystem.

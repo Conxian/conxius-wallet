@@ -10,8 +10,8 @@ Welcome, Sovereign Agent. This document provides instructions and context for
 working with the Conxius Wallet codebase and its B2B enhancement, the Conxian
 Gateway.
 
-**Last Updated:** 2026-02-18
-**Context:** B2B Alignment (Conxius Wallet + Conxian Gateway)
+**Last Updated:** 2026-03-12
+**Context:** B2B Alignment & Native Bridge (v1.6.0)
 
 ---
 
@@ -32,8 +32,9 @@ Gateway.
 
 - **Role**: Mobile core, TEE-backed private key management.
 - **Security**: Android Keystore AES-GCM-256, BiometricPrompt, StrongBox.
+- **Architecture**: **Bridged Sovereign** (Native Enclave + TS Protocol Logic).
 - **Protocol Support**: BTC, STX, RBTC, Liquid, Nostr, Web5, BOB, RGB, Ordinals,
-  Runes, Ark, BitVM.
+  Runes, Ark, BitVM, Maven, StateChain.
 
 ### Conxian Gateway (B2B Enhancement)
 
@@ -48,9 +49,9 @@ Gateway.
 
 - `/components`: 38 React UI components.
 - `/services`: Core business logic (32 modules).
-- `/android`: Capacitor Android project.
+- `/android`: Native Android project (Phase 4/5 Native Migration).
 - `/conxian-gateway`: (Sub-project) The Conxian Gateway enhancement.
-- `/lib-conxian-core`: (Sub-project) The shared Conxian core logic library.
+- `/lib-conxian-core`: (Sub-project) Shared Rust/TS core library.
 
 ---
 
@@ -60,17 +61,11 @@ Gateway.
 
 ```bash
 # Frontend Tests
-npm test
+pnpm test
 
 # Android Tests
 cd android && ./gradlew :app:testDebugUnitTest
 ```
-
-### B2B Security Checks
-
-1. Verify Corporate Profile data is always encrypted.
-2. Ensure session handshakes between mobile and Gateway are secure.
-3. Confirm "Shielded Wallet" interactions in Gateway adhere to enclave standards.
 
 ---
 
@@ -79,103 +74,33 @@ cd android && ./gradlew :app:testDebugUnitTest
 Ensure the following files are synced:
 
 - `docs/archive/PROJECT_CONTEXT.md`: Current state and session notes.
-- `docs/business/PRD.md`: The high-authority source of truth.
+- `docs/business/PRD.md`: The high-authority source of truth (v1.6.0).
 - `docs/operations/ROADMAP.md`: Technical and business milestones.
-- `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status.
+- `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status (v1.6.0).
+
+---
+
+## 🚀 Native Bridge Alignment (v1.6.0)
+
+The wallet utilizes a **Bridged Sovereign Architecture** where native Kotlin
+managers handle security-critical signing and protocol coordination.
+
+- **Native Managers**: Located in `com.conxius.wallet.bitcoin`.
+- **Managers**: `BdkManager`, `BabylonManager`, `NwcManager`, `DlcManager`,
+  `ArkManager`, `StateChainManager`, `MavenManager`, `LiquidManager`,
+  `EvmManager`, `LightningManager`.
+- **Signing**: All final signatures MUST be routed through the native enclave
+  via `WalletViewModel` or `SecureEnclavePlugin`.
+
+## 🤖 Sovereign AI & Zero-Leak Privacy
+
+Conxius implements a strict AI security layer to ensure no sensitive
+cryptographic identifiers leave the device.
+
+- **Sanitization**: Outgoing prompts are audited via `services/ai-security.ts`.
+- **Security**: Normalization strips ZWCs to prevent obfuscation bypasses.
 
 ---
 
 *Remember: We are building institutional-grade sovereign infrastructure. Precision
 is non-negotiable.*
-
----
-
-## 🚀 Full Bitcoin Ecosystem Alignment (2026-02-18)
-
-The wallet has been expanded to support the full Bitcoin stack. When working on
-any module:
-
-- Ensure it respects the specific derivation paths in `services/signer.ts`.
-- Use the established protocol fetchers in `services/protocol.ts`.
-- Maintain 'Zero-Leak' memory hardening (`.fill(0)`).
-- Prioritize TEE/StrongBox enforcement for all new layers.
-
-## 🧪 Full System Integration Testing (SVN 1.5)
-
-The wallet now includes a comprehensive E2E suite
-(`e2e/full_wallet_system.spec.ts`) that verifies the "Full Bitcoin Ecosystem"
-alignment.
-
-- Always ensure `MOCK_ASSETS` in `constants.tsx` provides enough balance for
-  test simulations.
-- When adding new layers, update the navigation helpers in the E2E suite to
-  include them.
-- Refer to `docs/testing/FULL_SYSTEM_TEST.md` for detailed coverage info.
-
-## Sprint 2026-02-18 Post-Mortem (Milestones M13-M15)
-
-- **Musig2:** Point aggregation requires specific handle on even-Y points for
-  Taproot. The implementation in `services/musig2.ts` uses a negation logic if
-  the Y-coordinate is odd.
-- **RGB:** Validation is now structured around a `stash` object, preparing for
-  full WASM-based DAG verification.
-- **CoinJoin:** WabiSabi credential issuance and blinded registration are
-  simulated via a unified state machine in `services/coinjoin.ts`.
-
-## 🤖 Sovereign AI & Zero-Leak Privacy (v1.0)
-
-Conxius implements a strict AI security layer to ensure no sensitive
-cryptographic identifiers (addresses, keys, mnemonics) leave the device.
-
-- **Sanitization:** All outgoing prompts to LLMs are passed through
-  `services/ai-security.ts` to redact Bitcoin/EVM addresses, hex strings,
-  and mnemonics.
-- **Audit:** The `secureAuditPrompt` function checks for malicious intent and
-  prompt injection before any external API call.
-- **Transparency:** The UI provides clear indicators (badges/icons) when a
-  prompt has been sanitized or when the AI is running in local simulation mode.
-- **Hardened Gemini Service:** All Gemini interactions in `services/gemini.ts`
-  now use the central `callGemini` wrapper for mandatory security auditing.
-
-## 🌐 Protocol Sovereignty & BYOS Nodes (v1.1)
-
-Conxius has been enhanced to allow users to "Bring Your Own" services, including
-AI and RPC nodes, ensuring full alignment with the Bitcoin-First hierarchy.
-
-- **BYOS AI Hooks:** Users can configure custom AI endpoints (OpenAI-compatible)
-  in Settings. All interactions still pass through the local Sovereign Audit.
-- **Sovereign-First RPC:** The network layer now prefers user-defined nodes
-  over public RPCs.
-- **Routing Strategy:** Users can toggle between "Sovereign-First", "Mixed",
-  and "Public-Only" modes in the Node Hub.
-- **Global Alignment:** Non-React services are synchronized with the UI state
-  via `setGlobalAppState`, ensuring protocol fetchers always respect the
-  user's sovereignty choices.
-
-## 🔐 Smart Wallet & Miniscript Sovereignty (v1.2)
-
-Conxius has evolved into a full Smart Sovereign Wallet, implementing
-UTXO-native spending policies via Miniscript and Musig2.
-
-- **Miniscript Support:** Define complex spending rules (TimeLocks,
-  Inheritance, Thresholds) in the `SovereignPolicies` hub.
-- **Interactive Thresholds:** The `Musig2Session` service handles the
-  multi-step signature aggregation required for privacy-preserving multisig.
-- **AI Policy Auditor:** Satoshi AI (`services/ai.ts`) is now equipped to
-  audit Miniscript descriptors for risk, key loss, and sovereignty maturity.
-- **Unified Network Layer:** Every module in the app (Fees, DEX, Stacking)
-  is now hard-aligned with the user's sovereign RPC and Tor settings.
-
-## 🚀 Service Super-App Expansion (v1.6.0)
-
-The wallet has transitioned into a "Service Super-App", integrating non-custodial
-DeFi and real-world utilities while maintaining localized signing.
-
-- **Payload Constructors**: Modules like `services/yield.ts` and `services/babylon.ts`
-  must strictly act as unsigned transaction constructors. Final signing MUST be
-  performed via `requestEnclaveSignature`.
-- **NIP-47 (NWC)**: Support for KIND 23124/23125 events for remote control.
-- **DLC (Discreet Log)**: Support for conditional on-chain payments via oracle
-  attestations.
-- **Sandboxed Marketplace**: Real-world service web-views must be isolated from
-  the core wallet state, using BIP21 intents for payment hand-offs.

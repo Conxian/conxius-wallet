@@ -32,7 +32,7 @@ export const sanitizePrompt = (
   // 2. Redact Bitcoin Addresses (Legacy, Segwit, Taproot, Testnet)
   // bc1q..., bc1p..., 1..., 3..., tb1..., m/n...
   const btcRegex =
-    /\b(bc1[qp][a-z0-9]{37,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{37,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/gi;
+    /\b(bc1[qp][a-z0-9]{33,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/gi;
   sanitized = sanitized.replace(btcRegex, (match) => {
     const id = `[BTC_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -107,6 +107,14 @@ export const sanitizePrompt = (
   const bolt11Regex = /\bln(?:bc|tb|bcrt|dev)[0-9a-z]+\b/gi;
   sanitized = sanitized.replace(bolt11Regex, (match) => {
     const id = `[BOLT11_${generateRandomString(4)}]`;
+    redactionMap[id] = match;
+    return id;
+  });
+
+  // 12. Redact AI Service API Keys (Google Gemini, OpenAI, etc.)
+  const apiKeyRegex = /\b(AIzaSy[a-zA-Z0-9_-]{33}|sk-[a-zA-Z0-9_-]{20,})\b/g;
+  sanitized = sanitized.replace(apiKeyRegex, (match) => {
+    const id = `[API_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });

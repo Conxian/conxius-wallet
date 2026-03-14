@@ -1,3 +1,9 @@
+---
+title: Assets
+layout: page
+permalink: /./openspec/specs/assets
+---
+
 # Asset Specification (v1.6.0)
 
 ## Derivation Paths (Native Enclave Core)

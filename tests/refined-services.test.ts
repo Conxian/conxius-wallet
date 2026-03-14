@@ -30,7 +30,7 @@ describe('Sovereign Protocol Refinement', () => {
     });
 
     it('calculates monetization fees with sovereignty discount', () => {
-        const state: any = { version: '1.5.0', walletConfig: { backupVerified: true } };
+        const state: any = { version: '1.6.0', walletConfig: { backupVerified: true } };
         const rate = calculateEffectiveFeeRate(state);
         expect(rate).toBeLessThan(0.0025);
     });

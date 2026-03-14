@@ -1,3 +1,9 @@
+---
+title: Tasks
+layout: page
+permalink: /./openspec/changes/archive/2026-03-08-universal-spec-alignment/tasks
+---
+
 # Tasks: Universal Spec Alignment
 
 ## 1. Documentation Alignment

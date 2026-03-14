@@ -1,3 +1,9 @@
+---
+title: Submodules
+layout: page
+permalink: /./openspec/specs/submodules
+---
+
 # Submodule Specification (v1.6.0)
 
 ## lib-conxian-core

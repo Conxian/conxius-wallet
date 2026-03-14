@@ -80,7 +80,10 @@ The Gateway acts as a portal for institutional users to interact with their mobi
 ### 5.2 Rootstock (RSK) & Liquid (L-BTC)
 * **Risk Level:** Medium (Sidechain)
 * **Risk Warning:** Federated.
-* **Custody Model:** Users trust a federation of functionaries/signers.
+* **Centralization Detail:**
+    * **Liquid:** Operates via a Strong Federation (11-of-15) of known functionaries. Peg-ins are automated but peg-outs depend on federation signers.
+    * **Rootstock:** Uses a Powpeg (vault) secured by HSMs and a federation of Functionaries, protected by RSK merge-mining.
+* **Custody Model:** Users trust a federation of functionaries/signers rather than individual miners.
 
 ### 5.3 RGB Protocol
 * **Risk Level:** Low (Client-Side Validated)
