@@ -1,3 +1,9 @@
+---
+title: Project Context
+layout: page
+permalink: /./archive/PROJECT_CONTEXT
+---
+
 # Conxius Wallet: Project Context
 
 **Last Updated:** 2026-03-12

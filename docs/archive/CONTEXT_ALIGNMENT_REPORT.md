@@ -1,3 +1,9 @@
+---
+title: Context Alignment Report
+layout: page
+permalink: /./archive/CONTEXT_ALIGNMENT_REPORT
+---
+
 # Conxius Wallet: Context Alignment Report
 
 **Date:** 2026-02-18

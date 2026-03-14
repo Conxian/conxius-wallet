@@ -1,3 +1,9 @@
+---
+title: Performance Guidelines
+layout: page
+permalink: /./operations/PERFORMANCE_GUIDELINES
+---
+
 # Conxius Wallet: Performance & Resource Optimization
 
 ## 1. Memory Management Best Practices

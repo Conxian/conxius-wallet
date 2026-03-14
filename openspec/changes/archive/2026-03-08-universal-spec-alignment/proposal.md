@@ -1,3 +1,9 @@
+---
+title: Proposal
+layout: page
+permalink: /./openspec/changes/archive/2026-03-08-universal-spec-alignment/proposal
+---
+
 # Proposal: Universal Spec and PRD Alignment
 
 ## Why

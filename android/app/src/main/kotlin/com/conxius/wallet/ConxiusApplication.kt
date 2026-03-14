@@ -32,6 +32,7 @@ class ConxiusApplication : Application() {
     val insuranceManager by lazy { InsuranceManager() }
     val interoperabilityManager by lazy { InteroperabilityManager() }
     val b2bManager by lazy { B2bManager() }
+    val nttManager by lazy { NttManager() }
 
     override fun onCreate() {
         super.onCreate()

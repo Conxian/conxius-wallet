@@ -80,4 +80,41 @@ export class EthAdapter {
 
         return Buffer.concat(parts);
     }
+
+    /**
+     * Constructs an ERC-4337 UserOperation for Bitcoin-native control of ETH addresses.
+     *
+     * @param sender The proxy/wallet address on ETH
+     * @param nonce The current nonce of the sender
+     * @param callData The transaction data to execute
+     * @param callGasLimit Gas limit for the main execution
+     * @param verificationGasLimit Gas limit for the validation phase
+     * @param preVerificationGas Gas for overhead
+     * @param maxFeePerGas Maximum fee per gas
+     * @param maxPriorityFeePerGas Maximum priority fee per gas
+     */
+    static createUserOperation(
+        sender: string,
+        nonce: bigint,
+        callData: Uint8Array,
+        callGasLimit: bigint = 100000n,
+        verificationGasLimit: bigint = 100000n,
+        preVerificationGas: bigint = 50000n,
+        maxFeePerGas: bigint = 2000000000n,
+        maxPriorityFeePerGas: bigint = 1000000000n
+    ): any {
+        return {
+            sender,
+            nonce: '0x' + nonce.toString(16),
+            initCode: '0x',
+            callData: '0x' + Buffer.from(callData).toString('hex'),
+            callGasLimit: '0x' + callGasLimit.toString(16),
+            verificationGasLimit: '0x' + verificationGasLimit.toString(16),
+            preVerificationGas: '0x' + preVerificationGas.toString(16),
+            maxFeePerGas: '0x' + maxFeePerGas.toString(16),
+            maxPriorityFeePerGas: '0x' + maxPriorityFeePerGas.toString(16),
+            paymasterAndData: '0x',
+            signature: '0x' // To be filled by Conclave signature
+        };
+    }
 }

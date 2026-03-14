@@ -18,7 +18,7 @@ This document outlines the definitive user experience for Native Token Transfers
 
 ---
 
-### **Step 1: The Single, Unified Authorization**
+### **Step 1: The Single, Unified Authorization** (Complexity: (1)$)
 
 1.  **Action:** The user reviews the transfer details on a final confirmation screen. This screen MUST display:
     *   Source and Destination (e.g., "From Stacks", "To Rootstock").
@@ -36,7 +36,7 @@ This document outlines the definitive user experience for Native Token Transfers
 
 ---
 
-### **Step 2: The Communicated Wait**
+### **Step 2: The Communicated Wait** (Complexity: (1)$)
 
 **Objective:** Keep the user informed and confident while the technical processes execute. The UI must now transition to a persistent, non-blocking status tracker.
 
@@ -64,7 +64,7 @@ This document outlines the definitive user experience for Native Token Transfers
 
 ---
 
-### **Friction & Edge Cases:**
+### **Friction & Edge Cases:** (Complexity: (1)$)
 
 *   **Stuck Transaction:** If the source transaction is not confirmed after a reasonable time (e.g., 1 hour), the UI will show a "Stalled" status with an option to "Try to accelerate" (if the network supports it) or "Contact Support."
 *   **VAA Not Generated:** If the VAA is not generated after a long period, the UI will indicate this and provide guidance.

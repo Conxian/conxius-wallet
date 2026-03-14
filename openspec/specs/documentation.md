@@ -1,3 +1,9 @@
+---
+title: Documentation
+layout: page
+permalink: /./openspec/specs/documentation
+---
+
 # Documentation Specification
 
 ## Requirements

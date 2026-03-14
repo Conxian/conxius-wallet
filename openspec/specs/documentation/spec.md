@@ -1,3 +1,9 @@
+---
+title: Spec
+layout: page
+permalink: /./openspec/specs/documentation/spec
+---
+
 # documentation Specification
 
 ## Purpose

@@ -1,3 +1,9 @@
+---
+title: Security
+layout: page
+permalink: /./SECURITY
+---
+
 # Security Policy
 
 ## Supported Versions

@@ -1,3 +1,9 @@
+---
+title: Business
+layout: page
+permalink: /./openspec/specs/business
+---
+
 # Business Specification (v1.6.0)
 
 ## Vision

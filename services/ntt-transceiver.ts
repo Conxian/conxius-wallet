@@ -1,5 +1,6 @@
 
 import { Buffer } from 'buffer';
+import { NTT } from '@wormhole-foundation/sdk-definitions-ntt';
 
 /**
  * NTT Transceiver Module (Sovereign Implementation)
@@ -18,6 +19,15 @@ export class NttTransceiver {
      *
      * @param payload The raw NTT message payload (serialized NativeTokenTransfer)
      * @param signature The 64/65-byte ECDSA signature from the Conclave
+     * @param emitterChain The Wormhole Chain ID of the source
+     * @param emitterAddress The 32-byte address of the source NTT Manager
+     * @param sequence The sequence number of the message
+     */
+    /**
+     * Formats a Conclave-signed NTT payload into a Wormhole VAA.
+     *
+     * @param payload The raw NTT message payload (serialized NativeTokenTransfer)
+     * @param signature The 64/65-byte ECDSA signature from the Conclave (r, s, [v])
      * @param emitterChain The Wormhole Chain ID of the source
      * @param emitterAddress The 32-byte address of the source NTT Manager
      * @param sequence The sequence number of the message
@@ -57,9 +67,13 @@ export class NttTransceiver {
         sigEntry.set(signature.slice(0, 64), 1);
 
         // Recovery ID (v)
+        // Conclave/Bitcoin signatures might be 64 bytes (Schnorr) or 65 bytes (ECDSA with V)
+        // Wormhole VAAs use 65-byte ECDSA signatures for Guardian attestation.
         let v = signature.length > 64 ? signature[64] : 0;
-        if (v < 27) v += 27; // Ensure ETH-style v if needed, though Wormhole uses 0/1 usually
-        sigEntry.writeUInt8(v - 27, 65);
+
+        // Normalize V for Wormhole (expects 0 or 1, added to 27 for ETH-style recovery)
+        if (v >= 27) v -= 27;
+        sigEntry.writeUInt8(v, 65);
 
         return Buffer.concat([header, sigEntry, body]);
     }
