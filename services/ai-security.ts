@@ -112,7 +112,7 @@ export const sanitizePrompt = (
   });
 
   // 12. Redact AI Service API Keys (Google Gemini, OpenAI, etc.)
-  const apiKeyRegex = /\b(AIzaSy[a-zA-Z0-9_-]{33}|sk-[a-zA-Z0-9_-]{20,})\b/g;
+  const apiKeyRegex = /\b(AIzaSy[a-zA-Z0-9_-]{33}|sk-[a-zA-Z0-9_-]{20,})\b/gi;
   sanitized = sanitized.replace(apiKeyRegex, (match) => {
     const id = `[API_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -150,12 +150,13 @@ export const isPromptMalicious = (text: string): boolean => {
   ];
 
   return injectionPatterns.some((p) => {
-    // Create a regex that allows any amount of whitespace between words (handles newlines/tabs)
-    // and also handles cases where words are mashed together after ZWC stripping.
+    // Create a regex that allows any amount of whitespace or punctuation between words
+    // (handles newlines/tabs/underscores/dots) and also handles cases where words
+    // are mashed together after ZWC stripping.
     const pattern = p
       .split(/\s+/)
       .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-      .join("\\s*");
+      .join("[\\s\\W_]*");
     const regex = new RegExp(pattern, "i");
     return regex.test(normalized);
   });
