@@ -1,6 +1,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RotateCcw, Bug, Shield } from 'lucide-react';
+import { sanitizeError } from '../services/network';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -86,7 +87,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Error Details</p>
               </div>
               <p className="text-xs font-mono text-red-400 break-all leading-relaxed">
-                {this.state.error.message}
+                {sanitizeError(this.state.error)}
               </p>
             </div>
           )}

@@ -243,10 +243,10 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     /\bsk-[a-zA-Z0-9_-]{20,}\b/i               // Generic Secret Keys (OpenAI, etc.)
   ];
 
-  // Defensive: check the entire error object for ANY leakage
+  // Defensive: check the entire error object and the extracted message for ANY leakage
+  const messageScan = String(message);
   if (
-    sensitivePatterns.some((p) => p.test(strippedScan)) ||
-    sensitivePatterns.some((p) => p.test(spacedScan))
+    sensitivePatterns.some((p) => p.test(strippedScan) || p.test(spacedScan) || p.test(messageScan))
   ) {
     return defaultMsg;
   }
