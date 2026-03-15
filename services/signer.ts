@@ -9,7 +9,7 @@ import { getPsbtSighashes, finalizePsbtWithSigs, signSchnorr } from "./psbt";
 import { workerManager } from "./worker-manager";
 import { getAddressFromPublicKey } from "@stacks/transactions";
 import { deriveLiquidAddress } from "./liquid";
-import { keccak_256 } from "@noble/hashes/sha3";
+import { keccak_256 } from "@noble/hashes/sha3.js";
 
 const bip32 = BIP32Factory(ecc);
 
