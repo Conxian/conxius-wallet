@@ -22,7 +22,7 @@ export const sanitizePrompt = (
   let sanitized = normalized;
 
   // 1. Redact BIP-39 Mnemonics (12-24 words)
-  const mnemonicRegex = /\b([a-z]{3,}\s+){11,23}[a-z]{3,}\b/gi;
+  const mnemonicRegex = /(?<![a-zA-Z0-9])(([a-z]{3,}\s+){11,23}[a-z]{3,})(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(mnemonicRegex, (match) => {
     const id = `[MNEMONIC_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -32,7 +32,7 @@ export const sanitizePrompt = (
   // 2. Redact Bitcoin Addresses (Legacy, Segwit, Taproot, Testnet)
   // bc1q..., bc1p..., 1..., 3..., tb1..., m/n...
   const btcRegex =
-    /\b(bc1[qp][a-z0-9]{33,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})\b/gi;
+    /(?<![a-zA-Z0-9])(bc1[qp][a-z0-9]{33,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(btcRegex, (match) => {
     const id = `[BTC_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -40,7 +40,7 @@ export const sanitizePrompt = (
   });
 
   // 3. Redact EVM Addresses (0x...)
-  const evmRegex = /\b(0x[a-fA-F0-9]{40})\b/gi;
+  const evmRegex = /(?<![a-zA-Z0-9])(0x[a-fA-F0-9]{40})(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(evmRegex, (match) => {
     const id = `[EVM_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -48,7 +48,7 @@ export const sanitizePrompt = (
   });
 
   // 4. Redact Transaction IDs / Private Keys / Node IDs (64 or 66-char hex)
-  const hexRegex = /\b((?:0x)?[a-fA-F0-9]{64,66})\b/gi;
+  const hexRegex = /(?<![a-zA-Z0-9])((?:0x)?[a-fA-F0-9]{64,66})(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(hexRegex, (match) => {
     const id = `[HEX_SEC_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -56,7 +56,7 @@ export const sanitizePrompt = (
   });
 
   // 5. Redact Stacks Addresses (SP..., ST...)
-  const stxRegex = /\b(S[PST][0-9A-Z]{28,41})\b/gi;
+  const stxRegex = /(?<![a-zA-Z0-9])(S[PST][0-9A-Z]{28,41})(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(stxRegex, (match) => {
     const id = `[STX_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -64,7 +64,7 @@ export const sanitizePrompt = (
   });
 
   // 6. Redact Liquid Addresses (lq1..., tlq1..., elq1...)
-  const liquidRegex = /\b((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})\b/gi;
+  const liquidRegex = /(?<![a-zA-Z0-9])((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(liquidRegex, (match) => {
     const id = `[LIQUID_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -72,7 +72,7 @@ export const sanitizePrompt = (
   });
 
   // 7. Redact BIP32 Extended Keys (xpub/xprv etc)
-  const xkeyRegex = /\b([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})\b/gi;
+  const xkeyRegex = /(?<![a-zA-Z0-9])([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(xkeyRegex, (match) => {
     const id = `[EXT_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -80,7 +80,7 @@ export const sanitizePrompt = (
   });
 
   // 8. Redact Nostr Keys (nsec1, npub1)
-  const nostrRegex = /\b(nsec1[a-z0-9]{50,200}|npub1[a-z0-9]{50,200})\b/gi;
+  const nostrRegex = /(?<![a-zA-Z0-9])(nsec1[a-z0-9]{50,200}|npub1[a-z0-9]{50,200})(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(nostrRegex, (match) => {
     const id = `[NOSTR_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -88,7 +88,7 @@ export const sanitizePrompt = (
   });
 
   // 9. Redact Silent Payment Addresses (sp1...)
-  const spRegex = /\b(sp1[a-z0-9]{50,200})\b/gi;
+  const spRegex = /(?<![a-zA-Z0-9])(sp1[a-z0-9]{50,200})(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(spRegex, (match) => {
     const id = `[SP_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -96,7 +96,7 @@ export const sanitizePrompt = (
   });
 
   // 10. Redact Bitcoin WIF Private Keys (Mainnet & Testnet)
-  const wifRegex = /\b[5KL9c][1-9A-HJ-NP-Za-km-z]{50,51}\b/g;
+  const wifRegex = /(?<![a-zA-Z0-9])([5KL9c][1-9A-HJ-NP-Za-km-z]{50,51})(?![a-zA-Z0-9])/g;
   sanitized = sanitized.replace(wifRegex, (match) => {
     const id = `[WIF_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -104,7 +104,7 @@ export const sanitizePrompt = (
   });
 
   // 11. Redact Lightning BOLT11 Invoices
-  const bolt11Regex = /\bln(?:bc|tb|bcrt|dev)[0-9a-z]+\b/gi;
+  const bolt11Regex = /(?<![a-zA-Z0-9])(ln(?:bc|tb|bcrt|dev)[0-9a-z]+)(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(bolt11Regex, (match) => {
     const id = `[BOLT11_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -112,7 +112,7 @@ export const sanitizePrompt = (
   });
 
   // 12. Redact AI Service API Keys (Google Gemini, OpenAI, etc.)
-  const apiKeyRegex = /\b(AIzaSy[a-zA-Z0-9_-]{33}|sk-[a-zA-Z0-9_-]{20,})\b/gi;
+  const apiKeyRegex = /(?<![a-zA-Z0-9])(AIzaSy[a-zA-Z0-9_-]{33}|sk-[a-zA-Z0-9_-]{20,})(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(apiKeyRegex, (match) => {
     const id = `[API_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
