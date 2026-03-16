@@ -52,21 +52,23 @@ describe('Alignment and Logic Fixes', () => {
   });
 
   it('should fetch global reserve metrics correctly', async () => {
-    // Mock fetch for global reserve metrics
+    // Mock fetch for global reserve metrics (sBTC supply endpoint)
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve([
-        { asset: 'Liquid (L-BTC)', totalSupplied: 452.4, totalReserves: 521.8, collateralRatio: 115.3, status: 'Audited' }
-      ])
+      json: () => Promise.resolve({
+        total_supply: 500000000,
+        btc_locked: 510000000,
+        ratio: 0.98
+      })
     });
     global.fetch = mockFetch as any;
 
     const metrics = await fetchGlobalReserveMetrics();
     expect(metrics).not.toBeNull();
     if (metrics) {
-        expect(metrics.length).toBeGreaterThan(0);
-        expect(metrics[0].asset).toBeDefined();
-        expect(metrics[0].collateralRatio).toBeGreaterThan(0);
+        expect(metrics.totalSbtc).toBe(500000000);
+        expect(metrics.totalBtcLocked).toBe(510000000);
+        expect(metrics.ratio).toBe(0.98);
     }
   });
 });
