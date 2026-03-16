@@ -57,12 +57,15 @@ function normalizeAssetType(value: unknown, fallback: Asset['type'] = 'Native'):
  */
 export const fetchBtcBalance = async (address: string, network: Network = 'mainnet'): Promise<number> => {
   try {
-    const { BTC_EXPLORER } = endpointsFor(network);
-    const response = await fetchWithRetry(`${BTC_EXPLORER}/address/${address}`);
+    const { BTC_API } = endpointsFor(network) as any;
+    const response = await fetchWithRetry(`${BTC_API}/address/${address}`);
     if (!response.ok) return 0;
     const data = await response.json();
     const stats = data.chain_stats || data.utxo_stats || {};
-    return (toFiniteNumber(stats.funded_txo_sum) - toFiniteNumber(stats.spent_txo_sum)) / SATS_PER_BTC;
+    const mempool = data.mempool_stats || {};
+    const totalFunded = toFiniteNumber(stats.funded_txo_sum) + toFiniteNumber(mempool.funded_txo_sum);
+    const totalSpent = toFiniteNumber(stats.spent_txo_sum) + toFiniteNumber(mempool.spent_txo_sum);
+    return (totalFunded - totalSpent) / SATS_PER_BTC;
   } catch (e) {
     console.error('[Protocol] BTC balance fetch failed:', sanitizeError(e));
     return 0;
@@ -74,19 +77,22 @@ export const fetchBtcBalance = async (address: string, network: Network = 'mainn
  */
 export const fetchRunesBalances = async (address: string): Promise<Asset[]> => {
   try {
-    const response = await fetchWithRetry(`${getGatewayUrl()}/api/v1/runes/${address}`);
+    const response = await fetchWithRetry(`${getGatewayUrl('mainnet')}/api/v1/runes/${address}`);
     if (!response.ok) return [];
     const data = await response.json();
-    return toArrayPayload(data).map((item: any) => ({
-      id: item.id || `rune-${item.name}`,
-      name: item.name,
-      symbol: item.symbol || item.name,
-      balance: toFiniteNumber(item.balance),
-      valueUsd: toFiniteNumber(item.valueUsd),
-      type: normalizeAssetType(item.type, 'Rune'),
-      layer: 'Mainnet' as const,
-      address
-    }));
+    return toArrayPayload(data).map((item: any) => {
+      const runeData = item.rune || {};
+      return {
+        id: item.id || runeData.id || `rune-${runeData.name || item.name}`,
+        name: runeData.name || item.name,
+        symbol: runeData.symbol || item.symbol || runeData.name || item.name,
+        balance: toFiniteNumber(item.balance) / Math.pow(10, toFiniteNumber(runeData.divisibility, 0)),
+        valueUsd: toFiniteNumber(item.valueUsd),
+        type: normalizeAssetType(item.type, 'Rune'),
+        layer: 'Mainnet' as const,
+        address
+      };
+    });
   } catch {
     return [];
   }
@@ -97,8 +103,8 @@ export const fetchRunesBalances = async (address: string): Promise<Asset[]> => {
  */
 export const fetchStacksBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
   try {
-    const { STACKS_API } = endpointsFor(network);
-    const response = await fetchWithRetry(`${STACKS_API}/extended/v1/address/${address}/balances`);
+    const { STX_API } = endpointsFor(network) as any;
+    const response = await fetchWithRetry(`${STX_API}/extended/v1/address/${address}/balances`);
     if (!response.ok) return [];
     const data = await response.json();
     
@@ -144,8 +150,8 @@ export const fetchStacksBalances = async (address: string, network: Network = 'm
  * Broadcasts a raw Bitcoin transaction hex to the network.
  */
 export const broadcastBtcTx = async (hex: string, network: Network = 'mainnet'): Promise<string> => {
-  const { BTC_EXPLORER } = endpointsFor(network);
-  const response = await fetchWithRetry(`${BTC_EXPLORER}/tx`, {
+  const { BTC_API } = endpointsFor(network) as any;
+  const response = await fetchWithRetry(`${BTC_API}/tx`, {
     method: 'POST',
     body: hex
   });
@@ -156,7 +162,7 @@ export const broadcastBtcTx = async (hex: string, network: Network = 'mainnet'):
   }
 
   const txid = await response.text();
-  notificationService.notify('Transaction Broadcasted', `TXID: ${txid}`, 'success');
+  notificationService.notifyTransaction('Transaction Broadcasted', `TXID: ${txid}`, true);
   return txid;
 };
 
@@ -165,8 +171,8 @@ export const broadcastBtcTx = async (hex: string, network: Network = 'mainnet'):
  */
 export const fetchBtcUtxos = async (address: string, network: Network = 'mainnet'): Promise<UTXO[]> => {
   try {
-    const { BTC_EXPLORER } = endpointsFor(network);
-    const response = await fetchWithRetry(`${BTC_EXPLORER}/address/${address}/utxo`);
+    const { BTC_API } = endpointsFor(network) as any;
+    const response = await fetchWithRetry(`${BTC_API}/address/${address}/utxo`);
     if (!response.ok) return [];
     const data = await response.json();
     return toArrayPayload(data).map((u: any) => ({
@@ -174,7 +180,10 @@ export const fetchBtcUtxos = async (address: string, network: Network = 'mainnet
       vout: u.vout,
       amount: u.value,
       status: u.status,
-      address
+      address,
+      isFrozen: false,
+      derivationPath: '',
+      privacyRisk: 'Low'
     }));
   } catch {
     return [];
