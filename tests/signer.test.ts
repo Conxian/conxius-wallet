@@ -189,7 +189,7 @@ describe('signer service', () => {
         description: 'Test transaction'
       };
 
-      await expect(requestEnclaveSignature(request)).rejects.toThrow('Master Seed missing');
+      await expect(requestEnclaveSignature(request, undefined as any)).rejects.toThrow('Seed required for fallback signer');
     });
 
     it('should simulate processing delay on web platform', async () => {
@@ -300,12 +300,11 @@ describe('Enclave Layer Signing (Native)', () => {
       // Mock signNative to return success
       (signNative as any).mockResolvedValue({ signature: 'sig', pubkey: 'pub' });
 
-      await requestEnclaveSignature(request, 'vault', '1234');
+      await requestEnclaveSignature(request, 'vault');
 
       expect(signNative).toHaveBeenCalledWith(expect.objectContaining({
         network: 'rgb',
-        path: "m/86'/0'/0'/0/0",
-        payload: JSON.stringify(request.payload)
+        path: "m/86'/0'/0'/0/0"
       }));
     });
 
@@ -322,7 +321,7 @@ describe('Enclave Layer Signing (Native)', () => {
       (Capacitor.isNativePlatform as any).mockReturnValue(true);
       (signNative as any).mockResolvedValue({ signature: 'sig', pubkey: 'pub' });
 
-      await requestEnclaveSignature(request, 'vault', '1234');
+      await requestEnclaveSignature(request, 'vault');
 
       expect(signNative).toHaveBeenCalledWith(expect.objectContaining({
         network: 'statechain',

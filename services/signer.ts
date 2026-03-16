@@ -9,8 +9,9 @@ import { getPsbtSighashes, finalizePsbtWithSigs, signSchnorr } from "./psbt";
 import { workerManager } from "./worker-manager";
 import { getAddressFromPublicKey } from "@stacks/transactions";
 import { deriveLiquidAddress } from "./liquid";
-import { keccak_256 } from "@noble/hashes/sha3";
+import { keccak_256 } from "@noble/hashes/sha3.js";
 
+bitcoin.initEccLib(ecc);
 const bip32 = BIP32Factory(ecc);
 
 export interface SignRequest {
@@ -49,6 +50,11 @@ export const requestEnclaveSignature = async (
     else if (request.layer === "BitVM") path = "m/84'/0'/0'/4/0";
     else if (request.layer === "Maven") path = "m/84'/0'/0'/3/0";
     else if (request.layer === "Silent") path = "m/352'/0'/0'/10/0";
+    else if (request.layer === "RGB") path = "m/86'/0'/0'/0/0";
+    else if (request.layer === "StateChain") {
+        const index = request.payload?.index || 0;
+        path = `m/84'/0'/0'/2/${index}`;
+    }
 
     try {
         // Handle PSBT Batch Signing
