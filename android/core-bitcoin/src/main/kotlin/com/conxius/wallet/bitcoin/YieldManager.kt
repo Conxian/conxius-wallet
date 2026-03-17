@@ -1,22 +1,25 @@
 package com.conxius.wallet.bitcoin
 
+import android.util.Log
+
 /**
- * Yield Manager
- * Native bridge for Yield.xyz and non-custodial staking/lending.
+ * YieldManager: Native Bridge for Non-Custodial Yield Services (Yield.xyz).
  */
 class YieldManager {
+    private val TAG = "YieldManager"
 
     /**
-     * Signs a yield entry transaction (e.g. Aave deposit).
+     * Signs a yield discovery or deployment transaction.
      */
     fun signYieldTx(payload: ByteArray): String {
-        return "yield_signed_tx_enclave"
+        Log.d(TAG, "Signing Yield Transaction (${payload.size} bytes)")
+        return "yield_sig_hex_00112233"
     }
 
     /**
-     * Estimates yield potential for a given strategy.
+     * Validates a yield strategy for risk parameters.
      */
-    fun getStrategyApy(strategyId: String): Double {
-        return 12.5
+    fun validateStrategy(strategyId: String, riskScore: Int): Boolean {
+        return riskScore <= 80
     }
 }

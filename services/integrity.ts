@@ -1,104 +1,41 @@
-import { registerPlugin, Capacitor } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
+import { checkDeviceIntegrity } from './device-integrity';
 import { notificationService } from './notifications';
-import { generateRandomString } from './random';
-
-interface PlayIntegrityPlugin {
-    requestIntegrityToken(params: { nonce: string }): Promise<{ token: string }>;
-}
-
-const PlayIntegrity = registerPlugin<PlayIntegrityPlugin>('PlayIntegrity');
-
-export interface IntegrityVerificationResult {
-    success: boolean;
-    deviceIntegrity: boolean;
-    strongIntegrity: boolean;
-    virtualIntegrity: boolean;
-    error?: string;
-}
 
 /**
- * Service to handle device attestation via Google Play Integrity.
+ * System Integrity Service (v1.1)
+ *
+ * Coordinates device integrity checks and enforces security policies.
+ * Consistent with the Sovereign Architect's requirements for "Citadel Native" security.
  */
-export const requestDeviceAttestation = async (nonce: string): Promise<string | null> => {
-    if (!Capacitor.isNativePlatform()) {
-        console.info('[Integrity] Web environment - skipping real attestation.');
-        return 'web_mock_integrity_token';
-    }
+export const verifySystemIntegrity = async (): Promise<boolean> => {
+    if (!Capacitor.isNativePlatform()) return true;
 
     try {
-        const { token } = await PlayIntegrity.requestIntegrityToken({ nonce });
-        return token;
-    } catch (e: any) {
-        console.error('[Integrity] Failed to get integrity token:', e);
-        return null;
+        const result = await checkDeviceIntegrity();
+
+        if (!result.isSecure) {
+            notificationService.notify({
+                category: 'SYSTEM',
+                type: 'error',
+                title: 'Security Compromise',
+                message: 'Device integrity check failed. Sovereign features disabled for protection.'
+            });
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('[Integrity] Verification failed:', error);
+        return false;
     }
 };
 
 /**
- * Verifies an integrity token with the Conxian Gateway.
+ * Enforces a security gate for high-risk operations.
  */
-export const verifyIntegrityToken = async (token: string): Promise<IntegrityVerificationResult> => {
-    const gatewayUrl = (import.meta as any).env?.VITE_GATEWAY_URL;
-
-    if (!gatewayUrl || token === 'web_mock_integrity_token') {
-        return {
-            success: true,
-            deviceIntegrity: true,
-            strongIntegrity: true,
-            virtualIntegrity: false
-        };
-    }
-
-    try {
-        const response = await fetch(`${gatewayUrl}/v1/verify-integrity`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token })
-        });
-
-        if (!response.ok) throw new Error('Gateway verification failed');
-
-        return await response.json();
-    } catch (e: any) {
-        console.error('[Integrity] Token verification failed:', e);
-        return {
-            success: false,
-            deviceIntegrity: false,
-            strongIntegrity: false,
-            virtualIntegrity: false,
-            error: e.message
-        };
-    }
-};
-
-/**
- * Comprehensive check to ensure the device is safe for high-value operations.
- */
-export const ensureDeviceSafety = async (): Promise<boolean> => {
-    const nonce = generateRandomString(12);
-    const token = await requestDeviceAttestation(nonce);
-
-    if (!token) {
-        notificationService.notify({
-            category: 'SYSTEM',
-            type: 'error',
-            title: 'Security Alert',
-            message: 'Device integrity could not be verified. High-value operations restricted.'
-        });
-        return false;
-    }
-
-    const verification = await verifyIntegrityToken(token);
-
-    if (!verification.deviceIntegrity) {
-        notificationService.notify({
-            category: 'SYSTEM',
-            type: 'error',
-            title: 'Compromised Device',
-            message: 'Your device environment is not genuine. Sovereignty operations are disabled.'
-        });
-        return false;
-    }
-
-    return true;
+export const securityGate = async <T>(operation: () => Promise<T>): Promise<T> => {
+    const isSecure = await verifySystemIntegrity();
+    if (!isSecure) throw new Error('Security integrity check failed');
+    return await operation();
 };

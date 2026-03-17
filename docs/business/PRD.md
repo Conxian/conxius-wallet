@@ -22,7 +22,7 @@ permalink: /prd
 
 ## 2. Business & Competitive Landscape
 
-### 2.1. Business State: [PRODUCTION] (Complexity: (1)$)
+### 2.1. Business State: [PRODUCTION] (Complexity: $O(1)$)
 
 - **[MARKET_FIT]:** [ORCHESTRATING]
 - **[RISK_COMPLIANCE]:** [ORCHESTRATING]
@@ -33,14 +33,14 @@ permalink: /prd
 
 ## 3. Core Technical Specifications
 
-### 3.1. Bridged Sovereign Architecture (Complexity: (1)$)
+### 3.1. Bridged Sovereign Architecture (Complexity: $O(1)$)
 
 Conxius utilizes a **Bridged Sovereign Architecture** to balance rapid protocol support with hardware-level security:
 - **Native Enclave Core**: All private keys and seeds are managed by the Android Keystore + StrongBox. Signing occurs exclusively in the native layer via dedicated Kotlin managers.
 - **TypeScript Protocol Layer**: High-level protocol logic (payload construction, API interaction) is handled in a secure TS environment.
 - **Native Bridge Managers**: A full suite of 20+ Kotlin managers (e.g., `BdkManager`, `YieldManager`) bridge the TS layer to native Rust/Kotlin libraries for critical operations.
 
-### 3.2. Native Migration (Phase 5: "Clean Break") (Complexity: (1)$)
+### 3.2. Native Migration (Phase 5: "Clean Break") (Complexity: $O(1)$)
 
 The project is transitioning to a **pure native Android architecture** (Kotlin/Rust):
 - **Core Security**: StrongBox-backed AES-GCM encryption for BIP-39 seeds. [PRODUCTION]
@@ -61,7 +61,7 @@ The project is transitioning to a **pure native Android architecture** (Kotlin/R
 | **Babylon** | BRIDGED | TS Payload + Native Babylon Manager |
 | **DLCs** | BRIDGED | TS Offer Flow + Native DlcManager |
 | **BOB / RSK** | BRIDGED | TS Ethers + Native EVM Manager |
-| **RGB / BitVM** | BRIDGED | WASM/Simulation (TS) + Native Managers |
+| **RGB / BitVM** | BRIDGED | AluVM Simulation (TS) + Native Managers |
 | **Ark / StateChain** | BRIDGED | TS Simulation + Native Managers |
 | **Web5** | BRIDGED | Web5 API (TS) + Native Web5 Manager |
 | **Yield / Insurance** | BRIDGED | TS Protocol Entry + Native Managers |

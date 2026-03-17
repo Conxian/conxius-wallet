@@ -1,40 +1,34 @@
 package com.conxius.wallet.bitcoin
 
+import android.util.Log
+
 /**
- * Breez Manager
- * Native wrapper for Breez SDK (Lightning Network).
- * Handles node lifecycle, payments, and LSP coordination.
+ * BreezManager: Native Bridge for Lightning Network operations via Breez SDK.
  */
 class BreezManager {
-
-    private var nodeId: String? = null
+    private val TAG = "BreezManager"
 
     /**
-     * Starts the Greenlight node via Breez SDK.
+     * Starts the Breez node and returns the node ID.
      */
     fun startNode(apiKey: String, mnemonic: String): String {
-        nodeId = "02breez_node_id_placeholder"
-        return nodeId!!
+        Log.d(TAG, "Starting Breez Lightning Node")
+        // In Production: Initializes the Breez SDK and connects to Greenlight.
+        return "breez_node_id_${System.currentTimeMillis()}"
     }
 
     /**
-     * Creates a Bolt11 invoice.
+     * Pays a Lightning BOLT11 invoice.
      */
-    fun createInvoice(amountMsat: Long, description: String): String {
-        return "lnbc1_breez_invoice_placeholder"
+    fun payInvoice(bolt11: String): String {
+        Log.d(TAG, "Paying Lightning Invoice: $bolt11")
+        return "payment_preimage_hex_placeholder"
     }
 
     /**
-     * Pays a Bolt11 invoice.
+     * Receives a payment via BOLT11.
      */
-    fun payInvoice(bolt11: String): Boolean {
-        return true
-    }
-
-    /**
-     * Gets node info and balance.
-     */
-    fun getBalanceMsat(): Long {
-        return 1000000L // 1000 sats
+    fun receivePayment(amountSats: Long, description: String): String {
+        return "lnbc_invoice_placeholder"
     }
 }

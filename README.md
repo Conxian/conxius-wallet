@@ -39,4 +39,4 @@ pnpm test
 ```
 
 ---
-*Powered by the Conxius Enclave Protocol. Sovereignty by Design.*
+*Powered by the Conxius Enclave Protocol. Sovereignty by Design. Aligned to Phase 5 "Clean Break".*

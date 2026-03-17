@@ -1,37 +1,24 @@
 import os
 import re
-from datetime import datetime
 
-# Files to check, as per AGENTS.md
-files_to_check = [
-    ("docs/archive/PROJECT_CONTEXT.md", r"Last Updated: (.*)"),
-    ("docs/business/PRD.md", r"Last Updated: (.*)"),
-    ("docs/operations/ROADMAP.md", r"Last Updated: (.*)"),
-    ("docs/protocols/IMPLEMENTATION_REGISTRY.md", r"Last Updated: (.*)"),
-]
+def check_version_drift(directory, expected_version="v1.6.0"):
+    drift_found = False
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith(".md"):
+                path = os.path.join(root, file)
+                with open(path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    # Check for version strings like v1.5.0 or v1.4.0
+                    versions = re.findall(r'v1\.[0-5]\.[0-9]', content)
+                    if versions and any(v != expected_version for v in versions):
+                        print(f"[DRIFT] {path} contains legacy versions: {set(versions)}")
+                        drift_found = True
+    return drift_found
 
-latest_timestamp = None
-latest_file = None
-
-# Find the most recently updated file
-for file_path, _ in files_to_check:
-    if os.path.exists(file_path):
-        timestamp = os.path.getmtime(file_path)
-        if latest_timestamp is None or timestamp > latest_timestamp:
-            latest_timestamp = timestamp
-            latest_file = file_path
-
-if latest_file is None:
-    print("Could not find any of the documentation files to check.")
-    exit(1)
-
-# Check all other files against the latest one
-all_synced = True
-for file_path, _ in files_to_check:
-    if file_path != latest_file:
-        if not os.path.exists(file_path) or os.path.getmtime(file_path) < latest_timestamp:
-            print(f"Warning: {file_path} may be out of sync with {latest_file}.")
-            all_synced = False
-
-if all_synced:
-    print("All documentation files appear to be in sync.")
+if __name__ == "__main__":
+    print("Checking for documentation version drift...")
+    if not check_version_drift("."):
+        print("Success: All documentation is aligned to v1.6.0.")
+    else:
+        print("Warning: Version drift detected in some files.")
