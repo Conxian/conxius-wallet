@@ -1,31 +1,93 @@
 import { AppState } from '../types';
 
+/**
+ * Sovereignty Score Engine (v1.1)
+ * Calculates the user's level of financial self-sovereignty.
+ */
+
 export interface Quest {
     id: string;
     label: string;
+    category: 'Security' | 'Privacy' | 'Network' | 'Governance';
     points: number;
     completed: boolean;
-    category: 'Security' | 'Privacy' | 'Community';
 }
+
+export const calculateSovereigntyScore = (state: AppState): number => {
+    let score = 0;
+
+    // 1. Hardware Security (40 pts)
+    if (state.walletConfig?.type === 'single' && state.walletConfig.seedVault) score += 30;
+    if (state.walletConfig?.type === 'multisig') score += 40;
+
+    // 2. Network Sovereignty (30 pts)
+    if (state.rpcStrategy === 'Sovereign-First') score += 30;
+    else if (state.rpcStrategy === 'Mixed') score += 15;
+
+    // 3. Privacy Health (30 pts)
+    if (state.isTorEnabled) score += 15;
+    if (state.privacyMode) score += 15;
+
+    return Math.min(score, 100);
+};
 
 export const getQuests = (state: AppState): Quest[] => {
     return [
-        { id: 'wallet_setup', label: 'Initialize Wallet', points: 10, completed: true, category: 'Security' },
-        { id: 'backup_verified', label: 'Verify Master Backup', points: 40, completed: state.walletConfig?.backupVerified ?? false, category: 'Security' },
-        { id: 'biometric_active', label: 'Enable Biometric Gate', points: 20, completed: state.security?.biometricUnlock ?? false, category: 'Security' },
-        { id: 'node', label: 'Connect Local Node', points: 30, completed: !!(state.lnBackend?.endpoint || state.activeCitadel?.sharedRpcEndpoint), category: 'Security' },
-        { id: 'silent_pay', label: 'Execute Silent Payment', points: 25, completed: (state.utxos ?? []).some(u => u.address.startsWith('sp1')), category: 'Privacy' },
-        { id: 'taproot_audit', label: 'Taproot Asset Audit', points: 15, completed: !!state.walletConfig?.taprootAddress, category: 'Privacy' },
-        { id: 'citadel', label: 'Join a Citadel', points: 20, completed: !!state.activeCitadel, category: 'Community' },
-        { id: 'tor', label: 'Enable Tor Routing', points: 20, completed: state.isTorEnabled ?? false, category: 'Privacy' },
-        { id: 'consolidation', label: 'Sovereign Consolidation', points: 50, completed: !!(state.assets && state.assets.length > 0 && state.assets.every(a => a.symbol === 'BTC' || a.balance === 0)), category: 'Security' },
-        { id: 'l2_expansion', label: 'L2 Expansion: B2/Botanix/Mezo+', points: 30, completed: (state.assets ?? []).some(a => ['B2', 'Botanix', 'Mezo', 'Alpen', 'Zulu', 'Bison', 'Hemi', 'Nubit', 'Lorenzo', 'Citrea', 'Babylon', 'Merlin', 'Bitlayer'].includes(a.layer)), category: 'Security' },
+        {
+            id: 'backup_verified',
+            label: 'Verify Backup Mnemonic',
+            category: 'Security',
+            points: 20,
+            completed: !!state.walletConfig?.backupVerified
+        },
+        {
+            id: 'sovereign_rpc',
+            label: 'Connect Custom Node',
+            category: 'Network',
+            points: 30,
+            completed: state.rpcStrategy === 'Sovereign-First'
+        },
+        {
+            id: 'tor_active',
+            label: 'Enable Tor Routing',
+            category: 'Privacy',
+            points: 15,
+            completed: !!state.isTorEnabled
+        },
+        {
+            id: 'privacy_mode',
+            label: 'Enable Privacy Mode',
+            category: 'Privacy',
+            points: 15,
+            completed: !!state.privacyMode
+        },
+        {
+            id: 'biometric_lock',
+            label: 'Enable Biometric Lock',
+            category: 'Security',
+            points: 20,
+            completed: !!state.security?.biometricUnlock
+        },
+        {
+            id: 'multisig_upgrade',
+            label: 'Upgrade to Multisig',
+            category: 'Security',
+            points: 40,
+            completed: state.walletConfig?.type === 'multisig'
+        },
+        {
+            id: 'citadel_joined',
+            label: 'Join a Sovereign Citadel',
+            category: 'Governance',
+            points: 25,
+            completed: !!state.activeCitadel
+        },
+        {
+            id: 'node_synced',
+            label: 'Fully Sync Local Node',
+            category: 'Network',
+            points: 30,
+            completed: state.nodeSyncProgress === 100
+        }
     ];
-};
-
-export const calculateSovereigntyScore = (state: AppState): number => {
-    const quests = getQuests(state);
-    const currentXP = quests.reduce((acc, q) => q.completed ? acc + q.points : acc, 0);
-    const totalXP = quests.reduce((acc, q) => acc + q.points, 0);
-    return currentXP / totalXP;
 };

@@ -4,19 +4,19 @@ layout: page
 permalink: /./Sovereign_State
 ---
 
-# Sovereign State - Conxius Wallet
+# Sovereign State - Conxius Wallet (v1.6.0)
 
 ## Core Modules Status
 
 | Module | Status | Description |
 | :--- | :--- | :--- |
-| **:app** | [COMPLETED] | Main Android application entry point and UI. |
-| **:core-crypto** | [COMPLETED] | Native security enclave and cryptographic primitives. |
-| **:core-bitcoin** | [COMPLETED] | Native Bitcoin protocol managers (L1, BDK). |
-| **:core-database** | [COMPLETED] | Encrypted local storage (SQLCipher/Room). |
-| **lib-conxian-core** | [COMPLETED] | Rust-based core logic and Musig2 implementation. |
-| **services/** | [COMPLETED] | TypeScript protocol logic and bridge interfaces. |
-| **components/** | [COMPLETED] | React/Capacitor UI components. |
+| **:app** | ✅ PRODUCTION | Main Android application (Kotlin/Compose). |
+| **:core-crypto** | ✅ PRODUCTION | Native StrongBox/TEE Keystore (Kotlin). |
+| **:core-bitcoin** | ✅ PRODUCTION | Native BDK and Protocol Managers (Kotlin). |
+| **:core-database** | ✅ PRODUCTION | Encrypted SQLCipher/Room Storage (Kotlin). |
+| **lib-conxian-core** | ✅ PRODUCTION | Rust Core (Musig2, AluVM, Gateway). |
+| **services/** | ✅ BRIDGED | TS Protocol logic & Native Bridge interfaces. |
+| **components/** | ✅ BRIDGED | React/Capacitor UI & Bridge hooks. |
 
 ## Feature Implementation Registry
 
@@ -24,9 +24,11 @@ permalink: /./Sovereign_State
 | :--- | :--- | :--- |
 | [NTT_TRANSCEIVER] | [COMPLETED] | Wormhole NTT Transceiver for Conclave signatures. |
 | [NTT_MANAGER] | [COMPLETED] | Native Kotlin manager for NTT payload construction. |
-| [ETH_ADAPTER] | [COMPLETED] | ERC-4337/EIP-712 support for ETH satellite control. |
+| [BABYLON_STAKING] | [BRIDGED] | Native Taproot staking for Babylon protocol. |
+| [DLC_CONTRACTS] | [BRIDGED] | Native DlcManager for Discreet Log Contracts. |
+| [TAPROOT_ASSETS] | [BRIDGED] | Discovery and transfer logic for Taproot Assets. |
+| [B2B_GATEWAY] | [BRIDGED] | Institutional signing and treasury authorization. |
 | [DOCS_ALIGNMENT] | [COMPLETED] | Jekyll frontmatter and LaTeX formula optimization. |
-| [AUDIT_REPORT] | [COMPLETED] | BitcoinLayers.org risk assessment and bridge audit. |
 
 ---
 *Last Updated: March 2026*

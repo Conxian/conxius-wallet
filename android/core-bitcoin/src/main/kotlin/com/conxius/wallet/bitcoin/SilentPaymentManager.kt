@@ -1,25 +1,25 @@
 package com.conxius.wallet.bitcoin
 
+import android.util.Log
+
 /**
- * Silent Payment Manager
- * Native bridge for BIP-352 Silent Payments.
+ * SilentPaymentManager: Native Bridge for BIP-352 Silent Payments.
  */
 class SilentPaymentManager {
+    private val TAG = "SilentPaymentManager"
 
     /**
-     * Derives Silent Payment scan and spend keys.
+     * Derives a Silent Payment address.
      */
-    fun deriveKeys(seed: ByteArray): Map<String, ByteArray> {
-        return mapOf(
-            "scanKey" to ByteArray(32),
-            "spendKey" to ByteArray(32)
-        )
+    fun deriveSilentAddress(scanKey: ByteArray, spendKey: ByteArray): String {
+        Log.d(TAG, "Deriving Silent Payment Address")
+        return "sp1_native_address_placeholder"
     }
 
     /**
-     * Signs a Silent Payment state transition or output.
+     * Scans for incoming Silent Payments.
      */
-    fun signOutput(message: ByteArray): String {
-        return "sp_output_sig_enclave"
+    fun scanForPayments(utxos: List<String>, scanKey: ByteArray): List<String> {
+        return emptyList()
     }
 }

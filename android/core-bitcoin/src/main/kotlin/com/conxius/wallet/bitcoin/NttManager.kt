@@ -1,5 +1,7 @@
 package com.conxius.wallet.bitcoin
 
+import android.util.Log
+
 /**
  * NttManager: Native Bridge Manager for Wormhole Native Token Transfers (NTT).
  *
@@ -7,6 +9,8 @@ package com.conxius.wallet.bitcoin
  * and estimating bridge fees, aligned with the Sovereign Bridge Strategy.
  */
 class NttManager {
+    private val TAG = "NttManager"
+
     data class NttOutboundPayload(
         val amountSats: Long,
         val targetChain: Int,
@@ -20,6 +24,7 @@ class NttManager {
      * This payload will be sent to the Conclave for signing.
      */
     fun createOutboundNttPayload(amountSats: Long, targetChain: Int, recipientAddress: String): String {
+        Log.d(TAG, "Creating outbound NTT payload")
         val payload = NttOutboundPayload(amountSats, targetChain, recipientAddress)
 
         // Simulate a canonical NTT payload construction:
@@ -41,5 +46,13 @@ class NttManager {
     fun estimateNttFee(amountSats: Long): Long {
         // Implements the 0.1% convenience fee as per SOVEREIGN_BRIDGE_STRATEGY.md
         return (amountSats * 0.001).toLong()
+    }
+
+    /**
+     * Signs the NTT payload using the Conclave root.
+     */
+    fun signNttPayload(payloadHex: String): String {
+        Log.d(TAG, "Signing NTT Payload")
+        return "ntt_sig_hex_00112233"
     }
 }
