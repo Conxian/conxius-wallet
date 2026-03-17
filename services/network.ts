@@ -12,10 +12,6 @@ function envValue(key: string): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
-/**
- * The Conxian Gateway acts as a unified entry point for sovereign services.
- * Defaults to localhost in development/regtest and conxianlabs.com in production.
- */
 export function getGatewayUrl(network: Network): string {
   const envGateway = envValue('VITE_GATEWAY_URL');
   if (envGateway) return envGateway;
@@ -30,10 +26,6 @@ export function getGatewayUrl(network: Network): string {
   }
 }
 
-/**
- * Sovereign-First Endpoint Resolver (v1.1)
- * Prioritizes user nodes, then public RPCs, based on rpcStrategy.
- */
 export function endpointsFor(network: Network, appState?: AppState) {
   const gateway = getGatewayUrl(network);
   const state = appState || _globalAppState;
@@ -42,13 +34,8 @@ export function endpointsFor(network: Network, appState?: AppState) {
 
   const getSovereignEndpoint = (layer: string, defaultPublic: string): string => {
       if (strategy === 'Public-Only') return defaultPublic;
-
       const custom = customNodes.find(n => n.layer === layer && n.isActive);
-
-      if (strategy === 'Sovereign-First') return custom?.endpoint || defaultPublic;
-      if (strategy === 'Mixed') return custom?.endpoint || defaultPublic; // Could be expanded for load balancing
-
-      return defaultPublic;
+      return custom?.endpoint || defaultPublic;
   };
 
   switch (network) {
@@ -75,34 +62,6 @@ export function endpointsFor(network: Network, appState?: AppState) {
         BABYLON_API: "https://rpc.testnet.babylonchain.io",
         MERLIN_API: "https://rpc.testnet.merlinchain.io",
         BITLAYER_API: "https://rpc.testnet.bitlayer.org",
-        RGB_API: envValue('VITE_RGB_PROXY_URL') || `${gateway}/rgb`,
-        BITVM_API: envValue('VITE_BITVM_VERIFY_URL') || `${gateway}/bitvm`,
-        BISQ_API: envValue('VITE_BISQ_PROXY_URL') || `${gateway}/bisq`,
-        CHANGELLY_API: envValue('VITE_CHANGELLY_PROXY_URL') || `${gateway}/changelly`
-      };
-    case 'regtest':
-      return {
-        BTC_API: "http://127.0.0.1:3002/api",
-        STX_API: "http://127.0.0.1:3999",
-        LIQUID_API: "http://127.0.0.1:7040",
-        RSK_API: "http://127.0.0.1:4444",
-        BOB_API: "http://127.0.0.1:8545",
-        ARK_API: "http://127.0.0.1:3535",
-        MAVEN_API: "http://127.0.0.1:7070",
-        STATE_CHAIN_API: "http://127.0.0.1:5050",
-        B2_API: "http://127.0.0.1:8545",
-        BOTANIX_API: "http://127.0.0.1:8546",
-        MEZO_API: "http://127.0.0.1:8547",
-        ALPEN_API: "http://127.0.0.1:8548",
-        ZULU_API: "http://127.0.0.1:8549",
-        BISON_API: "http://127.0.0.1:8550",
-        HEMI_API: "http://127.0.0.1:8551",
-        NUBIT_API: "http://127.0.0.1:8552",
-        LORENZO_API: "http://127.0.0.1:8553",
-        CITREA_API: "http://127.0.0.1:8554",
-        BABYLON_API: "http://127.0.0.1:8555",
-        MERLIN_API: "http://127.0.0.1:8556",
-        BITLAYER_API: "http://127.0.0.1:8557",
         RGB_API: envValue('VITE_RGB_PROXY_URL') || `${gateway}/rgb`,
         BITVM_API: envValue('VITE_BITVM_VERIFY_URL') || `${gateway}/bitvm`,
         BISQ_API: envValue('VITE_BISQ_PROXY_URL') || `${gateway}/bisq`,
@@ -139,10 +98,6 @@ export function endpointsFor(network: Network, appState?: AppState) {
   }
 }
 
-/**
- * Robust fetch wrapper with exponential backoff and timeout.
- * Now supports Tor-simulated routing for Privacy v2.
- */
 export async function fetchWithRetry(
     url: string,
     options: RequestInit = {},
@@ -155,9 +110,7 @@ export async function fetchWithRetry(
     const finalOptions = { ...options };
 
     if (isTorEnabled) {
-        // Tor Bridge / Privacy Proxy implementation
-        // Defaulting to gateway's tor route
-        const gateway = getGatewayUrl('mainnet'); // default to mainnet gateway for routing if not specified
+        const gateway = getGatewayUrl('mainnet');
         const proxyUrl = envValue('VITE_TOR_PROXY_URL') || `${gateway}/tor`;
         finalUrl = `${proxyUrl}/route?url=${encodeURIComponent(url)}`;
         finalOptions.headers = {
@@ -168,7 +121,7 @@ export async function fetchWithRetry(
     }
 
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 12000); // Increased timeout for Tor
+    const id = setTimeout(() => controller.abort(), 12000);
     const response = await fetch(finalUrl, { ...finalOptions, signal: controller.signal });
     clearTimeout(id);
     
@@ -187,8 +140,7 @@ export async function fetchWithRetry(
 }
 
 /**
- * Sanitizes error objects to prevent leaking internal stack traces,
- * sensitive API responses, or system details to the UI or logs.
+ * Sanitizes error objects to prevent leaking internal technical details.
  */
 export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error'): string {
   if (!error) return defaultMsg;
@@ -200,10 +152,8 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     message = error;
     fullScan = error;
   } else {
-    // Defense-in-depth: Extract from more potential fields while scanning the whole object
     message = error.message || error.reason || error.error || error.statusText || String(error) || defaultMsg;
     try {
-      // Circular-safe serialization for deep security scan
       const seen = new WeakSet();
       fullScan = JSON.stringify(error, (key, value) => {
         if (typeof value === "object" && value !== null) {
@@ -217,43 +167,31 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     }
   }
 
-  // Security: Normalize inputs to prevent obfuscated leaks.
-  // We perform two scans:
-  // 1. ZWCs stripped (standard normalization)
-  // 2. ZWCs replaced with spaces (to catch mnemonics/phrases joined by ZWCs)
   const zwcRegex = /[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g;
   const strippedScan = fullScan.replace(zwcRegex, "");
   const spacedScan = fullScan.replace(zwcRegex, " ");
 
-  // Blacklist of potentially sensitive words or patterns
   const sensitivePatterns = [
-    /stack/i, /at /i, /node_modules/i, /(?<![a-zA-Z0-9])0x[a-fA-F0-9]{40}(?![a-zA-Z0-9])/i, // stack traces and hex addresses
+    /stack/i, /at /i, /node_modules/i, /(?<![a-zA-Z0-9])0x[a-fA-F0-9]{40}(?![a-zA-Z0-9])/i,
     /rpc/i, /internal/i, /database/i, /query/i, /connect/i, /__/,
-    /(?<![a-zA-Z0-9])([a-z]{3,}\s+){11,23}[a-z]{3,}(?![a-zA-Z0-9])/i, // BIP-39 mnemonic phrases
-    /(?<![a-zA-Z0-9])(0x)?[a-fA-F0-9]{64,66}(?![a-zA-Z0-9])/i,         // Hex secrets (Private Keys, TxIDs, Node IDs)
-    /(?<![a-zA-Z0-9])([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})(?![a-zA-Z0-9])/i, // BIP32 extended keys (pub/prv)
-    /(?<![a-zA-Z0-9])(bc1[qp][a-z0-9]{33,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})(?![a-zA-Z0-9])/i, // BTC
-    /(?<![a-zA-Z0-9])(S[PST][0-9A-Z]{28,41})(?![a-zA-Z0-9])/i, // Stacks
-    /(?<![a-zA-Z0-9])((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})(?![a-zA-Z0-9])/i, // Liquid
-    /(?<![a-zA-Z0-9])(nsec1[a-z0-9]{50,200}|npub1[a-z0-9]{50,200})(?![a-zA-Z0-9])/i, // Nostr
-    /(?<![a-zA-Z0-9])(sp1[a-z0-9]{50,200})(?![a-zA-Z0-9])/i, // Silent Payments
-    /(?<![a-zA-Z0-9])[5KL9c][1-9A-HJ-NP-Za-km-z]{50,51}(?![a-zA-Z0-9])/i, // WIF Private Keys
-    /(?<![a-zA-Z0-9])(ln(?:bc|tb|bcrt|dev)[0-9a-z]+)(?![a-zA-Z0-9])/i,      // BOLT11 Invoices
-    /(?<![a-zA-Z0-9])AIzaSy[a-zA-Z0-9_-]{33}(?![a-zA-Z0-9])/i,            // Google API Keys
-    /(?<![a-zA-Z0-9])sk-[a-zA-Z0-9_-]{20,}(?![a-zA-Z0-9])/i               // Generic Secret Keys (OpenAI, etc.)
+    /(?<![a-zA-Z0-9])([a-z]{3,}\s+){11,23}[a-z]{3,}(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])(0x)?[a-fA-F0-9]{64,66}(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])(bc1[qp][a-z0-9]{33,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])(S[PST][0-9A-Z]{28,41})(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])(nsec1[a-z0-9]{50,200}|npub1[a-z0-9]{50,200})(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])(sp1[a-z0-9]{50,200})(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])[5KL9c][1-9A-HJ-NP-Za-km-z]{50,51}(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])(ln(?:bc|tb|bcrt|dev)[0-9a-z]+)(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])AIzaSy[a-zA-Z0-9_-]{33}(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])sk-[a-zA-Z0-9_-]{20,}(?![a-zA-Z0-9])/i
   ];
 
-  // Defensive: check the entire error object and the extracted message for ANY leakage
-  const messageScan = String(message);
-  if (
-    sensitivePatterns.some((p) => p.test(strippedScan) || p.test(spacedScan) || p.test(messageScan))
-  ) {
+  if (sensitivePatterns.some((p) => p.test(strippedScan) || p.test(spacedScan) || p.test(String(message)))) {
     return defaultMsg;
   }
 
-  // Security: Clean the returned message of non-printable characters for UI/Log hygiene
   const cleanMessage = typeof message === 'string' ? message.replace(zwcRegex, "") : defaultMsg;
-
-  // Slice to avoid giant response bodies leaking
   return typeof cleanMessage === 'string' ? cleanMessage.substring(0, 100) : defaultMsg;
 }

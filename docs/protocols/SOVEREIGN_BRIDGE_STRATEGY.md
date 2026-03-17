@@ -47,7 +47,7 @@ To maintain our "Sovereign by Design" ethos, Conxius cannot rely on custodial br
 
 We prioritize mechanisms that derive security from Bitcoin or minimize trust.
 
-### A. Stacks (sBTC) (Complexity: (1)$)
+### A. Stacks (sBTC) (Complexity: $O(1)$)
 
 * **Mechanism:** Decentralized Two-Way Peg (Nakamoto Release).
 * **Status:** **LIVE** (Deposits enabled Dec 2024, Withdrawals March 2025).
@@ -57,7 +57,7 @@ We prioritize mechanisms that derive security from Bitcoin or minimize trust.
 * **Ethos Alignment:** ⭐⭐⭐⭐⭐ (Bitcoin-secured, no federation).
 * **Action:** Implement `signer.ts` support for the specific sBTC deposit script format.
 
-### B. Rootstock (RBTC) (Complexity: (1)$)
+### B. Rootstock (RBTC) (Complexity: $O(1)$)
 
 * **Mechanism:** **PowPeg** (Proof-of-Work Peg).
 * **Trust Model:** Federated (PowHSM) but secured by Bitcoin merge-mining.
@@ -67,7 +67,7 @@ We prioritize mechanisms that derive security from Bitcoin or minimize trust.
 * **Ethos Alignment:** ⭐⭐⭐⭐ (Merge-mined security, hardware enforcement).
 * **Action:** Use native bridge for large amounts; use Swaps (see below) for speed.
 
-### C. Liquid (L-BTC) (Complexity: (1)$)
+### C. Liquid (L-BTC) (Complexity: $O(1)$)
 
 * **Mechanism:** Federated Peg (Liquid Federation).
 * **Trust Model:** Federated (15 functionaries).
@@ -121,12 +121,12 @@ To solve UX without sacrificing sovereignty, we should integrate **Boltz**.
 
 To ensure the best UX for the "Digital Citadelist," the Conxius NTT Bridge implements a **Sovereign Gas Abstraction** model.
 
-### A. The 0.1% Convenience Fee (Complexity: (1)$)
+### A. The 0.1% Convenience Fee (Complexity: $O(1)$)
 * **Value:** A 0.1% fee is charged on NTT transfers (BTC -> sBTC, sBTC -> L-BTC, etc.).
 * **Justification:** This fee covers the maintenance of the NTT Transceiver infrastructure and the automated relayer fleet.
 * **Implementation:** The fee is deducted by the NTT Manager contract on the source chain during the `burn` or `lock` phase.
 
-### B. Gas Abstraction (The "sBTC-as-Gas" Model) (Complexity: (1)$)
+### B. Gas Abstraction (The "sBTC-as-Gas" Model) (Complexity: $O(1)$)
 * **Mechanism:** When a user bridges assets to an EVM chain (e.g., BOB or Ethereum), they are prompted to pay for the destination gas in their source asset (e.g., sBTC).
 * **Architecture:**
     1. Conxius calculates the required gas on the destination.

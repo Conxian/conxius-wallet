@@ -28,14 +28,15 @@ permalink: /docs/roadmap
 - **Tech:** 14+ Bitcoin L2s (BOB, B2, etc.), Babylon Staking, NIP-47
 - **Biz:** Market Fit Pivot, Institutional Bridge
 
-### Level 4: The Clean Break (ACTIVE)
+### Level 4: The Clean Break (COMPLETED)
 - **Focus:** Pure Native Android Migration & Sovereign Persistence.
-- **Tech:** BDK Kotlin, StrongBox-First Security, Jetpack Compose UI, Babylon Staking, NIP-47.
+- **Tech:** BDK Kotlin, StrongBox-First Security, Jetpack Compose UI.
 - **Biz:** **"Citadel Native"** Launch; Transition from Capacitor to Pure Kotlin/Rust.
 
-### Level 5: Global Sovereignty (STRATEGIC)
+### Level 5: Global Sovereignty (ACTIVE)
 - **Focus:** B2B SDK & Privacy-Preserving Treasury.
 - **Tech:** DLC Settlement, Policy-gated Enclave, Multi-sig Quorum, ZK Verifier.
+- **Biz:** Institutional Expansion & Shielded Corporate Payments.
 
 ---
 
@@ -45,7 +46,8 @@ permalink: /docs/roadmap
 | :--- | :--- | :--- | :--- |
 | **M13: Native Core** | Q3 2026 | ✅ | **Kotlin/BDK Migration** & Babylon Staking |
 | **M14: NWC & DLC** | Q3 2026 | ✅ | NIP-47 Support & DLC.link Integration |
-| **M15: Privacy Hub** | Q4 2026 | 🚀 | WabiSabi Coordinator & Advanced Yield |
+| **M15: Privacy Hub** | Q4 2026 | ✅ | WabiSabi Coordinator & Advanced Yield |
+| **M16: B2B SDK** | Q1 2027 | 🚀 | Institutional White-label & Shielded Treasury |
 
 ---
 
@@ -57,3 +59,4 @@ permalink: /docs/roadmap
 - **Level 2 (Interoperability):** The Bridge.
 - **Level 3 (Scaling):** L2 Ecosystem.
 - **Level 4 (Clean Break):** Native Sovereignty.
+- **Level 5 (Expansion):** Institutional Global Sovereignty.

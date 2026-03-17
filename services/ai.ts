@@ -26,9 +26,7 @@ export const callAi = async (
     return "AI Service not configured. Using local simulation heuristics.";
   }
 
-  // 1. SECURITY AUDIT: Sanitize outgoing prompt
-  const { sanitized, isBlocked, reason, redactionMap } =
-    secureAuditPrompt(prompt);
+  const { sanitized, isBlocked, reason, redactionMap } = secureAuditPrompt(prompt);
   if (isBlocked) return `[Sovereign Audit Blocked]: ${reason}`;
 
   try {
@@ -48,7 +46,6 @@ export const callAi = async (
       });
       responseText = response.text || "";
     } else if (_aiConfig.provider === "Custom" && _aiConfig.endpoint) {
-      // BYOS: Custom AI Hook (Compatible with OpenAI-style APIs)
       const response = await fetchWithRetry(_aiConfig.endpoint, {
         method: "POST",
         headers: {
@@ -71,7 +68,6 @@ export const callAi = async (
       return "Provider not supported or missing endpoint.";
     }
 
-    // 2. REHYDRATE: Re-inject redacted data for user visibility
     return rehydrateResponse(responseText, redactionMap);
   } catch (error: any) {
     console.error("[Sovereign AI] Call failed", error);
@@ -79,9 +75,6 @@ export const callAi = async (
   }
 };
 
-/**
- * Enhanced AI Auditor with Smart Wallet awareness.
- */
 export const auditSpendingPolicy = async (policy: any) => {
   const prompt = `Audit the following Bitcoin Spending Policy for risk and sovereignty:
     Name: ${policy.name}
@@ -96,8 +89,7 @@ export const auditSpendingPolicy = async (policy: any) => {
     4. Provide a 'Sovereign Confidence Score' out of 100.`;
 
   return callAi(prompt, {
-    systemInstruction:
-      "You are the Satoshi Risk Auditor. You specialize in Bitcoin Script and Miniscript security.",
+    systemInstruction: "You are the Satoshi Risk Auditor. You specialize in Bitcoin Script and Miniscript security.",
     model: "gemini-1.5-pro",
   });
 };

@@ -1,29 +1,27 @@
 package com.conxius.wallet.bitcoin
 
+import android.util.Log
+
 /**
- * Liquid Network Manager
- * Handles confidential asset management and peg-in/peg-out logic for the native layer.
+ * LiquidManager: Native Bridge for Elements-based Sidechains (Liquid Network).
  */
 class LiquidManager {
+    private val TAG = "LiquidManager"
 
     /**
-     * Constructs a Liquid confidential address from a pubkey and blinding key.
+     * Derives a confidential address for Liquid.
      */
     fun deriveConfidentialAddress(pubkey: ByteArray, blindingKey: ByteArray): String {
-        return "lq1_confidential_address_native_placeholder"
+        Log.d(TAG, "Deriving Liquid Confidential Address")
+        // In Production: Uses elements-miniscript to derive the address.
+        return "tlq1_native_confidential_address_placeholder"
     }
 
     /**
-     * Signs a Liquid PSET (Partially Signed Elements Transaction) using the enclave.
+     * Signs a Liquid transaction (PSET).
      */
-    fun signPset(psetBase64: String): String {
-        return "liquid_signed_pset_enclave_placeholder"
-    }
-
-    /**
-     * Validates a Liquid peg-in claim script.
-     */
-    fun validatePegInClaim(claimScript: ByteArray): Boolean {
-        return true
+    fun signLiquidTx(psetBase64: String): String {
+        Log.d(TAG, "Signing Liquid PSET")
+        return "signed_pset_base64_placeholder"
     }
 }
