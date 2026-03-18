@@ -187,17 +187,28 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
         if (typeof value === "object" && value !== null) {
           if (seen.has(value)) return "[Circular]";
           seen.add(value);
+          // Ensure Error objects have their non-enumerable properties included in the scan
+          if (value instanceof Error) {
+            return {
+              ...value,
+              name: value.name,
+              message: value.message,
+              stack: value.stack
+            };
+          }
         }
         return value;
       });
     } catch {
-      fullScan = String(error);
+      fullScan = String(error) + (error.stack ? ` ${error.stack}` : "");
     }
   }
 
   const zwcRegex = /[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g;
   const strippedScan = fullScan.replace(zwcRegex, "");
   const spacedScan = fullScan.replace(zwcRegex, " ");
+  const strippedMessage = String(message).replace(zwcRegex, "");
+  const spacedMessage = String(message).replace(zwcRegex, " ");
 
   const sensitivePatterns = [
     /stack/i, /at /i, /node_modules/i, /(?<![a-zA-Z0-9])0x[a-fA-F0-9]{40}(?![a-zA-Z0-9])/i,
@@ -216,7 +227,7 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     /(?<![a-zA-Z0-9])sk-[a-zA-Z0-9_-]{20,}(?![a-zA-Z0-9])/i
   ];
 
-  if (sensitivePatterns.some((p) => p.test(strippedScan) || p.test(spacedScan) || p.test(String(message)))) {
+  if (sensitivePatterns.some((p) => p.test(strippedScan) || p.test(spacedScan) || p.test(strippedMessage) || p.test(spacedMessage))) {
     return defaultMsg;
   }
 
