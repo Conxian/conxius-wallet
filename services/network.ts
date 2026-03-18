@@ -39,6 +39,34 @@ export function endpointsFor(network: Network, appState?: AppState) {
   };
 
   switch (network) {
+    case 'regtest':
+      return {
+        BTC_API: getSovereignEndpoint('Bitcoin L1', "http://127.0.0.1:8080"),
+        STX_API: getSovereignEndpoint('Stacks L2', "http://127.0.0.1:3999"),
+        LIQUID_API: getSovereignEndpoint('Liquid', "http://127.0.0.1:3001"),
+        RSK_API: getSovereignEndpoint('Rootstock', "http://127.0.0.1:4444"),
+        BOB_API: "http://127.0.0.1:8545",
+        ARK_API: "http://127.0.0.1:3000",
+        MAVEN_API: "http://127.0.0.1:8081",
+        STATE_CHAIN_API: "http://127.0.0.1:8082",
+        B2_API: "http://127.0.0.1:8546",
+        BOTANIX_API: "http://127.0.0.1:8547",
+        MEZO_API: "http://127.0.0.1:8548",
+        ALPEN_API: "http://127.0.0.1:8549",
+        ZULU_API: "http://127.0.0.1:8550",
+        BISON_API: "http://127.0.0.1:8551",
+        HEMI_API: "http://127.0.0.1:8552",
+        NUBIT_API: "http://127.0.0.1:8553",
+        LORENZO_API: "http://127.0.0.1:8554",
+        CITREA_API: "http://127.0.0.1:8555",
+        BABYLON_API: "http://127.0.0.1:8556",
+        MERLIN_API: "http://127.0.0.1:8557",
+        BITLAYER_API: "http://127.0.0.1:8558",
+        RGB_API: `${gateway}/rgb`,
+        BITVM_API: `${gateway}/bitvm`,
+        BISQ_API: `${gateway}/bisq`,
+        CHANGELLY_API: `${gateway}/changelly`
+      };
     case 'testnet':
       return {
         BTC_API: getSovereignEndpoint('Bitcoin L1', "https://mempool.space/testnet/api"),
@@ -174,7 +202,7 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
   const sensitivePatterns = [
     /stack/i, /at /i, /node_modules/i, /(?<![a-zA-Z0-9])0x[a-fA-F0-9]{40}(?![a-zA-Z0-9])/i,
     /rpc/i, /internal/i, /database/i, /query/i, /connect/i, /__/,
-    /(?<![a-zA-Z0-9])([a-z]{3,}\s+){11,23}[a-z]{3,}(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])([a-z]{3,}[\s\W_0-9]+){11,23}[a-z]{3,}(?![a-zA-Z0-9])/i,
     /(?<![a-zA-Z0-9])(0x)?[a-fA-F0-9]{64,66}(?![a-zA-Z0-9])/i,
     /(?<![a-zA-Z0-9])([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})(?![a-zA-Z0-9])/i,
     /(?<![a-zA-Z0-9])(bc1[qp][a-z0-9]{33,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})(?![a-zA-Z0-9])/i,

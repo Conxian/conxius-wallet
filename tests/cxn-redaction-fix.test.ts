@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { sanitizePrompt } from "../services/ai-security";
 import { sanitizeError } from "../services/network";
 
-describe("Sentinel: Redaction Boundary Regression Tests", () => {
+describe("cxn-arch-guardian: Redaction Boundary Regression Tests", () => {
   it("should redact API keys even when preceded by an underscore", () => {
     const prompt = "The key is api_key_sk-0000000000000000000000000000000000000000";
     const { sanitized } = sanitizePrompt(prompt);

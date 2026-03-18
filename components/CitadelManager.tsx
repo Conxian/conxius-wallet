@@ -103,7 +103,7 @@ const CitadelManager: React.FC = () => {
 
     // Simulate auditing process
     setTimeout(() => {
-      setBountyAudit(`// SOVEREIGN SENTINEL AUDIT REPORT
+      setBountyAudit(`// SOVEREIGN CXN_ARCH_GUARDIAN AUDIT REPORT
 // Target: ${bounty.title}
 // Difficulty: ${bounty.difficulty}
 
@@ -263,7 +263,7 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                               {isAuditing ? (
                                  <div className="flex flex-col items-center justify-center h-full gap-4 py-20">
                                     <Loader2 className="animate-spin text-orange-500" size={32} />
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 animate-pulse">Sovereign Sentinel Auditing Codebase...</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 animate-pulse">Sovereign cxn-arch-guardian Auditing Codebase...</p>
                                  </div>
                               ) : (
                                  <div className="prose prose-invert max-w-none text-xs leading-relaxed text-zinc-400 font-mono whitespace-pre-wrap selection:bg-orange-500/40">
