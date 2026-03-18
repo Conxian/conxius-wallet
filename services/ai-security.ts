@@ -7,6 +7,10 @@ import { generateRandomString } from "./random";
 
 const MAX_PROMPT_LENGTH = 20000;
 
+// Security: Normalize inputs by stripping non-printable and zero-width characters to prevent obfuscated leaks
+// We exclude common whitespace (0x09, 0x0A, 0x0D) to preserve formatting.
+const NORMALIZE_REGEX = /[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g;
+
 /**
  * Redacts sensitive data from a string and returns a local mapping.
  * Supported: Bitcoin addresses, EVM addresses, TxIDs, Mnemonics, xprv/xpub.
@@ -16,13 +20,12 @@ export const sanitizePrompt = (
 ): { sanitized: string; redactionMap: Record<string, string> } => {
   const redactionMap: Record<string, string> = {};
 
-  // Security: Normalize inputs by stripping non-printable and zero-width characters to prevent obfuscated leaks
-  // We exclude common whitespace (0x09, 0x0A, 0x0D) to preserve formatting.
-  const normalized = text.replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, "");
+  const normalized = text.replace(NORMALIZE_REGEX, "");
   let sanitized = normalized;
 
   // 1. Redact BIP-39 Mnemonics (12-24 words)
-  const mnemonicRegex = /(?<![a-zA-Z0-9])(([a-z]{3,}\s+){11,23}[a-z]{3,})(?![a-zA-Z0-9])/gi;
+  // Supports varied separators (spaces, hyphens, underscores, dots, digits) for defense-in-depth.
+  const mnemonicRegex = /(?<![a-zA-Z0-9])(([a-z]{3,}[\s\W_0-9]+){11,23}[a-z]{3,})(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(mnemonicRegex, (match) => {
     const id = `[MNEMONIC_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -128,10 +131,7 @@ export const sanitizePrompt = (
 export const isPromptMalicious = (text: string): boolean => {
   if (text.length > MAX_PROMPT_LENGTH) return true;
 
-  // Security: Strip non-printable and zero-width characters to prevent obfuscated injection
-  // We exclude common whitespace (0x09, 0x0A, 0x0D) to preserve formatting.
-  // eslint-disable-next-line no-control-regex
-  const normalized = text.replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, "");
+  const normalized = text.replace(NORMALIZE_REGEX, "");
   const injectionPatterns = [
     "ignore previous instructions",
     "system prompt",
@@ -156,7 +156,7 @@ export const isPromptMalicious = (text: string): boolean => {
     const pattern = p
       .split(/\s+/)
       .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-      .join("[\\s\\W_]*");
+      .join("[\\s\\W_0-9]*");
     const regex = new RegExp(pattern, "i");
     return regex.test(normalized);
   });

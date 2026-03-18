@@ -150,7 +150,7 @@ const SystemDiagnostics: React.FC = () => {
                     {isGeneratingReport ? (
                        <div className="flex flex-col items-center justify-center py-12 gap-4 text-orange-500">
                           <Loader2 size={32} className="animate-spin" />
-                          <span className="text-[10px] font-black uppercase tracking-widest animate-pulse">Sentinel Synthesizing Summary...</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest animate-pulse">cxn-arch-guardian Synthesizing Summary...</span>
                        </div>
                     ) : aiReport ? (
                        <div className="bg-zinc-950/50 p-6 rounded-2xl border border-zinc-900 animate-in fade-in">
@@ -175,7 +175,7 @@ const SystemDiagnostics: React.FC = () => {
            <div className="bg-black border border-zinc-800 rounded-[3rem] p-8 h-80 overflow-hidden shadow-2xl group">
               <div className="flex items-center gap-3 text-zinc-600 mb-6 border-b border-zinc-900 pb-4">
                  <Terminal size={18} className="group-hover:text-orange-500 transition-colors" />
-                 <span className="text-[10px] font-black uppercase font-mono tracking-widest">SENTINEL_DEBUG_OUTPUT</span>
+                 <span className="text-[10px] font-black uppercase font-mono tracking-widest">CXN_ARCH_GUARDIAN_DEBUG_OUTPUT</span>
               </div>
               <div className="space-y-3 font-mono text-[10px] text-zinc-500 h-full overflow-y-auto custom-scrollbar selection:bg-orange-500/50">
                  <p className="text-green-500">&gt; [OK] LICENSE_VALIDATED: BSL-1.1 (Conxian-Labs)</p>

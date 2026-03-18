@@ -66,7 +66,7 @@ const SatoshiAIChat: React.FC = () => {
       ...prev,
       {
         role: "user",
-        content: userMessage,
+        content: uiSanitized,
         isSanitized: uiSanitized !== userMessage,
       },
     ]);

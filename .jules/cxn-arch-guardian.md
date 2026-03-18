@@ -1,10 +1,10 @@
 ---
-title: Sentinel Journal 🛡️
+title: cxn-arch-guardian Journal 🛡️
 layout: page
-permalink: /sentinel
+permalink: /cxn-arch-guardian
 ---
 
-# Sentinel Journal 🛡️
+# cxn-arch-guardian Journal 🛡️ (ATS v2.0)
 
 ## 2025-05-14 - Incomplete Duress Mode Protection
 **Vulnerability:** The "Duress PIN" feature only reset the in-memory application state, leaving the encrypted master seed and wallet data (BIP-39 entropy) intact on the device's persistent storage.
@@ -98,7 +98,7 @@ permalink: /sentinel
 ### Service Super-App Alignment (v1.6.0)
 - **Requirement**: All third-party payloads (Yield.xyz, 1inch, Babylon) must be construction-only.
 - **Verification**: Playwright tests must assert that the Enclave signature modal appears before any external execution.
-- **Privacy**: Sentinel AI must redact PII from Travala/Silent.Link web-view hand-offs.
+- **Privacy**: cxn-arch-guardian AI must redact PII from Travala/Silent.Link web-view hand-offs.
 ## 2025-05-23 - [Obfuscated Prompt Injection Bypass]
 **Vulnerability:** AI security filters using keyword matching (like 'ignore previous instructions') can be bypassed by inserting non-printable or zero-width characters (e.g., U+200B) between letters.
 **Learning:** LLMs often ignore these hidden characters while security regexes/string checks might fail to match them, creating an obfuscation vector.

@@ -3,6 +3,6 @@ I have expanded the service architecture with non-custodial integrations:
 - Updated services/swap.ts, services/monetization.ts
 - Expanded components/Marketplace.tsx and components/DeFiDashboard.tsx
 - Added tests/yield.test.ts, tests/swap-advanced.test.ts, tests/real-world.test.ts
-- Added e2e/sentinel_privacy.spec.ts
+- Added e2e/cxn-arch-guardian_privacy.spec.ts
 
 Please review the security and sovereignty alignment.
