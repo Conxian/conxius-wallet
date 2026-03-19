@@ -26,6 +26,7 @@ export const sanitizePrompt = (
   // 1. Redact BIP-39 Mnemonics (12-24 words)
   // Supports varied separators (spaces, hyphens, underscores, dots, digits) for defense-in-depth.
   const mnemonicRegex = /(?<![a-zA-Z0-9])(([a-z]{3,}[\s\W_0-9]+){11,23}[a-z]{3,})(?![a-zA-Z0-9])/gi;
+
   sanitized = sanitized.replace(mnemonicRegex, (match) => {
     const id = `[MNEMONIC_${generateRandomString(4)}]`;
     redactionMap[id] = match;
@@ -122,6 +123,16 @@ export const sanitizePrompt = (
     return id;
   });
 
+  // 13. Redact mashed mnemonics (last pass to avoid over-matching technical identifiers)
+  const mashedMnemonicRegex = /(?<![a-zA-Z0-9])([a-z]{3,}){12}(?![a-zA-Z0-9])/gi;
+  sanitized = sanitized.replace(mashedMnemonicRegex, (match) => {
+    // Only redact if it doesn't look like a redaction placeholder
+    if (match.startsWith('[') && match.includes('_') && match.endsWith(']')) return match;
+    const id = `[MNEMONIC_${generateRandomString(4)}]`;
+    redactionMap[id] = match;
+    return id;
+  });
+
   return { sanitized, redactionMap };
 };
 
@@ -173,14 +184,25 @@ export const rehydrateResponse = (
   const ids = Object.keys(redactionMap);
   if (ids.length === 0) return text;
 
+  // Normalize map keys to uppercase for case-insensitive lookup
+  const normalizedMap: Record<string, string> = {};
+  for (const key of ids) {
+    normalizedMap[key.toUpperCase()] = redactionMap[key];
+  }
+
   // Single-pass rehydration: Prevents double-substitution and improves performance.
   // Escapes special regex characters in the redaction IDs.
+  // Using 'gi' for case-insensitive rehydration to handle AI variations.
   const pattern = new RegExp(
     ids.map((id) => id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"),
-    "g",
+    "gi",
   );
 
-  return text.replace(pattern, (matched) => redactionMap[matched] || matched);
+  return text.replace(pattern, (matched) => {
+    // Normalizing lookup to handle case-insensitive matches.
+    const key = matched.toUpperCase();
+    return normalizedMap[key] || matched;
+  });
 };
 
 /**
