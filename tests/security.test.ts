@@ -30,10 +30,10 @@ describe('Security: Error Sanitization', () => {
   });
 
   it('should truncate very long error messages', () => {
-    const longMsg = 'A'.repeat(200);
+    const longMsg = 'Safe Message: ' + '1'.repeat(200);
     const sanitized = sanitizeError(longMsg);
     expect(sanitized.length).toBeLessThanOrEqual(100);
-    expect(sanitized).toBe('A'.repeat(100));
+    expect(sanitized).toBe(('Safe Message: ' + '1'.repeat(200)).substring(0, 100));
   });
 
   it('should return default message for null or empty input', () => {
