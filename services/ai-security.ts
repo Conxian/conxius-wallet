@@ -51,8 +51,8 @@ export const sanitizePrompt = (
     return id;
   });
 
-  // 4. Redact Transaction IDs / Private Keys / Node IDs (64 or 66-char hex)
-  const hexRegex = /(?<![a-zA-Z0-9])((?:0x)?[a-fA-F0-9]{64,66})(?![a-zA-Z0-9])/gi;
+  // 4. Redact Transaction IDs / Private Keys / Node IDs / 64-byte Seeds (64, 66, or 128-char hex)
+  const hexRegex = /(?<![a-zA-Z0-9])((?:0x)?(?:[a-fA-F0-9]{64,66}|[a-fA-F0-9]{128}))(?![a-zA-Z0-9])/gi;
   sanitized = sanitized.replace(hexRegex, (match) => {
     const id = `[HEX_SEC_${generateRandomString(4)}]`;
     redactionMap[id] = match;
