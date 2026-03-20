@@ -213,7 +213,8 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
   const sensitivePatterns = [
     /stack/i, /at /i, /node_modules/i, /(?<![a-zA-Z0-9])0x[a-fA-F0-9]{40}(?![a-zA-Z0-9])/i,
     /rpc/i, /internal/i, /database/i, /query/i, /connect/i, /__/,
-    /(?<![a-zA-Z0-9])([a-z]{3,}[\s\W_0-9]+){11,23}[a-z]{3,}(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])(([a-z]{3,}[\s\W_0-9]+){11,23}[a-z]{3,})(?![a-zA-Z0-9])/i,
+    /(?<![a-zA-Z0-9])([a-z]{3,}){12}(?![a-zA-Z0-9])/i,
     /(?<![a-zA-Z0-9])(0x)?[a-fA-F0-9]{64,66}(?![a-zA-Z0-9])/i,
     /(?<![a-zA-Z0-9])([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})(?![a-zA-Z0-9])/i,
     /(?<![a-zA-Z0-9])(bc1[qp][a-z0-9]{33,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})(?![a-zA-Z0-9])/i,
