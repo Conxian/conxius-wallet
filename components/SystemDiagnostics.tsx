@@ -150,7 +150,7 @@ const SystemDiagnostics: React.FC = () => {
                     {isGeneratingReport ? (
                        <div className="flex flex-col items-center justify-center py-12 gap-4 text-orange-500">
                           <Loader2 size={32} className="animate-spin" />
-                          <span className="text-[10px] font-black uppercase tracking-widest animate-pulse">cxn-arch-guardian Synthesizing Summary...</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest animate-pulse">Nakamoto-Guardian Synthesizing Summary...</span>
                        </div>
                     ) : aiReport ? (
                        <div className="bg-zinc-950/50 p-6 rounded-2xl border border-zinc-900 animate-in fade-in">

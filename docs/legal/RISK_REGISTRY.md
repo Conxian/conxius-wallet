@@ -112,12 +112,12 @@ The Gateway acts as a portal for institutional users to interact with their mobi
 * **Description:** Malicious payload from Yield/Swap aggregator or false Oracle attestation for DLC.
 * **Mitigation:**
     * **WYSIWYS Enforced:** Users see raw payload before signing.
-    * **Local Sanitization:** cxn-arch-guardian AI audits payloads for known exploit patterns.
+    * **Local Sanitization:** Nakamoto-Guardian AI audits payloads for known exploit patterns.
     * **Redundant Oracles:** DLCs prioritize multi-oracle attestations.
 
 ## 4. Aggregator & Oracle Risks (v1.6.0)
 * **Description:** Malicious payload from Yield/Swap aggregator or false Oracle attestation for DLC.
 * **Mitigation:**
     * **WYSIWYS Enforced:** Users see raw payload before signing.
-    * **Local Sanitization:** cxn-arch-guardian AI audits payloads for known exploit patterns.
+    * **Local Sanitization:** Nakamoto-Guardian AI audits payloads for known exploit patterns.
     * **Redundant Oracles:** DLCs prioritize multi-oracle attestations.
