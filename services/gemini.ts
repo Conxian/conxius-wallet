@@ -27,7 +27,7 @@ export const generateReleaseNotes = async (version: string) => {
   const prompt = `Generate a high-density, professional 'Cypherpunk' style release report for Conxius Wallet SVN ${version}.
   Highlight:
   - The transition to BSL 1.1 Licensing.
-  - Integrated System Health cxn-arch-guardian.
+  - Integrated System Health Nakamoto-Guardian.
   - Native Wormhole NTT Bridge stabilization.
   - Sovereign Studio expansion (Ordinals/Runes).
   - DAO Bounty Integration for community devs.
@@ -47,7 +47,7 @@ export const getSystemHealthSummary = async (testResults: any[]) => {
 
   return callAi(prompt, {
     model: 'gemini-1.5-flash',
-    systemInstruction: "You are the Conxius cxn-arch-guardian System."
+    systemInstruction: "You are the Conxius Nakamoto-Guardian System."
   });
 };
 

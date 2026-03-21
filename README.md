@@ -28,7 +28,7 @@ Conxius is a non-custodial, "Sovereign-First" financial command center for the f
 - **Mobile Enclave**: Native Kotlin implementation of TEE-backed AES and RSA providers.
 - **Persistent Crypto Worker**: Background TypeScript environment for secure, session-level state management.
 - **Sovereign-First RPC**: Prioritizes user-defined custom nodes (Bitcoin Core, Stacks, etc.) over public infrastructure.
-- **cxn-arch-guardian AI**: Local privacy filter and intent detector enforcing Zero Secret Egress.
+- **Nakamoto-Guardian AI**: Local privacy filter and intent detector enforcing Zero Secret Egress.
 
 ## 🧪 Development
 
