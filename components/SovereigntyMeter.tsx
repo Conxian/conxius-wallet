@@ -53,19 +53,19 @@ const SovereigntyMeter: React.FC = () => {
   };
 
   return (
-    <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] p-6 space-y-6 shadow-xl relative overflow-hidden group">
+    <div className="bg-off-white/40 border border-border rounded-[2rem] p-6 space-y-6 shadow-xl relative overflow-hidden group">
       <div className={`absolute -top-10 -right-10 w-32 h-32 blur-3xl rounded-full transition-all ${isHotWallet ? 'bg-orange-500/5' : 'bg-green-500/10'}`} />
       
       <div className="flex items-center justify-between relative z-10">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-zinc-950 border border-orange-500/30 rounded-2xl flex items-center justify-center shadow-inner group-hover:border-orange-500/50 transition-all">
-             {rankName === 'Sovereign' ? <Crown className="text-orange-500 fill-current" size={24} /> : <Medal className="text-orange-500" size={24} />}
+          <div className="w-12 h-12 bg-white border border-orange-500/30 rounded-2xl flex items-center justify-center shadow-inner group-hover:border-orange-500/50 transition-all">
+             {rankName === 'Sovereign' ? <Crown className="text-accent-earth fill-current" size={24} /> : <Medal className="text-accent-earth" size={24} />}
           </div>
           <div>
-            <h3 className="font-bold text-sm text-zinc-100 flex items-center gap-2">
+            <h3 className="font-bold text-sm text-brand-deep flex items-center gap-2">
               Pass Tier: {rankName}
             </h3>
-            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">NFT Evolution Rank</p>
+            <p className="text-[10px] text-brand-earth font-bold uppercase tracking-widest">NFT Evolution Rank</p>
           </div>
         </div>
         <div className="text-right">
@@ -76,10 +76,10 @@ const SovereigntyMeter: React.FC = () => {
       <div className="space-y-4">
         <div className="space-y-2">
            <div className="flex justify-between items-end">
-              <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Sovereignty Score</span>
-              <span className="text-[10px] font-mono font-bold text-orange-500">{totalXP > 0 ? Math.round((currentXP/totalXP)*100) : 0}%</span>
+              <span className="text-[10px] font-black uppercase text-brand-earth tracking-widest">Sovereignty Score</span>
+              <span className="text-[10px] font-mono font-bold text-accent-earth">{totalXP > 0 ? Math.round((currentXP/totalXP)*100) : 0}%</span>
            </div>
-           <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-900 p-0.5">
+           <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-border p-0.5">
               <div
                 className="h-full bg-linear-to-r from-orange-600 to-yellow-500 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(249,115,22,0.4)]"
                 style={{ width: `${totalXP > 0 ? (currentXP / totalXP) * 100 : 0}%` }}
@@ -89,10 +89,10 @@ const SovereigntyMeter: React.FC = () => {
 
         <div className="space-y-2">
            <div className="flex justify-between items-end">
-              <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Privacy Score</span>
+              <span className="text-[10px] font-black uppercase text-brand-earth tracking-widest">Privacy Score</span>
               <span className="text-[10px] font-mono font-bold text-emerald-500">{privacyResult.score}%</span>
            </div>
-           <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-900 p-0.5">
+           <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-border p-0.5">
               <div
                 className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
                 style={{ width: `${privacyResult.score}%` }}
@@ -103,7 +103,7 @@ const SovereigntyMeter: React.FC = () => {
 
       {isHotWallet && (
          <div className="bg-orange-500/10 border border-orange-500/20 p-3 rounded-xl flex items-start gap-3">
-            <AlertTriangle size={16} className="text-orange-500 shrink-0 mt-0.5" />
+            <AlertTriangle size={16} className="text-accent-earth shrink-0 mt-0.5" />
             <div>
                <p className="text-[10px] font-bold text-orange-200">Sovereignty Risk: Hot Wallet</p>
                <p className="text-[9px] text-orange-200/70 leading-relaxed">
@@ -115,19 +115,19 @@ const SovereigntyMeter: React.FC = () => {
 
       <div className="space-y-3">
       {nativeSecurity && (
-         <div className="bg-zinc-950/50 border border-zinc-800 p-3 rounded-2xl space-y-2">
+         <div className="bg-white/50 border border-border p-3 rounded-2xl space-y-2">
             <div className="flex items-center justify-between">
-               <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest flex items-center gap-1.5">
-                  <Shield size={10} className={nativeSecurity.level !== "SOFTWARE" ? "text-orange-500" : "text-zinc-600"} />
+               <span className="text-[10px] font-black uppercase text-brand-earth tracking-widest flex items-center gap-1.5">
+                  <Shield size={10} className={nativeSecurity.level !== "SOFTWARE" ? "text-accent-earth" : "text-brand-earth"} />
                   Hardware Security
                </span>
-               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${nativeSecurity.isStrongBox ? "bg-orange-500/20 text-orange-500" : "bg-zinc-800 text-zinc-400"}`}>
+               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${nativeSecurity.isStrongBox ? "bg-orange-500/20 text-accent-earth" : "bg-border text-brand-earth"}`}>
                   {nativeSecurity.level}
                </span>
             </div>
             {integrity && (
                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest flex items-center gap-1.5">
+                  <span className="text-[10px] font-black uppercase text-brand-earth tracking-widest flex items-center gap-1.5">
                      <CheckCircle2 size={10} className={integrity.isSecure ? "text-emerald-500" : "text-red-500"} />
                      Device Integrity
                   </span>
@@ -138,23 +138,23 @@ const SovereigntyMeter: React.FC = () => {
             )}
          </div>
       )}
-        <p className="text-[10px] font-black uppercase text-zinc-600 tracking-widest border-b border-zinc-900 pb-2">Active Quests</p>
+        <p className="text-[10px] font-black uppercase text-brand-earth tracking-widest border-b border-border pb-2">Active Quests</p>
         {ACTIVE_QUESTS.filter(q => !q.completed).slice(0, 3).map((quest) => (
           <div
             key={quest.id}
             onClick={() => {
                if (quest.id === 'backup_verified') setShowBackupAudit(true);
             }}
-            className="flex items-center justify-between group cursor-pointer p-3 hover:bg-zinc-800/50 rounded-xl transition-all border border-transparent hover:border-zinc-800"
+            className="flex items-center justify-between group cursor-pointer p-3 hover:bg-border/50 rounded-xl transition-all border border-transparent hover:border-border"
           >
             <div className="flex items-center gap-3">
-              <Star size={14} className="text-zinc-700 group-hover:text-orange-500 transition-colors" />
+              <Star size={14} className="text-brand-earth group-hover:text-accent-earth transition-colors" />
               <div>
-                <span className="text-xs text-zinc-300 block">{quest.label}</span>
-                <span className="text-[8px] font-black uppercase text-zinc-600">{quest.category}</span>
+                <span className="text-xs text-brand-deep block">{quest.label}</span>
+                <span className="text-[8px] font-black uppercase text-brand-earth">{quest.category}</span>
               </div>
             </div>
-            <span className="text-[10px] font-mono font-bold text-orange-500/60 group-hover:text-orange-500">+{quest.points} XP</span>
+            <span className="text-[10px] font-mono font-bold text-accent-earth/60 group-hover:text-accent-earth">+{quest.points} XP</span>
           </div>
         ))}
         {ACTIVE_QUESTS.length > 0 && ACTIVE_QUESTS.every(q => q.completed) && (
@@ -165,7 +165,7 @@ const SovereigntyMeter: React.FC = () => {
       <button 
         onClick={handleUpgradePass}
         disabled={isUpgrading}
-        className="w-full py-3 bg-zinc-800 hover:bg-orange-600 text-zinc-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+        className="w-full py-3 bg-border hover:bg-accent-earth text-brand-earth hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
       >
         {isUpgrading ? <Zap size={14} className="animate-spin" /> : <ArrowRight size={14} />}
         {isUpgrading ? 'Minting Pass...' : 'Upgrade My Pass'}

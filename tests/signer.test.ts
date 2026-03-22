@@ -183,7 +183,7 @@ describe('signer service', () => {
   describe('requestEnclaveSignature', () => {
     it('should throw error when master seed is missing', async () => {
       const request: SignRequest = {
-        type: 'transaction',
+        type: 'psbt',
         layer: 'Mainnet',
         payload: { test: 'data' },
         description: 'Test transaction'
@@ -286,7 +286,7 @@ describe('Enclave Layer Signing (Native)', () => {
     it('should call signNative with correct network for RGB', async () => {
       const { signNative } = await import('../services/enclave-storage');
       const request: SignRequest = {
-        type: 'transaction',
+        type: 'psbt',
         layer: 'RGB',
         payload: { hash: '00'.repeat(32) },
         description: 'RGB Sign'
@@ -311,7 +311,7 @@ describe('Enclave Layer Signing (Native)', () => {
     it('should call signNative with sequential path for StateChain', async () => {
       const { signNative } = await import('../services/enclave-storage');
       const request: SignRequest = {
-        type: 'transaction',
+        type: 'psbt',
         layer: 'StateChain',
         payload: { hash: '00'.repeat(32), index: 5 },
         description: 'StateChain Sign'
