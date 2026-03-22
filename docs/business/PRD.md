@@ -70,3 +70,15 @@ The project is transitioning to a **pure native Android architecture** (Kotlin/R
 ---
 
 *Verified by OpenSpec Alignment Design.*
+
+---
+
+## 5. UI/UX STANDARDIZATION (Sovereign Earthy)
+
+As of v1.6.0, all Conxian Protocol interfaces (Conxius Wallet, Gateway, Explorer) MUST adhere to the **Sovereign Earthy** visual identity.
+
+### 5.1. Design Ethos
+- **Foundational Palette**: 60% Ivory (#FDFBF7), 30% Pure White (#FFFFFF), 10% Earth/Brand Tones.
+- **Institutional Clarity**: High-contrast dark typography against bright surfaces to ensure financial data legibility and reduce cognitive fatigue.
+- **Atmospheric Cues**: Hero sections and primary brand headers may utilize full-bleed deep brand colors to establish presence.
+- **Interaction Model**: Use structural spacing and micro-borders (1px) for depth, minimizing heavy drop shadows to maintain a crisp, professional aesthetic.

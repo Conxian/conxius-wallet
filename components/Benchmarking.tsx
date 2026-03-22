@@ -52,12 +52,12 @@ const Benchmarking: React.FC = () => {
       <header className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Ecosystem Benchmark</h2>
-          <p className="text-zinc-500 text-sm">Competitive intelligence vs. Industry Standards.</p>
+          <p className="text-brand-earth text-sm">Competitive intelligence vs. Industry Standards.</p>
         </div>
         <div className="flex items-center gap-3">
-           <div className="bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl flex items-center gap-2">
-              <Trophy size={16} className="text-orange-500" />
-              <span className="text-[10px] font-black uppercase text-zinc-400">Status: Dominant</span>
+           <div className="bg-off-white border border-border px-4 py-2 rounded-xl flex items-center gap-2">
+              <Trophy size={16} className="text-accent-earth" />
+              <span className="text-[10px] font-black uppercase text-brand-earth">Status: Dominant</span>
            </div>
         </div>
       </header>
@@ -65,9 +65,9 @@ const Benchmarking: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           {/* Radar Chart Section */}
-          <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-8">
+          <div className="bg-off-white/40 border border-border rounded-[2.5rem] p-8">
             <h3 className="text-lg font-bold mb-8 flex items-center gap-2">
-              <BarChart3 size={20} className="text-zinc-500" />
+              <BarChart3 size={20} className="text-brand-earth" />
               Sovereignty Moat Visualization
             </h3>
             <div className="h-80 w-full">
@@ -86,32 +86,32 @@ const Benchmarking: React.FC = () => {
           </div>
 
           {/* Comparison Table */}
-          <div className="bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden">
-            <div className="p-6 border-b border-zinc-900 bg-zinc-900/20">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500">Feature Parity Matrix</h3>
+          <div className="bg-white border border-border rounded-[2.5rem] overflow-hidden">
+            <div className="p-6 border-b border-border bg-off-white/20">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-brand-earth">Feature Parity Matrix</h3>
             </div>
             <table className="w-full text-left">
-              <thead className="bg-zinc-900/10 text-[10px] font-black uppercase text-zinc-600 tracking-widest">
+              <thead className="bg-off-white/10 text-[10px] font-black uppercase text-brand-earth tracking-widest">
                 <tr>
                   <th className="px-6 py-4">Capability</th>
-                  <th className="px-6 py-4 text-orange-500">Conxius</th>
+                  <th className="px-6 py-4 text-accent-earth">Conxius</th>
                   <th className="px-6 py-4">Legacy</th>
                   <th className="px-6 py-4">General Web3</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-900">
+              <tbody className="divide-y divide-off-white">
                 {COMPARISON_METRICS.map((m, i) => (
-                  <tr key={i} className="hover:bg-zinc-900/20 transition-colors">
-                    <td className="px-6 py-5 text-xs font-medium text-zinc-300">{m.feature}</td>
+                  <tr key={i} className="hover:bg-off-white/20 transition-colors">
+                    <td className="px-6 py-5 text-xs font-medium text-brand-deep">{m.feature}</td>
                     <td className="px-6 py-5 text-xs">
                       {typeof m.conxius === 'boolean' ? (
-                        <div className="w-5 h-5 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-500">
+                        <div className="w-5 h-5 bg-orange-500/20 rounded-full flex items-center justify-center text-accent-earth">
                           <Zap size={10} fill="currentColor" />
                         </div>
-                      ) : <span className="text-orange-500 font-bold">{m.conxius}</span>}
+                      ) : <span className="text-accent-earth font-bold">{m.conxius}</span>}
                     </td>
-                    <td className="px-6 py-5 text-xs text-zinc-600">{m.legacy ? 'Yes' : 'No'}</td>
-                    <td className="px-6 py-5 text-xs text-zinc-600">{m.web3.toString()}</td>
+                    <td className="px-6 py-5 text-xs text-brand-earth">{m.legacy ? 'Yes' : 'No'}</td>
+                    <td className="px-6 py-5 text-xs text-brand-earth">{m.web3.toString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -121,7 +121,7 @@ const Benchmarking: React.FC = () => {
 
         <div className="space-y-6">
           {/* Strategic Advice Panel */}
-          <div className="bg-orange-600 border border-orange-500 rounded-[2.5rem] p-8 text-white relative overflow-hidden group shadow-2xl shadow-orange-600/20">
+          <div className="bg-accent-earth border border-orange-500 rounded-[2.5rem] p-8 text-white relative overflow-hidden group shadow-2xl shadow-orange-600/20">
             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
                <Target size={100} />
             </div>
@@ -140,34 +140,34 @@ const Benchmarking: React.FC = () => {
                   <div className="whitespace-pre-wrap">{advice}</div>
                 )}
               </div>
-              <button onClick={getStrategicAdvice} className="mt-8 w-full bg-white text-orange-600 font-bold py-3 rounded-2xl text-[10px] uppercase tracking-widest hover:bg-zinc-100 transition-all flex items-center justify-center gap-2">
+              <button onClick={getStrategicAdvice} className="mt-8 w-full bg-white text-orange-600 font-bold py-3 rounded-2xl text-[10px] uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2">
                 <RefreshCw size={14} /> Refresh Analysis
               </button>
             </div>
           </div>
 
           {/* Risk Tracker */}
-          <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-8 space-y-6">
-            <h4 className="font-bold text-sm flex items-center gap-2 text-zinc-400">
+          <div className="bg-off-white/40 border border-border rounded-[2.5rem] p-8 space-y-6">
+            <h4 className="font-bold text-sm flex items-center gap-2 text-brand-earth">
               <ShieldAlert size={18} className="text-yellow-500" />
               Industry Risk Watch
             </h4>
             <div className="space-y-4">
-              <div className="p-4 bg-zinc-950 border border-zinc-900 rounded-2xl space-y-2">
+              <div className="p-4 bg-white border border-border rounded-2xl space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase">CEX Liquidity Risk</span>
+                  <span className="text-[10px] font-bold text-brand-earth uppercase">CEX Liquidity Risk</span>
                   <span className="text-[10px] font-bold text-red-500 uppercase">High</span>
                 </div>
-                <div className="w-full h-1 bg-zinc-900 rounded-full">
+                <div className="w-full h-1 bg-off-white rounded-full">
                   <div className="w-[85%] h-full bg-red-500" />
                 </div>
               </div>
-              <div className="p-4 bg-zinc-950 border border-zinc-900 rounded-2xl space-y-2">
+              <div className="p-4 bg-white border border-border rounded-2xl space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Sovereign Moat Depth</span>
+                  <span className="text-[10px] font-bold text-brand-earth uppercase">Sovereign Moat Depth</span>
                   <span className="text-[10px] font-bold text-green-500 uppercase">Deep</span>
                 </div>
-                <div className="w-full h-1 bg-zinc-900 rounded-full">
+                <div className="w-full h-1 bg-off-white rounded-full">
                   <div className="w-[98%] h-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
                 </div>
               </div>

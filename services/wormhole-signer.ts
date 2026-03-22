@@ -49,7 +49,7 @@ export class ConxiusWormholeSigner {
       // Request signature via AppContext authorization flow
       // This ensures biometrics/PIN are handled correctly by the central Enclave manager
       const result = await this._authCallback({
-          type: 'transaction',
+          type: 'psbt',
           layer: layer as any, // Cast to match signer types
           payload: transaction,
           description: description || `Sign ${this._chain} Transaction`
