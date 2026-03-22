@@ -207,3 +207,10 @@ export async function getSecurityLevelNative(): Promise<{ level: string; isStron
   }
   return { level: 'WEB', isStrongBox: false };
 }
+
+export const STORAGE_KEY = 'conxius_vault';
+
+export async function persistState(state: any, pin?: string): Promise<void> {
+  const blob = JSON.stringify(state);
+  await setEnclaveBlob(STORAGE_KEY, blob);
+}

@@ -118,3 +118,8 @@ permalink: /Nakamoto-Guardian
 **Vulnerability:** Redaction regexes using standard word boundaries (`\b`) failed to identify sensitive data (API keys, EVM addresses, etc.) when they were part of underscored identifiers like `api_key_sk-...` or `address_0x...`. This is because JavaScript's `\b` treats underscores as word characters.
 **Learning:** Standard word boundaries are insufficient for security-critical redaction in technical environments where underscores are common delimiters. Security filters must use lookarounds that specifically exclude alphanumeric characters but allow other delimiters like underscores to be treated as boundaries.
 **Prevention:** Replace `\b` with negative lookarounds `(?<![a-zA-Z0-9])` and `(?![a-zA-Z0-9])` in all PII and secret redaction regexes to ensure coverage across varied identifier formats.
+
+## UI/UX Alignment: Sovereign Earthy (v1.6.0)
+- **Vulnerability**: Legacy "Dark Mode" fatigue in financial dashboards.
+- **Learning**: Implementing an Ivory (#FDFBF7) base with White (#FFFFFF) operational surfaces significantly improves data legibility and institutional trust.
+- **Prevention**: Enforce the 60-30-10 palette rule in AGENTS.md to prevent "style drift" during feature expansion.

@@ -140,25 +140,25 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
     <div className="p-8 space-y-10 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-2">
-          <h2 className="text-4xl font-black italic uppercase tracking-tighter text-zinc-100 flex items-center gap-3">
+          <h2 className="text-4xl font-black italic uppercase tracking-tighter text-brand-deep flex items-center gap-3">
             <Shield className="text-purple-500" size={36} />
             {MOCK_CITADEL.name}
           </h2>
-          <p className="text-zinc-500 text-sm italic">"{MOCK_CITADEL.motto}"</p>
+          <p className="text-brand-earth text-sm italic">"{MOCK_CITADEL.motto}"</p>
         </div>
         <div className="flex gap-4">
-           <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl px-6 py-4">
-              <p className="text-[10px] font-black uppercase text-zinc-500 mb-1">Ecosystem Alignment</p>
+           <div className="bg-off-white/50 border border-border rounded-2xl px-6 py-4">
+              <p className="text-[10px] font-black uppercase text-brand-earth mb-1">Ecosystem Alignment</p>
               <p className="text-xl font-bold text-purple-100 font-mono">{MOCK_CITADEL.alignmentScore}%</p>
            </div>
-           <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl px-6 py-4">
-              <p className="text-[10px] font-black uppercase text-zinc-500 mb-1">Members</p>
-              <p className="text-xl font-bold text-zinc-100 font-mono">{MOCK_CITADEL.membersCount}</p>
+           <div className="bg-off-white/50 border border-border rounded-2xl px-6 py-4">
+              <p className="text-[10px] font-black uppercase text-brand-earth mb-1">Members</p>
+              <p className="text-xl font-bold text-brand-deep font-mono">{MOCK_CITADEL.membersCount}</p>
            </div>
         </div>
       </div>
 
-      <div className="flex gap-2 p-1.5 bg-zinc-900/50 border border-zinc-800 rounded-2xl w-fit">
+      <div className="flex gap-2 p-1.5 bg-off-white/50 border border-border rounded-2xl w-fit">
          {tabs.map((tab) => (
             <button
                key={tab.id}
@@ -166,7 +166,7 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                   activeTab === tab.id 
                      ? 'bg-purple-600 text-white shadow-lg' 
-                     : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
+                     : 'text-brand-earth hover:text-brand-deep hover:bg-border'
                }`}
             >
                <tab.icon size={14} />
@@ -180,12 +180,12 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
             
             {activeTab === 'pool' && (
                <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
-                  <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-10 relative overflow-hidden group shadow-2xl">
+                  <div className="bg-off-white/40 border border-border rounded-[2.5rem] p-10 relative overflow-hidden group shadow-2xl">
                      <div className="relative z-10 flex flex-col gap-8">
                         <div>
-                           <p className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] mb-4">Batched Stacking Protocol (PoX-4)</p>
-                           <h3 className="text-5xl font-bold text-zinc-100 font-mono tracking-tighter mb-2">
-                              {MOCK_CITADEL.pool.totalStacked.toLocaleString()} <span className="text-lg text-zinc-500">STX Pooled</span>
+                           <p className="text-[10px] font-black uppercase text-brand-earth tracking-[0.2em] mb-4">Batched Stacking Protocol (PoX-4)</p>
+                           <h3 className="text-5xl font-bold text-brand-deep font-mono tracking-tighter mb-2">
+                              {MOCK_CITADEL.pool.totalStacked.toLocaleString()} <span className="text-lg text-brand-earth">STX Pooled</span>
                            </h3>
                         </div>
                         <button className="w-full md:w-64 px-6 py-4 bg-purple-600 hover:bg-purple-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 active:scale-[0.98]">
@@ -200,34 +200,34 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
                   <div className="grid grid-cols-1 gap-4">
                      {bounties.map((bounty) => (
-                        <div key={bounty.id} className={`p-8 bg-zinc-950 border border-zinc-900 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:border-orange-500/30 transition-all ${selectedBounty?.id === bounty.id ? 'border-orange-500/50 ring-1 ring-orange-500/20' : ''}`}>
+                        <div key={bounty.id} className={`p-8 bg-white border border-border rounded-[2.5rem] flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:border-orange-500/30 transition-all ${selectedBounty?.id === bounty.id ? 'border-orange-500/50 ring-1 ring-orange-500/20' : ''}`}>
                            <div className="flex items-center gap-6">
-                              <div className={`w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center transition-all ${bounty.status === 'Open' ? 'text-green-500' : 'text-zinc-700'}`}>
+                              <div className={`w-14 h-14 rounded-2xl bg-off-white border border-border flex items-center justify-center transition-all ${bounty.status === 'Open' ? 'text-green-500' : 'text-brand-earth'}`}>
                                  {bounty.category === 'Core' ? <Terminal size={24} /> : bounty.category === 'UI/UX' ? <Sparkles size={24} /> : <Lock size={24} />}
                               </div>
                               <div>
                                  <div className="flex items-center gap-3">
-                                    <span className="text-[9px] font-black uppercase text-zinc-600 tracking-widest bg-zinc-900 px-2 py-0.5 rounded">v1.2.0 Enhancement</span>
+                                    <span className="text-[9px] font-black uppercase text-brand-earth tracking-widest bg-off-white px-2 py-0.5 rounded">v1.2.0 Enhancement</span>
                                     <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${
                                        bounty.difficulty === 'Elite' ? 'text-red-500 border-red-500/20' : 
-                                       bounty.difficulty === 'Intermediate' ? 'text-orange-500 border-orange-500/20' : 
+                                       bounty.difficulty === 'Intermediate' ? 'text-accent-earth border-orange-500/20' :
                                        'text-green-500 border-green-500/20'
                                     }`}>{bounty.difficulty}</span>
-                                    {bounty.status === 'Claimed' && <span className="text-[9px] font-black uppercase text-zinc-100 bg-orange-600 px-2 py-0.5 rounded">Claimed</span>}
+                                    {bounty.status === 'Claimed' && <span className="text-[9px] font-black uppercase text-brand-deep bg-accent-earth px-2 py-0.5 rounded">Claimed</span>}
                                  </div>
-                                 <h4 className="text-lg font-bold text-zinc-100 mt-1">{bounty.title}</h4>
-                                 <p className="text-xs text-zinc-500 mt-1">{bounty.description}</p>
+                                 <h4 className="text-lg font-bold text-brand-deep mt-1">{bounty.title}</h4>
+                                 <p className="text-xs text-brand-earth mt-1">{bounty.description}</p>
                               </div>
                            </div>
                            <div className="flex items-center gap-6 w-full md:w-auto justify-between border-t md:border-t-0 pt-4 md:pt-0">
                               <div className="text-right">
-                                 <p className="text-[10px] font-black uppercase text-zinc-600">Reward</p>
-                                 <p className="text-lg font-mono font-bold text-orange-500">{bounty.reward}</p>
+                                 <p className="text-[10px] font-black uppercase text-brand-earth">Reward</p>
+                                 <p className="text-lg font-mono font-bold text-accent-earth">{bounty.reward}</p>
                               </div>
                               <button 
                                  disabled={bounty.status === 'Claimed'}
                                  onClick={() => auditBounty(bounty)}
-                                 className="px-6 py-3 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 text-zinc-300 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-800 flex items-center gap-2"
+                                 className="px-6 py-3 bg-off-white hover:bg-border disabled:opacity-50 text-brand-deep rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-border flex items-center gap-2"
                               >
                                  <Search size={14} /> Audit & Claim
                               </button>
@@ -237,21 +237,21 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                   </div>
                   
                   {selectedBounty && (
-                     <div className="bg-zinc-900/40 border border-orange-500/30 rounded-[3rem] p-10 space-y-8 animate-in zoom-in duration-300 relative overflow-hidden">
+                     <div className="bg-off-white/40 border border-orange-500/30 rounded-[3rem] p-10 space-y-8 animate-in zoom-in duration-300 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-8 opacity-[0.03] rotate-12">
                            <Award size={200} />
                         </div>
                         <div className="relative z-10 space-y-6">
                            <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                 <div className="p-3 bg-orange-500/10 rounded-2xl text-orange-500">
+                                 <div className="p-3 bg-orange-500/10 rounded-2xl text-accent-earth">
                                     <Hammer size={24} />
                                  </div>
                                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">Bounty Protocol Audit</h3>
                               </div>
                               <button 
                                 onClick={() => setSelectedBounty(null)} 
-                                className="p-2 text-zinc-600 hover:text-white transition-colors"
+                                className="p-2 text-brand-earth hover:text-white transition-colors"
                                 aria-label="Close"
                                 title="Close"
                               >
@@ -259,14 +259,14 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                               </button>
                            </div>
 
-                           <div className="bg-zinc-950 border border-zinc-900 rounded-[2rem] p-8 min-h-[300px] relative">
+                           <div className="bg-white border border-border rounded-[2rem] p-8 min-h-[300px] relative">
                               {isAuditing ? (
                                  <div className="flex flex-col items-center justify-center h-full gap-4 py-20">
-                                    <Loader2 className="animate-spin text-orange-500" size={32} />
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 animate-pulse">Sovereign Nakamoto-Guardian Auditing Codebase...</p>
+                                    <Loader2 className="animate-spin text-accent-earth" size={32} />
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-earth animate-pulse">Sovereign Nakamoto-Guardian Auditing Codebase...</p>
                                  </div>
                               ) : (
-                                 <div className="prose prose-invert max-w-none text-xs leading-relaxed text-zinc-400 font-mono whitespace-pre-wrap selection:bg-orange-500/40">
+                                 <div className="prose prose-invert max-w-none text-xs leading-relaxed text-brand-earth font-mono whitespace-pre-wrap selection:bg-orange-500/40">
                                     {bountyAudit}
                                  </div>
                               )}
@@ -274,11 +274,11 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                            
                            {!isAuditing && (
                               <div className="flex gap-4">
-                                 <button onClick={handleClaim} className="flex-1 py-4 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 active:scale-[0.98]">
+                                 <button onClick={handleClaim} className="flex-1 py-4 bg-accent-earth hover:bg-accent-earth/90 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 active:scale-[0.98]">
                                     Initialize Work Channel
                                  </button>
                                  <button 
-                                    className="px-6 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-800"
+                                    className="px-6 py-4 bg-off-white hover:bg-border text-brand-earth rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-border"
                                     aria-label="Comment"
                                     title="Comment"
                                  >

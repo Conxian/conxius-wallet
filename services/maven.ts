@@ -66,7 +66,7 @@ export const createMavenTransfer = async (
 
         // 2. Request Enclave Signature
         const signResult = await requestEnclaveSignature({
-            type: 'transaction',
+            type: 'psbt',
             layer: 'Maven',
             payload: { hash: msgHash, ...payload },
             description: `Maven Transfer: ${amount} units`

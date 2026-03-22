@@ -56,37 +56,37 @@ const UTXOManager: React.FC = () => {
   const frozenSats = filteredUtxos.filter(u => u.isFrozen).reduce((acc, u) => acc + u.amount, 0);
 
   return (
-    <div className="bg-zinc-950 border border-zinc-800 rounded-[3rem] p-8 shadow-2xl space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-zinc-900 pb-8">
+    <div className="bg-white border border-border rounded-[3rem] p-8 shadow-2xl space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-border pb-8">
         <div>
-          <h2 className="text-3xl font-black tracking-tighter text-zinc-100 flex items-center gap-3 italic uppercase">
-            <Binary className="text-orange-500" />
+          <h2 className="text-3xl font-black tracking-tighter text-brand-deep flex items-center gap-3 italic uppercase">
+            <Binary className="text-accent-earth" />
             Coin Control Forge
           </h2>
-          <p className="text-zinc-500 text-sm italic mt-2">
+          <p className="text-brand-earth text-sm italic mt-2">
              Real-time indexer for {activeAddress?.slice(0, 12)}... UTXOs. 
           </p>
         </div>
         <div className="flex items-center gap-4">
-            <button onClick={loadUtxos} disabled={isLoading} className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-orange-500">
+            <button onClick={loadUtxos} disabled={isLoading} className="p-3 rounded-xl bg-off-white border border-border text-brand-earth hover:text-accent-earth">
                 <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
             </button>
                         {canSweep && (
                 <button
                     onClick={handleSweepDust}
-                    className="flex items-center gap-2 bg-orange-600/10 border border-orange-500/20 px-4 py-2 rounded-xl text-orange-500 hover:bg-orange-600 hover:text-white transition-all"
+                    className="flex items-center gap-2 bg-accent-earth/10 border border-orange-500/20 px-4 py-2 rounded-xl text-accent-earth hover:bg-accent-earth hover:text-white transition-all"
                 >
                     <Binary size={14} />
                     <span className="text-[10px] font-black uppercase tracking-widest">Sweep Dust</span>
                 </button>
             )}
-            <div className="bg-zinc-900/50 border border-zinc-800 px-6 py-4 rounded-2xl text-right min-w-[200px]">
-                <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Aggregate Liquid Satoshis</p>
+            <div className="bg-off-white/50 border border-border px-6 py-4 rounded-2xl text-right min-w-[200px]">
+                <p className="text-[10px] font-black uppercase text-brand-earth tracking-widest">Aggregate Liquid Satoshis</p>
                 <div className="flex items-baseline justify-end gap-2">
-                    <span className={`text-2xl font-mono font-bold text-zinc-100`}>
+                    <span className={`text-2xl font-mono font-bold text-brand-deep`}>
                         {(totalSats - frozenSats).toLocaleString()}
                     </span>
-                    <span className="text-xs font-bold text-orange-500">SATS</span>
+                    <span className="text-xs font-bold text-accent-earth">SATS</span>
                 </div>
             </div>
         </div>
@@ -103,15 +103,15 @@ const UTXOManager: React.FC = () => {
                autoCapitalize="off"
                spellCheck="false"
                placeholder="Search by TXID or Address..."
-               className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 pl-12 pr-4 font-mono text-sm text-zinc-200 focus:outline-none"
+               className="w-full bg-off-white border border-border rounded-2xl py-4 pl-12 pr-4 font-mono text-sm text-brand-deep focus:outline-none"
             />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-earth" size={18} />
          </div>
       </div>
 
       {isLoading ? (
-        <div className="py-20 flex flex-col items-center gap-4 text-zinc-600">
-            <Loader2 className="animate-spin text-orange-500" size={32} />
+        <div className="py-20 flex flex-col items-center gap-4 text-brand-earth">
+            <Loader2 className="animate-spin text-accent-earth" size={32} />
             <p className="text-[10px] font-black uppercase tracking-widest animate-pulse">Pulling Block Meta from Mempool...</p>
         </div>
       ) : (
@@ -120,13 +120,13 @@ const UTXOManager: React.FC = () => {
                 <div 
                 key={utxo.txid} 
                 className={`p-6 rounded-[2rem] border transition-all duration-300 group ${
-                    utxo.isFrozen ? 'bg-blue-900/10 border-blue-500/30' : 'bg-zinc-900/20 border-zinc-800'
+                    utxo.isFrozen ? 'bg-blue-900/10 border-blue-500/30' : 'bg-off-white/20 border-border'
                 }`}
                 >
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="flex items-center gap-5">
                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
-                            utxo.isFrozen ? 'bg-blue-500/10 border-blue-500/30 text-blue-500' : 'bg-zinc-950 border-zinc-800 text-zinc-500'
+                            utxo.isFrozen ? 'bg-blue-500/10 border-blue-500/30 text-blue-500' : 'bg-white border-border text-brand-earth'
                         }`}>
                             {utxo.isFrozen ? <Snowflake size={20} /> : <Binary size={20} />}
                         </div>
@@ -137,22 +137,22 @@ const UTXOManager: React.FC = () => {
                                 }`}>
                                     {utxo.privacyRisk} Risk
                                 </span>
-                                <span className="text-[9px] font-black uppercase text-zinc-700 bg-zinc-900 px-2 py-0.5 rounded">v84_legacy</span>
+                                <span className="text-[9px] font-black uppercase text-brand-earth bg-off-white px-2 py-0.5 rounded">v84_legacy</span>
                             </div>
-                            <p className="text-[10px] font-mono text-zinc-500 break-all">{utxo.txid}</p>
+                            <p className="text-[10px] font-mono text-brand-earth break-all">{utxo.txid}</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-6">
                         <div className="text-right">
-                            <p className="text-lg font-mono font-bold text-orange-500">{utxo.amount.toLocaleString()} sats</p>
-                                                        <p className="text-[9px] font-black uppercase text-zinc-600">{utxo.status}</p>
+                            <p className="text-lg font-mono font-bold text-accent-earth">{utxo.amount.toLocaleString()} sats</p>
+                                                        <p className="text-[9px] font-black uppercase text-brand-earth">{utxo.status}</p>
                             {utxo.status !== 'confirmed' && (
                                 <a
                                   href={'https://mempool.space/tx/' + utxo.txid}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-[8px] font-black uppercase text-orange-500 hover:text-orange-400 flex items-center justify-end gap-1 mt-1"
+                                  className="text-[8px] font-black uppercase text-accent-earth hover:text-orange-400 flex items-center justify-end gap-1 mt-1"
                                 >
                                   <Zap size={10} /> Turbo Boost
                                 </a>
@@ -161,7 +161,7 @@ const UTXOManager: React.FC = () => {
                         <button 
                             onClick={() => toggleFreeze(utxo.txid)}
                             className={`p-3 rounded-xl border transition-all ${
-                                utxo.isFrozen ? 'bg-blue-500 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-500'
+                                utxo.isFrozen ? 'bg-blue-500 text-white' : 'bg-off-white border-border text-brand-earth'
                             }`}
                         >
                             {utxo.isFrozen ? <Unlock size={16} /> : <Lock size={16} />}

@@ -103,11 +103,11 @@ const HandoffProtocol: React.FC = () => {
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-24">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black tracking-tighter text-zinc-100 flex items-center gap-3 italic uppercase">
-            <Rocket className="text-orange-500" />
+          <h2 className="text-3xl font-black tracking-tighter text-brand-deep flex items-center gap-3 italic uppercase">
+            <Rocket className="text-accent-earth" />
             Deploy Network
           </h2>
-          <p className="text-zinc-500 text-sm italic">Automated Flight Check & Mainnet Release Protocol.</p>
+          <p className="text-brand-earth text-sm italic">Automated Flight Check & Mainnet Release Protocol.</p>
         </div>
         <div className="flex items-center gap-4">
            {context?.state.isMainnetLive ? (
@@ -117,8 +117,8 @@ const HandoffProtocol: React.FC = () => {
              </div>
            ) : (
              <div className="bg-orange-500/10 border border-orange-500/20 px-6 py-2 rounded-2xl flex items-center gap-2">
-                <Activity size={16} className="text-orange-500 animate-pulse" />
-                <span className="text-xs font-black uppercase text-orange-500 tracking-widest">Testnet Mode</span>
+                <Activity size={16} className="text-accent-earth animate-pulse" />
+                <span className="text-xs font-black uppercase text-accent-earth tracking-widest">Testnet Mode</span>
              </div>
            )}
         </div>
@@ -128,24 +128,24 @@ const HandoffProtocol: React.FC = () => {
         
         {/* Testnet Flight Recorder (Left Panel) */}
         <div className="lg:col-span-8 space-y-8">
-           <div className="bg-black border border-zinc-800 rounded-[3rem] p-1 shadow-2xl relative overflow-hidden group">
-              <div className="bg-zinc-950 rounded-[2.8rem] flex flex-col min-h-[600px] relative z-10">
+           <div className="bg-ivory border border-border rounded-[3rem] p-1 shadow-2xl relative overflow-hidden group">
+              <div className="bg-white rounded-[2.8rem] flex flex-col min-h-[600px] relative z-10">
                  
                  {/* Terminal Header */}
-                 <div className="p-8 border-b border-zinc-900 bg-zinc-900/20 flex items-center justify-between">
+                 <div className="p-8 border-b border-border bg-off-white/20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                       <Terminal size={18} className="text-orange-500" />
-                       <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 font-mono">FLIGHT_CHECK_TERMINAL</h3>
+                       <Terminal size={18} className="text-accent-earth" />
+                       <h3 className="text-xs font-black uppercase tracking-widest text-brand-earth font-mono">FLIGHT_CHECK_TERMINAL</h3>
                     </div>
                     {testStatus === 'idle' ? (
                        <button 
                          onClick={runFlightCheck}
-                         className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                         className="bg-border hover:bg-brand-earth text-brand-deep px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
                        >
                           <Play size={12} fill="currentColor" /> Initialize Simulation
                        </button>
                     ) : testStatus === 'running' ? (
-                       <div className="flex items-center gap-2 text-orange-500 text-[10px] font-black uppercase tracking-widest">
+                       <div className="flex items-center gap-2 text-accent-earth text-[10px] font-black uppercase tracking-widest">
                           <Loader2 size={12} className="animate-spin" /> Running Tests...
                        </div>
                     ) : (
@@ -158,38 +158,38 @@ const HandoffProtocol: React.FC = () => {
                  {/* Simulation Canvas */}
                  <div className="flex-1 p-0 flex flex-col md:flex-row">
                     {/* Visualizer */}
-                    <div className="flex-1 p-8 border-r border-zinc-900 space-y-8">
-                       <div className="bg-zinc-900/30 rounded-2xl p-6 border border-zinc-800">
-                          <p className="text-[10px] font-black uppercase text-zinc-500 mb-2">Ephemeral Test Wallet</p>
+                    <div className="flex-1 p-8 border-r border-border space-y-8">
+                       <div className="bg-off-white/30 rounded-2xl p-6 border border-border">
+                          <p className="text-[10px] font-black uppercase text-brand-earth mb-2">Ephemeral Test Wallet</p>
                           <div className="flex items-center justify-between">
                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-500">
+                                <div className="w-8 h-8 rounded-lg bg-border flex items-center justify-center text-brand-earth">
                                    <Zap size={16} />
                                 </div>
-                                <span className="font-mono text-sm text-zinc-200">{generatedWallet || "Waiting for generation..."}</span>
+                                <span className="font-mono text-sm text-brand-deep">{generatedWallet || "Waiting for generation..."}</span>
                              </div>
-                             <span className="font-mono text-sm font-bold text-orange-500">{testBalance.toFixed(4)} sBTC</span>
+                             <span className="font-mono text-sm font-bold text-accent-earth">{testBalance.toFixed(4)} sBTC</span>
                           </div>
                        </div>
 
                        <div className="space-y-4">
-                          <p className="text-[10px] font-black uppercase text-zinc-600 pl-1">Execution Pipeline</p>
+                          <p className="text-[10px] font-black uppercase text-brand-earth pl-1">Execution Pipeline</p>
                           {TEST_SUITE.map((test, idx) => {
                              const isActive = (testProgress / 20) > idx;
                              const isPending = (testProgress / 20) === idx && testStatus === 'running';
                              
                              return (
-                                <div key={test.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${isActive ? 'bg-green-500/5 border-green-500/20' : 'bg-zinc-900/20 border-zinc-900 opacity-50'}`}>
+                                <div key={test.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${isActive ? 'bg-green-500/5 border-green-500/20' : 'bg-off-white/20 border-border opacity-50'}`}>
                                    <div className="flex items-center gap-4">
-                                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${isActive ? 'bg-green-500 text-black' : 'bg-zinc-800 text-zinc-500'}`}>
+                                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${isActive ? 'bg-green-500 text-black' : 'bg-border text-brand-earth'}`}>
                                          {isActive ? <CheckCircle2 size={14} /> : idx + 1}
                                       </div>
                                       <div>
-                                         <p className={`text-xs font-bold ${isActive ? 'text-zinc-200' : 'text-zinc-500'}`}>{test.label}</p>
-                                         <p className="text-[10px] text-zinc-600">{test.detail}</p>
+                                         <p className={`text-xs font-bold ${isActive ? 'text-brand-deep' : 'text-brand-earth'}`}>{test.label}</p>
+                                         <p className="text-[10px] text-brand-earth">{test.detail}</p>
                                       </div>
                                    </div>
-                                   {isPending && <Loader2 size={14} className="animate-spin text-orange-500" />}
+                                   {isPending && <Loader2 size={14} className="animate-spin text-accent-earth" />}
                                 </div>
                              )
                           })}
@@ -197,10 +197,10 @@ const HandoffProtocol: React.FC = () => {
                     </div>
 
                     {/* Console Output */}
-                    <div className="w-full md:w-80 bg-black p-6 font-mono text-[10px] text-zinc-500 overflow-y-auto custom-scrollbar h-64 md:h-auto border-t md:border-t-0 md:border-l border-zinc-900">
-                       <p className="text-zinc-700 mb-4">// CONXIUS TESTNET LOGS</p>
+                    <div className="w-full md:w-80 bg-ivory p-6 font-mono text-[10px] text-brand-earth overflow-y-auto custom-scrollbar h-64 md:h-auto border-t md:border-t-0 md:border-l border-border">
+                       <p className="text-brand-earth mb-4">// CONXIUS TESTNET LOGS</p>
                        {testLog.map((log, i) => (
-                          <p key={i} className="mb-2 text-zinc-400 animate-in slide-in-from-left-2 duration-200">
+                          <p key={i} className="mb-2 text-brand-earth animate-in slide-in-from-left-2 duration-200">
                              {log}
                           </p>
                        ))}
@@ -219,10 +219,10 @@ const HandoffProtocol: React.FC = () => {
            {/* Launch Button Card */}
            <div className={`border rounded-[3rem] p-10 space-y-8 shadow-2xl relative overflow-hidden group transition-all duration-700 ${
               context?.state.isMainnetLive 
-                ? 'bg-zinc-100 border-zinc-100 text-zinc-950 shadow-zinc-100/20' 
+                ? 'bg-white border-white text-ivory shadow-white/20'
                 : testStatus === 'success'
-                   ? 'bg-orange-600 border-orange-500 text-white shadow-orange-600/30'
-                   : 'bg-zinc-900 border-zinc-800 text-zinc-500'
+                   ? 'bg-accent-earth border-orange-500 text-white shadow-orange-600/30'
+                   : 'bg-off-white border-border text-brand-earth'
            }`}>
               
               <div className="relative z-10 space-y-6">
@@ -248,8 +248,8 @@ const HandoffProtocol: React.FC = () => {
                        context?.state.isMainnetLive 
                           ? 'bg-green-500 text-white border-none' 
                           : testStatus === 'success'
-                             ? 'bg-white text-orange-600 hover:bg-zinc-100'
-                             : 'bg-zinc-800 text-zinc-600'
+                             ? 'bg-white text-orange-600 hover:bg-white'
+                             : 'bg-border text-brand-earth'
                     }`}
                  >
                     {isDeploying ? 'Deploying...' : context?.state.isMainnetLive ? 'SYSTEM DEPLOYED' : 'GO LIVE'}
@@ -258,11 +258,11 @@ const HandoffProtocol: React.FC = () => {
            </div>
 
            {/* Readiness Audit */}
-           <div className="bg-zinc-950 border border-zinc-800 rounded-[2.5rem] p-8 space-y-6 shadow-xl">
-              <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest flex items-center gap-2">
+           <div className="bg-white border border-border rounded-[2.5rem] p-8 space-y-6 shadow-xl">
+              <h4 className="text-[10px] font-black uppercase text-brand-earth tracking-widest flex items-center gap-2">
                  <ShieldCheck size={14} className="text-blue-500" /> Pre-Flight Audit
               </h4>
-              <div className="text-[10px] text-zinc-400 italic leading-relaxed whitespace-pre-wrap">
+              <div className="text-[10px] text-brand-earth italic leading-relaxed whitespace-pre-wrap">
                  {auditMemo || "Pending audit..."}
               </div>
            </div>

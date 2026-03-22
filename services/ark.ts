@@ -163,7 +163,7 @@ export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network:
         if (vault) {
             const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(vtxo.txid + recipientAddress))).toString("hex");
             const signResult = await requestEnclaveSignature({
-                type: 'transaction',
+                type: 'psbt',
                 layer: 'Ark',
                 payload: {
                     hash: msgHash,

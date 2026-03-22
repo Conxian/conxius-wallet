@@ -60,16 +60,16 @@ const SystemDiagnostics: React.FC = () => {
     <div className="p-8 max-w-6xl mx-auto space-y-10 animate-in fade-in duration-500 pb-32">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black tracking-tighter text-zinc-100 italic uppercase flex items-center gap-3">
-             <Activity className="text-orange-500" />
+          <h2 className="text-3xl font-black tracking-tighter text-brand-deep italic uppercase flex items-center gap-3">
+             <Activity className="text-accent-earth" />
              System Integrity Audit
           </h2>
-          <p className="text-zinc-500 text-sm italic">Verification of all wallet protocols, broadcast paths, and enclave isolation.</p>
+          <p className="text-brand-earth text-sm italic">Verification of all wallet protocols, broadcast paths, and enclave isolation.</p>
         </div>
         <button 
           onClick={runAllTests} 
           disabled={isRunning}
-          className="bg-zinc-100 hover:bg-white text-zinc-950 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 transition-all shadow-xl active:scale-95 disabled:opacity-50"
+          className="bg-white hover:bg-white text-ivory px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 transition-all shadow-xl active:scale-95 disabled:opacity-50"
         >
           {isRunning ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
           {isRunning ? 'Auditing Protocols...' : 'Initialize Full Diagnostic'}
@@ -79,9 +79,9 @@ const SystemDiagnostics: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Diagnostic Results Grid */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-zinc-900/40 border border-zinc-800 rounded-[3rem] overflow-hidden shadow-2xl">
-             <div className="p-8 border-b border-zinc-900 bg-zinc-900/20 flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500">Diagnostic Vector Suite</h3>
+          <div className="bg-off-white/40 border border-border rounded-[3rem] overflow-hidden shadow-2xl">
+             <div className="p-8 border-b border-border bg-off-white/20 flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-brand-earth">Diagnostic Vector Suite</h3>
                 {overallStatus === 'secure' && (
                    <div className="flex items-center gap-2 text-green-500 text-[10px] font-black uppercase bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
                       <CheckCircle2 size={12} /> System Hardened
@@ -93,32 +93,32 @@ const SystemDiagnostics: React.FC = () => {
                    </div>
                 )}
              </div>
-             <div className="divide-y divide-zinc-900">
+             <div className="divide-y divide-off-white">
                 {tests.map((test) => (
-                   <div key={test.id} className="p-6 flex items-center justify-between group hover:bg-zinc-900/10 transition-colors">
+                   <div key={test.id} className="p-6 flex items-center justify-between group hover:bg-off-white/10 transition-colors">
                       <div className="flex items-center gap-5">
                          <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center transition-all ${
                             test.status === 'passed' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
                             test.status === 'failed' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
-                            test.status === 'running' ? 'bg-orange-500/10 border-orange-500/20 text-orange-500' :
-                            'bg-zinc-900 border-zinc-800 text-zinc-700'
+                            test.status === 'running' ? 'bg-orange-500/10 border-orange-500/20 text-accent-earth' :
+                            'bg-off-white border-border text-brand-earth'
                          }`}>
                             <test.icon size={20} className={test.status === 'running' ? 'animate-pulse' : ''} />
                          </div>
                          <div>
-                            <p className={`text-sm font-bold transition-colors ${test.status === 'passed' ? 'text-zinc-100' : test.status === 'failed' ? 'text-red-400' : 'text-zinc-500'}`}>
+                            <p className={`text-sm font-bold transition-colors ${test.status === 'passed' ? 'text-brand-deep' : test.status === 'failed' ? 'text-red-400' : 'text-brand-earth'}`}>
                                {test.label}
                             </p>
-                            <p className="text-[10px] text-zinc-600 font-black uppercase tracking-tighter mt-0.5">
+                            <p className="text-[10px] text-brand-earth font-black uppercase tracking-tighter mt-0.5">
                                {test.status === 'failed' ? 'CONNECTION REFUSED' : 'V3-ROUTING :: TLS 1.3'}
                             </p>
                          </div>
                       </div>
                       <div className="flex items-center gap-4">
-                         {test.status === 'running' && <Loader2 size={18} className="animate-spin text-orange-500" />}
+                         {test.status === 'running' && <Loader2 size={18} className="animate-spin text-accent-earth" />}
                          {test.status === 'passed' && <CheckCircle2 size={24} className="text-green-500 drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" />}
                          {test.status === 'failed' && <XCircle size={24} className="text-red-500" />}
-                         {test.status === 'pending' && <div className="w-6 h-6 rounded-full border-2 border-zinc-900" />}
+                         {test.status === 'pending' && <div className="w-6 h-6 rounded-full border-2 border-border" />}
                       </div>
                    </div>
                 ))}
@@ -134,52 +134,52 @@ const SystemDiagnostics: React.FC = () => {
               overallStatus === 'secure' ? 'bg-green-500/5 border-green-500/20' :
               overallStatus === 'warn' ? 'bg-red-500/5 border-red-500/20' :
               overallStatus === 'testing' ? 'bg-orange-500/5 border-orange-500/20' :
-              'bg-zinc-900/40 border-zinc-800'
+              'bg-off-white/40 border-border'
            }`}>
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
-                 <ShieldAlert size={120} className={overallStatus === 'secure' ? 'text-green-500' : 'text-zinc-500'} />
+                 <ShieldAlert size={120} className={overallStatus === 'secure' ? 'text-green-500' : 'text-brand-earth'} />
               </div>
 
               <div className="relative z-10 space-y-6">
                  <div className="flex items-center gap-3">
-                    <Sparkles size={20} className={overallStatus === 'secure' ? 'text-green-500' : 'text-zinc-500'} />
-                    <h4 className="text-xl font-black italic uppercase tracking-tighter text-zinc-200">Integrity Report</h4>
+                    <Sparkles size={20} className={overallStatus === 'secure' ? 'text-green-500' : 'text-brand-earth'} />
+                    <h4 className="text-xl font-black italic uppercase tracking-tighter text-brand-deep">Integrity Report</h4>
                  </div>
 
-                 <div className="text-xs leading-relaxed font-medium italic text-zinc-400 min-h-[160px]">
+                 <div className="text-xs leading-relaxed font-medium italic text-brand-earth min-h-[160px]">
                     {isGeneratingReport ? (
-                       <div className="flex flex-col items-center justify-center py-12 gap-4 text-orange-500">
+                       <div className="flex flex-col items-center justify-center py-12 gap-4 text-accent-earth">
                           <Loader2 size={32} className="animate-spin" />
                           <span className="text-[10px] font-black uppercase tracking-widest animate-pulse">Nakamoto-Guardian Synthesizing Summary...</span>
                        </div>
                     ) : aiReport ? (
-                       <div className="bg-zinc-950/50 p-6 rounded-2xl border border-zinc-900 animate-in fade-in">
+                       <div className="bg-white/50 p-6 rounded-2xl border border-border animate-in fade-in">
                           <div className="whitespace-pre-wrap selection:bg-orange-500/30">{aiReport}</div>
                        </div>
                     ) : isRunning ? (
                        <p className="animate-pulse">Analyzing system entropy and validating broadcast routes via Tor V3 circuits...</p>
                     ) : (
-                       <p className="text-zinc-600">Run the diagnostic suite to verify environment parameters and protocol health.</p>
+                       <p className="text-brand-earth">Run the diagnostic suite to verify environment parameters and protocol health.</p>
                     )}
                  </div>
 
                  {overallStatus !== 'idle' && overallStatus !== 'testing' && (
                     <div className="flex gap-4">
-                       <button className="flex-1 py-3 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-zinc-800">Export Logs</button>
+                       <button className="flex-1 py-3 bg-off-white hover:bg-border text-brand-deep rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-border">Export Logs</button>
                     </div>
                  )}
               </div>
            </div>
 
            {/* Build Terminal */}
-           <div className="bg-black border border-zinc-800 rounded-[3rem] p-8 h-80 overflow-hidden shadow-2xl group">
-              <div className="flex items-center gap-3 text-zinc-600 mb-6 border-b border-zinc-900 pb-4">
-                 <Terminal size={18} className="group-hover:text-orange-500 transition-colors" />
+           <div className="bg-ivory border border-border rounded-[3rem] p-8 h-80 overflow-hidden shadow-2xl group">
+              <div className="flex items-center gap-3 text-brand-earth mb-6 border-b border-border pb-4">
+                 <Terminal size={18} className="group-hover:text-accent-earth transition-colors" />
                  <span className="text-[10px] font-black uppercase font-mono tracking-widest">CXN_ARCH_GUARDIAN_DEBUG_OUTPUT</span>
               </div>
-              <div className="space-y-3 font-mono text-[10px] text-zinc-500 h-full overflow-y-auto custom-scrollbar selection:bg-orange-500/50">
+              <div className="space-y-3 font-mono text-[10px] text-brand-earth h-full overflow-y-auto custom-scrollbar selection:bg-orange-500/50">
                  <p className="text-green-500">&gt; [OK] LICENSE_VALIDATED: BSL-1.1 (Conxian-Labs)</p>
-                 <p className="text-zinc-700">&gt; [OK] ENCLAVE_ISOLATION_VERIFIED</p>
+                 <p className="text-brand-earth">&gt; [OK] ENCLAVE_ISOLATION_VERIFIED</p>
                  {tests.filter(t => t.status === 'passed').map(t => (
                     <p key={t.id} className="animate-in slide-in-from-left-2">&gt; [VERIFIED] {t.label.toUpperCase()}... SUCCESS</p>
                  ))}
@@ -187,7 +187,7 @@ const SystemDiagnostics: React.FC = () => {
                     <p key={t.id} className="animate-in slide-in-from-left-2 text-red-500">&gt; [FAIL] {t.label.toUpperCase()}... TIMEOUT</p>
                  ))}
                  {isRunning && (
-                    <div className="flex items-center gap-2 text-orange-500 animate-pulse">
+                    <div className="flex items-center gap-2 text-accent-earth animate-pulse">
                        <span>&gt; [BUSY] Auditing next vector...</span>
                        <span className="w-1.5 h-3 bg-orange-500" />
                     </div>

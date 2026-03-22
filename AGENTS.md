@@ -104,3 +104,14 @@ cryptographic identifiers leave the device.
 
 *Remember: We are building institutional-grade sovereign infrastructure. Precision
 is non-negotiable.*
+
+## 🎨 UI/UX Standardization (Sovereign Earthy)
+
+All primary operational views MUST follow the Conxian "Bright Foundation":
+
+- **Base Canvas**: Ivory (#FDFBF7) or Warm Off-White (#F9F8F6).
+- **Surface Layers**: White (#FFFFFF) for cards, modals, and sections.
+- **Typography**: High-contrast Dark Earth/Deep Black (#121212, #1A1A1A).
+- **Brand Accents**: Earthy tones (#C25E00) and Forest Greens (#1E3A34) reserved for primary CTAs and active states.
+- **Legibility**: Maintain WCAG AAA compliance for financial data (Dark text on Light backgrounds).
+- **Purge**: Avoid heavy dark-mode backgrounds in functional workspaces. Hero zones may use deep brand colors for presence.

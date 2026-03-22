@@ -25,7 +25,7 @@ const DOCS_DATA = [
     id: 'architecture',
     title: 'Enclave Security',
     icon: Shield,
-    color: 'text-orange-500',
+    color: 'text-accent-earth',
     content: `The Conxius Enclave uses a "Shared-Nothing" architecture. Your private keys are derived locally from hardware-level entropy and stored within the browser's origin-private file system.
     
     ### Verification Pillars:
@@ -43,11 +43,11 @@ const Documentation: React.FC = () => {
     <div className="p-8 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-500 pb-24">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black tracking-tighter text-zinc-100 flex items-center gap-3 italic uppercase">
-            <BookOpen className="text-orange-500" />
+          <h2 className="text-3xl font-black tracking-tighter text-brand-deep flex items-center gap-3 italic uppercase">
+            <BookOpen className="text-accent-earth" />
             System Manual
           </h2>
-          <p className="text-zinc-500 text-sm italic">Formal specification of the Conxius Sovereign Standard.</p>
+          <p className="text-brand-earth text-sm italic">Formal specification of the Conxius Sovereign Standard.</p>
         </div>
       </header>
 
@@ -58,26 +58,26 @@ const Documentation: React.FC = () => {
               key={doc.id}
               onClick={() => setActiveSection(doc.id)}
               className={`w-full p-6 rounded-[2rem] border text-left transition-all group flex items-center gap-5 ${
-                activeSection === doc.id ? 'bg-zinc-900 border-orange-500/50 shadow-2xl' : 'bg-zinc-950 border-zinc-900 hover:border-zinc-800'
+                activeSection === doc.id ? 'bg-off-white border-orange-500/50 shadow-2xl' : 'bg-white border-border hover:border-border'
               }`}
             >
-              <div className={`p-3 rounded-2xl bg-zinc-900 border border-zinc-800 ${doc.color}`}><doc.icon size={20} /></div>
+              <div className={`p-3 rounded-2xl bg-off-white border border-border ${doc.color}`}><doc.icon size={20} /></div>
               <div>
-                <h4 className="font-bold text-zinc-100 group-hover:text-orange-500">{doc.title}</h4>
-                <p className="text-[10px] text-zinc-600 font-black uppercase tracking-widest mt-0.5">SVN 1.5 Specification</p>
+                <h4 className="font-bold text-brand-deep group-hover:text-accent-earth">{doc.title}</h4>
+                <p className="text-[10px] text-brand-earth font-black uppercase tracking-widest mt-0.5">SVN 1.5 Specification</p>
               </div>
             </button>
           ))}
         </div>
 
         <div className="lg:col-span-8">
-          <div className="bg-zinc-900/40 border border-zinc-800 rounded-[3rem] p-12 min-h-[600px] shadow-2xl relative overflow-hidden">
+          <div className="bg-off-white/40 border border-border rounded-[3rem] p-12 min-h-[600px] shadow-2xl relative overflow-hidden">
              <div className="relative z-10 prose prose-invert max-w-none">
                 <div className="flex items-center gap-4 mb-10">
-                   <div className={`p-4 rounded-[1.5rem] bg-zinc-950 border border-zinc-800 ${activeDoc.color}`}><activeDoc.icon size={32} /></div>
-                   <h1 className="text-4xl font-black tracking-tighter text-zinc-100 uppercase italic m-0">{activeDoc.title}</h1>
+                   <div className={`p-4 rounded-[1.5rem] bg-white border border-border ${activeDoc.color}`}><activeDoc.icon size={32} /></div>
+                   <h1 className="text-4xl font-black tracking-tighter text-brand-deep uppercase italic m-0">{activeDoc.title}</h1>
                 </div>
-                <div className="text-zinc-400 leading-loose space-y-6 text-sm whitespace-pre-wrap selection:bg-orange-500/30">
+                <div className="text-brand-earth leading-loose space-y-6 text-sm whitespace-pre-wrap selection:bg-orange-500/30">
                    {activeDoc.content}
                 </div>
              </div>

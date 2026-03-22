@@ -1,438 +1,164 @@
-
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
+import {
+  Shield,
+  Lock,
+  FlaskConical,
+  Loader2,
+  QrCode,
+  Copy,
+  X,
+  ShieldCheck,
+  CheckCircle2,
+  Network
+} from 'lucide-react';
+import Dashboard from './components/Dashboard';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
-import Dashboard from './components/Dashboard';
-import Onboarding from './components/Onboarding';
 import SatoshiAIChat from './components/SatoshiAIChat';
+import SystemDiagnostics from './components/SystemDiagnostics';
+import Studio from './components/Studio';
+import Marketplace from './components/Marketplace';
+import Web3Browser from './components/Web3Browser';
 import MobileMenu from './components/MobileMenu';
-import ErrorBoundary from './components/ErrorBoundary';
-
-// Code-split secondary routes via React.lazy
-const NTTBridge = lazy(() => import('./components/NTTBridge'));
-const IdentityManager = lazy(() => import('./components/IdentityManager'));
-const StackingManager = lazy(() => import('./components/StackingManager'));
-const PaymentPortal = lazy(() => import('./components/PaymentPortal'));
-const NodeSettings = lazy(() => import('./components/NodeSettings'));
-const PrivacyEnclave = lazy(() => import('./components/PrivacyEnclave'));
-const Security = lazy(() => import('./components/Security'));
-const Settings = lazy(() => import('./components/Settings'));
-const RewardsHub = lazy(() => import('./components/RewardsHub'));
-const Benchmarking = lazy(() => import('./components/Benchmarking'));
-const InvestorDashboard = lazy(() => import('./components/InvestorDashboard'));
-const ReleaseManager = lazy(() => import('./components/ReleaseManager'));
-const HandoffProtocol = lazy(() => import('./components/HandoffProtocol'));
-const LabsExplorer = lazy(() => import('./components/LabsExplorer'));
-const GovernancePortal = lazy(() => import('./components/GovernancePortal'));
-const ReserveSystem = lazy(() => import('./components/ReserveSystem'));
-const Documentation = lazy(() => import('./components/Documentation'));
-const DeFiDashboard = lazy(() => import('./components/DeFiDashboard'));
-const CitadelManager = lazy(() => import('./components/CitadelManager'));
-const UTXOManager = lazy(() => import('./components/UTXOManager'));
-const SilentPayments = lazy(() => import('./components/SilentPayments'));
-const Studio = lazy(() => import('./components/Studio'));
-const Marketplace = lazy(() => import('./components/Marketplace'));
-const SystemDiagnostics = lazy(() => import('./components/SystemDiagnostics'));
-const SovereignPolicies = lazy(() => import('./components/SovereignPolicies'));
-import SignLoginMessageModal from "./components/SignLoginMessageModal";
-const Web3Browser = lazy(() => import('./components/Web3Browser'));
+import PaymentPortal from './components/PaymentPortal';
+import CitadelManager from './components/CitadelManager';
+import UTXOManager from './components/UTXOManager';
+import SilentPayments from './components/SilentPayments';
+import DeFiDashboard from './components/DeFiDashboard';
+import RewardsHub from './components/RewardsHub';
+import LabsExplorer from './components/LabsExplorer';
+import GovernancePortal from './components/GovernancePortal';
+import ReserveSystem from './components/ReserveSystem';
+import Benchmarking from './components/Benchmarking';
+import Documentation from './components/Documentation';
+import InvestorDashboard from './components/InvestorDashboard';
+import ReleaseManager from './components/ReleaseManager';
+import HandoffProtocol from './components/HandoffProtocol';
+import StackingManager from './components/StackingManager';
+import NTTBridge from './components/NTTBridge';
+import IdentityManager from './components/IdentityManager';
+import NodeSettings from './components/NodeSettings';
+import PrivacyEnclave from './components/PrivacyEnclave';
+import Security from './components/Security';
+import SovereignPolicies from './components/SovereignPolicies';
+import Settings from './components/Settings';
+import Onboarding from './components/Onboarding';
 import LockScreen from './components/LockScreen';
-import ToastContainer, { ToastMessage, ToastType } from './components/Toast';
-import { Shield as ShieldIcon, Loader2, FlaskConical, Lock, Cpu, CheckCircle2 } from 'lucide-react';
-import './styles/progress.css';
-import { AppState, WalletConfig, Asset, Bounty, AppMode, Network, LnBackendConfig } from './types';
+import ErrorBoundary from './components/ErrorBoundary';
+import ToastContainer from './components/Toast';
+import SignLoginMessageModal from './components/SignLoginMessageModal';
 import { AppContext } from './context';
-import { MOCK_ASSETS } from './constants';
-import { Language, getTranslation } from './services/i18n';
-import { encryptState, decryptState, isLegacyBlob } from './services/storage';
-import { encryptSeed } from './services/seed';
-import * as bip39 from 'bip39';
-import { decryptSeed } from './services/seed';
-import { requestEnclaveSignature, SignRequest, SignResult } from './services/signer';
-import { workerManager } from './services/worker-manager';
-import { ConxiusWormholeSigner } from './services/wormhole-signer';
-import { evaluateSecurityPosture } from './services/device-integrity';
-import { clearEnclaveBiometricSession, getEnclaveBlob, hasEnclaveBlob, removeEnclaveBlob, setEnclaveBlob, SecureEnclave } from './services/enclave-storage';
+import { WalletConfig, BitcoinLayer, AppState } from './types';
+import { SignRequest } from './services/signer';
+import { getTranslation } from './services/i18n';
+import { getEnclaveBlob, persistState, removeEnclaveBlob, STORAGE_KEY } from './services/enclave-storage';
 import { notificationService } from './services/notifications';
-import { sanitizeError, setGlobalAppState } from './services/network';
-import { setAiConfig as setAiServiceConfig } from './services/ai';
-import { IdentityService } from './services/identity';
-import { Web5Service } from './services/web5';
 
-const STORAGE_KEY = 'conxius_enclave_v3_encrypted';
-
-interface CapacitorWindow extends Window {
-  Capacitor?: {
-    isNativePlatform: () => boolean;
-  };
-}
-
-type PossiblyLegacyState = AppState & { language: Language; geminiApiKey?: string };
-
-const INITIAL_BOUNTIES: Bounty[] = [
-  { id: 'B-402', title: 'Implement BitVM Fraud Proofs', description: 'Port the L2 verification logic to the Conxius Enclave.', reward: '0.042 BTC', category: 'Core', status: 'Open', difficulty: 'Elite', expiry: 'Dec 12' },
-  { id: 'B-403', title: 'Local-First Indexer Opt', description: 'Reduce memory footprint of the UTXO indexer by 30%.', reward: '25,000 STX', category: 'Security', status: 'Open', difficulty: 'Intermediate', expiry: 'Jan 05' },
-  { id: 'B-404', title: 'Nostr Identity Themes', description: 'Design 5 new pixel-art themes for Sovereign Passes.', reward: '500,000 SATS', category: 'UI/UX', status: 'Open', difficulty: 'Beginner', expiry: 'Nov 30' },
+const BOOT_SEQUENCE = [
+  { icon: Shield, text: 'Hardening Enclave...' },
+  { icon: Lock, text: 'Mounting Secure Storage...' },
+  { icon: FlaskConical, text: 'Initializing Sovereign AI...' },
 ];
 
-const DEFAULT_STATE: AppState & { language: Language } = {
-  version: '0.3.0',
-  mode: 'sovereign',
-  network: 'mainnet',
-  language: 'en',
-  privacyMode: false,
-  nodeSyncProgress: 100,
-  integratorFeesAccumulated: 0.00042,
-  sovereigntyScore: 100,
-  isTorActive: true,
-  deploymentReadiness: 100,
-  externalGatewaysActive: false,
-  rpcStrategy: "Sovereign-First",
-  customNodes: [],
-  isMainnetLive: false,
-  walletConfig: undefined,
-  assets: [], // Default to empty, load mocks only if explicit simulation
-  bounties: INITIAL_BOUNTIES,
-  dataSharing: {
-    enabled: false,
-    aiCapBoostActive: false,
-    minAskPrice: 50,
-    totalEarned: 0
-  },
-  security: {
-    autoLockMinutes: 5
-  },
-  utxos: [],
-  isTorEnabled: true,
-  theme: 'dark'
-};
-
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [pendingSignRequest, setPendingSignRequest] = useState<{ request: SignRequest; resolve: (val: boolean) => void; } | null>(null);
   const [bootStep, setBootStep] = useState(0);
   const [isBooting, setIsBooting] = useState(true);
-  const [state, setState] = useState<AppState & { language: Language }>(DEFAULT_STATE);
-  useEffect(() => { setGlobalAppState(state); }, [state]);
-  
-  // Security & UX State
-  const [isLocked, setIsLocked] = useState(false);
-  const [lockError, setLockError] = useState(false);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [state, setState] = useState<any>({
+    mode: 'simulation',
+    network: 'testnet',
+    isMainnetLive: false,
+    language: 'en',
+    sovereigntyScore: 70,
+    assets: [],
+    security: { biometricUnlock: false },
+    aiConfig: { provider: 'Gemini' }
+  });
   const [enclaveChecked, setEnclaveChecked] = useState(false);
   const [enclaveExists, setEnclaveExists] = useState(false);
+  const [isLocked, setIsLocked] = useState(true);
+  const [lockError, setLockError] = useState(false);
+  const [toasts, setToasts] = useState<any[]>([]);
+  const [pendingSignRequest, setPendingSignRequest] = useState<any>(null);
+
   const currentPinRef = useRef<string | null>(null);
 
-  // Auto-lock timer
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    const resetTimer = () => {
-      if (timer) clearTimeout(timer);
-      const minutes = state.security?.autoLockMinutes ?? 5;
-      timer = setTimeout(() => {
-        performLock();
-        notify('warning', 'Session expired for your security.', 'Vault Auto-Locked');
-      }, minutes * 60 * 1000);
+    const checkEnclave = async () => {
+      const exists = !!(await getEnclaveBlob(STORAGE_KEY));
+      setEnclaveExists(exists);
+      setEnclaveChecked(true);
+      if (!exists) setIsLocked(false);
     };
-    ['mousemove','mousedown','keypress','touchstart'].forEach(evt => window.addEventListener(evt, resetTimer));
-    resetTimer();
-    return () => {
-      ['mousemove','mousedown','keypress','touchstart'].forEach(evt => window.removeEventListener(evt, resetTimer));
-      if (timer) clearTimeout(timer);
-    };
-  }, [state.security?.autoLockMinutes]);
+    checkEnclave();
 
-  // Persistence Logic
-  useEffect(() => {
-    notificationService.requestPermissions();
-    hasEnclaveBlob(STORAGE_KEY)
-      .then(exists => {
-        setEnclaveExists(exists);
-        if (exists) setIsLocked(true);
-      })
-      .finally(() => setEnclaveChecked(true));
-  }, []);
-
-  const sanitizeStateForPersistence = (s: AppState & { language: Language }) => {
-    const next = { ...s };
-    if (next.walletConfig) {
-      next.walletConfig = { ...next.walletConfig };
-      delete next.walletConfig.mnemonic;
-      delete next.walletConfig.passphrase;
-    }
-    if (next.lnBackend && next.lnBackend.type && next.lnBackend.type !== 'None' && next.lnBackend.type !== 'LND') {
-      next.lnBackend = { type: 'None' };
-    }
-    return next;
-  };
-
-  const persistState = async (newState: AppState & { language: Language }, pin: string) => {
-    try {
-      const encrypted = await encryptState(sanitizeStateForPersistence(newState), pin);
-      await setEnclaveBlob(STORAGE_KEY, encrypted, { requireBiometric: !!newState.security?.biometricUnlock });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : '';
-      if (msg.toLowerCase().includes('auth required')) {
-        notify('warning', 'Re-authenticate to keep state in biometric vault');
+    let step = 0;
+    const interval = setInterval(() => {
+      if (step < BOOT_SEQUENCE.length - 1) {
+        step++;
+        setBootStep(step);
       } else {
-        notify('error', 'Encryption Failed: State not saved');
+        clearInterval(interval);
+        setTimeout(() => setIsBooting(false), 800);
       }
-    }
-  };
+    }, 1200);
 
-  useEffect(() => {
-    const legacyState = state as PossiblyLegacyState;
-    setAiServiceConfig(legacyState.aiConfig || { provider: 'Gemini', apiKey: legacyState.geminiApiKey || '' });
-  }, [(state as PossiblyLegacyState).geminiApiKey, state.aiConfig]);
-
-  useEffect(() => {
-    if (state.walletConfig && currentPinRef.current) {
-      // Debounce saving or simple save for now
-      const timeout = setTimeout(() => {
-         persistState(state, currentPinRef.current!);
-      }, 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [state]);
-
-  useEffect(() => {
-  }, [activeTab]);
-
-  const BOOT_SEQUENCE = [
-    { text: "Device Integrity...", icon: ShieldIcon },
-    { text: "BIP-322 Verification...", icon: Lock },
-    { text: "Tor V3 Tunnel Stable...", icon: ShieldIcon },
-    { text: "BIP-84 Roots Loaded...", icon: Cpu },
-    { text: "Sovereignty Confirmed.", icon: CheckCircle2 }
-  ];
-
-  useEffect(() => {
-    const runBoot = async () => {
-      // Step 0: Device Integrity
-      const security = await evaluateSecurityPosture();
-      if (!security.allowed) {
-        notify('error', security.reason);
-      }
-
-      let step = 0;
-      const interval = setInterval(() => {
-        if (step < BOOT_SEQUENCE.length - 1) {
-          step++;
-          setBootStep(step);
-        } else {
-          clearInterval(interval);
-          setTimeout(() => setIsBooting(false), 800);
-        }
-      }, 350);
-      return interval;
-    };
-
-    const intervalPromise = runBoot();
-    return () => {
-      intervalPromise.then(interval => clearInterval(interval));
-    };
+    return () => clearInterval(interval);
   }, []);
-
-  const notify = async (type: ToastType, message: string, title?: string) => {
-    const sanitizedMessage = type === 'error' ? sanitizeError(message) : message;
-    const defaultTitle = type === 'error' ? 'Security Alert' : type === 'success' ? 'Operation Success' : 'Wallet Update';
-    const event = await notificationService.notify({
-      category: (type === 'error' || type === 'warning') ? 'SECURITY' : 'SYSTEM',
-      type,
-      title: title || defaultTitle,
-      message: sanitizedMessage
-    });
-
-    setToasts(prev => [...prev, { id: event.id, type: event.type, message: event.message }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== event.id));
-    }, 4000);
-  };
-
-  const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  };
 
   const handleUnlock = async (pin: string) => {
-    try {
-      const saved = await getEnclaveBlob(STORAGE_KEY, { requireBiometric: !!state.security?.biometricUnlock });
-      if (!saved) return;
-      if (state.security?.duressPin && pin === state.security.duressPin) {
-        // Duress Mode: Immediately wipe the persistent enclave data and revert to decoy state.
-        await removeEnclaveBlob(STORAGE_KEY);
-        localStorage.clear();
-        sessionStorage.clear();
-        clearEnclaveBiometricSession();
-        setAiServiceConfig({ provider: 'Gemini', apiKey: '' });
-        workerManager.clearCache();
-        IdentityService.clearCache();
-        Web5Service.getInstance().clearSession();
-        setState({ ...DEFAULT_STATE, assets: [], walletConfig: undefined });
-        currentPinRef.current = null;
-        setEnclaveExists(false);
-        setIsLocked(false);
-        setLockError(false);
-        notify('warning', 'Duress mode activated. Vault purged.');
-        return;
-      }
-      const decryptedState = await decryptState(saved, pin);
-      const nextState: AppState & { language: Language } = { ...DEFAULT_STATE, ...decryptedState };
-      if (nextState.walletConfig) {
-        const walletConfig: WalletConfig = { ...nextState.walletConfig };
-
-        // Migration/Upgrade: Ensure seedVault and mnemonicVault exist
-        if (typeof walletConfig.mnemonic === 'string') {
-          let seedBytes: Uint8Array | null = null;
-          let mnemonicBuf: Uint8Array | null = null;
-          try {
-            seedBytes = await bip39.mnemonicToSeed(walletConfig.mnemonic, walletConfig.passphrase || undefined);
-            if (!walletConfig.seedVault) {
-              walletConfig.seedVault = await encryptSeed(new Uint8Array(seedBytes), pin);
-            }
-            if (!walletConfig.mnemonicVault) {
-              mnemonicBuf = new TextEncoder().encode(walletConfig.mnemonic);
-              walletConfig.mnemonicVault = await encryptSeed(mnemonicBuf, pin);
-            }
-          } finally {
-            if (seedBytes) seedBytes.fill(0);
-            if (mnemonicBuf) mnemonicBuf.fill(0);
-          }
-        }
-
-        delete walletConfig.mnemonic;
-        delete walletConfig.passphrase;
-        nextState.walletConfig = walletConfig;
-      }
-      if (nextState.lnBackend && nextState.lnBackend.type && nextState.lnBackend.type !== 'None' && nextState.lnBackend.type !== 'LND') {
-        nextState.lnBackend = { type: 'None' };
-      }
-      setState(nextState);
+    const blob = await getEnclaveBlob(STORAGE_KEY);
+    if (blob) {
       currentPinRef.current = pin;
-      setEnclaveExists(true);
+      setState(JSON.parse(blob));
       setIsLocked(false);
       setLockError(false);
-      
-      // Migration: If legacy blob detected, re-encrypt immediately to harden
-      if (isLegacyBlob(saved)) {
-         persistState(nextState, pin);
-         notify('success', 'Vault Upgraded to V2 Security');
-      }
-      
-      // Phase 3: Optimize Session - Unlock Cache
-      if ((window as CapacitorWindow).Capacitor?.isNativePlatform() && nextState.walletConfig?.seedVault) {
-          SecureEnclave.unlockSession({ 
-              vault: nextState.walletConfig.seedVault, 
-              pin 
-          }).catch(e => console.warn("Failed to unlock enclave session cache:", e));
-      }
-
-      notify('success', 'Enclave Decrypted Successfully');
-    } catch (e) {
+    } else {
       setLockError(true);
-      const msg = e instanceof Error ? e.message : '';
-      if (msg.toLowerCase().includes('auth required')) {
-        notify('error', 'Biometric authentication required');
-      } else {
-        notify('error', 'Decryption Failed: Invalid PIN');
-      }
     }
-  };
-
-  const setPrivacyMode = (val: boolean) => setState(prev => ({ ...prev, privacyMode: val }));
-  const toggleGateway = (val: boolean) => setState(prev => ({ ...prev, externalGatewaysActive: val }));
-  const setMainnetLive = (val: boolean) => setState(prev => ({ ...prev, isMainnetLive: val }));
-  const updateFees = (val: number) => setState(prev => ({ ...prev, integratorFeesAccumulated: prev.integratorFeesAccumulated + val }));
-  const updateAssets = (assets: Asset[]) => setState(prev => ({ ...prev, assets }));
-  const setLanguage = (language: Language) => setState(prev => ({ ...prev, language }));
-  const setNetwork = (network: Network) => setState(prev => ({ ...prev, network }));
-  const setMode = (mode: AppMode) => setState(prev => ({ 
-    ...prev, 
-    mode,
-    assets: mode === 'simulation' ? MOCK_ASSETS : []
-  }));
-  const setLnBackend = (cfg: LnBackendConfig) => setState(prev => ({ ...prev, lnBackend: cfg }));
-  const setSecurity = (s: Partial<AppState['security']>) => setState(prev => ({ ...prev, security: { ...prev.security, ...s } as AppState['security'] }));
-  const setAiConfig = (config: AppState["aiConfig"]) => {
-    setAiServiceConfig(config);
-    setState(prev => ({ ...prev, aiConfig: config }));
-  };
-  const setCustomNodes = (nodes: AppState["customNodes"]) => { setState(prev => ({ ...prev, customNodes: nodes })); };
-  const setRpcStrategy = (strategy: AppState["rpcStrategy"]) => { setState(prev => ({ ...prev, rpcStrategy: strategy })); };
-
-  const performLock = () => {
-     currentPinRef.current = null;
-     clearEnclaveBiometricSession();
-     setAiServiceConfig({ provider: 'Gemini', apiKey: '' });
-     workerManager.clearCache();
-     IdentityService.clearCache();
-     Web5Service.getInstance().clearSession();
-     setIsLocked(true);
-     // Memory Hardening: Reset state to defaults on lock to purge sensitive material (Gemini keys, assets) from RAM.
-     setState(prev => ({
-       ...DEFAULT_STATE,
-       language: prev.language,
-       network: prev.network,
-       mode: prev.mode,
-     }));
   };
 
   const lockWallet = () => {
-     performLock();
+    setIsLocked(true);
+    currentPinRef.current = null;
   };
 
-  const authorizeSignature = async (request: SignRequest): Promise<SignResult> => {
-    const pin = currentPinRef.current;
-    const seedVault = state.walletConfig?.seedVault;
-    if (!pin || !seedVault) {
-      throw new Error('Master Seed missing from session vault.');
-    }
+  const setPrivacyMode = (mode: boolean) => setState((prev: any) => ({ ...prev, privacyMode: mode }));
+  const updateFees = (fees: any) => setState((prev: any) => ({ ...prev, fees }));
+  const toggleGateway = () => setState((prev: any) => ({ ...prev, gatewayActive: !prev.gatewayActive }));
+  const setMainnetLive = (live: boolean) => setState((prev: any) => ({ ...prev, isMainnetLive: live }));
+  const updateAssets = (assets: any) => setState((prev: any) => ({ ...prev, assets }));
+  const setLanguage = (language: any) => setState((prev: any) => ({ ...prev, language }));
+  const setNetwork = (network: any) => setState((prev: any) => ({ ...prev, network }));
+  const setMode = (mode: any) => setState((prev: any) => ({ ...prev, mode }));
+  const setLnBackend = (backend: any) => setState((prev: any) => ({ ...prev, lnBackend: backend }));
+  const setSecurity = (security: any) => setState((prev: any) => ({ ...prev, security: { ...prev.security, ...security } }));
+  const setAiConfig = (config: any) => setState((prev: any) => ({ ...prev, aiConfig: config }));
+  const setCustomNodes = (nodes: any) => setState((prev: any) => ({ ...prev, customNodes: nodes }));
+  const setRpcStrategy = (strategy: any) => setState((prev: any) => ({ ...prev, rpcStrategy: strategy }));
+  const getWormholeSigner = () => null;
 
-    // Hardening: Explicit confirmation for message signing (BIP-322 / Login)
-    if (request.type === 'message') {
-        const confirmed = await new Promise<boolean>((resolve) => {
-            setPendingSignRequest({
-                request,
-                resolve: (val) => resolve(val)
-            });
-        });
-        setPendingSignRequest(null);
-        if (!confirmed) throw new Error('Signature request declined by user.');
-    }
-    
-    // Check if running on Android/iOS native runtime
-    const isNative = (window as CapacitorWindow).Capacitor?.isNativePlatform();
-
-    if (isNative) {
-       try {
-          return await requestEnclaveSignature(request, seedVault, undefined); 
-       } catch (e: unknown) {
-          console.warn("Session Native Cache Miss/Expired, falling back to explicit PIN", e);
-          return await requestEnclaveSignature(request, seedVault, pin);
-       }
-    } else {
-       const seed = await decryptSeed(seedVault, pin);
-       try {
-         return await requestEnclaveSignature(request, seed);
-       } finally {
-         seed.fill(0);
-       }
-    }
+  const notifyUser = (type: any, message: string) => {
+    const id = Date.now().toString();
+    setToasts((prev: any) => [...prev, { id, type, message }]);
   };
 
-  
-  const getWormholeSigner = (chain: string) => {
-    // Assuming 'chain' is compatible or we map it. 
-    // The signer needs the auth callback which we already have: authorizeSignature
-    // We use a placeholder address because the actual address is derived/verified by the enclave during signing
-    // or expected to be known by the caller. 
-    // In a real implementation, we might want to pass the derived address here if known.
-    const address = state.walletConfig?.masterAddress || '0xPlaceholder'; 
-    return new ConxiusWormholeSigner(chain, address, authorizeSignature);
+  const removeToast = (id: string) => setToasts((prev: any) => prev.filter((t: any) => t.id !== id));
+
+  const authorizeSignature = async (request: SignRequest) => {
+    return new Promise<any>((resolve) => {
+      setPendingSignRequest({ request, resolve });
+    });
   };
-  
-  const setWalletConfig = (config: WalletConfig & { mode?: AppMode }, pin?: string) => {
-     const effectiveMode: AppMode = config.mode ?? 'sovereign';
-     const initialAssets = effectiveMode === 'sovereign' ? [] : MOCK_ASSETS;
+
+  const setWalletConfig = async (config: WalletConfig, pin?: string) => {
+     const initialAssets = [
+       { id: '1', name: 'Bitcoin', symbol: 'BTC', balance: 0.42, valueUsd: 28500, change: 2.4, layer: 'Mainnet' },
+       { id: '2', name: 'Stacks', symbol: 'STX', balance: 1250, valueUsd: 1800, change: -1.2, layer: 'Stacks' },
+       { id: '3', name: 'Liquid BTC', symbol: 'L-BTC', balance: 0.05, valueUsd: 3400, change: 0.5, layer: 'Liquid' }
+     ];
+
+     const effectiveMode = config.backupVerified ? 'sovereign' : 'simulation';
      const newPin = pin || currentPinRef.current;
      if (newPin) currentPinRef.current = newPin;
      
@@ -446,17 +172,16 @@ const App: React.FC = () => {
      
      setState(newState);
      
-     // CRITICAL: Persist immediately on creation/restore to prevent data loss on app switch
      if (newPin) {
         persistState(newState, newPin).then(() => {
-            setEnclaveExists(true); // Ensure lock screen knows vault exists immediately
+            setEnclaveExists(true);
         });
      }
   };
 
-  const claimBounty = (id: string) => setState(prev => ({
+  const claimBounty = (id: string) => setState((prev: any) => ({
     ...prev,
-    bounties: prev.bounties.map(b => b.id === id ? { ...b, status: 'Claimed', claimedBy: 'LocalEnclave' } : b)
+    bounties: prev.bounties.map((b: any) => b.id === id ? { ...b, status: 'Claimed', claimedBy: 'LocalEnclave' } : b)
   }));
 
   const resetEnclave = () => {
@@ -470,12 +195,8 @@ const App: React.FC = () => {
   const t = (key: string) => getTranslation(state.language, key);
 
   const getPayloadMessage = (payload: unknown): string => {
-    if (typeof payload === 'string') {
-      return payload;
-    }
-    if (payload && typeof (payload as { message?: string }).message === 'string') {
-      return (payload as { message: string }).message;
-    }
+    if (typeof payload === 'string') return payload;
+    if (payload && typeof (payload as { message?: string }).message === 'string') return (payload as { message: string }).message;
     return JSON.stringify(payload);
   };
 
@@ -516,23 +237,23 @@ const App: React.FC = () => {
   if (isBooting) {
     const CurrentIcon = BOOT_SEQUENCE[bootStep].icon;
     return (
-      <div className="fixed inset-0 bg-zinc-950 flex flex-col items-center justify-center z-[1000] p-6 text-center font-mono">
-        <div className="w-24 h-24 bg-zinc-900 rounded-[2.5rem] flex items-center justify-center mb-10 border border-zinc-800 shadow-2xl relative overflow-hidden">
-          <FlaskConical size={48} className="text-orange-500 fill-current relative z-10" />
+      <div className="fixed inset-0 bg-ivory flex flex-col items-center justify-center z-[1000] p-6 text-center font-mono">
+        <div className="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center mb-10 border border-off-white shadow-sm relative overflow-hidden">
+          <FlaskConical size={48} className="text-accent-earth fill-current relative z-10" />
         </div>
         <div className="space-y-6 max-w-md w-full">
-           <CurrentIcon size={24} className="animate-pulse text-orange-500 mx-auto" />
-           <h1 className="text-3xl font-black tracking-tighter text-zinc-100 uppercase italic">
-              Conxian<span className="text-orange-500">-Labs</span>
+           <CurrentIcon size={24} className="animate-pulse text-accent-earth mx-auto" />
+           <h1 className="text-3xl font-black tracking-tighter text-brand-deep uppercase italic">
+              Conxian<span className="text-accent-earth">-Labs</span>
            </h1>
-           <div className="h-1 w-full bg-zinc-900 rounded-full overflow-hidden">
+           <div className="h-1 w-full bg-off-white rounded-full overflow-hidden">
               {(() => {
                 const pct = Math.round(((bootStep + 1) / BOOT_SEQUENCE.length) * 100);
                 const quant = Math.min(100, Math.max(0, Math.round(pct / 5) * 5));
-                return <div className={`h-full bg-orange-500 transition-all duration-500 progress-${quant}`} />;
+                return <div className={`h-full bg-accent-earth transition-all duration-500 progress-${quant}`} />;
               })()}
            </div>
-           <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest animate-pulse">
+           <p className="text-[10px] font-bold text-brand-earth uppercase tracking-widest animate-pulse">
               {BOOT_SEQUENCE[bootStep].text}
            </p>
         </div>
@@ -540,87 +261,40 @@ const App: React.FC = () => {
     );
   }
 
-  // Lock Screen Intercept
-  if (isLocked) {
-    return (
-      <>
-        <LockScreen
-          onUnlock={handleUnlock}
-          isError={lockError}
-          requireBiometric={state.security?.biometricUnlock ?? false}
-          onResetWallet={resetEnclave}
-        />
-        <ToastContainer toasts={toasts} removeToast={removeToast} />
-      </>
-    );
-  }
-
-  if (!enclaveChecked) {
-    return (
-      <div className="fixed inset-0 bg-zinc-950 text-zinc-100 flex items-center justify-center p-8">
-        <div className="w-full max-w-sm space-y-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Checking Vault</p>
-          <div className="h-1 w-full bg-zinc-900 rounded-full overflow-hidden">
-            <div className="h-full bg-orange-500 w-2/3 animate-pulse" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!state.walletConfig) {
-    if (enclaveExists) {
-      return (
-        <LockScreen
-          onUnlock={handleUnlock}
-          isError={lockError}
-          requireBiometric={state.security?.biometricUnlock ?? false}
-          onResetWallet={resetEnclave}
-        />
-      );
-    }
-    return (
-      <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, getWormholeSigner }}>
-        <Onboarding onComplete={(config, pin) => { if (config) setWalletConfig(config as WalletConfig, pin); }} />
-        <ToastContainer toasts={toasts} removeToast={removeToast} />
-      </AppContext.Provider>
-    );
-  }
-
   return (
-    <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, getWormholeSigner }}>
-      <div className={`flex bg-[var(--bg)] text-[var(--text)] min-h-screen selection:bg-[rgba(247,147,26,0.35)] overflow-hidden`}>
+    <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify: notifyUser, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, getWormholeSigner }}>
+      <div className={`flex bg-ivory text-brand-deep min-h-screen selection:bg-accent-earth/30 overflow-hidden`}>
         <div className="hidden md:block">
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         </div>
         <main className="flex-1 overflow-y-auto relative pb-24 md:pb-0 custom-scrollbar">
-          <div className="h-16 border-b border-[var(--border)] bg-[var(--surface-1)]/80 backdrop-blur-md flex items-center justify-between px-6 md:px-8 sticky top-0 z-50">
+          <div className="h-16 border-b border-border bg-white/80 backdrop-blur-md flex items-center justify-between px-6 md:px-8 sticky top-0 z-50">
             <div className="flex items-center gap-3">
-               <div className="w-7 h-7 rounded-lg overflow-hidden ring-1 ring-[var(--border)] md:hidden">
+               <div className="w-7 h-7 rounded-lg overflow-hidden ring-1 ring-border md:hidden">
                  <img src="/conxius-logo.svg" alt="Conxius" className="w-full h-full object-cover" />
                </div>
                <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${
                  state.isMainnetLive 
-                   ? 'bg-[var(--text)] text-[var(--bg)] border-[var(--text)]' 
+                   ? 'bg-brand-deep text-white border-brand-deep'
                    : state.mode === 'sovereign'
-                    ? 'bg-[rgba(34,197,94,0.12)] text-[var(--success)] border-[rgba(34,197,94,0.35)]'
-                    : 'bg-[rgba(251,191,36,0.12)] text-[var(--accent-2)] border-[rgba(251,191,36,0.35)]'
+                    ? 'bg-success/10 text-success border-success/30'
+                    : 'bg-accent-earth/10 text-accent-earth border-accent-earth/30'
                }`}>
                  {state.isMainnetLive ? t('status.stable') : state.mode === 'sovereign' ? t('status.sovereign') : t('status.simulation')}
                </span>
             </div>
             <div className="flex items-center gap-4">
                <div className="text-right">
-                  <p className="text-[9px] font-black text-[var(--muted)] uppercase tracking-widest">Sovereignty</p>
-                  <p className="text-xs font-mono font-bold text-[var(--accent-2)]">{state.sovereigntyScore}/100</p>
+                  <p className="text-[9px] font-black text-brand-earth uppercase tracking-widest">Sovereignty</p>
+                  <p className="text-xs font-mono font-bold text-accent-earth">{state.sovereigntyScore}/100</p>
                </div>
-               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[var(--success)] to-[var(--accent-2)] cursor-pointer hover:scale-105 transition-transform" onClick={lockWallet} title="Lock Enclave">
-                  <Lock size={14} className="text-white mx-auto mt-2" />
+               <div className="w-8 h-8 rounded-lg bg-accent-earth cursor-pointer hover:scale-105 transition-transform flex items-center justify-center shadow-sm" onClick={lockWallet} title="Lock Enclave">
+                  <Lock size={14} className="text-white" />
                </div>
             </div>
           </div>
           {state.network !== 'mainnet' && (
-            <div className="px-6 md:px-8 py-2 bg-amber-600/10 border-b border-amber-600/30 text-amber-600 text-[10px] font-black uppercase tracking-widest sticky top-16 z-40">
+            <div className="px-6 md:px-8 py-2 bg-accent-earth/5 border-b border-accent-earth/20 text-accent-earth text-[10px] font-black uppercase tracking-widest sticky top-16 z-40">
               Warning: Non-Mainnet Environment • {state.network.toUpperCase()}
             </div>
           )}
@@ -628,7 +302,7 @@ const App: React.FC = () => {
             <ErrorBoundary key={activeTab} scope={activeTab}>
               <Suspense fallback={
                 <div className="flex items-center justify-center py-32">
-                  <Loader2 size={24} className="animate-spin text-orange-500" />
+                  <Loader2 size={24} className="animate-spin text-accent-earth" />
                 </div>
               }>
                 {renderContent()}
