@@ -26,7 +26,6 @@ The following logic segments are currently held in `/drafts` and are NOT part of
 
 | Feature | Reason | Status |
 | :--- | :--- | :--- |
-| `Ark V-UTXO` | Researching Native ASP Client stability. | PENDING |
 | `BitVM Verifier` | Waiting for finalized BitVM 2 specs. | RESEARCH |
 
 ## 🔄 Reintegration Workflow
