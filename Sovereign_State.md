@@ -28,6 +28,7 @@ permalink: /./Sovereign_State
 | [DLC_CONTRACTS] | [BRIDGED] | Native DlcManager for Discreet Log Contracts. |
 | [TAPROOT_ASSETS] | [BRIDGED] | Discovery and transfer logic for Taproot Assets. |
 | [B2B_GATEWAY] | [BRIDGED] | Institutional signing and treasury authorization. |
+| [ARK_VUTXO] | [COMPLETED] | Native Ark V-UTXO lifecycle and Stacks anchoring. |
 | [DOCS_ALIGNMENT] | [COMPLETED] | Jekyll frontmatter and LaTeX formula optimization. |
 
 ---
