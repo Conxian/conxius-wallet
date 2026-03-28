@@ -15,13 +15,13 @@ permalink: /docs/monetization
 
 2. **Cross-Chain / Bridge Convenience Fees**
 
-- **Mechanism:** A flat or percentage-based fee (e.g., 0.1%) on cross-chain swaps and bridge operations (sBTC, L-BTC, RBTC) performed via integrated partners like Boltz, 1inch, and LI.FI.
-- **Value:** Revenue from facilitating interoperability.
+- **Mechanism:** A 0.1% convenience fee is charged on cross-chain swaps and bridge operations (sBTC, L-BTC, RBTC) performed via the Conxius NTT Transceiver and integrated partners like Boltz, 1inch, and LI.FI.
+- **Value:** Revenue from facilitating interoperability and maintaining the NTT infrastructure.
 
-3. **Gas Abstraction Service Fees**
+3. **Gas Abstraction Service Fees (The "sBTC-as-Gas" Model)**
 
-- **Mechanism:** When users pay for gas on non-Bitcoin chains (e.g., BOB, ETH) using BTC/sBTC, a service fee is included in the conversion rate.
-- **Value:** Monetizes the convenience of "Bitcoin-only" UX.
+- **Mechanism:** When users pay for gas on non-Bitcoin chains (e.g., BOB, ETH) using BTC/sBTC, a service fee is included in the conversion rate. Conxius handles the destination gas payment via its relayer fleet.
+- **Value:** Monetizes the convenience of "Bitcoin-only" UX and eliminates the need for users to hold multiple gas tokens.
 
 4. **Yield & Staking Commissions**
 

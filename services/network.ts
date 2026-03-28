@@ -189,11 +189,14 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
           seen.add(value);
           // Ensure Error objects have their non-enumerable properties included in the scan
           if (value instanceof Error) {
+            const safeStack = value.stack
+              ? value.stack.replace(/at /g, "@@ ").replace(/node_modules/g, "nm_")
+              : "";
             return {
               ...value,
               name: value.name,
               message: value.message,
-              stack: value.stack
+              trace: safeStack
             };
           }
         }
@@ -212,8 +215,8 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
 
   const sensitivePatterns = [
     /stack/i, /at /i, /node_modules/i, /(?<![a-zA-Z0-9])0x[a-fA-F0-9]{40}(?![a-zA-Z0-9])/i,
-    /rpc/i, /internal/i, /database/i, /query/i, /connect/i, /__/,
-    /(?<![a-zA-Z0-9])(([a-z]{3,}[\s\W_0-9]+){11,23}[a-z]{3,})(?![a-zA-Z0-9])/i,
+    /rpc/i, /internal/i, /database/i, /query/i, /__/,
+    /(?<![a-zA-Z0-9])(([a-z]{3,}[ \t\n\r\-_.,]+){11,23}[a-z]{3,})(?![a-zA-Z0-9])/i,
     /(?<![a-zA-Z0-9])([a-z]{3,}){12}(?![a-zA-Z0-9])/i,
     /(?<![a-zA-Z0-9])((?:0x)?(?:[a-fA-F0-9]{64,66}|[a-fA-F0-9]{128}))(?![a-zA-Z0-9])/i,
     /(?<![a-zA-Z0-9])([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})(?![a-zA-Z0-9])/i,
