@@ -26,6 +26,7 @@ import { AppContext } from '../context';
 import { Asset, BitcoinLayer } from '../types';
 import { SignRequest } from '../services/signer';
 import { getTranslation } from '../services/i18n';
+import { generateRandomString } from '../services/random';
 import AssetDetailModal from './AssetDetailModal';
 import UTXOManager from './UTXOManager';
 import SilentPayments from './SilentPayments';
@@ -62,7 +63,7 @@ const Dashboard: React.FC = () => {
   const handleQrError = () => setQrError(true);
 
   const broadcastBtcTx = async (hex: string, net: string) => {
-    return "txid_" + Math.random().toString(36).substring(7);
+    return "txid_" + generateRandomString(12);
   };
 
   return (
@@ -162,7 +163,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex-1">
                        <p className="text-xs font-bold text-brand-deep">Received Bitcoin</p>
-                       <p className="text-[10px] text-brand-earth font-mono">bc1q...{Math.random().toString(36).substring(7)}</p>
+                       <p className="text-[10px] text-brand-earth font-mono">bc1q...{generateRandomString(8)}</p>
                     </div>
                     <div className="text-right">
                        <p className="text-xs font-black text-success">+0.0042 BTC</p>
