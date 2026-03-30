@@ -1,4 +1,20 @@
 import { generateRandomString } from "./random";
+import {
+  NORMALIZE_REGEX,
+  MNEMONIC_REGEX,
+  MASHED_MNEMONIC_REGEX,
+  BTC_ADDR_REGEX,
+  EVM_ADDR_REGEX,
+  HEX_SECRET_REGEX,
+  STX_ADDR_REGEX,
+  LIQUID_ADDR_REGEX,
+  EXT_KEY_REGEX,
+  NOSTR_KEY_REGEX,
+  SP_ADDR_REGEX,
+  WIF_KEY_REGEX,
+  BOLT11_REGEX,
+  API_KEY_REGEX,
+} from "./security-constants";
 
 /**
  * AI Security & Privacy Layer (Sovereign AI v1.1)
@@ -6,10 +22,6 @@ import { generateRandomString } from "./random";
  */
 
 const MAX_PROMPT_LENGTH = 20000;
-
-// Security: Normalize inputs by stripping non-printable and zero-width characters to prevent obfuscated leaks
-// We exclude common whitespace (0x09, 0x0A, 0x0D) to preserve formatting.
-const NORMALIZE_REGEX = /[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g;
 
 /**
  * Redacts sensitive data from a string and returns a local mapping.
@@ -24,108 +36,91 @@ export const sanitizePrompt = (
   let sanitized = normalized;
 
   // 1. Redact BIP-39 Mnemonics (12-24 words)
-  // Supports varied separators (spaces, hyphens, underscores, dots, digits) for defense-in-depth.
-  const mnemonicRegex = /(?<![a-zA-Z0-9])(([a-z]{3,}[\s\W_0-9]+){11,23}[a-z]{3,})(?![a-zA-Z0-9])/gi;
-
-  sanitized = sanitized.replace(mnemonicRegex, (match) => {
+  sanitized = sanitized.replace(MNEMONIC_REGEX, (match) => {
     const id = `[MNEMONIC_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 2. Redact Bitcoin Addresses (Legacy, Segwit, Taproot, Testnet)
-  // bc1q..., bc1p..., 1..., 3..., tb1..., m/n...
-  const btcRegex =
-    /(?<![a-zA-Z0-9])(bc1[qp][a-z0-9]{33,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})(?![a-zA-Z0-9])/gi;
-  sanitized = sanitized.replace(btcRegex, (match) => {
+  sanitized = sanitized.replace(BTC_ADDR_REGEX, (match) => {
     const id = `[BTC_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 3. Redact EVM Addresses (0x...)
-  const evmRegex = /(?<![a-zA-Z0-9])(0x[a-fA-F0-9]{40})(?![a-zA-Z0-9])/gi;
-  sanitized = sanitized.replace(evmRegex, (match) => {
+  sanitized = sanitized.replace(EVM_ADDR_REGEX, (match) => {
     const id = `[EVM_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 4. Redact Transaction IDs / Private Keys / Node IDs / 64-byte Seeds (64, 66, or 128-char hex)
-  const hexRegex = /(?<![a-zA-Z0-9])((?:0x)?(?:[a-fA-F0-9]{64,66}|[a-fA-F0-9]{128}))(?![a-zA-Z0-9])/gi;
-  sanitized = sanitized.replace(hexRegex, (match) => {
+  sanitized = sanitized.replace(HEX_SECRET_REGEX, (match) => {
     const id = `[HEX_SEC_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 5. Redact Stacks Addresses (SP..., ST...)
-  const stxRegex = /(?<![a-zA-Z0-9])(S[PST][0-9A-Z]{28,41})(?![a-zA-Z0-9])/gi;
-  sanitized = sanitized.replace(stxRegex, (match) => {
+  sanitized = sanitized.replace(STX_ADDR_REGEX, (match) => {
     const id = `[STX_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 6. Redact Liquid Addresses (lq1..., tlq1..., elq1...)
-  const liquidRegex = /(?<![a-zA-Z0-9])((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})(?![a-zA-Z0-9])/gi;
-  sanitized = sanitized.replace(liquidRegex, (match) => {
+  sanitized = sanitized.replace(LIQUID_ADDR_REGEX, (match) => {
     const id = `[LIQUID_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 7. Redact BIP32 Extended Keys (xpub/xprv etc)
-  const xkeyRegex = /(?<![a-zA-Z0-9])([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})(?![a-zA-Z0-9])/gi;
-  sanitized = sanitized.replace(xkeyRegex, (match) => {
+  sanitized = sanitized.replace(EXT_KEY_REGEX, (match) => {
     const id = `[EXT_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 8. Redact Nostr Keys (nsec1, npub1)
-  const nostrRegex = /(?<![a-zA-Z0-9])(nsec1[a-z0-9]{50,200}|npub1[a-z0-9]{50,200})(?![a-zA-Z0-9])/gi;
-  sanitized = sanitized.replace(nostrRegex, (match) => {
+  sanitized = sanitized.replace(NOSTR_KEY_REGEX, (match) => {
     const id = `[NOSTR_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 9. Redact Silent Payment Addresses (sp1...)
-  const spRegex = /(?<![a-zA-Z0-9])(sp1[a-z0-9]{50,200})(?![a-zA-Z0-9])/gi;
-  sanitized = sanitized.replace(spRegex, (match) => {
+  sanitized = sanitized.replace(SP_ADDR_REGEX, (match) => {
     const id = `[SP_ADDR_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 10. Redact Bitcoin WIF Private Keys (Mainnet & Testnet)
-  const wifRegex = /(?<![a-zA-Z0-9])([5KL9c][1-9A-HJ-NP-Za-km-z]{50,51})(?![a-zA-Z0-9])/g;
-  sanitized = sanitized.replace(wifRegex, (match) => {
+  sanitized = sanitized.replace(WIF_KEY_REGEX, (match) => {
     const id = `[WIF_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 11. Redact Lightning BOLT11 Invoices
-  const bolt11Regex = /(?<![a-zA-Z0-9])(ln(?:bc|tb|bcrt|dev)[0-9a-z]+)(?![a-zA-Z0-9])/gi;
-  sanitized = sanitized.replace(bolt11Regex, (match) => {
+  sanitized = sanitized.replace(BOLT11_REGEX, (match) => {
     const id = `[BOLT11_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 12. Redact AI Service API Keys (Google Gemini, OpenAI, etc.)
-  const apiKeyRegex = /(?<![a-zA-Z0-9])(AIzaSy[a-zA-Z0-9_-]{33}|sk-[a-zA-Z0-9_-]{20,})(?![a-zA-Z0-9])/gi;
-  sanitized = sanitized.replace(apiKeyRegex, (match) => {
+  sanitized = sanitized.replace(API_KEY_REGEX, (match) => {
     const id = `[API_KEY_${generateRandomString(4)}]`;
     redactionMap[id] = match;
     return id;
   });
 
   // 13. Redact mashed mnemonics (last pass to avoid over-matching technical identifiers)
-  const mashedMnemonicRegex = /(?<![a-zA-Z0-9])([a-z]{3,}){12}(?![a-zA-Z0-9])/gi;
-  sanitized = sanitized.replace(mashedMnemonicRegex, (match) => {
+  sanitized = sanitized.replace(MASHED_MNEMONIC_REGEX, (match) => {
     // Only redact if it doesn't look like a redaction placeholder
     if (match.startsWith('[') && match.includes('_') && match.endsWith(']')) return match;
     const id = `[MNEMONIC_${generateRandomString(4)}]`;
