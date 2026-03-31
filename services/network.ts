@@ -19,6 +19,7 @@ export function getGatewayUrl(network: Network): string {
 
   switch (network) {
     case 'regtest':
+    case 'devnet':
       return "http://127.0.0.1:8080";
     case 'testnet':
       return "https://gateway.testnet.conxianlabs.com";
@@ -41,6 +42,7 @@ export function endpointsFor(network: Network, appState?: AppState) {
 
   switch (network) {
     case 'regtest':
+    case 'devnet':
       return {
         BTC_API: getSovereignEndpoint('Bitcoin L1', "http://127.0.0.1:8080"),
         STX_API: getSovereignEndpoint('Stacks L2', "http://127.0.0.1:3999"),
@@ -85,7 +87,7 @@ export function endpointsFor(network: Network, appState?: AppState) {
         ZULU_API: "https://rpc.testnet.zulu.network",
         BISON_API: "https://rpc.testnet.bisonlabs.io",
         HEMI_API: "https://rpc.testnet.hemi.network",
-        NUBIT_API: "https://rpc.nubit.org",
+        NUBIT_API: "https://rpc.testnet.nubit.org",
         LORENZO_API: "https://rpc.testnet.lorenzo-protocol.xyz",
         CITREA_API: "https://rpc.testnet.citrea.xyz",
         BABYLON_API: "https://rpc.testnet.babylonchain.io",
@@ -213,7 +215,15 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
   const strippedMessage = String(message).replace(NORMALIZE_REGEX, "");
   const spacedMessage = String(message).replace(NORMALIZE_REGEX, " ");
 
-  if (SENSITIVE_PATTERNS.some((p) => p.test(strippedScan) || p.test(spacedScan) || p.test(strippedMessage) || p.test(spacedMessage))) {
+  // Fix: Ensure all global regexes have their lastIndex reset to 0 before testing.
+  // This prevents stateful behavior where matches are skipped in subsequent calls or
+  // when string lengths change.
+  const isSensitive = SENSITIVE_PATTERNS.some((p) => {
+    if (p.global) p.lastIndex = 0;
+    return p.test(strippedScan) || (p.lastIndex = 0, p.test(spacedScan)) || (p.lastIndex = 0, p.test(strippedMessage)) || (p.lastIndex = 0, p.test(spacedMessage));
+  });
+
+  if (isSensitive) {
     return defaultMsg;
   }
 

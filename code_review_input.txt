@@ -1,8 +1,11 @@
-I have expanded the service architecture with non-custodial integrations:
-- Created services/yield.ts, services/insurance.ts, services/real-world.ts
-- Updated services/swap.ts, services/monetization.ts
-- Expanded components/Marketplace.tsx and components/DeFiDashboard.tsx
-- Added tests/yield.test.ts, tests/swap-advanced.test.ts, tests/real-world.test.ts
-- Added e2e/cxn-arch-guardian_privacy.spec.ts
+File: services/network.ts
+Changes:
+1. Fixed statefulness in 'sanitizeError' by resetting 'lastIndex' for all global regexes in 'SENSITIVE_PATTERNS' before each string scan.
+2. Corrected 'NUBIT_API' testnet endpoint to 'https://rpc.testnet.nubit.org'.
+3. Aligned all RPC endpoints for Mainnet, Testnet, Regtest, and Devnet, ensuring correct routing across all network states.
+4. Added comprehensive regression tests in 'tests/sanitize-error-hardening.test.ts'.
 
-Please review the security and sovereignty alignment.
+Verification:
+- Confirmed statefulness fix with reproduction Node.js script.
+- Confirmed network mapping for all 4 states (Mainnet/Testnet/Regtest/Devnet) via content inspection and local tests.
+- Verified redaction of AI API keys and obfuscated addresses.
