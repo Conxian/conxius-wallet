@@ -20,6 +20,7 @@ export interface Asset {
   icon?: string;
   linkedDid?: string;
   address?: string;
+  change?: number;
 }
 
 export interface UTXO {

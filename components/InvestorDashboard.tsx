@@ -42,16 +42,16 @@ const InvestorDashboard: React.FC = () => {
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
-             <Briefcase className="text-orange-500" />
-             <h2 className="text-3xl font-black tracking-tighter text-zinc-100 uppercase italic">Research & Risk Enclave</h2>
+             <Briefcase className="text-accent-earth" />
+             <h2 className="text-3xl font-black tracking-tighter text-brand-deep uppercase italic">Research & Risk Enclave</h2>
           </div>
-          <p className="text-zinc-500 text-sm">Quantifying protocol-native moats and risk-adjusted valuation.</p>
+          <p className="text-brand-earth text-sm">Quantifying protocol-native moats and risk-adjusted valuation.</p>
         </div>
         <div className="flex items-center gap-4">
-           <div className="bg-zinc-900 border border-zinc-800 px-6 py-4 rounded-[2rem] text-right group hover:border-orange-500/30 transition-all shadow-2xl">
-              <p className="text-[10px] font-black uppercase text-zinc-500 tracking-widest mb-1">Pre-Market Evaluation</p>
+           <div className="bg-off-white border border-border px-6 py-4 rounded-[2rem] text-right group hover:border-orange-500/30 transition-all shadow-2xl">
+              <p className="text-[10px] font-black uppercase text-brand-earth tracking-widest mb-1">Pre-Market Evaluation</p>
               <div className="flex items-center gap-2">
-                 <span className="text-2xl font-mono font-bold text-orange-500">{valuationRange}</span>
+                 <span className="text-2xl font-mono font-bold text-accent-earth">{valuationRange}</span>
                  <TrendingUp size={16} className="text-green-500" />
               </div>
            </div>
@@ -67,8 +67,8 @@ const InvestorDashboard: React.FC = () => {
                 <div 
                   key={vector.id}
                   onClick={() => setActiveVector(vector.id)}
-                  className={`p-8 bg-zinc-900/40 border rounded-[2.5rem] transition-all cursor-pointer group relative overflow-hidden ${
-                    activeVector === vector.id ? 'border-orange-500/50 bg-orange-500/5' : 'border-zinc-800 hover:border-zinc-700'
+                  className={`p-8 bg-off-white/40 border rounded-[2.5rem] transition-all cursor-pointer group relative overflow-hidden ${
+                    activeVector === vector.id ? 'border-orange-500/50 bg-orange-500/5' : 'border-border hover:border-brand-earth'
                   }`}
                 >
                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
@@ -76,16 +76,16 @@ const InvestorDashboard: React.FC = () => {
                    </div>
                    <div className="relative z-10 space-y-4">
                       <div className="flex justify-between items-start">
-                         <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">{vector.label}</h4>
-                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-zinc-950 border border-zinc-900 ${vector.color}`}>
+                         <h4 className="text-[10px] font-black uppercase text-brand-earth tracking-widest">{vector.label}</h4>
+                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-white border border-border ${vector.color}`}>
                             {vector.status}
                          </span>
                       </div>
                       <div className="flex items-baseline gap-2">
-                         <span className="text-4xl font-mono font-bold text-zinc-100">{vector.value}</span>
-                         <span className="text-xs font-bold text-zinc-600">/ 100</span>
+                         <span className="text-4xl font-mono font-bold text-brand-deep">{vector.value}</span>
+                         <span className="text-xs font-bold text-brand-earth">/ 100</span>
                       </div>
-                      <div className="w-full h-1 bg-zinc-950 rounded-full overflow-hidden">
+                      <div className="w-full h-1 bg-white rounded-full overflow-hidden">
                          <div className={`h-full transition-all duration-1000 ${vector.id === 'liq' ? 'bg-yellow-500' : 'bg-orange-500'}`} style={{ width: `${vector.value}%` }} />
                       </div>
                    </div>
@@ -94,31 +94,31 @@ const InvestorDashboard: React.FC = () => {
           </div>
 
           {/* CRO Research Terminal */}
-          <div className="bg-zinc-900/40 border border-zinc-800 rounded-[3rem] p-1 shadow-2xl overflow-hidden">
-             <div className="bg-zinc-950 rounded-[2.8rem] flex flex-col min-h-[600px]">
-                <div className="p-8 border-b border-zinc-900 bg-zinc-900/20 flex items-center justify-between">
+          <div className="bg-off-white/40 border border-border rounded-[3rem] p-1 shadow-2xl overflow-hidden">
+             <div className="bg-white rounded-[2.8rem] flex flex-col min-h-[600px]">
+                <div className="p-8 border-b border-border bg-off-white/20 flex items-center justify-between">
                    <div className="flex items-center gap-3">
-                      <FileText size={20} className="text-orange-500" />
-                      <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 font-mono italic">CRO_STRATEGIC_AUDIT_2024</h3>
+                      <FileText size={20} className="text-accent-earth" />
+                      <h3 className="text-xs font-black uppercase tracking-widest text-brand-earth font-mono italic">CRO_STRATEGIC_AUDIT_2024</h3>
                    </div>
                    <div className="flex items-center gap-4">
-                      <button onClick={runInstitutionalAudit} className="text-[10px] font-black uppercase text-orange-500 hover:text-orange-400 transition-all flex items-center gap-2">
+                      <button onClick={runInstitutionalAudit} className="text-[10px] font-black uppercase text-accent-earth hover:text-orange-400 transition-all flex items-center gap-2">
                          <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
                          Refine Analysis
                       </button>
                    </div>
                 </div>
                 
-                <div className="flex-1 p-10 font-serif text-sm text-zinc-300 leading-relaxed overflow-y-auto custom-scrollbar relative">
+                <div className="flex-1 p-10 font-serif text-sm text-brand-deep leading-relaxed overflow-y-auto custom-scrollbar relative">
                    {isLoading ? (
                       <div className="flex flex-col items-center justify-center h-full gap-6 py-20">
-                         <Loader2 className="animate-spin text-orange-500" size={48} />
-                         <p className="text-sm font-black uppercase tracking-[0.3em] text-zinc-500">Deconstructing Protocol Risks...</p>
+                         <Loader2 className="animate-spin text-accent-earth" size={48} />
+                         <p className="text-sm font-black uppercase tracking-[0.3em] text-brand-earth">Deconstructing Protocol Risks...</p>
                       </div>
                    ) : memo ? (
                       <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                         <div className="bg-orange-600/10 border border-orange-500/20 p-6 rounded-3xl mb-8 flex items-center gap-4">
-                            <ShieldAlert className="text-orange-500 shrink-0" size={24} />
+                         <div className="bg-accent-earth/10 border border-orange-500/20 p-6 rounded-3xl mb-8 flex items-center gap-4">
+                            <ShieldAlert className="text-accent-earth shrink-0" size={24} />
                             <p className="text-xs italic text-orange-200">
                                <strong>Warning:</strong> Valuation is sensitive to L1 congestion. Current fees suggest a 4.2% discount on NTT liquidity depth.
                             </p>
@@ -133,20 +133,20 @@ const InvestorDashboard: React.FC = () => {
 
         <div className="lg:col-span-4 space-y-8">
            {/* Treasury Health */}
-           <div className="bg-zinc-950 border border-zinc-800 rounded-[2.5rem] p-8 space-y-8 shadow-xl">
-              <h4 className="text-xs font-black uppercase text-zinc-500 tracking-widest flex items-center gap-2">
-                 <Landmark size={16} className="text-orange-500" /> Treasury Exposure
+           <div className="bg-white border border-border rounded-[2.5rem] p-8 space-y-8 shadow-xl">
+              <h4 className="text-xs font-black uppercase text-brand-earth tracking-widest flex items-center gap-2">
+                 <Landmark size={16} className="text-accent-earth" /> Treasury Exposure
               </h4>
               <div className="space-y-4">
                  {TREASURY_ASSETS.map((asset, i) => (
-                    <div key={i} className="flex justify-between items-center p-5 bg-zinc-900/50 rounded-2xl border border-zinc-800 group hover:border-orange-500/20 transition-all">
+                    <div key={i} className="flex justify-between items-center p-5 bg-off-white/50 rounded-2xl border border-border group hover:border-orange-500/20 transition-all">
                        <div>
-                          <p className="text-[10px] font-black uppercase text-zinc-600">{asset.name}</p>
-                          <p className="text-sm font-bold text-zinc-100">{asset.value}</p>
+                          <p className="text-[10px] font-black uppercase text-brand-earth">{asset.name}</p>
+                          <p className="text-sm font-bold text-brand-deep">{asset.value}</p>
                        </div>
                        <div className="text-right">
-                          <p className="text-xs font-mono font-bold text-zinc-400">{asset.usd}</p>
-                          <p className={`text-[10px] font-black ${asset.change.startsWith('+') ? 'text-green-500' : 'text-zinc-500'}`}>{asset.change}</p>
+                          <p className="text-xs font-mono font-bold text-brand-earth">{asset.usd}</p>
+                          <p className={`text-[10px] font-black ${asset.change.startsWith('+') ? 'text-green-500' : 'text-brand-earth'}`}>{asset.change}</p>
                        </div>
                     </div>
                  ))}
@@ -154,7 +154,7 @@ const InvestorDashboard: React.FC = () => {
            </div>
 
            {/* Institutional Bull Case */}
-           <div className="bg-orange-600 border border-orange-500 rounded-[2.5rem] p-8 text-white relative overflow-hidden group shadow-2xl shadow-orange-600/30">
+           <div className="bg-accent-earth border border-orange-500 rounded-[2.5rem] p-8 text-white relative overflow-hidden group shadow-2xl shadow-orange-600/30">
               <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:scale-110 transition-transform">
                  <Medal size={120} />
               </div>
@@ -163,30 +163,30 @@ const InvestorDashboard: React.FC = () => {
                  <p className="text-xs font-medium leading-relaxed italic opacity-90 mb-8">
                     "Conxius captures the 'Bitcoin Multi-Layer' renaissance. By integrating NTT natively, it creates an exit-liquidity moat that CEXs cannot match without sacrificing their custodial margins."
                  </p>
-                 <button className="w-full bg-white text-orange-600 font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest hover:bg-zinc-100 transition-all shadow-xl">
+                 <button className="w-full bg-white text-orange-600 font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-xl">
                     Download Full PDF Report
                  </button>
               </div>
            </div>
 
            {/* Exit Strategy Monitor */}
-           <div className="bg-zinc-950 border border-zinc-800 rounded-[2.5rem] p-8 space-y-6">
-              <h4 className="font-bold text-sm text-zinc-400 flex items-center gap-2">
+           <div className="bg-white border border-border rounded-[2.5rem] p-8 space-y-6">
+              <h4 className="font-bold text-sm text-brand-earth flex items-center gap-2">
                  <Target size={18} className="text-blue-500" />
                  Market Depth Vectors
               </h4>
               <div className="space-y-4 pt-4">
-                 <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
-                    <span className="text-[10px] font-black uppercase text-zinc-600">Integrator Yield</span>
+                 <div className="flex justify-between items-center border-b border-border pb-3">
+                    <span className="text-[10px] font-black uppercase text-brand-earth">Integrator Yield</span>
                     <span className="text-xs font-mono font-bold text-green-500">14.2% APY</span>
                  </div>
-                 <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
-                    <span className="text-[10px] font-black uppercase text-zinc-600">Sovereign Retention</span>
-                    <span className="text-xs font-mono font-bold text-zinc-200">88.4%</span>
+                 <div className="flex justify-between items-center border-b border-border pb-3">
+                    <span className="text-[10px] font-black uppercase text-brand-earth">Sovereign Retention</span>
+                    <span className="text-xs font-mono font-bold text-brand-deep">88.4%</span>
                  </div>
                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black uppercase text-zinc-600">Exit Volatility</span>
-                    <span className="text-xs font-mono font-bold text-orange-500">Moderate</span>
+                    <span className="text-[10px] font-black uppercase text-brand-earth">Exit Volatility</span>
+                    <span className="text-xs font-mono font-bold text-accent-earth">Moderate</span>
                  </div>
               </div>
            </div>

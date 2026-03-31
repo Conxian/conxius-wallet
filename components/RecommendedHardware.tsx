@@ -21,7 +21,7 @@ const RecommendedHardware: React.FC = () => {
       commission: '12%',
       payout: 'Bitcoin',
       recommended: true,
-      color: 'bg-zinc-100 text-zinc-950',
+      color: 'bg-white text-ivory',
       iconLetter: 'B'
     },
     {
@@ -39,7 +39,7 @@ const RecommendedHardware: React.FC = () => {
       link: 'https://shop.ledger.com/?r=CONXIUS', // https://shiftcrypto.ch/bitbox02/?ref=CONXIUS
       commission: '10%',
       payout: 'Fiat',
-      color: 'bg-zinc-800 text-white',
+      color: 'bg-border text-white',
       iconLetter: 'L'
     }
   ];
@@ -47,11 +47,11 @@ const RecommendedHardware: React.FC = () => {
   return (
     <div className="bg-orange-500/5 border border-orange-500/10 rounded-3xl p-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold flex items-center gap-2 uppercase tracking-widest text-orange-500 text-xs">
+        <h3 className="font-bold flex items-center gap-2 uppercase tracking-widest text-accent-earth text-xs">
           <ShoppingCart size={16} />
           Sovereign Shield Shop
         </h3>
-        <span className="text-[10px] font-bold text-zinc-600 uppercase">Verified Hardware</span>
+        <span className="text-[10px] font-bold text-brand-earth uppercase">Verified Hardware</span>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -63,8 +63,8 @@ const RecommendedHardware: React.FC = () => {
             rel="noopener noreferrer"
             className={`relative p-6 rounded-2xl flex flex-col justify-between border transition-all group ${
               wallet.recommended 
-                ? 'bg-zinc-900/60 border-orange-500/30 hover:border-orange-500' 
-                : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-600'
+                ? 'bg-off-white/60 border-orange-500/30 hover:border-orange-500'
+                : 'bg-off-white/40 border-border hover:border-brand-earth'
             }`}
           >
             {wallet.recommended && (
@@ -78,17 +78,17 @@ const RecommendedHardware: React.FC = () => {
                 {wallet.iconLetter}
               </div>
               <div>
-                <h4 className="font-bold text-sm text-zinc-200">{wallet.name}</h4>
-                <p className="text-[10px] text-zinc-500 mt-1 leading-relaxed">{wallet.description}</p>
+                <h4 className="font-bold text-sm text-brand-deep">{wallet.name}</h4>
+                <p className="text-[10px] text-brand-earth mt-1 leading-relaxed">{wallet.description}</p>
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-zinc-800/50 flex items-center justify-between">
+            <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between">
                <div className="flex flex-col">
-                  <span className="text-[9px] font-bold text-zinc-600 uppercase">Support Us</span>
-                  <span className="text-[9px] text-zinc-500">Earns {wallet.commission}</span>
+                  <span className="text-[9px] font-bold text-brand-earth uppercase">Support Us</span>
+                  <span className="text-[9px] text-brand-earth">Earns {wallet.commission}</span>
                </div>
-               <div className="w-8 h-8 rounded-full bg-zinc-950 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-colors">
+               <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center group-hover:bg-accent-earth/90 group-hover:text-white transition-colors">
                   <ExternalLink size={12} />
                </div>
             </div>
@@ -96,7 +96,7 @@ const RecommendedHardware: React.FC = () => {
         ))}
       </div>
       
-      <p className="text-[10px] text-zinc-500 italic text-center">
+      <p className="text-[10px] text-brand-earth italic text-center">
         Buying via these links directly funds Conxian Labs development without extra cost to you.
       </p>
     </div>

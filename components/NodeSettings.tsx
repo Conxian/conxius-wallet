@@ -116,20 +116,20 @@ const NodeSettings: React.FC = () => {
     <div className="p-8 max-w-7xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black tracking-tighter text-zinc-100 flex items-center gap-3 italic uppercase">
-            <div className="flex flex-col md:flex-row md:items-center gap-6"><Network className="text-orange-500" /><div><select value={appContext?.state.rpcStrategy || "Sovereign-First"} onChange={e => appContext?.setRpcStrategy(e.target.value as any)} className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest text-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 transition-all shadow-xl shadow-orange-600/10"><option value="Sovereign-First">Sovereign-First</option><option value="Mixed">Mixed Mode</option><option value="Public-Only">Public-Only</option></select><p className="text-[8px] text-zinc-500 mt-1 uppercase font-bold tracking-tighter">Current Routing Strategy</p></div></div>
+          <h2 className="text-3xl font-black tracking-tighter text-brand-deep flex items-center gap-3 italic uppercase">
+            <div className="flex flex-col md:flex-row md:items-center gap-6"><Network className="text-accent-earth" /><div><select value={appContext?.state.rpcStrategy || "Sovereign-First"} onChange={e => appContext?.setRpcStrategy(e.target.value as any)} className="bg-off-white border border-border rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest text-accent-earth focus:outline-none focus:ring-1 focus:ring-orange-500/50 transition-all shadow-xl shadow-orange-600/10"><option value="Sovereign-First">Sovereign-First</option><option value="Mixed">Mixed Mode</option><option value="Public-Only">Public-Only</option></select><p className="text-[8px] text-brand-earth mt-1 uppercase font-bold tracking-tighter">Current Routing Strategy</p></div></div>
             Sovereign Node Hub
           </h2>
-          <p className="text-zinc-500 text-sm italic">Decentralize your source of truth. Don't trust, verify.</p>
+          <p className="text-brand-earth text-sm italic">Decentralize your source of truth. Don't trust, verify.</p>
         </div>
         <div className="flex gap-4">
-           <div className={`bg-zinc-900 border px-6 py-3 rounded-2xl flex items-center gap-4 transition-all ${conxiusHardened ? 'border-orange-500/50' : 'border-zinc-800'}`}>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${conxiusHardened ? 'bg-orange-600 text-white' : 'bg-zinc-800 text-zinc-600'}`}>
+           <div className={`bg-off-white border px-6 py-3 rounded-2xl flex items-center gap-4 transition-all ${conxiusHardened ? 'border-orange-500/50' : 'border-border'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${conxiusHardened ? 'bg-accent-earth text-white' : 'bg-border text-brand-earth'}`}>
                  <ShieldCheck size={20} />
               </div>
               <div className="text-right">
-                 <p className="text-[10px] font-black uppercase text-zinc-500">Conxius Hardened</p>
-                 <button onClick={() => setConxiusHardened(!conxiusHardened)} className={`text-xs font-bold uppercase tracking-widest ${conxiusHardened ? 'text-orange-500' : 'text-zinc-600'}`}>
+                 <p className="text-[10px] font-black uppercase text-brand-earth">Conxius Hardened</p>
+                 <button onClick={() => setConxiusHardened(!conxiusHardened)} className={`text-xs font-bold uppercase tracking-widest ${conxiusHardened ? 'text-accent-earth' : 'text-brand-earth'}`}>
                     {conxiusHardened ? 'Active (Tor Routed)' : 'Inactive (Public)'}
                  </button>
               </div>
@@ -144,40 +144,40 @@ const NodeSettings: React.FC = () => {
         <div className="lg:col-span-8 space-y-10">
           
           {/* Active Node Matrix */}
-          <div className="bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
-             <div className="p-6 border-b border-zinc-900 bg-zinc-900/20 flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+          <div className="bg-white border border-border rounded-[2.5rem] overflow-hidden shadow-2xl">
+             <div className="p-6 border-b border-border bg-off-white/20 flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-brand-earth flex items-center gap-2">
                    <Activity size={16} /> RPC Connection Matrix
                 </h3>
-                <span className="text-[10px] font-mono text-zinc-600 font-bold uppercase tracking-tighter">Verified peers: 142 (Tor-v3)</span>
+                <span className="text-[10px] font-mono text-brand-earth font-bold uppercase tracking-tighter">Verified peers: 142 (Tor-v3)</span>
              </div>
-             <div className="divide-y divide-zinc-900">
+             <div className="divide-y divide-off-white">
                 {nodes.map((node) => (
-                  <div key={node.id} className="p-6 flex items-center justify-between group hover:bg-zinc-900/10 transition-all">
+                  <div key={node.id} className="p-6 flex items-center justify-between group hover:bg-off-white/10 transition-all">
                      <div className="flex items-center gap-6">
                         <div className={`w-12 h-12 rounded-2xl border flex flex-col items-center justify-center transition-all ${
-                          node.status === 'online' ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-zinc-900 border-zinc-800'
+                          node.status === 'online' ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-off-white border-border'
                         }`}>
                            <p className="text-[8px] font-black uppercase tracking-tighter mb-0.5">{node.latency}ms</p>
                            <Activity size={14} className={node.status === 'online' ? 'animate-pulse' : ''} />
                         </div>
                         <div>
                            <div className="flex items-center gap-3">
-                              <p className="text-[10px] font-black uppercase text-zinc-600 tracking-widest">{node.layer}</p>
-                              {node.isDefault && <span className="text-[8px] font-black bg-zinc-900 text-zinc-500 px-1.5 py-0.5 rounded uppercase">Preset</span>}
-                              {node.type === 'Local' && <span className="text-[8px] font-black bg-orange-500/10 text-orange-500 px-1.5 py-0.5 rounded uppercase border border-orange-500/20">Sovereign Root</span>}
+                              <p className="text-[10px] font-black uppercase text-brand-earth tracking-widest">{node.layer}</p>
+                              {node.isDefault && <span className="text-[8px] font-black bg-off-white text-brand-earth px-1.5 py-0.5 rounded uppercase">Preset</span>}
+                              {node.type === 'Local' && <span className="text-[8px] font-black bg-orange-500/10 text-accent-earth px-1.5 py-0.5 rounded uppercase border border-orange-500/20">Sovereign Root</span>}
                            </div>
-                           <p className="text-sm font-mono font-bold text-zinc-200 mt-1">{node.provider}</p>
-                           <p className="text-[10px] font-mono text-zinc-600 italic truncate w-48 md:w-96">{node.endpoint}</p>
+                           <p className="text-sm font-mono font-bold text-brand-deep mt-1">{node.provider}</p>
+                           <p className="text-[10px] font-mono text-brand-earth italic truncate w-48 md:w-96">{node.endpoint}</p>
                         </div>
                      </div>
                      <div className="flex items-center gap-4">
                         {!node.isDefault && (
-                          <button type="button" onClick={() => removeNode(node.id)} className="opacity-0 group-hover:opacity-100 p-2 text-zinc-700 hover:text-red-500 transition-all" aria-label="Remove Node" title="Remove Node">
+                          <button type="button" onClick={() => removeNode(node.id)} className="opacity-0 group-hover:opacity-100 p-2 text-brand-earth hover:text-red-500 transition-all" aria-label="Remove Node" title="Remove Node">
                              <X size={16} />
                           </button>
                         )}
-                        <div className={`w-2.5 h-2.5 rounded-full ${node.status === 'online' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]' : 'bg-zinc-800'}`} />
+                        <div className={`w-2.5 h-2.5 rounded-full ${node.status === 'online' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]' : 'bg-border'}`} />
                      </div>
                   </div>
                 ))}
@@ -185,19 +185,19 @@ const NodeSettings: React.FC = () => {
           </div>
 
           {/* Infrastructure Research (Gemini Terminal) */}
-          <div className="bg-black border border-zinc-800 rounded-[3rem] p-1 shadow-2xl group">
-             <div className="bg-zinc-950 rounded-[2.8rem] flex flex-col min-h-[500px]">
-                <div className="p-8 border-b border-zinc-900 bg-zinc-900/20 flex items-center justify-between">
+          <div className="bg-ivory border border-border rounded-[3rem] p-1 shadow-2xl group">
+             <div className="bg-white rounded-[2.8rem] flex flex-col min-h-[500px]">
+                <div className="p-8 border-b border-border bg-off-white/20 flex items-center justify-between">
                    <div className="flex items-center gap-3">
-                      <Terminal size={18} className="text-orange-500" />
-                      <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 font-mono italic">INFRA_STRATEGIC_RESEARCH_TERMINAL</h3>
+                      <Terminal size={18} className="text-accent-earth" />
+                      <h3 className="text-xs font-black uppercase tracking-widest text-brand-earth font-mono italic">INFRA_STRATEGIC_RESEARCH_TERMINAL</h3>
                    </div>
-                   <div className="flex bg-zinc-900 p-1 rounded-xl">
+                   <div className="flex bg-off-white p-1 rounded-xl">
                       {['Bitcoin L1', 'Stacks', 'Rootstock'].map(l => (
                          <button 
                            key={l}
                            onClick={() => researchLayer(l)}
-                           className="px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-orange-500 transition-colors"
+                           className="px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-brand-earth hover:text-accent-earth transition-colors"
                          >
                             {l}
                          </button>
@@ -205,22 +205,22 @@ const NodeSettings: React.FC = () => {
                    </div>
                 </div>
                 
-                <div className="flex-1 p-10 font-mono text-xs text-zinc-400 leading-relaxed overflow-y-auto custom-scrollbar relative">
+                <div className="flex-1 p-10 font-mono text-xs text-brand-earth leading-relaxed overflow-y-auto custom-scrollbar relative">
                    {isLoadingResearch ? (
                       <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
-                         <Loader2 className="animate-spin text-orange-500" size={32} />
+                         <Loader2 className="animate-spin text-accent-earth" size={32} />
                          <p className="uppercase tracking-[0.3em] font-black animate-pulse">Researching Global Peer Mesh...</p>
                       </div>
                    ) : researchData ? (
                       <div className="animate-in fade-in duration-500">
                          <div className="bg-orange-500/5 border border-orange-500/10 p-6 rounded-2xl mb-8 flex items-center gap-4">
-                            <Sparkles className="text-orange-500 shrink-0" size={18} />
-                            <p className="text-[10px] font-black uppercase text-orange-500 italic">Chief Infra Advisor: Optimal Routes Found</p>
+                            <Sparkles className="text-accent-earth shrink-0" size={18} />
+                            <p className="text-[10px] font-black uppercase text-accent-earth italic">Chief Infra Advisor: Optimal Routes Found</p>
                          </div>
                          <div className="whitespace-pre-wrap">{researchData}</div>
                       </div>
                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-zinc-700 opacity-30 select-none">
+                      <div className="flex flex-col items-center justify-center h-full text-brand-earth opacity-30 select-none">
                          <Database size={48} className="mb-4" />
                          <p className="text-sm uppercase tracking-[0.3em] font-black text-center">Execute Infrastructure Scan</p>
                       </div>
@@ -230,9 +230,9 @@ const NodeSettings: React.FC = () => {
           </div>
           
             {/* Lightning Backend & Status */}
-            <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] p-6 space-y-6">
+            <div className="bg-off-white/40 border border-border rounded-[2rem] p-6 space-y-6">
                <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-brand-earth flex items-center gap-2">
                      <Zap size={14} /> Lightning Backend
                   </h3>
                   {lnBackend.type === 'Breez' && (
@@ -248,8 +248,8 @@ const NodeSettings: React.FC = () => {
                ) : (
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                      <div>
-                       <label className="text-[10px] font-black uppercase text-zinc-600">Type</label>
-                       <select value={lnBackend.type} onChange={(e) => setLnBackend(prev => ({ ...prev, type: e.target.value as any }))} className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" aria-label="Lightning Backend Type" title="Lightning Backend Type">
+                       <label className="text-[10px] font-black uppercase text-brand-earth">Type</label>
+                       <select value={lnBackend.type} onChange={(e) => setLnBackend(prev => ({ ...prev, type: e.target.value as any }))} className="w-full bg-white border border-border rounded-2xl px-4 py-3 text-sm" aria-label="Lightning Backend Type" title="Lightning Backend Type">
                          <option>None</option>
                          <option value="Breez">Breez / Greenlight (Embedded)</option>
                          <option value="LND">LND (Remote)</option>
@@ -258,12 +258,12 @@ const NodeSettings: React.FC = () => {
                      {lnBackend.type === 'LND' && (
                         <>
                            <div>
-                             <label className="text-[10px] font-black uppercase text-zinc-600">Endpoint</label>
-                             <input value={lnBackend.endpoint} onChange={(e) => setLnBackend(prev => ({ ...prev, endpoint: e.target.value }))} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" placeholder="https://host:port" />
+                             <label className="text-[10px] font-black uppercase text-brand-earth">Endpoint</label>
+                             <input value={lnBackend.endpoint} onChange={(e) => setLnBackend(prev => ({ ...prev, endpoint: e.target.value }))} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="w-full bg-white border border-border rounded-2xl px-4 py-3 text-sm" placeholder="https://host:port" />
                            </div>
                            <div>
-                             <label className="text-[10px] font-black uppercase text-zinc-600">API Key</label>
-                             <input type="password" value={lnBackend.apiKey} onChange={(e) => setLnBackend(prev => ({ ...prev, apiKey: e.target.value }))} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 text-sm" placeholder="Macaroon hex or token" />
+                             <label className="text-[10px] font-black uppercase text-brand-earth">API Key</label>
+                             <input type="password" value={lnBackend.apiKey} onChange={(e) => setLnBackend(prev => ({ ...prev, apiKey: e.target.value }))} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" className="w-full bg-white border border-border rounded-2xl px-4 py-3 text-sm" placeholder="Macaroon hex or token" />
                            </div>
                         </>
                      )}
@@ -272,7 +272,7 @@ const NodeSettings: React.FC = () => {
                
                <div className="flex justify-end gap-3">
                   {(lnBackend.type === 'Breez' || appLnType === 'Breez') && (
-                      <p className="text-[9px] text-zinc-500 self-center mr-auto italic">
+                      <p className="text-[9px] text-brand-earth self-center mr-auto italic">
                           Breez SDK is running locally. Keys are in Secure Enclave.
                       </p>
                   )}
@@ -283,18 +283,18 @@ const NodeSettings: React.FC = () => {
             </div>
 
             {/* Network Sovereignty / Tor */}
-            <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] p-6 space-y-4">
-               <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+            <div className="bg-off-white/40 border border-border rounded-[2rem] p-6 space-y-4">
+               <h3 className="text-[10px] font-black uppercase tracking-widest text-brand-earth flex items-center gap-2">
                   <ShieldCheck size={14} /> Network Sovereignty
                </h3>
                <div className="flex items-center justify-between">
                   <div>
-                     <p className="text-zinc-200 text-sm font-bold">Tor Proxy (Orbot/Internal)</p>
-                     <p className="text-[10px] text-zinc-500">Route all HTTP and PayJoin traffic through Tor network.</p>
+                     <p className="text-brand-deep text-sm font-bold">Tor Proxy (Orbot/Internal)</p>
+                     <p className="text-[10px] text-brand-earth">Route all HTTP and PayJoin traffic through Tor network.</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                      <input type="checkbox" className="sr-only peer" disabled checked={false} />
-                     <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-500 after:border-zinc-500 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 opacity-50 cursor-not-allowed"></div>
+                     <div className="w-11 h-6 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white0 after:border-white0 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 opacity-50 cursor-not-allowed"></div>
                   </label>
                </div>
                <p className="text-[9px] text-red-500 italic">Tor integration requires native binary. Currently disabled in Alpha.</p>
@@ -303,7 +303,7 @@ const NodeSettings: React.FC = () => {
 
         <div className="lg:col-span-4 space-y-8">
            {/* Ethos Advisor (Gemini) */}
-           <div className="bg-orange-600 border border-orange-500 rounded-[3rem] p-10 text-white relative overflow-hidden group shadow-2xl shadow-orange-600/30">
+           <div className="bg-accent-earth border border-orange-500 rounded-[3rem] p-10 text-white relative overflow-hidden group shadow-2xl shadow-orange-600/30">
               <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
                  <BookOpen size={100} />
               </div>
@@ -322,15 +322,15 @@ const NodeSettings: React.FC = () => {
                        <div className="whitespace-pre-wrap leading-relaxed">{ethosAdvice}</div>
                     )}
                  </div>
-                 <button onClick={() => fetchEthos(selectedPath)} className="mt-8 w-full bg-white text-orange-600 font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest hover:bg-zinc-100 transition-all flex items-center justify-center gap-2 shadow-xl">
+                 <button onClick={() => fetchEthos(selectedPath)} className="mt-8 w-full bg-white text-orange-600 font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2 shadow-xl">
                     <RefreshCw size={14} /> Refresh Research
                  </button>
               </div>
            </div>
 
            {/* Hardware Specs Widget */}
-           <div className="bg-zinc-950 border border-zinc-800 rounded-[2.5rem] p-8 space-y-6 shadow-xl">
-              <h4 className="font-bold text-sm text-zinc-400 flex items-center gap-2 uppercase tracking-widest">
+           <div className="bg-white border border-border rounded-[2.5rem] p-8 space-y-6 shadow-xl">
+              <h4 className="font-bold text-sm text-brand-earth flex items-center gap-2 uppercase tracking-widest">
                  <Cpu size={18} className="text-blue-500" />
                  Sovereign Specs
               </h4>
@@ -340,12 +340,12 @@ const NodeSettings: React.FC = () => {
                    { label: 'RAM', value: '16GB DDR4', sub: 'Mempool & DB Cache' },
                    { label: 'Network', value: '1Gbps + Tor', sub: 'Privacy routing enabled' },
                  ].map((spec, i) => (
-                    <div key={i} className="flex justify-between items-start border-b border-zinc-900 pb-3 last:border-0">
+                    <div key={i} className="flex justify-between items-start border-b border-border pb-3 last:border-0">
                        <div>
-                          <p className="text-[10px] font-black uppercase text-zinc-600">{spec.label}</p>
-                          <p className="text-xs font-bold text-zinc-200">{spec.value}</p>
+                          <p className="text-[10px] font-black uppercase text-brand-earth">{spec.label}</p>
+                          <p className="text-xs font-bold text-brand-deep">{spec.value}</p>
                        </div>
-                       <p className="text-[9px] text-zinc-500 italic">{spec.sub}</p>
+                       <p className="text-[9px] text-brand-earth italic">{spec.sub}</p>
                     </div>
                  ))}
               </div>
@@ -355,23 +355,23 @@ const NodeSettings: React.FC = () => {
 
       {/* Add Custom RPC Modal */}
       {isAddingNode && (
-         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-[3rem] p-10 space-y-8 relative shadow-2xl">
-               <button type="button" onClick={() => setIsAddingNode(false)} className="absolute top-8 right-8 text-zinc-700 hover:text-zinc-300 transition-colors" aria-label="Close Modal" title="Close Modal">
+         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-brand-deep/80 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="w-full max-w-md bg-white border border-border rounded-[3rem] p-10 space-y-8 relative shadow-2xl">
+               <button type="button" onClick={() => setIsAddingNode(false)} className="absolute top-8 right-8 text-brand-earth hover:text-brand-deep transition-colors" aria-label="Close Modal" title="Close Modal">
                   <X size={24} />
                </button>
                <div className="text-center space-y-2">
                   <h3 className="text-2xl font-black italic uppercase tracking-tighter">Register Custom RPC</h3>
-                  <p className="text-xs text-zinc-500 italic leading-relaxed">Ensure your node supports JSON-RPC 2.0 and is accessible via Tor if hardened mode is active.</p>
+                  <p className="text-xs text-brand-earth italic leading-relaxed">Ensure your node supports JSON-RPC 2.0 and is accessible via Tor if hardened mode is active.</p>
                </div>
                
                <form onSubmit={handleAddNode} className="space-y-6">
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase text-zinc-600 ml-1">Protocol Layer</label>
+                     <label className="text-[10px] font-black uppercase text-brand-earth ml-1">Protocol Layer</label>
                      <select 
                         value={newNode.layer}
                         onChange={e => setNewNode({ ...newNode, layer: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 px-5 text-zinc-200 focus:outline-none"
+                        className="w-full bg-off-white border border-border rounded-2xl py-4 px-5 text-brand-deep focus:outline-none"
                         aria-label="Protocol Layer"
                         title="Protocol Layer"
                      >
@@ -382,7 +382,7 @@ const NodeSettings: React.FC = () => {
                      </select>
                   </div>
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase text-zinc-600 ml-1">Endpoint URI</label>
+                     <label className="text-[10px] font-black uppercase text-brand-earth ml-1">Endpoint URI</label>
                      <input 
                         value={newNode.endpoint}
                         onChange={e => setNewNode({ ...newNode, endpoint: e.target.value })}
@@ -391,11 +391,11 @@ const NodeSettings: React.FC = () => {
                         autoCapitalize="off"
                         spellCheck="false"
                         placeholder="http://127.0.0.1:8332 or .onion"
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 px-5 font-mono text-sm text-zinc-200 focus:outline-none focus:border-orange-500/50"
+                        className="w-full bg-off-white border border-border rounded-2xl py-4 px-5 font-mono text-sm text-brand-deep focus:outline-none focus:border-orange-500/50"
                      />
                   </div>
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase text-zinc-600 ml-1">Provider Alias</label>
+                     <label className="text-[10px] font-black uppercase text-brand-earth ml-1">Provider Alias</label>
                      <input 
                         value={newNode.provider}
                         onChange={e => setNewNode({ ...newNode, provider: e.target.value })}
@@ -404,10 +404,10 @@ const NodeSettings: React.FC = () => {
                         autoCapitalize="off"
                         spellCheck="false"
                         placeholder="e.g. Satoshi Home Node"
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl py-4 px-5 text-sm text-zinc-200 focus:outline-none focus:border-orange-500/50"
+                        className="w-full bg-off-white border border-border rounded-2xl py-4 px-5 text-sm text-brand-deep focus:outline-none focus:border-orange-500/50"
                      />
                   </div>
-                  <button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 active:scale-95">
+                  <button type="submit" className="w-full bg-accent-earth hover:bg-accent-earth/90 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 active:scale-95">
                      Authorize & Add Node
                   </button>
                </form>
@@ -433,25 +433,25 @@ const BreezStatsView: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    if (!info) return <div className="text-xs text-zinc-500 italic"><Loader2 className="inline animate-spin mr-2" size={12}/>Connecting to Greenlight...</div>;
+    if (!info) return <div className="text-xs text-brand-earth italic"><Loader2 className="inline animate-spin mr-2" size={12}/>Connecting to Greenlight...</div>;
     
     return (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-zinc-950/50 p-4 rounded-2xl border border-zinc-900">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white/50 p-4 rounded-2xl border border-border">
             <div>
-               <p className="text-[9px] font-black uppercase text-zinc-600">Node ID</p>
-               <p className="text-xs font-mono text-zinc-300 truncate" title={info.id}>{info.id.substring(0,8)}...</p>
+               <p className="text-[9px] font-black uppercase text-brand-earth">Node ID</p>
+               <p className="text-xs font-mono text-brand-deep truncate" title={info.id}>{info.id.substring(0,8)}...</p>
             </div>
             <div>
-               <p className="text-[9px] font-black uppercase text-zinc-600">Block Height</p>
-               <p className="text-xs font-mono text-orange-500">{info.blockHeight}</p>
+               <p className="text-[9px] font-black uppercase text-brand-earth">Block Height</p>
+               <p className="text-xs font-mono text-accent-earth">{info.blockHeight}</p>
             </div>
             <div>
-               <p className="text-[9px] font-black uppercase text-zinc-600">Spendable (Local)</p>
-               <p className="text-xs font-mono text-zinc-200">{(info.maxPayableMsat/1000).toLocaleString()} sats</p>
+               <p className="text-[9px] font-black uppercase text-brand-earth">Spendable (Local)</p>
+               <p className="text-xs font-mono text-brand-deep">{(info.maxPayableMsat/1000).toLocaleString()} sats</p>
             </div>
             <div>
-               <p className="text-[9px] font-black uppercase text-zinc-600">Inbound (Remote)</p>
-               <p className="text-xs font-mono text-zinc-200">{(info.maxReceivableMsat/1000).toLocaleString()} sats</p>
+               <p className="text-[9px] font-black uppercase text-brand-earth">Inbound (Remote)</p>
+               <p className="text-xs font-mono text-brand-deep">{(info.maxReceivableMsat/1000).toLocaleString()} sats</p>
             </div>
         </div>
     );

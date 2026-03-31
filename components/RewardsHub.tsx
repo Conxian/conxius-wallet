@@ -43,91 +43,91 @@ const RewardsHub: React.FC = () => {
     <div className="p-8 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-500 pb-24">
       <header className="flex justify-between items-end">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-zinc-100">Labs Rewards Hub</h2>
-          <p className="text-zinc-500 text-sm">Quantifying value distribution in the sovereign ecosystem.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-brand-deep">Labs Rewards Hub</h2>
+          <p className="text-brand-earth text-sm">Quantifying value distribution in the sovereign ecosystem.</p>
         </div>
         <div className="hidden md:flex items-center gap-2 bg-green-500/10 border border-green-500/20 px-4 py-2 rounded-2xl">
            <DollarSign size={14} className="text-green-500" />
-           <span className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Net Efficiency Gain: +$1,120.45</span>
+           <span className="text-[10px] font-black uppercase text-brand-earth tracking-widest">Net Efficiency Gain: +$1,120.45</span>
         </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-7 space-y-10">
-          <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2.5rem] p-10 relative overflow-hidden group shadow-2xl">
+          <div className="bg-off-white/40 border border-border rounded-[2.5rem] p-10 relative overflow-hidden group shadow-2xl">
             <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
               <PieChart size={200} />
             </div>
             <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="space-y-6">
                 <div>
-                  <p className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] mb-2">Aggregate Gain</p>
-                  <h3 className="text-5xl font-bold text-zinc-100 font-mono tracking-tighter">$1,240.85</h3>
+                  <p className="text-[10px] font-black uppercase text-brand-earth tracking-[0.2em] mb-2">Aggregate Gain</p>
+                  <h3 className="text-5xl font-bold text-brand-deep font-mono tracking-tighter">$1,240.85</h3>
                   <p className="text-xs text-green-500 font-bold mt-2 flex items-center gap-1">
                      <TrendingUp size={12} /> +12.4% vs. Legacy CEX
                   </p>
                 </div>
                 
                 <div className="space-y-4">
-                   <div className="flex justify-between text-xs border-b border-zinc-900 pb-2">
-                      <span className="text-zinc-500">Protocol Stacking</span>
-                      <span className="text-zinc-100 font-bold">$980.20</span>
+                   <div className="flex justify-between text-xs border-b border-border pb-2">
+                      <span className="text-brand-earth">Protocol Stacking</span>
+                      <span className="text-brand-deep font-bold">$980.20</span>
                    </div>
-                   <div className="flex justify-between text-xs border-b border-zinc-900 pb-2">
-                      <span className="text-zinc-500">L2 Fee Savings</span>
-                      <span className="text-zinc-100 font-bold">$260.65</span>
+                   <div className="flex justify-between text-xs border-b border-border pb-2">
+                      <span className="text-brand-earth">L2 Fee Savings</span>
+                      <span className="text-brand-deep font-bold">$260.65</span>
                    </div>
-                   <div className="flex justify-between text-xs border-b border-zinc-900 pb-2">
+                   <div className="flex justify-between text-xs border-b border-border pb-2">
                       <span className="text-purple-500 flex items-center gap-2"><Database size={10} /> Data Dividends</span>
                       <span className="text-purple-400 font-bold">{(dataEarnings * 65000).toFixed(2)} USD</span>
                    </div>
                 </div>
               </div>
 
-              <div className="bg-zinc-950/50 rounded-3xl p-8 border border-zinc-900 flex flex-col justify-between">
+              <div className="bg-white/50 rounded-3xl p-8 border border-border flex flex-col justify-between">
                  <div className="space-y-2">
-                    <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-widest flex items-center gap-2">
-                       <FlaskConical size={14} className="text-orange-500" /> Labs R&D Support
+                    <h4 className="text-[10px] font-black uppercase text-brand-earth tracking-widest flex items-center gap-2">
+                       <FlaskConical size={14} className="text-accent-earth" /> Labs R&D Support
                     </h4>
-                    <p className="text-3xl font-bold text-orange-500 font-mono">{accumulatedFees.toFixed(6)} <span className="text-xs">BTC</span></p>
-                    <p className="text-[10px] text-zinc-600 leading-relaxed italic">
+                    <p className="text-3xl font-bold text-accent-earth font-mono">{accumulatedFees.toFixed(6)} <span className="text-xs">BTC</span></p>
+                    <p className="text-[10px] text-brand-earth leading-relaxed italic">
                       Verified by the Conxius Treasury multisig. Funding local-first privacy infrastructure.
                     </p>
                  </div>
                  <div className="pt-6">
-                    <div className="w-full h-1 bg-zinc-900 rounded-full mb-2 overflow-hidden">
+                    <div className="w-full h-1 bg-off-white rounded-full mb-2 overflow-hidden">
                        <div className="w-[15%] h-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
                     </div>
-                    <p className="text-[8px] text-zinc-700 font-black uppercase">Treasury Contribution Level: Active</p>
+                    <p className="text-[8px] text-brand-earth font-black uppercase">Treasury Contribution Level: Active</p>
                  </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
-              <div className="p-6 border-b border-zinc-900 bg-zinc-900/20 flex items-center justify-between">
-                 <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+          <div className="bg-white border border-border rounded-[2.5rem] overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-border bg-off-white/20 flex items-center justify-between">
+                 <h3 className="text-xs font-black uppercase tracking-widest text-brand-earth flex items-center gap-2">
                     <Terminal size={16} /> Verifiable Labs Ledger
                  </h3>
                  <div className="flex items-center gap-2">
                     <Activity size={12} className="text-green-500 animate-pulse" />
-                    <span className="text-[9px] font-black text-zinc-600 uppercase tracking-tighter">Chain Sync OK</span>
+                    <span className="text-[9px] font-black text-brand-earth uppercase tracking-tighter">Chain Sync OK</span>
                  </div>
               </div>
-              <div className="divide-y divide-zinc-900">
+              <div className="divide-y divide-off-white">
                  {ledger.map((item) => (
-                    <div key={item.id} className="p-6 flex items-center justify-between group hover:bg-zinc-900/10 transition-all">
+                    <div key={item.id} className="p-6 flex items-center justify-between group hover:bg-off-white/10 transition-all">
                        <div className="flex items-center gap-5">
-                          <div className={`w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center ${item.type.includes('Data') ? 'text-purple-500' : 'text-zinc-500'}`}>
+                          <div className={`w-10 h-10 rounded-xl bg-off-white border border-border flex items-center justify-center ${item.type.includes('Data') ? 'text-purple-500' : 'text-brand-earth'}`}>
                              {item.type.includes('Data') ? <Database size={18} /> : <Coins size={18} />}
                           </div>
                           <div>
-                             <p className="text-sm font-bold text-zinc-100">{item.type}</p>
-                             <p className="text-[10px] text-zinc-600 font-mono italic">{item.time}</p>
+                             <p className="text-sm font-bold text-brand-deep">{item.type}</p>
+                             <p className="text-[10px] text-brand-earth font-mono italic">{item.time}</p>
                           </div>
                        </div>
                        <div className="text-right">
-                          <p className="text-sm font-mono font-bold text-orange-500">+{item.amount}</p>
+                          <p className="text-sm font-mono font-bold text-accent-earth">+{item.amount}</p>
                           <span className="text-[8px] font-black bg-green-500/10 text-green-500 px-2 py-0.5 rounded uppercase tracking-widest border border-green-500/10">{item.status}</span>
                        </div>
                     </div>
@@ -137,7 +137,7 @@ const RewardsHub: React.FC = () => {
         </div>
 
         <div className="lg:col-span-5 space-y-8">
-           <div className="bg-orange-600 border border-orange-500 rounded-[2.5rem] p-10 text-white relative overflow-hidden group shadow-2xl shadow-orange-600/30">
+           <div className="bg-accent-earth border border-orange-500 rounded-[2.5rem] p-10 text-white relative overflow-hidden group shadow-2xl shadow-orange-600/30">
             <div className="absolute -bottom-8 -right-8 opacity-20 group-hover:scale-110 transition-transform">
               <Sparkles size={160} />
             </div>
@@ -146,7 +146,7 @@ const RewardsHub: React.FC = () => {
             <button
               onClick={runSovereignAudit}
               disabled={isAuditing}
-              className="w-full bg-white text-orange-600 font-black py-4 rounded-3xl text-xs uppercase tracking-widest hover:bg-zinc-100 transition-all shadow-2xl flex items-center justify-center gap-2"
+              className="w-full bg-white text-orange-600 font-black py-4 rounded-3xl text-xs uppercase tracking-widest hover:bg-white transition-all shadow-2xl flex items-center justify-center gap-2"
             >
               {isAuditing ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
               {isAuditing ? 'Generating Report...' : 'Audit R&D Roadmap'}
@@ -154,12 +154,12 @@ const RewardsHub: React.FC = () => {
           </div>
 
           {auditReport && (
-            <div className="bg-zinc-950 border border-zinc-800 rounded-[2.5rem] p-8 animate-in zoom-in duration-300">
-               <div className="flex items-center gap-2 mb-4 text-orange-500">
+            <div className="bg-white border border-border rounded-[2.5rem] p-8 animate-in zoom-in duration-300">
+               <div className="flex items-center gap-2 mb-4 text-accent-earth">
                   <Info size={16} />
                   <span className="text-[10px] font-black uppercase tracking-widest">Economic Audit v1.0</span>
                </div>
-               <p className="text-xs text-zinc-400 leading-relaxed font-serif whitespace-pre-wrap italic">
+               <p className="text-xs text-brand-earth leading-relaxed font-serif whitespace-pre-wrap italic">
                   {auditReport}
                </p>
             </div>

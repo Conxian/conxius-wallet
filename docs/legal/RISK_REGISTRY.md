@@ -6,7 +6,7 @@ permalink: /risk
 
 # Conxius Wallet Risk & Compliance Registry
 
-**Last Updated:** 2026-02-18
+**Last Updated:** 2026-03-25
 **Entity:** Conxian Labs
 **Jurisdiction:** South Africa (Primary), Global (Secondary)
 
@@ -68,6 +68,13 @@ The Gateway acts as a portal for institutional users to interact with their mobi
     * **Sovereign Rails:** Deployment of dedicated proxies and nodes (M12) reduces reliance on shared public infrastructure.
     * **Failsafe Mode:** If APIs fail, the wallet defaults to "Basic Mode" (Send/Receive on-chain) which requires no third parties.
 
+### 4.3 Aggregator & Oracle Risks (v1.6.0)
+* **Description:** Malicious payload from Yield/Swap aggregator or false Oracle attestation for DLC.
+* **Mitigation:**
+    * **WYSIWYS Enforced:** Users see raw payload before signing.
+    * **Local Sanitization:** Nakamoto-Guardian AI audits payloads for known exploit patterns.
+    * **Redundant Oracles:** DLCs prioritize multi-oracle attestations.
+
 ---
 
 ## 5. Bitcoin Layer Risk Assessment
@@ -85,39 +92,37 @@ The Gateway acts as a portal for institutional users to interact with their mobi
     * **Rootstock:** Uses a Powpeg (vault) secured by HSMs and a federation of Functionaries, protected by RSK merge-mining.
 * **Custody Model:** Users trust a federation of functionaries/signers rather than individual miners.
 
-### 5.3 RGB Protocol
+### 5.3 BOB (Build On Bitcoin)
+* **Risk Level:** Medium (Hybrid L2)
+* **Risk Warning:** Phase-based Security Migration.
+* **Centralization Detail:** BOB initially bootstraps as an Optimistic Rollup on Ethereum. While it aims for BitVM-based settlement on Bitcoin, its current state involves dependencies on Ethereum security and multi-sig/institutional bridge components.
+* **Custody Model:** Hybrid trust model transitioning towards BitVM 1-of-n security.
+
+### 5.4 B2 Network
+* **Risk Level:** Medium (ZK Rollup)
+* **Risk Warning:** Modular Complexity.
+* **Centralization Detail:** B2 uses a modular architecture where data availability is settled on Bitcoin via Taproot inscriptions, but the execution and DA layers are distinct. Reliance on the B2 Hub for PoSg consensus and decentralized sequencer roadmap.
+* **Custody Model:** Non-custodial ZK-Rollup model anchored to Bitcoin.
+
+### 5.5 RGB Protocol
 * **Risk Level:** Low (Client-Side Validated)
 * **Risk Warning:** Data Availability Risk.
 * **Custody Model:** Truly non-custodial. Assets live in Taproot commitments.
 
-### 5.4 WabiSabi (CoinJoin)
+### 5.6 WabiSabi (CoinJoin)
 * **Risk Level:** Low (Privacy Protocol)
 * **Risk Warning:** Coordinator Reliability.
 * **Custody Model:** Non-custodial. Users retain control throughout the mixing process.
 
-### 5.5 Musig2 (Taproot Multi-Sig)
+### 5.7 Musig2 (Taproot Multi-Sig)
 * **Risk Level:** Low (Cryptographic Standard)
 * **Risk Warning:** Key Management.
 * **Custody Model:** Enhances sovereignty by allowing institutional quorums without a single point of failure.
 
-### 5.6 BitVM, Ark, State Chains, Maven
+### 5.8 BitVM, Ark, State Chains, Maven
 * **Risk Level:** Experimental / Medium.
 * **Note:** See IMPLEMENTATION_REGISTRY.md for current status.
 
 ---
 
 *Maintained by: Conxian Labs Legal & Compliance Team*
-
-## 4. Aggregator & Oracle Risks (v1.6.0)
-* **Description:** Malicious payload from Yield/Swap aggregator or false Oracle attestation for DLC.
-* **Mitigation:**
-    * **WYSIWYS Enforced:** Users see raw payload before signing.
-    * **Local Sanitization:** Nakamoto-Guardian AI audits payloads for known exploit patterns.
-    * **Redundant Oracles:** DLCs prioritize multi-oracle attestations.
-
-## 4. Aggregator & Oracle Risks (v1.6.0)
-* **Description:** Malicious payload from Yield/Swap aggregator or false Oracle attestation for DLC.
-* **Mitigation:**
-    * **WYSIWYS Enforced:** Users see raw payload before signing.
-    * **Local Sanitization:** Nakamoto-Guardian AI audits payloads for known exploit patterns.
-    * **Redundant Oracles:** DLCs prioritize multi-oracle attestations.
