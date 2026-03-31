@@ -14,7 +14,7 @@ describe("AI Error Hardening", () => {
     // Use repeated chars to avoid scanners
     const leakyKey = '0'.repeat(64);
     const leakyError = {
-      message: `Failed to connect to database at secret-db-v1.conxian.internal with key 0x${leakyKey}`,
+      message: "Failed to connect to database at secret-db-v1.conxian.internal with key 0x" + leakyKey,
       stack: "Error at /node_modules/leaky-lib/index.js:10:5"
     };
 

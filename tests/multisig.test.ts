@@ -1,37 +1,35 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { deriveMultiSigAddress, MultiSigQuorum, deriveMusig2TaprootAddress } from '../services/multisig';
-import * as ecc from 'tiny-secp256k1';
-import * as bitcoin from 'bitcoinjs-lib';
+import { describe, it, expect, vi } from 'vitest';
+import { MultiSigWallet } from '../services/multisig';
 
-describe('Multi-Sig Service', () => {
-    beforeAll(async () => {
-        try {
-            await (ecc as any).initUint8Array();
-        } catch (e) {}
-        bitcoin.initEccLib(ecc);
+describe('MultiSig Wallet (Bridged)', () => {
+  const mockQuorum = {
+    m: 2,
+    n: 3,
+    network: 'testnet' as const,
+    signers: [
+        { id: 1, name: 'Local 1', type: 'local' as const, key: '02' + '2'.repeat(64), status: 'ready' as const },
+        { id: 2, name: 'Local 2', type: 'local' as const, key: '03' + '3'.repeat(64), status: 'ready' as const },
+        { id: 3, name: 'Hard 1', type: 'hardware' as const, key: '02' + '4'.repeat(64), status: 'ready' as const }
+    ]
+  };
+
+  it('should initialize and list signers correctly', () => {
+    const wallet = new MultiSigWallet(mockQuorum);
+    expect(wallet.config.m).toBe(2);
+    expect(wallet.config.signers).toHaveLength(3);
+  });
+
+  it('should fetch UTXOs using the correct network endpoint', async () => {
+    const wallet = new MultiSigWallet(mockQuorum);
+    const mockAddr = 'tb1q' + 'z'.repeat(38);
+
+    global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => [{ txid: 'f'.repeat(64), vout: 0, amount: 100000 }]
     });
 
-    it('should derive a P2WSH 2-of-3 address correctly', () => {
-        const quorum: MultiSigQuorum = {
-            name: 'Test Quorum',
-            m: 2,
-            n: 3,
-            publicKeys: [
-                '022222222222222222222222222222222222222222222222222222222222222222',
-                '023333333333333333333333333333333333333333333333333333333333333333',
-                '024444444444444444444444444444444444444444444444444444444444444444'
-            ],
-            network: 'mainnet'
-        };
-
-        const address = deriveMultiSigAddress(quorum);
-        expect(address.startsWith('bc1q')).toBe(true);
-        expect(address.length).toBeGreaterThan(40);
-    });
-
-    it('should derive a Musig2 Taproot address correctly', () => {
-        // This test verifies the service logic flow.
-        // Actual P2TR derivation is checked for existence of the helper.
-        expect(deriveMusig2TaprootAddress).toBeDefined();
-    });
+    const utxos = await wallet.fetchUtxos(mockAddr);
+    expect(utxos).toHaveLength(1);
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('mempool.space/testnet/api'));
+  });
 });

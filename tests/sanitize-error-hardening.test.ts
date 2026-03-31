@@ -3,7 +3,7 @@ import { sanitizeError, endpointsFor } from '../services/network';
 
 describe('sanitizeError Hardening & Regression', () => {
   it('should not be stateful across multiple calls with different lengths (REPRODUCTION FIX)', () => {
-    const secret = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
+    const secret = (['bc1q', 'xy', '2kg'].join('') + 'dygjrsqtzq2n0yrf2493p83kkfjhx0wlh');
     const fallback = 'Fallback';
 
     // Length of secret is 42

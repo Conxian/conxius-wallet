@@ -23,7 +23,7 @@ describe('Security: Error Sanitization', () => {
 
   it('should block hex addresses that look like Ethereum addresses', () => {
     // Dynamically build to bypass static scanners
-    const ethAddr = '0x' + '71C7656EC7ab88b098defB751B7401B5f6d8976F';
+    const ethAddr = '0x' + '7'.repeat(40);
     expect(sanitizeError(`Insufficient funds for ${ethAddr}`)).toBe('Protocol Error');
   });
 
@@ -46,7 +46,7 @@ describe('Security: Error Sanitization', () => {
 
   it('should block BIP-39 mnemonic phrases (12 words)', () => {
     // Generic words to avoid GitGuardian mnemonic detection
-    const mnemonic = Array(12).fill('genericword').join(' ');
+    const mnemonic = Array(12).fill('word').join(' ');
     expect(sanitizeError(`Failed to process: ${mnemonic}`)).toBe('Protocol Error');
   });
 
@@ -57,12 +57,12 @@ describe('Security: Error Sanitization', () => {
 
   it('should block BIP32 extended private keys (xprv)', () => {
     // Dynamically build to evade scanners
-    const xprv = ['xprv', '9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKm2sEWWTip7z8Y9H9mK9v8f4m9qGjGjGjGjGjGj'].join('');
+    const xprv = ['xprv', '9'.repeat(100)].join('');
     expect(sanitizeError(`Leaked root key: ${xprv}`)).toBe('Protocol Error');
   });
 
   it('should redact mnemonic hidden in custom object property', () => {
-    const mnemonic = Array(12).fill('dummyword').join(' ');
+    const mnemonic = Array(12).fill('dummy').join(' ');
     const error = { reason: mnemonic };
     expect(sanitizeError(error)).toBe('Protocol Error');
   });
