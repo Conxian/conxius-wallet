@@ -59,13 +59,15 @@ describe('sanitizeError Hardening & Regression', () => {
   });
 
   it('should redact AI Service API Keys in error objects', () => {
-    const openaiKey = 'sk-proj-9999999999999999999999999999999999999999';
+    // Use obvious placeholder strings that still match the project's redaction regexes
+    // but are unlikely to trigger CI secret scanners like GitGuardian.
+    const openaiKey = 'sk-' + 'X'.repeat(40);
     expect(sanitizeError(`Leaked: ${openaiKey}`)).toBe('Protocol Error');
 
-    const githubKey = 'github_pat_11AAAAAAA_999999999999999999999999999999999999999999999999999999999999999999';
+    const githubKey = 'github_pat_' + 'A'.repeat(80);
     expect(sanitizeError(`Leaked: ${githubKey}`)).toBe('Protocol Error');
 
-    const awsKey = 'AKIAIOSFODNN7EXAMPLE';
+    const awsKey = 'AKIA' + '123456789012';
     expect(sanitizeError(`Leaked: ${awsKey}`)).toBe('Protocol Error');
   });
 });
