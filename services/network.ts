@@ -1,5 +1,6 @@
 import { Network, AppState } from '../types';
 import { generateRandomString } from './random';
+import { NORMALIZE_REGEX, SENSITIVE_PATTERNS } from './security-constants';
 
 let _globalAppState: AppState | undefined;
 
@@ -18,6 +19,7 @@ export function getGatewayUrl(network: Network): string {
 
   switch (network) {
     case 'regtest':
+    case 'devnet':
       return "http://127.0.0.1:8080";
     case 'testnet':
       return "https://gateway.testnet.conxianlabs.com";
@@ -40,6 +42,7 @@ export function endpointsFor(network: Network, appState?: AppState) {
 
   switch (network) {
     case 'regtest':
+    case 'devnet':
       return {
         BTC_API: getSovereignEndpoint('Bitcoin L1', "http://127.0.0.1:8080"),
         STX_API: getSovereignEndpoint('Stacks L2', "http://127.0.0.1:3999"),
@@ -207,34 +210,23 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
     }
   }
 
-  const zwcRegex = /[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g;
-  const strippedScan = fullScan.replace(zwcRegex, "");
-  const spacedScan = fullScan.replace(zwcRegex, " ");
-  const strippedMessage = String(message).replace(zwcRegex, "");
-  const spacedMessage = String(message).replace(zwcRegex, " ");
+  const strippedScan = fullScan.replace(NORMALIZE_REGEX, "");
+  const spacedScan = fullScan.replace(NORMALIZE_REGEX, " ");
+  const strippedMessage = String(message).replace(NORMALIZE_REGEX, "");
+  const spacedMessage = String(message).replace(NORMALIZE_REGEX, " ");
 
-  const sensitivePatterns = [
-    /stack/i, /at /i, /node_modules/i, /(?<![a-zA-Z0-9])0x[a-fA-F0-9]{40}(?![a-zA-Z0-9])/i,
-    /rpc/i, /internal/i, /database/i, /query/i, /__/,
-    /(?<![a-zA-Z0-9])(([a-z]{3,}[ \t\n\r\-_.,]+){11,23}[a-z]{3,})(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])([a-z]{3,}){12}(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])((?:0x)?(?:[a-fA-F0-9]{64,66}|[a-fA-F0-9]{128}))(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])([xtuvyz](?:pub|prv)[1-9A-HJ-NP-Za-km-z]{50,110})(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])(bc1[qp][a-z0-9]{33,58}|[13][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])(S[PST][0-9A-Z]{28,41})(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])((?:lq|tlq|elq)1[qp][a-z0-9]{38,110})(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])(nsec1[a-z0-9]{50,200}|npub1[a-z0-9]{50,200})(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])(sp1[a-z0-9]{50,200})(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])[5KL9c][1-9A-HJ-NP-Za-km-z]{50,51}(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])(ln(?:bc|tb|bcrt|dev)[0-9a-z]+)(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])AIzaSy[a-zA-Z0-9_-]{33}(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])sk-[a-zA-Z0-9_-]{20,}(?![a-zA-Z0-9])/i
-  ];
+  // Fix: Ensure all global regexes have their lastIndex reset to 0 before testing.
+  // This prevents stateful behavior where matches are skipped in subsequent calls or
+  // when string lengths change.
+  const isSensitive = SENSITIVE_PATTERNS.some((p) => {
+    if (p.global) p.lastIndex = 0;
+    return p.test(strippedScan) || (p.lastIndex = 0, p.test(spacedScan)) || (p.lastIndex = 0, p.test(strippedMessage)) || (p.lastIndex = 0, p.test(spacedMessage));
+  });
 
-  if (sensitivePatterns.some((p) => p.test(strippedScan) || p.test(spacedScan) || p.test(strippedMessage) || p.test(spacedMessage))) {
+  if (isSensitive) {
     return defaultMsg;
   }
 
-  const cleanMessage = typeof message === 'string' ? message.replace(zwcRegex, "") : defaultMsg;
+  const cleanMessage = typeof message === 'string' ? message.replace(NORMALIZE_REGEX, "") : defaultMsg;
   return typeof cleanMessage === 'string' ? cleanMessage.substring(0, 100) : defaultMsg;
 }
