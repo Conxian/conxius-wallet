@@ -8,6 +8,25 @@ permalink: /
 
 Conxius is a non-custodial, "Sovereign-First" financial command center for the full Bitcoin ecosystem. It bridges the security of a hardware-isolated environment (Android StrongBox/TEE) with the utility of modern DeFi, cross-chain interoperability, and real-world services.
 
+## Purpose
+
+Provide a non-custodial mobile wallet that unifies Bitcoin-native rails, Stacks, and emerging L2 ecosystems behind hardware-isolated signing and privacy-first defaults.
+
+## Status
+
+Active development. The architecture and supported integrations evolve quickly; treat external interfaces as subject to change unless explicitly versioned.
+
+## Audience
+
+- End users seeking a sovereignty-first, non-custodial wallet.
+- Mobile and security engineers working on enclave-backed key management.
+- Protocol and integration developers connecting wallet flows to Gateway and on-chain services.
+
+## Relationship to the Conxian stack
+
+- Client interface for interacting with Conxian protocol and broader Bitcoin-layer integrations.
+- Typically consumes Conxian Gateway APIs for state, compliance, and multi-layer coordination.
+
 ## 🚀 Key Pillars
 
 - **Zero-Leak Privacy**: Mandatory local redaction of PII and sensitive identifiers before any AI or network transmission.
