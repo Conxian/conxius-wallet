@@ -47,7 +47,7 @@ Active development. The architecture and supported integrations evolve quickly; 
 - **Mobile Enclave**: Native Kotlin implementation of TEE-backed AES and RSA providers.
 - **Persistent Crypto Worker**: Background TypeScript environment for secure, session-level state management.
 - **Sovereign-First RPC**: Prioritizes user-defined custom nodes (Bitcoin Core, Stacks, etc.) over public infrastructure.
-- **Nakamoto-Guardian AI**: Local privacy filter and intent detector enforcing Zero Secret Egress.
+- **CXN Guardian AI**: Local privacy filter and intent detector enforcing Zero Secret Egress.
 
 ## 🧪 Development
 
