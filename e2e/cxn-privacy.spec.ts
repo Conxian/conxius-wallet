@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Nakamoto-Guardian AI: Privacy Boundary Verification', () => {
+test.describe('CXN Guardian AI: Privacy Boundary Verification', () => {
     test('should redact sensitive data in simulated DeFi flows', async ({ page }) => {
         await page.goto('/');
 
@@ -19,7 +19,7 @@ test.describe('Nakamoto-Guardian AI: Privacy Boundary Verification', () => {
         // Since we are in simulation mode, we can verify that the UI components that use
         // the sanitizer are working.
 
-        // This is a placeholder for actual Nakamoto-Guardian testing which might involve
+        // This is a placeholder for actual CXN Guardian testing which might involve
         // monitoring network requests or checking redacted labels in the UI.
         // For now, we verify the DeFi dashboard elements are correctly rendered.
         await expect(page.getByText('Lido')).toBeVisible();

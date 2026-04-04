@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { sanitizePrompt, rehydrateResponse } from "../services/ai-security";
 import { sanitizeError } from "../services/network";
 
-describe("Sentinel Redaction Verification", () => {
+describe("CXN Guardian Redaction Verification", () => {
   it("should handle case-insensitive redaction and rehydration", () => {
     // Dynamic construction to evade scanners
     const addr = "bc1q" + "x".repeat(38);
