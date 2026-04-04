@@ -35,9 +35,9 @@ android/captures
 .gradle
 
 # Security - API Keys and Secrets
-.env*.local
-.env.development
-.env.production
+.env
+.env.*
+!.env.example
 *.keystore
 *.jks
 service-account*.json
@@ -46,6 +46,12 @@ service-account*.json
 *.p12
 *.mobileprovision
 
+# Local scratch / code review artifacts
+code_review_input.txt
+debug_regex.js
+test_match.js
+App.tsx.patch
+
 # Capacitor - Generated web assets
 android/app/src/main/assets/public/
 ios/App/public/
@@ -53,8 +59,9 @@ ios/App/public/
 # Maestro
 .maestro/
 maestro.zip
-*.png
 openspec/changes/*
+!openspec/changes/archive/
+!openspec/changes/archive/**
 !.github/skills/
 .gemini/
 .agent/
