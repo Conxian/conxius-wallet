@@ -46,6 +46,19 @@ jobs:
       run: pnpm test
       env:
         VITEST: true
+
+    - name: Upload test artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-artifacts
+        path: |
+          test-results
+          playwright-report
+          blob-report
+          coverage
+        if-no-files-found: ignore
+        retention-days: 14
     
     - name: Build
       run: pnpm run build

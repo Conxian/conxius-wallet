@@ -263,7 +263,7 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                               {isAuditing ? (
                                  <div className="flex flex-col items-center justify-center h-full gap-4 py-20">
                                     <Loader2 className="animate-spin text-accent-earth" size={32} />
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-earth animate-pulse">Sovereign Nakamoto-Guardian Auditing Codebase...</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-earth animate-pulse">Sovereign CXN Guardian Auditing Codebase...</p>
                                  </div>
                               ) : (
                                  <div className="prose prose-invert max-w-none text-xs leading-relaxed text-brand-earth font-mono whitespace-pre-wrap selection:bg-orange-500/40">

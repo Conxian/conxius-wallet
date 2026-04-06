@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { sanitizePrompt } from "../services/ai-security";
 
-describe("Sentinel Investigation: Mnemonic Redaction Gaps", () => {
+describe("CXN Guardian Investigation: Mnemonic Redaction Gaps", () => {
   it("should redact mashed 12-word mnemonics (baseline)", () => {
     const mashed = "abandonabilityableaboutaboveabsentabsorbabstractabsurdabuseaccessaccident";
     const { sanitized } = sanitizePrompt(mashed);
