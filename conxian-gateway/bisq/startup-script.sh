@@ -31,7 +31,9 @@ After=network.target
 User=bisq
 Group=bisq
 # API Port 9998, headless mode
-ExecStart=/opt/bisq/bin/Bisq --headless --apiPort=9998 --apiPassword=CHANGE_ME_IN_PRODUCTION
+# CRITICAL: BISQ_API_PASSWORD must be set in the environment or .env file
+# Do NOT use the default placeholder in production.
+ExecStart=/opt/bisq/bin/Bisq --headless --apiPort=9998 --apiPassword=${BISQ_API_PASSWORD}
 Restart=always
 
 [Install]
