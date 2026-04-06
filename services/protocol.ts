@@ -98,175 +98,122 @@ export const fetchRunesBalances = async (address: string): Promise<Asset[]> => {
   }
 };
 
-/**
- * Fetches Stacks balances (STX + SIP-10 tokens).
- */
-export const fetchStacksBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
-  try {
-    const { STX_API } = endpointsFor(network) as any;
-    const response = await fetchWithRetry(`${STX_API}/extended/v1/address/${address}/balances`);
-    if (!response.ok) return [];
-    const data = await response.json();
-    
-    const assets: Asset[] = [];
-    const stxPrice = await fetchStxPrice();
-    const stxBalance = toFiniteNumber(data.stx.balance) / 1000000;
+export const fetchRgbAssets = async (address: string): Promise<Asset[]> => {
+    try {
+        const response = await fetchWithRetry(`${getGatewayUrl('mainnet')}/rgb/v1/assets`);
+        if (!response.ok) return [];
+        const data = await response.json();
+        return toArrayPayload(data).map((item: any) => ({
+            id: item.id || `rgb-${item.name}`,
+            name: item.name,
+            symbol: item.symbol || item.name,
+            balance: toFiniteNumber(item.balance),
+            valueUsd: toFiniteNumber(item.valueUsd),
+            layer: 'RGB' as const,
+            type: 'RGB' as const,
+            address
+        }));
+    } catch {
+        return [];
+    }
+};
 
-    assets.push({
-      id: 'stx',
-      name: 'Stacks',
-      symbol: 'STX',
-      balance: stxBalance,
-      valueUsd: stxBalance * stxPrice,
-      type: 'Native',
-      layer: 'Stacks',
-      address
+export const fetchArkBalances = async (address: string): Promise<Asset[]> => {
+    try {
+        const { ARK_API } = endpointsFor('mainnet') as any;
+        const response = await fetchWithRetry(`${ARK_API}/v1/vtxos/${address}`);
+        if (!response.ok) return [];
+        const data = await response.json();
+        const btcPrice = await fetchBtcPrice();
+        return toArrayPayload(data).map((item: any) => {
+            const balance = toFiniteNumber(item.amount) / SATS_PER_BTC;
+            return {
+                id: item.id || `ark-${item.txid}`,
+                name: 'Ark VTXO',
+                symbol: 'sBTC',
+                balance,
+                valueUsd: balance * btcPrice,
+                layer: 'Ark' as const,
+                type: 'Ark' as const,
+                address
+            };
+        });
+    } catch {
+        return [];
+    }
+};
+
+export const fetchUtxos = async (address: string, network: Network = 'mainnet'): Promise<UTXO[]> => {
+    try {
+        const { BTC_API } = endpointsFor(network) as any;
+        const response = await fetchWithRetry(`${BTC_API}/address/${address}/utxo`);
+        if (!response.ok) return [];
+        const data = await response.json();
+        return toArrayPayload(data).map((u: any) => ({
+            txid: u.txid,
+            vout: u.vout,
+            amount: u.value,
+            address,
+            status: u.status?.confirmed ? 'confirmed' : 'pending',
+            isFrozen: false,
+            derivationPath: "m/84'/0'/0'/0/0",
+            privacyRisk: u.value > 100000000 ? 'High' : 'Low'
+        }));
+    } catch {
+        return [];
+    }
+};
+
+export const broadcastTransaction = async (hex: string, layer: BitcoinLayer, network: Network = 'mainnet'): Promise<string> => {
+    const endpoints = endpointsFor(network) as any;
+    let url = '';
+
+    if (layer === 'Mainnet') url = `${endpoints.BTC_API}/tx`;
+    else if (layer === 'Stacks') url = `${endpoints.STX_API}/v2/transactions`;
+    else if (layer === 'Liquid') url = `${endpoints.LIQUID_API}/tx`;
+    else if (layer === 'Rootstock') url = endpoints.RSK_API;
+    else throw new Error(`Broadcast not implemented for layer: ${layer}`);
+
+    const response = await fetch(url, {
+        method: "POST",
+        body: layer === 'Rootstock' ? JSON.stringify({
+            jsonrpc: "2.0",
+            method: "eth_sendRawTransaction",
+            params: [hex],
+            id: 1
+        }) : hex,
+        headers: layer === 'Rootstock' ? { "Content-Type": "application/json" } : {}
     });
 
-    // Handle SIP-10 Fungible Tokens
-    if (data.fungible_tokens) {
-      Object.keys(data.fungible_tokens).forEach(key => {
-        const token = data.fungible_tokens[key];
-        assets.push({
-          id: key,
-          name: key.split('::')[1] || 'Token',
-          symbol: key.split('::')[1]?.toUpperCase() || 'FT',
-          balance: toFiniteNumber(token.balance),
-          valueUsd: 0, // Market price fetch for SIP-10 would go here
-          type: 'SIP-10',
-          layer: 'Stacks',
-          address
-        });
-      });
+    if (!response.ok) {
+        const err = await response.text();
+        throw new Error(err || `Broadcast failed with status ${response.status}`);
     }
 
-    return assets;
-  } catch {
-    return [];
-  }
-};
-
-/**
- * Broadcasts a raw Bitcoin transaction hex to the network.
- */
-export const broadcastBtcTx = async (hex: string, network: Network = 'mainnet'): Promise<string> => {
-  const { BTC_API } = endpointsFor(network) as any;
-  const response = await fetchWithRetry(`${BTC_API}/tx`, {
-    method: 'POST',
-    body: hex
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Broadcast failed: ${errorText}`);
-  }
-
-  const txid = await response.text();
-  notificationService.notifyTransaction('Transaction Broadcasted', `TXID: ${txid}`, true);
-  return txid;
-};
-
-/**
- * Fetches UTXOs for a Bitcoin address.
- */
-export const fetchBtcUtxos = async (address: string, network: Network = 'mainnet'): Promise<UTXO[]> => {
-  try {
-    const { BTC_API } = endpointsFor(network) as any;
-    const response = await fetchWithRetry(`${BTC_API}/address/${address}/utxo`);
-    if (!response.ok) return [];
-    const data = await response.json();
-    return toArrayPayload(data).map((u: any) => ({
-      txid: u.txid,
-      vout: u.vout,
-      amount: u.value,
-      status: u.status,
-      address,
-      isFrozen: false,
-      derivationPath: '',
-      privacyRisk: 'Low'
-    }));
-  } catch {
-    return [];
-  }
-};
-
-/**
- * Fetches Liquid L-BTC balance.
- */
-export const fetchLiquidBalance = async (address: string, network: Network = 'mainnet'): Promise<number> => {
-  try {
-    const { LIQUID_API } = endpointsFor(network);
-    const response = await fetchWithRetry(`${LIQUID_API}/address/${address}`);
-    if (!response.ok) return 0;
-    const data = await response.json();
-    const stats = data.chain_stats || {};
-    return (toFiniteNumber(stats.funded_txo_sum) - toFiniteNumber(stats.spent_txo_sum)) / SATS_PER_BTC;
-  } catch {
-    return 0;
-  }
-};
-
-/**
- * Fetches Rootstock RBTC balance.
- */
-export const fetchRskBalance = async (address: string, network: Network = 'mainnet'): Promise<number> => {
-  try {
-    const { RSK_API } = endpointsFor(network);
-    const response = await fetchWithRetry(`${RSK_API}/address/${address}`);
-    if (!response.ok) return 0;
-    const data = await response.json();
-    return toFiniteNumber(data.balance) / SATS_PER_BTC;
-  } catch {
-    return 0;
-  }
-};
-
-/**
- * Tracking for NTT Bridge Guardian attestations.
- */
-export const trackNttBridge = async (txid: string) => {
-    // Wormholescan API alignment
-    const api = "https://api.wormholescan.io/api/v1/vaas/";
-    try {
-        const res = await fetchWithRetry(`${api}${txid}`);
-        return await res.json();
-    } catch {
-        return null;
+    if (layer === 'Rootstock') {
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.result;
     }
+
+    return response.text();
 };
 
-/**
- * Fetches Liquid peg-in address for a user.
- */
-export const fetchLiquidPegInAddress = async (liquidPubkey: string, network: Network = 'mainnet'): Promise<string> => {
-    // Calls the Liquid Federation / Peg-in service
-    return network === 'mainnet'
-        ? '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy' // Canonical Peg-in address for Mainnet
-        : '2N2pL9Y7G...'; // Placeholder for Testnet
-};
-
-/**
- * Monitors the status of a Liquid peg-in.
- */
-export const monitorLiquidPegIn = async (btcTxid: string) => {
-    const api = "https://blockstream.info/api/liquid/pegin/";
+export const getTransactionStatus = async (txid: string, layer: BitcoinLayer, network: Network = 'mainnet'): Promise<{ status: string }> => {
+    const endpoints = endpointsFor(network) as any;
     try {
-        const res = await fetchWithRetry(`${api}${btcTxid}`);
-        return await res.json();
-    } catch {
+        let url = '';
+        if (layer === 'Mainnet') url = `${endpoints.BTC_API}/tx/${txid}`;
+        else if (layer === 'Stacks') url = `${endpoints.STX_API}/extended/v1/tx/${txid}`;
+        else return { status: 'unknown' };
+
+        const res = await fetchWithRetry(url);
+        const data = await res.json();
+
+        if (layer === 'Mainnet') return { status: data.status?.confirmed ? 'completed' : 'pending' };
+        if (layer === 'Stacks') return { status: data.tx_status === 'success' ? 'completed' : 'pending' };
+
         return { status: 'pending' };
-    }
-};
-
-/**
- * Monitors the status of an sBTC peg-in.
- */
-export const monitorSbtcPegIn = async (btcTxid: string, network: Network = 'mainnet') => {
-    const { STACKS_API } = endpointsFor(network);
-    try {
-        const res = await fetchWithRetry(`${STACKS_API}/extended/v1/sbtc/pegin/${btcTxid}`);
-        if (!res.ok) return { status: 'pending' };
-        return await res.json();
     } catch {
         return { status: 'pending' };
     }
@@ -276,13 +223,13 @@ export const monitorSbtcPegIn = async (btcTxid: string, network: Network = 'main
  * Fetches global reserve metrics (e.g. sBTC supply vs BTC locked).
  */
 export const fetchGlobalReserveMetrics = async (network: Network = 'mainnet') => {
-    const { STACKS_API } = endpointsFor(network);
+    const { STACKS_API } = endpointsFor(network) as any;
     try {
         const res = await fetchWithRetry(`${STACKS_API}/extended/v1/sbtc/supply`);
         const data = await res.json();
         return {
-            totalSbtc: toFiniteNumber(data.total_supply),
-            totalBtcLocked: toFiniteNumber(data.btc_locked),
+            totalSbtc: toFiniteNumber(data.totalSbtc || data.total_supply),
+            totalBtcLocked: toFiniteNumber(data.totalBtcLocked || data.btc_locked),
             ratio: toFiniteNumber(data.ratio, 1.0)
         };
     } catch {
@@ -295,237 +242,56 @@ export const fetchGlobalReserveMetrics = async (network: Network = 'mainnet') =>
  */
 export const fetchSbtcWalletAddress = async (network: Network = 'mainnet'): Promise<string> => {
     try {
-        const { STACKS_API } = endpointsFor(network);
+        const { STACKS_API } = endpointsFor(network) as any;
         const res = await fetchWithRetry(`${STACKS_API}/extended/v1/sbtc/wallet`);
         const data = await res.json();
-        return data.address;
+        return data.address || '';
     } catch {
-        // Fallback to known canonical address for the current stack version if API fails
-        return network === 'mainnet' 
-            ? 'bc1q...sbtc_vault_mainnet'
-            : 'tb1q...sbtc_vault_testnet';
+        return '';
     }
 };
 
 /**
- * Fetches assets for the BOB (Build on Bitcoin) L2.
+ * Fetches EVM-compatible account balance (for BOB, B2, Rootstock, etc).
  */
-export const fetchBobAssets = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
-    const { BOB_API } = endpointsFor(network);
+async function fetchEvmBalance(rpc: string, address: string): Promise<number> {
     try {
-        const res = await fetchWithRetry(`${BOB_API}/v1/address/${address}/assets`);
-        if (!res.ok) return [];
-        const data = await res.json();
-        const btcPrice = await fetchBtcPrice();
-
-        return toArrayPayload(data).map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            symbol: item.symbol,
-            balance: toFiniteNumber(item.balance),
-            valueUsd: toFiniteNumber(item.balance) * btcPrice,
-            layer: 'BOB' as const,
-            type: 'Native',
-            address
-        }));
-    } catch {
-        return [];
-    }
-};
-
-/**
- * Fetches RGB assets (client-side validated Bitcoin assets).
- */
-export const fetchRgbAssets = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
-    const { RGB_API } = endpointsFor(network);
-    try {
-        // RGB assets are fetched from a local or user-provided stash proxy
-        const res = await fetchWithRetry(`${RGB_API}/v1/assets`);
-        if (!res.ok) return [];
-        const data = await res.json();
-
-        return toArrayPayload(data).map((item: any) => ({
-            id: item.asset_id,
-            name: item.name,
-            symbol: item.ticker,
-            balance: toFiniteNumber(item.balance),
-            valueUsd: 0,
-            layer: 'RGB' as const,
-            type: 'RGB',
-            address
-        }));
-    } catch {
-        return [];
-    }
-};
-
-/**
- * Fetches Ark VTXO balances.
- */
-export const fetchArkBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
-    const { ARK_API } = endpointsFor(network);
-    try {
-        // Ark utilizes VTXOs for off-chain Bitcoin transfers
-        const res = await fetchWithRetry(`${ARK_API}/v1/vtxos/${address}`);
-        if (!res.ok) return [];
-        const data = await res.json();
-        const btcPrice = await fetchBtcPrice();
-        const totalSats = toArrayPayload(data).reduce((acc: number, v: any) => acc + toFiniteNumber(v.amount), 0);
-        const balance = totalSats / SATS_PER_BTC;
-
-        if (balance === 0) return [];
-
-        return [{
-            id: 'ark-btc',
-            name: 'Ark Bitcoin',
-            symbol: 'ARK-BTC',
-            balance,
-            valueUsd: balance * btcPrice,
-            layer: 'Ark' as const,
-            type: 'Ark',
-            address
-        }];
-    } catch {
-        return [];
-    }
-};
-
-export async function fetchMavenAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
-    // Maven AI marketplace assets / reputation
-    return [];
-}
-
-/**
- * Fetches StateChain UTXO balances.
- */
-export const fetchStateChainBalances = async (address: string, network: Network = 'mainnet'): Promise<Asset[]> => {
-    const { STATECHAIN_API } = endpointsFor(network);
-    try {
-        const res = await fetchWithRetry(`${STATECHAIN_API}/v1/utxos/${address}`);
-        if (!res.ok) return [];
-        const data = await res.json();
-        const btcPrice = await fetchBtcPrice();
-        const totalSats = toArrayPayload(data).reduce((acc: number, v: any) => acc + toFiniteNumber(v.amount), 0);
-        const balance = totalSats / SATS_PER_BTC;
-
-        if (balance === 0) return [];
-
-        return [{
-            id: 'statechain-btc',
-            name: 'StateChain Bitcoin',
-            symbol: 'STC-BTC',
-            balance,
-            valueUsd: balance * btcPrice,
-            layer: 'StateChain' as const,
-            type: 'StateChainAsset',
-            address
-        }];
-    } catch {
-        return [];
-    }
-};
-
-/**
- * Verifies a BitVM fraud proof.
- */
-export const verifyBitVmProof = async (proof: string, network: Network = 'mainnet'): Promise<boolean> => {
-    const { BITVM_API } = endpointsFor(network);
-    try {
-        const res = await fetchWithRetry(`${BITVM_API}/v1/verify`, {
-            method: 'POST',
-            body: JSON.stringify({ proof })
-        });
-        const data = await res.json();
-        return !!data.valid;
-    } catch {
-        return false;
-    }
-};
-
-/**
- * High-level EVM Balance fetcher for L2s (BOB, RSK, etc)
- */
-async function fetchEvmBalance(rpcUrl: string, address: string): Promise<number> {
-    try {
-        const res = await fetchWithRetry(rpcUrl, {
-            method: 'POST',
+        const response = await fetch(rpc, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                jsonrpc: '2.0',
-                method: 'eth_getBalance',
-                params: [address, 'latest'],
+                jsonrpc: "2.0",
+                method: "eth_getBalance",
+                params: [address, "latest"],
                 id: 1
             })
         });
-        const data = await res.json();
-        if (data.result) {
-            return parseInt(data.result, 16) / 1e18;
-        }
-        return 0;
+        const data = await response.json();
+        if (data.error) return 0;
+        // Convert Wei to BTC/Eth unit
+        const wei = BigInt(data.result);
+        return Number(wei) / 1e18;
     } catch {
         return 0;
     }
 }
 
-/**
- * Functional BitVM verification with UI notifications.
- */
-export const verifyBitVmProofFunctional = async (proof: string, emitNotifications: boolean = true): Promise<boolean> => {
-    if (emitNotifications) notificationService.notify('BitVM Audit', 'Verifying computation proof...', 'info');
-
-    // Simulations for BitVM cycles
-    await new Promise(r => setTimeout(r, 1500));
-
-    const isValid = await verifyBitVmProof(proof);
-
-    if (emitNotifications) {
-        if (isValid) notificationService.notify('BitVM Verified', 'Computation proof is valid and secure.', 'success');
-        else notificationService.notify('BitVM Error', 'Invalid computation proof detected!', 'error');
-    }
-
-    return isValid;
-};
-
-/**
- * Checks the status of a Bitcoin transaction.
- */
-export const checkBtcTxStatus = async (txid: string, network: Network = 'mainnet'): Promise<{ confirmed: boolean; blockHeight?: number }> => {
-  try {
-    const { BTC_EXPLORER } = endpointsFor(network);
-    const response = await fetchWithRetry(`${BTC_EXPLORER}/tx/${txid}`);
-    if (!response.ok) return { confirmed: false };
-    const data = await response.json();
-    return {
-      confirmed: !!data.status.confirmed,
-      blockHeight: data.status.block_height
-    };
-  } catch {
-    return { confirmed: false };
-  }
-};
-
-/**
- * Fetches the Citadel Treasury balance (Consolidated L1 + sBTC).
- */
-export const fetchCitadelTreasury = async (network: Network = 'mainnet'): Promise<Asset[]> => {
-    // Treasury addresses for Conclave Protocol
-    const treasury = network === 'mainnet'
-        ? '3...citadel_vault'
-        : 'tb1...citadel_vault_testnet';
-
-    const btcBalance = await fetchBtcBalance(treasury, network);
+export async function fetchBobAssets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
+    const rpc = (endpointsFor(network) as any).BOB_API;
+    const balance = await fetchEvmBalance(rpc, address);
+    if (balance === 0) return [];
     const btcPrice = await fetchBtcPrice();
-
     return [{
-        id: 'citadel-treasury-btc',
-        name: 'Citadel Treasury',
-        symbol: 'BTC',
-        balance: btcBalance,
-        valueUsd: btcBalance * btcPrice,
-        layer: 'Mainnet',
+        id: 'bob-btc',
+        name: 'BOB (Build On Bitcoin)',
+        symbol: 'BOB-BTC',
+        balance,
+        valueUsd: balance * btcPrice,
+        layer: 'BOB',
         type: 'Native',
-        address: treasury
+        address
     }];
-};
+}
 
 export async function fetchB2Assets(address: string, network: Network = 'mainnet'): Promise<Asset[]> {
     const rpc = (endpointsFor(network) as any).B2_API;
@@ -551,7 +317,7 @@ export async function fetchBotanixAssets(address: string, network: Network = 'ma
     const btcPrice = await fetchBtcPrice();
     return [{
         id: 'botanix-btc',
-        name: 'Botanix',
+        name: 'Botanix Spiderchain',
         symbol: 'BOT-BTC',
         balance,
         valueUsd: balance * btcPrice,
@@ -569,7 +335,7 @@ export async function fetchMezoAssets(address: string, network: Network = 'mainn
     return [{
         id: 'mezo-btc',
         name: 'Mezo',
-        symbol: 'MEZO-BTC',
+        symbol: 'MEZ-BTC',
         balance,
         valueUsd: balance * btcPrice,
         layer: 'Mezo',
@@ -752,7 +518,7 @@ export async function fetchBitlayerAssets(address: string, network: Network = 'm
  * Fetches the native peg-in (deposit) address for a given Bitcoin layer.
  */
 export const fetchNativePegAddress = async (layer: BitcoinLayer, network: Network = 'mainnet'): Promise<string> => {
-    const endpoints = endpointsFor(network);
+    const endpoints = endpointsFor(network) as any;
 
     switch (layer) {
         case 'Stacks':
@@ -811,7 +577,7 @@ export async function fetchTaprootAssets(address: string, network: Network = 'ma
     // Taproot Assets (formerly Taro) - Placeholder for integration with lightning-terminal or similar
     // For now, we simulate an empty discovery if not on a real node.
     try {
-        const { RGB_API } = endpointsFor(network); // Reusing RGB proxy endpoint as it often handles Taproot assets too
+        const { RGB_API } = endpointsFor(network) as any; // Reusing RGB proxy endpoint as it often handles Taproot assets too
         const response = await fetchWithRetry(`${RGB_API}/v1/taproot-assets/${address}`, {}, 1, 500);
         if (!response.ok) return [];
         const data = await response.json();

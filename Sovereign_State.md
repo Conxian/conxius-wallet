@@ -29,7 +29,9 @@ permalink: /./Sovereign_State
 | [TAPROOT_ASSETS] | [BRIDGED] | Discovery and transfer logic for Taproot Assets. |
 | [B2B_GATEWAY] | [BRIDGED] | Institutional signing and treasury authorization. |
 | [ARK_VUTXO] | [COMPLETED] | Native Ark V-UTXO lifecycle and Stacks anchoring. |
+| [TEE_SETTLEMENT] | [COMPLETED] | Verified TEE-verified proposal-only triggers (CON-162). |
+| [REVENUE_ENGINE] | [COMPLETED] | Clarity 4.0 protocol fee automation (1% Extraction). |
 | [DOCS_ALIGNMENT] | [COMPLETED] | Jekyll frontmatter and LaTeX formula optimization. |
 
 ---
-*Last Updated: March 2026*
+*Last Updated: April 2026*

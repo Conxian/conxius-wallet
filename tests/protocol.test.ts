@@ -11,31 +11,31 @@ describe('Protocol Services', () => {
     });
 
     const balance = await fetchBtcBalance(TEST_BTC_ADDRESS, 'mainnet');
-    expect(balance).toBe(50000);
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('mempool.space/api/address'));
+    expect(balance).toBe(0.0005);
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('mempool.space/api/address'), expect.anything());
   });
 
   it('should fetch RGB assets via gateway', async () => {
     global.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ([])
+        json: async () => ({ assets: [] })
     });
 
     const mockAddr = 'bc1q' + '0'.repeat(38);
     const assets = await fetchRgbAssets(mockAddr);
     expect(assets).toBeInstanceOf(Array);
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/rgb'));
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/rgb/v1/assets'), expect.anything());
   });
 
   it('should fetch Ark balances via gateway', async () => {
     global.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ([])
+        json: async () => ({ vtxos: [] })
     });
 
     const mockAddr = 'bc1q' + '0'.repeat(38);
     const balances = await fetchArkBalances(mockAddr);
     expect(balances).toBeInstanceOf(Array);
-    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/ark'));
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/v1/vtxos/'), expect.anything());
   });
 });
