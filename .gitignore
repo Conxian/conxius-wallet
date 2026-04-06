@@ -36,10 +36,15 @@ android/captures
 
 # Security - API Keys and Secrets
 .env
-.env.local
-.env*.local
-.env.development
-.env.production
+.env.*
+.envrc
+.envrc.*
+!.env.example
+!.env.*.example
+!.env.template
+!.env.*.template
+!.env.sample
+!.env.*.sample
 *.keystore
 *.jks
 service-account*.json
@@ -48,6 +53,10 @@ service-account*.json
 *.p12
 *.mobileprovision
 
+# Local scratch / code review artifacts
+/code_review_input.txt
+/App.tsx.patch
+
 # Capacitor - Generated web assets
 android/app/src/main/assets/public/
 ios/App/public/
@@ -55,8 +64,9 @@ ios/App/public/
 # Maestro
 .maestro/
 maestro.zip
-*.png
 openspec/changes/*
+!openspec/changes/archive/
+!openspec/changes/archive/**
 
 # Root artifacts and temporary files
 /*.patch
