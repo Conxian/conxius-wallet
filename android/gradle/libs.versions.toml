@@ -1,7 +1,7 @@
 [versions]
 agp = "8.4.2"
 kotlin = "1.9.25"
-ksp = "1.9.25-1.0.20"
+ksp = "2.3.6"
 compose-bom = "2024.04.01"
 compose-compiler = "1.5.15"
 activity-compose = "1.9.0"
