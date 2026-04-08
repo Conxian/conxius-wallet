@@ -35,16 +35,16 @@ android/captures
 .gradle
 
 # Security - API Keys and Secrets
-.env
-.env.*
-.envrc
-.envrc.*
-!.env.example
-!.env.*.example
-!.env.template
-!.env.*.template
-!.env.sample
-!.env.*.sample
+/.env
+/.env.*
+/.envrc
+/.envrc.*
+!/.env.example
+!/.env.*.example
+!/.env.template
+!/.env.*.template
+!/.env.sample
+!/.env.*.sample
 *.keystore
 *.jks
 service-account*.json
@@ -63,6 +63,7 @@ ios/App/public/
 
 # Maestro
 .maestro/
+.maestro/**/*.png
 maestro.zip
 openspec/changes/*
 !openspec/changes/archive/
