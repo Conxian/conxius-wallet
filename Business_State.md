@@ -4,7 +4,7 @@ layout: page
 permalink: /business
 ---
 
-**Last Updated:** 2026-03-25
+**Last Updated:** 2026-04-06
 
 ## [MARKET_FIT]
 **Status:** [COMPLETED]
@@ -18,23 +18,25 @@ permalink: /business
 
 - **Risk Registry Update:** [COMPLETED] Audited and documented BOB (Build On Bitcoin) and B2 Network risks in `RISK_REGISTRY.md`.
 - **Regulatory Alignment:** [COMPLETED] Verified partner-delegated flows in `PARTNERS_AND_COMPLIANCE.md`.
+- **ZKML Verification:** [COMPLETED] Integrated CARF/BRS v1.5 compliant ZKML logic in Gateway for institutional auditability.
 
 ## [TOKENOMICS]
 **Status:** [COMPLETED]
 
 - **NTT Bridge Economics:** [COMPLETED] Defined Gas Abstraction (sBTC-as-Gas) and 0.1% convenience fee in `MONETIZATION.md` and `docs/SOVEREIGN_BRIDGE_STRATEGY.md`.
 - **Monetization Model:** [COMPLETED] Updated `MONETIZATION.md` with B2B SDK licensing tiers and NTT fee structures.
-- **B2B SDK Strategy:** [COMPLETED] Licensing model and value prop defined in `MONETIZATION.md`.
+- **Protocol Fee Engine:** [COMPLETED] Implemented 1% fee extraction logic in `core/revenue-automation.clar`.
 
 ## [ROADMAP]
 **Status:** [COMPLETED]
 
 - **Milestone Expansion:** [COMPLETED] Expanded M1-M11+ in `ROADMAP.md` to remove technical and business ambiguity.
+- **Mainnet Cutover:** [COMPLETED] All critical protocol, signer, and gateway cutover tasks (CON-416, CON-417, CON-418) verified for production readiness.
 - **Marketing Alignment:** [COMPLETED] Mapped tech features to strategic campaigns (e.g., "Hardware Without the Dongle", "Unwrap Your Bitcoin") in `ROADMAP.md`.
-- **Grant Strategy:** [COMPLETED] Tailored Stacks/Wormhole grant application templates in `docs/GRANT_APPLICATION_TEMPLATE.md`.
 
 ## [DOCUMENTATION]
 **Status:** [COMPLETED]
 
 - **5-Second Value Prop:** [COMPLETED] Refactored `README.md` for immediate strategic clarity.
+- **Readiness Gate:** [COMPLETED] Created canonical `docs/CSF_MAINNET_READINESS_GATE.md` as the launch source of truth.
 - **Business Readability:** [COMPLETED] Reviewed and synchronized all `docs/` for strategic alignment with the Technical PRD.
