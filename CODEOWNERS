@@ -4,8 +4,6 @@
 # - GitHub uses this file to auto-request reviews when a PR touches matching paths.
 # - Prefer listing real GitHub usernames or org/team slugs (not internal role aliases).
 
-* @botshelomokoka @admin-conxian-labs
-
 /.github/ @botshelomokoka @admin-conxian-labs
 /README.md @botshelomokoka @admin-conxian-labs
 /SECURITY.md @botshelomokoka @admin-conxian-labs
