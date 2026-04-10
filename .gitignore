@@ -63,6 +63,7 @@ ios/App/public/
 
 # Maestro
 .maestro/
+.maestro/**/*.png
 maestro.zip
 openspec/changes/*
 !openspec/changes/archive/
