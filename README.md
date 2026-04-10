@@ -16,6 +16,10 @@ Provide a non-custodial mobile wallet that unifies Bitcoin-native rails, Stacks,
 
 Active development. The architecture and supported integrations evolve quickly; treat external interfaces as subject to change unless explicitly versioned.
 
+## Ownership
+
+Ownership and review requirements are defined in [`CODEOWNERS`](./CODEOWNERS).
+
 ## Audience
 
 - End users seeking a sovereignty-first, non-custodial wallet.
