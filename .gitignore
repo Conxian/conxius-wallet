@@ -63,6 +63,7 @@ ios/App/public/
 
 # Maestro
 .maestro/
+# NOTE: Redundant with `.maestro/` today; kept to document that Maestro screenshots are generated artifacts.
 .maestro/**/*.png
 maestro.zip
 openspec/changes/*
