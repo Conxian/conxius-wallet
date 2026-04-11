@@ -1,22 +1,32 @@
-# Security-critical paths requiring explicit review
+# Code owners for the Conxius Wallet repository.
 # Format: [path] [owner]
 
+# Default ownership for all paths; keep this entry above more specific patterns because GitHub CODEOWNERS uses last-match-wins semantics
+* @botshelomokoka @admin-conxian-labs
+
+# General & Governance
+/README.md @botshelomokoka @admin-conxian-labs
+/SECURITY.md @botshelomokoka @admin-conxian-labs
+/CONTRIBUTING.md @botshelomokoka @admin-conxian-labs
+/.github/CODEOWNERS @botshelomokoka @admin-conxian-labs
+/.github/ @botshelomokoka @admin-conxian-labs
+
 # Core Security & Enclave Logic
-/services/ai-security.ts @conxian-labs/security-reviewers
-/services/security-constants.ts @conxian-labs/security-reviewers
-/services/enclave-storage.ts @conxian-labs/security-reviewers
-/services/signer.ts @conxian-labs/security-reviewers
-/services/crypto.worker.ts @conxian-labs/security-reviewers
+/services/ai-security.ts @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
+/services/security-constants.ts @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
+/services/enclave-storage.ts @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
+/services/signer.ts @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
+/services/crypto.worker.ts @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
 
 # Native Android Enclave & Managers
-/android/ @conxian-labs/security-reviewers
+/android/ @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
 
 # CI/CD & Workflows
-/.github/workflows/ @conxian-labs/security-reviewers
+/.github/workflows/ @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
 
 # Submodules (Infrastructure)
-/lib-conxian-core/ @conxian-labs/security-reviewers
-/conxian-gateway/ @conxian-labs/security-reviewers
+/lib-conxian-core/ @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
+/conxian-gateway/ @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
 
 # Legal & Compliance
 /docs/legal/ @conxian-labs/compliance-team

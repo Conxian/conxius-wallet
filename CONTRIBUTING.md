@@ -12,7 +12,7 @@ and sovereign multi-chain management on mobile devices.
 
 ## 🛡️ Core Principles
 
-1. **Sovereign by Design**: Prioritize user privacy and self-custody.
+1. **Sovereign by Design**: Prioritize user sovereignty and privacy via the **CXN Guardian** architecture.
 2. **Zero Secret Egress**: Never expose private keys or mnemonics in logs or
    network calls.
 3. **Local-First**: Utilize on-device TEE (The Conclave) for all cryptographic
@@ -29,28 +29,29 @@ compatibility with the Nakamoto release. This includes:
 - Adhering to post-condition best practices to prevent blind signing.
 - Aligning with sBTC peg-in/peg-out state machines.
 
-### Vitest 4.0
+### Vitest & pnpm
 
-We use **Vitest 4.0** for our frontend and logic test suites.
+We use **pnpm** for dependency management and **Vitest** for our test suites.
 
 - All new features MUST include comprehensive unit tests.
 - Tests should be located in the `/tests` directory.
-- Ensure that all tests pass before submitting a Pull Request: `npm test`.
+- Ensure that all tests pass before submitting a Pull Request: `pnpm test`.
 
 ## 🧪 Testing Protocols
 
 Before submitting a change:
 
-1. **Run All Tests**: `npm test`
-2. **Verify UI**: Ensure that sensitive fields have `autoComplete="off"` and
+1. **Run Unit Tests**: `pnpm test`
+2. **Run E2E Tests**: `pnpm run test:e2e` (Playwright)
+3. **Verify UI**: Ensure that sensitive fields have `autoComplete="off"` and
    other security attributes.
-3. **Check Logs**: Ensure no sensitive data is leaked to the console or Android
+4. **Check Logs**: Ensure no sensitive data is leaked to the console or Android
    logs.
 
 ## 📜 Documentation & PRD Sync
 
 Conxius follows an **Anti-Drift** policy. Any architectural change must be
-reflected in the [PRD.md](docs/business/PRD.md).
+reflected in the [PRD.md](https://github.com/Conxian/conxius-wallet/blob/main/docs/business/PRD.md) and tracked in [IMPLEMENTATION_REGISTRY.md](https://github.com/Conxian/conxius-wallet/blob/main/docs/protocols/IMPLEMENTATION_REGISTRY.md).
 
 - If you add a new chain or protocol, update the **Layer Unification Matrix**.
 - If you modify internal logic, update the corresponding documentation sections
