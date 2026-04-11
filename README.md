@@ -6,7 +6,7 @@ permalink: /
 
 # Conxius Wallet: The Sovereign Bitcoin Command Center (v1.6.0)
 
-Conxius is a non-custodial, "Sovereign-First" financial command center for the full Bitcoin ecosystem. It bridges the security of a hardware-isolated environment (Android StrongBox/TEE) with the utility of modern DeFi, cross-chain interoperability, and real-world services.
+Conxius is a non-custodial, "Sovereign-First" financial command center for the full Bitcoin ecosystem. Powered by the **CXN Guardian** security architecture, it bridges the security of a hardware-isolated environment (Android StrongBox/TEE) with the utility of modern DeFi, cross-chain interoperability, and real-world services.
 
 ## Purpose
 
@@ -14,26 +14,28 @@ Provide a non-custodial mobile wallet that unifies Bitcoin-native rails, Stacks,
 
 ## Status
 
-Active development. The architecture and supported integrations evolve quickly; treat external interfaces as subject to change unless explicitly versioned.
+**Production (v1.6.0)**. The architecture and supported integrations are aligned with the Phase 5 "Clean Break" migration to pure native Android infrastructure.
 
 ## Ownership
 
-Ownership and review requirements are defined in [`CODEOWNERS`](./CODEOWNERS).
+Ownership and review requirements are defined in the repository CODEOWNERS file:
+https://github.com/Conxian/conxius-wallet/blob/main/.github/CODEOWNERS
 
 ## Audience
 
 - End users seeking a sovereignty-first, non-custodial wallet.
 - Mobile and security engineers working on enclave-backed key management.
-- Protocol and integration developers connecting wallet flows to Gateway and on-chain services.
+- Protocol and integration developers connecting wallet flows to the Conxian Gateway and on-chain services.
 
 ## Relationship to the Conxian stack
 
-- Client interface for interacting with Conxian protocol and broader Bitcoin-layer integrations.
-- Typically consumes Conxian Gateway APIs for state, compliance, and multi-layer coordination.
+- **Client interface** for interacting with the Conxian protocol and broader Bitcoin-layer integrations.
+- **CXN Guardian AI**: Integrated privacy layer enforcing Zero Secret Egress for all interactions.
+- **Conxian Gateway**: Consumes Gateway APIs for state, compliance, and multi-layer coordination.
 
 ## 🚀 Key Pillars
 
-- **Zero-Leak Privacy**: Mandatory local redaction of PII and sensitive identifiers before any AI or network transmission.
+- **Zero-Leak Privacy**: Mandatory local redaction of PII and sensitive identifiers via CXN Guardian before any AI or network transmission.
 - **Hardware-Isolated Signing**: Cryptographic keys never leave the mobile device's Secure Enclave (StrongBox).
 - **Full Stack Bitcoin**: Native support for L1 (Segwit/Taproot), Lightning (Breez), Stacks (sBTC), Liquid (L-BTC), Rootstock, and 14+ Bitcoin L2s.
 - **Advanced Protocols**: Integrated support for Babylon Staking, Discreet Log Contracts (DLCs), and Nostr Wallet Connect (NIP-47).
@@ -59,6 +61,7 @@ Ownership and review requirements are defined in [`CODEOWNERS`](./CODEOWNERS).
 pnpm install
 pnpm run dev
 pnpm test
+pnpm run test:e2e
 ```
 
 ---
