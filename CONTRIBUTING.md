@@ -51,7 +51,7 @@ Before submitting a change:
 ## 📜 Documentation & PRD Sync
 
 Conxius follows an **Anti-Drift** policy. Any architectural change must be
-reflected in the [PRD.md](docs/business/PRD.md) and tracked in [IMPLEMENTATION_REGISTRY.md](docs/protocols/IMPLEMENTATION_REGISTRY.md).
+reflected in the [PRD.md](https://github.com/Conxian/conxius-wallet/blob/main/docs/business/PRD.md) and tracked in [IMPLEMENTATION_REGISTRY.md](https://github.com/Conxian/conxius-wallet/blob/main/docs/protocols/IMPLEMENTATION_REGISTRY.md).
 
 - If you add a new chain or protocol, update the **Layer Unification Matrix**.
 - If you modify internal logic, update the corresponding documentation sections
