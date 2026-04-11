@@ -1,6 +1,9 @@
 # Code owners for the Conxius Wallet repository.
 # Format: [path] [owner]
 
+# Default ownership for all paths not matched below
+* @botshelomokoka @admin-conxian-labs
+
 # General & Governance
 /README.md @botshelomokoka @admin-conxian-labs
 /SECURITY.md @botshelomokoka @admin-conxian-labs
