@@ -1,7 +1,7 @@
 # Code owners for the Conxius Wallet repository.
 # Format: [path] [owner]
 
-# Default ownership for all paths not matched below
+# Default ownership for all paths; keep this entry above more specific patterns because GitHub CODEOWNERS uses last-match-wins semantics
 * @botshelomokoka @admin-conxian-labs
 
 # General & Governance
