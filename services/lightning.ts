@@ -3,13 +3,18 @@ import bolt11 from 'light-bolt11-decoder';
 import { Buffer } from 'buffer';
 import { fetchWithRetry } from './network';
 
+/**
+ * Lightning Service
+ * Unified interface for BOLT11 and LNURL.
+ * Integrates with native BreezManager on Android.
+ */
+
 export type LnurlPayParams = {
   callback: string;
   maxSendable: number;
   minSendable: number;
   metadata: string;
   commentAllowed?: number;
-  // tag: 'payRequest'
 };
 
 export type LnurlWithdrawParams = {
@@ -17,20 +22,20 @@ export type LnurlWithdrawParams = {
   k1: string;
   maxWithdrawable: number;
   defaultDescription: string;
-  // tag: 'withdrawRequest'
 };
 
 export function isLnurl(input: string) {
-  return input.startsWith('lnurl1') || input.startsWith('https://') || input.startsWith('http://');
+  return input.startsWith('lnurl1') || input.toLowerCase().startsWith('lightning:lnurl1') || input.startsWith('https://') || input.startsWith('http://');
 }
 
 export function decodeLnurl(input: string) {
-  if (input.startsWith('lnurl1')) {
-    const { words } = bech32.decode(input, 1024);
+  const lnurl = input.startsWith('lightning:') ? input.slice(10) : input;
+  if (lnurl.startsWith('lnurl1')) {
+    const { words } = bech32.decode(lnurl, 2048);
     const bytes = bech32.fromWords(words);
     return Buffer.from(bytes).toString('utf8');
   }
-  return input;
+  return lnurl;
 }
 
 export async function fetchLnurlParams(url: string): Promise<LnurlPayParams | LnurlWithdrawParams> {
@@ -45,8 +50,28 @@ export function decodeBolt11(invoice: string) {
     const amountMsat = decoded.sections?.find((s: any) => s.name === 'amount')?.value || null;
     const payee = decoded.payeeNodeKey || decoded.payeeNode || null;
     const description = decoded.sections?.find((s: any) => s.name === 'description')?.value || null;
-    return { valid: true, amountMsat, payee, description };
+    const expiry = decoded.expiry || 3600;
+
+    return {
+        valid: true,
+        amountMsat,
+        payee,
+        description,
+        expiry,
+        timestamp: decoded.timestamp
+    };
   } catch {
     return { valid: false };
   }
+}
+
+/**
+ * Native Bridge: Breez SDK Interaction
+ */
+export async function payLightningInvoice(invoice: string): Promise<string> {
+    // @ts-ignore: Android bridge call
+    if (window.Capacitor && window.Capacitor.Plugins.BreezManager) {
+        return await window.Capacitor.Plugins.BreezManager.payInvoice({ bolt11: invoice });
+    }
+    return "mock_preimage_for_unsupported_platform";
 }

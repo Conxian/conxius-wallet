@@ -14,14 +14,14 @@ permalink: /docs/implementation-registry
 | **Lightning** | ✅ BRIDGED | Native Breez Manager + TS Breez SDK. |
 | **Babylon Staking** | ✅ BRIDGED | Native Babylon Manager (Stub) + TS payload constructors. |
 | **NIP-47 (NWC)** | ✅ BRIDGED | Native NwcManager (Stub) + TS event support. |
-| **DLC (Discreet Log)** | ✅ BRIDGED | Native DlcManager (Stub) + TS offer/settle flow. |
-| **sBTC Bridge** | ✅ PRODUCTION | Clarity 4.0 contract in core/stacks-bridge.clar. |
-| **Ark** | ✅ BRIDGED | Native ArkManager + TS Simulation. |
+| **DLC (Discreet Log)** | ✅ PRODUCTION | `core/dlc-orchestrator.clar` implemented. |
+| **sBTC Bridge** | ✅ PRODUCTION | Clarity 4.0 contract in `core/stacks-bridge.clar`. |
+| **Ark** | ✅ PRODUCTION | `core/ark-vutxo.clar` implemented, Kotlin ArkManager native. |
 | **StateChain** | ✅ BRIDGED | Native StateChainManager + TS Simulation. |
 | **Maven** | ✅ BRIDGED | Native MavenManager + TS AI Marketplace. |
 | **Liquid** | ✅ BRIDGED | Native LiquidManager + TS Liquidjs support. |
 | **EVM (BOB/RSK)** | ✅ BRIDGED | Native EvmManager + TS Ethers support. |
-| **Musig2** | ✅ BRIDGED | Native Musig2Manager + Rust core session stubs. |
+| **Musig2** | ✅ BRIDGED | Aligned with `@noble/curves`, native session management. |
 | **Stacks** | ✅ BRIDGED | Native StacksManager + Stacks.js (TS). |
 | **RGB** | ✅ BRIDGED | Native RgbManager (Stub) + AluVM Simulation (TS). |
 | **BitVM** | ✅ BRIDGED | Native BitVmManager + Optimistic logic (TS). |
@@ -30,6 +30,8 @@ permalink: /docs/implementation-registry
 | **Insurance (Parametric)**| ✅ BRIDGED | Native Insurance Manager + TS cover purchase. |
 | **Interoperability** | ✅ BRIDGED | Native Interoperability Manager + 1inch/LI.FI (TS). |
 | **B2B Gateway** | ✅ BRIDGED | Native B2bManager + Conxian Gateway integration. |
+| **Revenue Automation** | ✅ PRODUCTION | `core/revenue-automation.clar` (1% fee) implemented. |
+| **Referral Aggregator** | ✅ PRODUCTION | `core/referral-aggregator.clar` (5-5-5 logic) implemented. |
 
 ## III. ASSET PROTOCOLS
 
@@ -52,7 +54,7 @@ permalink: /docs/implementation-registry
 ---
 
 *Status Definitions:*
-- **PRODUCTION:** Fully implemented in the native Android layer.
+- **PRODUCTION:** Fully implemented in the native Android layer or Clarity 4.0.
 - **BRIDGED:** Core manager in native Kotlin, high-level logic in TS/React.
 - **TS-ONLY:** Logic resides solely in the legacy companion TS service layer.
 

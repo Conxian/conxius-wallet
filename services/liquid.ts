@@ -35,7 +35,7 @@ export const deriveLiquidAddress = (
 ): string => {
   const liquidNet = getLiquidNetwork(network);
   const payment = liquid.payments.p2wpkh({
-    pubkey,
+    pubkey: Buffer.from(pubkey),
     network: liquidNet,
   });
 
