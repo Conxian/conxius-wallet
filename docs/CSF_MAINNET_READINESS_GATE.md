@@ -33,10 +33,13 @@ This document tracks the final launch readiness for ConxianCSF mainnet deploymen
 - [x] READMEs updated with Purpose and Status sections.
 - [x] Principal cutover (ST -> SP) complete in configuration.
 - [x] LICENSE (MIT) added to root directory.
+- [x] Placeholder strings and testnet residue remediated in `services/`.
+- [x] Independent Verification Pathway (CON-346) documented.
+- [x] Community Funding Model (CON-137) and Bounty Classification (CON-231) documented.
 
 ## 🛡️ Go/No-Go Decision Status: [GO]
 
-As of April 12, 2026, all critical launch blockers for ConxianCSF are resolved.
+As of April 13, 2026, all critical launch blockers for ConxianCSF are resolved.
 
 ---
-*Updated: April 12, 2026*
+*Updated: April 13, 2026*
