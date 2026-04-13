@@ -42,7 +42,7 @@ export const requestEnclaveSignature = async (
   if (Capacitor.isNativePlatform()) {
     const vault = typeof seedOrVault === 'string' ? seedOrVault : 'default_vault';
     const pin = undefined; // In production, this is handled by BiometricPrompt
-    const network = 'testnet';
+    const network = 'mainnet'; // Remediation: Default to mainnet for production alignment
     let path = "m/84'/0'/0'/0/0";
 
     if (request.layer === "Stacks") path = "m/44'/5757'/0'/0/0";
