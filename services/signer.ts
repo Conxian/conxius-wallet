@@ -42,7 +42,7 @@ export const requestEnclaveSignature = async (
   if (Capacitor.isNativePlatform()) {
     const vault = typeof seedOrVault === 'string' ? seedOrVault : 'default_vault';
     const pin = undefined; // In production, this is handled by BiometricPrompt
-    const network = 'testnet';
+    const network = 'mainnet'; // Remediation: Default to mainnet for production alignment
     let path = "m/84'/0'/0'/0/0";
 
     if (request.layer === "Stacks") path = "m/44'/5757'/0'/0/0";
@@ -193,7 +193,7 @@ export const requestEnclaveSignature = async (
       if (derived.privateKey) {
           const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
           try {
-            const child = bip32.fromPrivateKey(privKeyBuf, Buffer.alloc(32));
+            const child = bip32.fromSeed(Buffer.concat([privKeyBuf, Buffer.alloc(32, 0)]));
             let messageHash: Buffer;
             if (request.payload?.hash) {
                 messageHash = Buffer.from(request.payload.hash, 'hex');
@@ -263,7 +263,7 @@ export const deriveSovereignRoots = async (mnemonic: string, passphrase?: string
 
     // BIP-44 Stacks Path
     const stxChild = root.derivePath("m/44'/5757'/0'/0/0");
-    const stx = getAddressFromPublicKey(stxChild.publicKey.toString('hex'));
+    const stx = getAddressFromPublicKey(stxChild.publicKey);
 
     // Liquid
     const liquid = deriveLiquidAddress(stxChild.publicKey);

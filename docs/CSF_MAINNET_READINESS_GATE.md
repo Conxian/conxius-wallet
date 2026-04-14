@@ -15,6 +15,7 @@ This document tracks the final launch readiness for ConxianCSF mainnet deploymen
 - [x] Ark V-UTXO contract (Clarity 4.0) verified for Mainnet.
 - [x] Revenue Automation (1% fee) implemented and tested.
 - [x] DLC Orchestrator implemented for bond lifecycle.
+- [x] Referral Aggregator (5-5-5 logic) implemented and tested.
 
 ### 2. Signer & Wallet Security
 - [x] Enclave-backed signing integrated for all major layers.
@@ -31,10 +32,14 @@ This document tracks the final launch readiness for ConxianCSF mainnet deploymen
 - [x] Version v1.6.0 pinned across all relevant repositories.
 - [x] READMEs updated with Purpose and Status sections.
 - [x] Principal cutover (ST -> SP) complete in configuration.
+- [x] LICENSE (MIT) added to root directory.
+- [x] Placeholder strings and testnet residue remediated in `services/`.
+- [x] Independent Verification Pathway (CON-346) documented.
+- [x] Community Funding Model (CON-137) and Bounty Classification (CON-231) documented.
 
 ## 🛡️ Go/No-Go Decision Status: [GO]
 
-As of April 2026, all critical launch blockers for ConxianCSF are resolved.
+As of April 13, 2026, all critical launch blockers for ConxianCSF are resolved.
 
 ---
-*Created: April 2026*
+*Updated: April 13, 2026*
