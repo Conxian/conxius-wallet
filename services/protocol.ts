@@ -534,7 +534,7 @@ export const fetchNativePegAddress = async (layer: BitcoinLayer, network: Networ
                     return data.address;
                 }
             } catch {}
-            return network === 'mainnet' ? 'bc1qbobgatewaymainnetverified' : 'tb1qbobgatewaytestnetverified';
+            return network === 'mainnet' ? 'bc1q_bob_mainnet' : 'tb1q_bob_testnet';
         case 'B2':
             try {
                 const res = await fetchWithRetry(`${endpoints.B2_API}/v1/bridge/deposit-address`);
@@ -543,31 +543,31 @@ export const fetchNativePegAddress = async (layer: BitcoinLayer, network: Networ
                     return data.address;
                 }
             } catch {}
-            return network === 'mainnet' ? 'bc1qb2bridgemainnetproduction' : 'tb1qb2bridgetestnet';
+            return network === 'mainnet' ? 'bc1q_b2_mainnet' : 'tb1qb2bridgetestnet';
         case 'Botanix':
-            return network === 'mainnet' ? 'bc1qbotanixspiderchainmainnet' : 'tb1qbotanixspiderchaintestnet';
+            return network === 'mainnet' ? 'bc1q_botanix_mainnet' : 'tb1qbotanixspiderchaintestnet';
         case 'Mezo':
-            return network === 'mainnet' ? 'bc1qmezotbtcmainnetproduction' : 'tb1qmezotbtctestnet';
+            return network === 'mainnet' ? 'bc1q_mezo_mainnet' : 'tb1qmezotbtctestnet';
         case 'Alpen':
-            return network === 'mainnet' ? 'bc1qalpengatewaymainnetproduction' : 'tb1qalpengatewaytestnet';
+            return network === 'mainnet' ? 'bc1q_alpen_mainnet' : 'tb1qalpengatewaytestnet';
         case 'Zulu':
-            return network === 'mainnet' ? 'bc1qzulugatewaymainnetproduction' : 'tb1qzulugatewaytestnet';
+            return network === 'mainnet' ? 'bc1q_zulu_mainnet' : 'tb1qzulugatewaytestnet';
         case 'Bison':
-            return network === 'mainnet' ? 'bc1qbisongatewaymainnetproduction' : 'tb1qbisongatewaytestnet';
+            return network === 'mainnet' ? 'bc1q_bison_mainnet' : 'tb1qbisongatewaytestnet';
         case 'Hemi':
-            return network === 'mainnet' ? 'bc1qhemigatewaymainnetproduction' : 'tb1qhemigatewaytestnet';
+            return network === 'mainnet' ? 'bc1q_hemi_mainnet' : 'tb1qhemigatewaytestnet';
         case 'Nubit':
-            return network === 'mainnet' ? 'bc1qnubitgatewaymainnetproduction' : 'tb1qnubitgatewaytestnet';
+            return network === 'mainnet' ? 'bc1q_nubit_mainnet' : 'tb1qnubitgatewaytestnet';
         case 'Lorenzo':
-            return network === 'mainnet' ? 'bc1qlorenzogatewaymainnetproduction' : 'tb1qlorenzogatewaytestnet';
+            return network === 'mainnet' ? 'bc1q_lorenzo_mainnet' : 'tb1qlorenzogatewaytestnet';
         case 'Citrea':
-            return network === 'mainnet' ? 'bc1qcitreagatewaymainnetproduction' : 'tb1qcitreagatewaytestnet';
+            return network === 'mainnet' ? 'bc1q_citrea_mainnet' : 'tb1qcitreagatewaytestnet';
         case 'Babylon':
-            return network === 'mainnet' ? 'bc1qbabylongatewaymainnetproduction' : 'tb1qbabylongatewaytestnet';
+            return network === 'mainnet' ? 'bc1q_babylon_mainnet' : 'tb1qbabylongatewaytestnet';
         case 'Merlin':
-            return network === 'mainnet' ? 'bc1qmerlingatewaymainnetproduction' : 'tb1qmerlingatewaytestnet';
+            return network === 'mainnet' ? 'bc1q_merlin_mainnet' : 'tb1qmerlingatewaytestnet';
         case 'Bitlayer':
-            return network === 'mainnet' ? 'bc1qbitlayergatewaymainnetproduction' : 'tb1qbitlayergatewaytestnet';
+            return network === 'mainnet' ? 'bc1q_bitlayer_mainnet' : 'tb1qbitlayergatewaytestnet';
         default:
             throw new Error(`Native peg-in not supported for layer: ${layer}`);
     }

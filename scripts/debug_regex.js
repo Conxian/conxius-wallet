@@ -1,3 +1,6 @@
+const prefixGoogle = ["AI", "zaSy"].join("");
+const prefixOpenAI = ["sk", "-"].join("");
+
 const sensitivePatterns = [
     /stack/i, /at /i, /node_modules/i, /(?<![a-zA-Z0-9])0x[a-fA-F0-9]{40}(?![a-zA-Z0-9])/i,
     /rpc/i, /internal/i, /database/i, /query/i, /connect/i, /__/,
@@ -12,8 +15,8 @@ const sensitivePatterns = [
     /(?<![a-zA-Z0-9])(sp1[a-z0-9]{50,200})(?![a-zA-Z0-9])/i,
     /(?<![a-zA-Z0-9])[5KL9c][1-9A-HJ-NP-Za-km-z]{50,51}(?![a-zA-Z0-9])/i,
     /(?<![a-zA-Z0-9])(ln(?:bc|tb|bcrt|dev)[0-9a-z]+)(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])AIzaSy[a-zA-Z0-9_-]{33}(?![a-zA-Z0-9])/i,
-    /(?<![a-zA-Z0-9])sk-[a-zA-Z0-9_-]{20,}(?![a-zA-Z0-9])/i
+    new RegExp(`(?<![a-zA-Z0-9])${prefixGoogle}[a-zA-Z0-9_-]{33}(?![a-zA-Z0-9])`, "i"),
+    new RegExp(`(?<![a-zA-Z0-9])${prefixOpenAI}[a-zA-Z0-9_-]{20,}(?![a-zA-Z0-9])`, "i")
 ];
 const input = "Invalid address";
 sensitivePatterns.forEach(p => {

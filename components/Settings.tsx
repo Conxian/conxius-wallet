@@ -185,7 +185,7 @@ const Settings: React.FC = () => {
                          type="password"
                          value={aiConfig?.apiKey || ''}
                          onChange={e => handleAiUpdate('apiKey', e.target.value)}
-                         placeholder="sk-..."
+                         placeholder="sk-XXXX"
                          className="w-full bg-white border border-border rounded-2xl px-12 py-5 text-sm font-mono text-brand-deep focus:outline-none focus:border-orange-500/50"
                        />
                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-earth" size={18} />

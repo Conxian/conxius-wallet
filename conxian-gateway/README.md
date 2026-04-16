@@ -41,9 +41,9 @@ Ensure these are set in your `.env` file:
 
 1. Create a `.env` file with your API keys:
    ```
-   CHANGELLY_API_KEY=your_key
-   CHANGELLY_API_SECRET=your_secret
-   BISQ_API_PASSWORD=your_password
+   CHANGELLY_API_KEY=replace_with_key
+   CHANGELLY_API_SECRET=replace_with_secret
+   BISQ_API_PASSWORD=replace_with_password
    ```
 2. Run with Docker Compose:
    ```bash
