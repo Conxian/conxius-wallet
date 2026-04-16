@@ -27,6 +27,6 @@ export async function createMerchantInvoice(amount: number, currency: string = '
         const result = await response.json();
         return { id: result.data.id, amount: parseFloat(result.data.amount), currency: result.data.currency, paymentAddress: result.data.address, expiresAt: result.data.release_at * 1000 };
     } catch {
-        return { id: 'cp_inv_' + generateRandomString(10), amount, currency, paymentAddress: 'bc1qmerchantproductionverified778', expiresAt: Date.now() + 900000 };
+        return { id: 'cp_inv_' + generateRandomString(10), amount, currency, paymentAddress: 'bc1q_merchant_prod', expiresAt: Date.now() + 900000 };
     }
 }

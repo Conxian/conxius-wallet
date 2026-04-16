@@ -1,6 +1,6 @@
 import { Network, AppState } from '../types';
 import { generateRandomString } from './random';
-import { NORMALIZE_REGEX, SENSITIVE_PATTERNS } from './security-constants';
+import { NORMALIZE_REGEX, SENSITIVE_SCAN_PATTERNS } from './security-constants';
 
 let _globalAppState: AppState | undefined;
 
@@ -215,12 +215,9 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
   const strippedMessage = String(message).replace(NORMALIZE_REGEX, "");
   const spacedMessage = String(message).replace(NORMALIZE_REGEX, " ");
 
-  // Fix: Ensure all global regexes have their lastIndex reset to 0 before testing.
-  // This prevents stateful behavior where matches are skipped in subsequent calls or
-  // when string lengths change.
-  const isSensitive = SENSITIVE_PATTERNS.some((p) => {
-    if (p.global) p.lastIndex = 0;
-    return p.test(strippedScan) || (p.lastIndex = 0, p.test(spacedScan)) || (p.lastIndex = 0, p.test(strippedMessage)) || (p.lastIndex = 0, p.test(spacedMessage));
+  // Using non-global scanner patterns to avoid stateful behavior with .test()
+  const isSensitive = SENSITIVE_SCAN_PATTERNS.some((p) => {
+    return p.test(strippedScan) || p.test(spacedScan) || p.test(strippedMessage) || p.test(spacedMessage);
   });
 
   if (isSensitive) {

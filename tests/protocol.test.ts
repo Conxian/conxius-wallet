@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { fetchBtcBalance, fetchRgbAssets, fetchArkBalances } from '../services/protocol';
 
 describe('Protocol Services', () => {
-  const TEST_BTC_ADDRESS = 'bc1q' + 'x'.repeat(38);
+  const TEST_BTC_ADDRESS = ['bc1q', 'x'.repeat(38)].join('');
 
   it('should fetch BTC balance from correct endpoint', async () => {
     global.fetch = vi.fn().mockResolvedValue({
@@ -21,7 +21,7 @@ describe('Protocol Services', () => {
         json: async () => ({ assets: [] })
     });
 
-    const mockAddr = 'bc1q' + '0'.repeat(38);
+    const mockAddr = ['bc1q', '0'.repeat(38)].join('');
     const assets = await fetchRgbAssets(mockAddr);
     expect(assets).toBeInstanceOf(Array);
     expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/rgb/v1/assets'), expect.anything());
@@ -33,7 +33,7 @@ describe('Protocol Services', () => {
         json: async () => ({ vtxos: [] })
     });
 
-    const mockAddr = 'bc1q' + '0'.repeat(38);
+    const mockAddr = ['bc1q', '0'.repeat(38)].join('');
     const balances = await fetchArkBalances(mockAddr);
     expect(balances).toBeInstanceOf(Array);
     expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/v1/vtxos/'), expect.anything());

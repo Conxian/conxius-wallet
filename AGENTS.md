@@ -80,6 +80,11 @@ Ensure the following files are synced:
 
 ---
 
+## 📋 Operating Model & Approvals
+
+All "High" and "Urgent" issues require COO (Sizwe Nkosi) review before promotion to \`main\`.
+See [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md) for the canonical approval path.
+
 ## 🚀 Native Bridge Alignment (v1.6.0)
 
 The wallet utilizes a **Bridged Sovereign Architecture** where native Kotlin

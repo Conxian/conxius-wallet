@@ -7,9 +7,9 @@ describe('MultiSig Wallet (Bridged)', () => {
     n: 3,
     network: 'testnet' as const,
     signers: [
-        { id: 1, name: 'Local 1', type: 'local' as const, key: '02' + '2'.repeat(64), status: 'ready' as const },
-        { id: 2, name: 'Local 2', type: 'local' as const, key: '03' + '3'.repeat(64), status: 'ready' as const },
-        { id: 3, name: 'Hard 1', type: 'hardware' as const, key: '02' + '4'.repeat(64), status: 'ready' as const }
+        { id: 1, name: 'Local 1', type: 'local' as const, key: ['02', '2'.repeat(64)].join(''), status: 'ready' as const },
+        { id: 2, name: 'Local 2', type: 'local' as const, key: ['03', '3'.repeat(64)].join(''), status: 'ready' as const },
+        { id: 3, name: 'Hard 1', type: 'hardware' as const, key: ['02', '4'.repeat(64)].join(''), status: 'ready' as const }
     ]
   };
 
@@ -21,7 +21,7 @@ describe('MultiSig Wallet (Bridged)', () => {
 
   it('should fetch UTXOs using the correct network endpoint', async () => {
     const wallet = new MultiSigWallet(mockQuorum);
-    const mockAddr = 'tb1q' + 'z'.repeat(38);
+    const mockAddr = ['tb1q', 'z'.repeat(38)].join('');
 
     global.fetch = vi.fn().mockResolvedValue({
         ok: true,

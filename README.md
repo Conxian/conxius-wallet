@@ -6,6 +6,8 @@ permalink: /
 
 # Conxius Wallet: The Sovereign Bitcoin Command Center (v1.6.0)
 
+![CI](https://github.com/Conxian/conxius-wallet/actions/workflows/ci.yml/badge.svg) ![Security](https://img.shields.io/badge/Security-CXN%20Guardian-orange)
+
 Conxius is a non-custodial, "Sovereign-First" financial command center for the full Bitcoin ecosystem. Powered by the **CXN Guardian** security architecture, it bridges the security of a hardware-isolated environment (Android StrongBox/TEE) with the utility of modern DeFi, cross-chain interoperability, and real-world services.
 
 ## Purpose
@@ -32,6 +34,15 @@ https://github.com/Conxian/conxius-wallet/blob/main/.github/CODEOWNERS
 - **Client interface** for interacting with the Conxian protocol and broader Bitcoin-layer integrations.
 - **CXN Guardian AI**: Integrated privacy layer enforcing Zero Secret Egress for all interactions.
 - **Conxian Gateway**: Consumes Gateway APIs for state, compliance, and multi-layer coordination.
+
+
+## 📦 Release Discipline
+
+Conxius Wallet follows a strict release flow:
+- **Versioning**: Semantic Versioning (SemVer) is enforced.
+- **Tags**: Production releases are tagged (e.g., \`v1.6.0\`).
+- **Changelog**: Every release requires an entry in \`CHANGELOG.md\`.
+- **Promotion**: Changes flow from \`dev\` -> \`staged\` -> \`main\`. Promotion to \`main\` requires COO approval and successful E2E validation.
 
 ## 🚀 Key Pillars
 
