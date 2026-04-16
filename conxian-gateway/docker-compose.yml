@@ -9,17 +9,50 @@ services:
       - CHANGELLY_API_KEY=${CHANGELLY_API_KEY}
       - CHANGELLY_API_SECRET=${CHANGELLY_API_SECRET}
     restart: always
+    networks:
+      - conxian-net
 
   bisq-node:
     image: openjdk:17-slim
+    profiles:
+      - bisq
+      - full-stack
     volumes:
       - ./bisq:/app/bisq
       - bisq-data:/root/.local/share/Bisq
     working_dir: /app/bisq
-    command: /bin/bash -c "apt-get update && apt-get install -y wget tor && wget https://github.com/bisq-network/bisq/releases/download/v1.9.14/Bisq-64bit-1.9.14.deb -O /tmp/bisq.deb && dpkg -i /tmp/bisq.deb || apt-get install -f -y && /opt/bisq/bin/Bisq --headless --apiPort=9998 --apiPassword=${BISQ_API_PASSWORD:-CHANGE_ME}"
+    command: /bin/bash -c "apt-get update && apt-get install -y wget tor && wget https://github.com/bisq-network/bisq/releases/download/v1.9.14/Bisq-64bit-1.9.14.deb -O /tmp/bisq.deb && dpkg -i /tmp/bisq.deb || apt-get install -f -y && /opt/bisq/bin/Bisq --headless --apiPort=9998 --apiPassword=${BISQ_API_PASSWORD}"
     ports:
       - "9998:9998"
     restart: always
+    networks:
+      - conxian-net
+
+  rgb-node:
+    image: alpine:latest
+    profiles:
+      - rgb
+      - full-stack
+    command: /bin/sh -c "echo 'RGB Node starting...' && sleep infinity"
+    environment:
+      - RGB_NETWORK=mainnet
+    restart: always
+    networks:
+      - conxian-net
+
+  bitvm-verify:
+    image: node:20-alpine
+    profiles:
+      - bitvm
+      - full-stack
+    command: /bin/sh -c "echo 'BitVM Verification Floor starting...' && sleep infinity"
+    restart: always
+    networks:
+      - conxian-net
+
+networks:
+  conxian-net:
+    driver: bridge
 
 volumes:
   bisq-data:

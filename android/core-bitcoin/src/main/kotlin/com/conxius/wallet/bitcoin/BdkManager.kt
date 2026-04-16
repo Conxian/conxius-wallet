@@ -3,13 +3,13 @@ package com.conxius.wallet.bitcoin
 import com.conxius.wallet.crypto.EphemeralSeed
 import org.bitcoindevkit.*
 
-class BdkManager(private val network: Network = Network.TESTNET) {
+class BdkManager(private val network: Network = Network.BITCOIN) {
     private var wallet: Wallet? = null
     private var blockchain: Blockchain? = null
     private var externalDescriptor: Descriptor? = null
     private var internalDescriptor: Descriptor? = null
 
-    fun initializeWallet(mnemonicStr: String, accountPath: String = "84'/1'/0'", proxyUrl: String? = null) {
+    fun initializeWallet(mnemonicStr: String, accountPath: String = "84'/0'/0'", proxyUrl: String? = null) {
         val mnemonic = Mnemonic.fromString(mnemonicStr)
         val rootKey = DescriptorSecretKey(network, mnemonic, null)
 

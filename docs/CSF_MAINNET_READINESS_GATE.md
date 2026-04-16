@@ -39,6 +39,12 @@ This document tracks the final launch readiness for ConxianCSF mainnet deploymen
 
 ## 🛡️ Go/No-Go Decision Status: [GO]
 
+### Final Audit Notes (CON-399/386/393)
+- Redaction scanner statefulness fixed (CON-305).
+- COO approval path integrated (CON-224).
+- Stacks principals validated; all testnet ST... remnants purged from production services.
+- Protocol vault SP3FBR... configured as canonical sBTC token principal in NTT.
+
 As of April 13, 2026, all critical launch blockers for ConxianCSF are resolved.
 
 ---
