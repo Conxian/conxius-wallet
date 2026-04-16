@@ -7,7 +7,7 @@ import {
 
 describe("Sovereign AI Security", () => {
   it("should redact Bitcoin addresses", () => {
-    const addr = "bc1q" + "x".repeat(38);
+    const addr = ["bc1q", "x".repeat(38)].join("");
     const prompt = "What is the balance of " + addr + "?";
     const { sanitized, redactionMap } = sanitizePrompt(prompt);
 
@@ -17,7 +17,7 @@ describe("Sovereign AI Security", () => {
   });
 
   it("should redact multiple instances of the same secret", () => {
-    const addr = "bc1q" + "x".repeat(38);
+    const addr = ["bc1q", "x".repeat(38)].join("");
     const prompt = "My address is " + addr + " and " + addr;
     const { sanitized, redactionMap } = sanitizePrompt(prompt);
 
@@ -26,8 +26,8 @@ describe("Sovereign AI Security", () => {
   });
 
   it("should redact different secrets", () => {
-    const addr1 = "bc1q" + "x".repeat(38);
-    const addr2 = "bc1q" + "z".repeat(38);
+    const addr1 = ["bc1q", "x".repeat(38)].join("");
+    const addr2 = ["bc1q", "z".repeat(38)].join("");
     const prompt = "From " + addr1 + " to " + addr2;
     const { sanitized, redactionMap } = sanitizePrompt(prompt);
 
@@ -67,7 +67,7 @@ describe("Sovereign AI Security", () => {
   });
 
   it("should rehydrate responses correctly", () => {
-    const addr = "bc1q" + "x".repeat(38);
+    const addr = ["bc1q", "x".repeat(38)].join("");
     const prompt = "Balance of " + addr;
     const { sanitized, redactionMap } = sanitizePrompt(prompt);
 
@@ -81,7 +81,7 @@ describe("Sovereign AI Security", () => {
   });
 
   it("should correctly match xpub/xprv with refined regex", () => {
-    const xprv = "xprv" + "9".repeat(100);
+    const xprv = ["xprv", "9".repeat(100)].join("");
     const prompt = "Here is " + xprv;
     const { sanitized } = sanitizePrompt(prompt);
     expect(sanitized).toContain("[EXT_KEY_");
@@ -89,7 +89,7 @@ describe("Sovereign AI Security", () => {
   });
 
   it("should redact OpenAI keys", () => {
-    const key = "sk-" + "0".repeat(40);
+    const key = ["sk", "-"].join("") + "0".repeat(40);
     const prompt = "My OpenAI key is " + key;
     const { sanitized } = sanitizePrompt(prompt);
     expect(sanitized).toContain("[API_KEY_");

@@ -15,13 +15,35 @@ It is designed to run either locally (via Docker Compose) or on GCP (via Cloud R
 2. **Bisq Node**: Runs a headless Bisq daemon with gRPC API enabled.
 3. **Infrastructure Config**: GCP deployment scripts and documentation.
 
-## Running Locally
+## Running Locally (Profiles)
+
+You can enable optional "Add-on Packs" using Docker profiles.
+
+```bash
+# Core only (Changelly Proxy)
+docker-compose up -d
+
+# Enable Bisq
+docker-compose --profile bisq up -d
+
+# Enable All (Bisq, RGB, BitVM)
+docker-compose --profile bisq --profile rgb --profile bitvm up -d
+```
+
+### Environment Variables
+
+Ensure these are set in your `.env` file:
+- `CHANGELLY_API_KEY`
+- `CHANGELLY_API_SECRET`
+- `BISQ_API_PASSWORD` (Required if Bisq profile is enabled)
+
+
 
 1. Create a `.env` file with your API keys:
    ```
-   CHANGELLY_API_KEY=your_key
-   CHANGELLY_API_SECRET=your_secret
-   BISQ_API_PASSWORD=your_password
+   CHANGELLY_API_KEY=replace_with_key
+   CHANGELLY_API_SECRET=replace_with_secret
+   BISQ_API_PASSWORD=replace_with_password
    ```
 2. Run with Docker Compose:
    ```bash

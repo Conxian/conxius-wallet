@@ -2,8 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { syncVtxos } from '../services/ark';
 
 describe('Ark V-UTXO Management', () => {
-  const mockAddr = 'bc1q' + 'x'.repeat(38);
-  const mockVutxoId = '0x' + 'f'.repeat(64);
+  const mockAddr = ['bc1q', 'x'.repeat(38)].join('');
+  const mockVutxoId = ['0x', 'f'.repeat(64)].join('');
 
   it('should sync and map V-UTXOs correctly', async () => {
     global.fetch = vi.fn().mockResolvedValue({

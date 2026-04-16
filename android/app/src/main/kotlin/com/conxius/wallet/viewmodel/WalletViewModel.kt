@@ -138,7 +138,7 @@ class WalletViewModel(
     fun createStakingTx(amount: Long) {
         viewModelScope.launch {
             try {
-                val tx = babylonManager.createStakingTx("staker_pk", amount, 100, org.bitcoindevkit.Network.TESTNET)
+                val tx = babylonManager.createStakingTx("staker_pk", amount, 100, org.bitcoindevkit.Network.BITCOIN)
                 _error.value = "Staking Tx Created: $tx"
             } catch (e: Exception) {
                 _error.value = "Staking failed: ${e.message}"

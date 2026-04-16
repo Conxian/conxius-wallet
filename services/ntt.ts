@@ -25,7 +25,7 @@ export const NTT_CONFIGS = {
         decimals: 8,
         tokenIds: {
             Bitcoin: 'native',
-            Stacks: 'SP1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sbtc-token',
+            Stacks: 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sbtc-token',
             Ethereum: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270', // Public sBTC NTT Manager (EVM)
             Base: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
             Arbitrum: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270'
