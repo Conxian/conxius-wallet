@@ -6,7 +6,7 @@ permalink: /risk
 
 # Conxius Wallet Risk & Compliance Registry
 
-**Last Updated:** 2026-03-25
+**Last Updated:** 2026-04-18
 **Entity:** Conxian Labs
 **Jurisdiction:** South Africa (Primary), Global (Secondary)
 

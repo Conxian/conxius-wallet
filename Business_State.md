@@ -4,7 +4,7 @@ layout: page
 permalink: /business
 ---
 
-**Last Updated:** 2026-04-12
+**Last Updated:** 2026-04-18
 
 ## [MARKET_FIT]
 **Status:** [COMPLETED]
@@ -25,7 +25,7 @@ permalink: /business
 
 - **NTT Bridge Economics:** [COMPLETED] Defined Gas Abstraction (sBTC-as-Gas) and 0.1% convenience fee in `MONETIZATION.md` and `docs/SOVEREIGN_BRIDGE_STRATEGY.md`.
 - **Monetization Model:** [COMPLETED] Updated `MONETIZATION.md` with B2B SDK licensing tiers and NTT fee structures.
-- **Protocol Fee Engine:** [IN PROGRESS] 1% fee extraction logic in `core/revenue-automation.clar` is being implemented (recovered).
+- **Protocol Fee Engine:** [COMPLETED] 1% fee extraction logic implemented in `core/revenue-automation.clar`.
 
 ## [ROADMAP]
 **Status:** [IN PROGRESS]

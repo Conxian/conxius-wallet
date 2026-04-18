@@ -10,7 +10,7 @@ Welcome, Sovereign Agent. This document provides instructions and context for
 working with the Conxius Wallet codebase and its B2B enhancement, the Conxian
 Gateway.
 
-**Last Updated:** 2026-03-12
+**Last Updated:** 2026-04-18
 **Context:** B2B Alignment & Native Bridge (v1.6.0)
 
 ---

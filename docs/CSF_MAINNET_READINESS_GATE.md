@@ -45,7 +45,7 @@ This document tracks the final launch readiness for ConxianCSF mainnet deploymen
 - Stacks principals validated; all testnet ST... remnants purged from production services.
 - Protocol vault SP3FBR... configured as canonical sBTC token principal in NTT.
 
-As of April 13, 2026, all critical launch blockers for ConxianCSF are resolved.
+As of April 18, 2026, all critical launch blockers for ConxianCSF are resolved.
 
 ---
-*Updated: April 13, 2026*
+*Updated: April 18, 2026*

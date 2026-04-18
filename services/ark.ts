@@ -194,11 +194,11 @@ export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network:
             }
         }
 
-        return "forfeit_tx_" + Date.now();
+        return "txid_forfeit_simulation_" + Date.now();
 
     } catch (e: any) {
         console.warn('Ark Forfeit failed, falling back to simulation', e);
-        return "forfeit_tx_" + Date.now();
+        return "txid_forfeit_simulation_" + Date.now();
     }
 };
 
@@ -232,7 +232,7 @@ export const redeemVtxo = async (vtxo: VTXO, vault: string, network: Network): P
         }
 
         notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'BitVM Verification', message: 'Unilateral Exit Broadcasted' });
-        return "redemption_tx_" + Date.now();
+        return "txid_redemption_" + Date.now();
 
     } catch (e: any) {
         notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'BitVM Verification', message: `Redemption failed: ${e.message}` });

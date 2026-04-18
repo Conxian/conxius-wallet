@@ -11,25 +11,25 @@ permalink: /docs/implementation-registry
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
 | **Bitcoin L1** | ✅ PRODUCTION | Native BDK (BIP-84/86) integration. |
-| **Lightning** | ✅ BRIDGED | Native Breez Manager + TS Breez SDK. |
-| **Babylon Staking** | ✅ PRODUCTION | Native Taproot staking for Babylon protocol. |
+| **Lightning** | ⚠️ BRIDGED | Native Breez Manager (Stub) + TS Breez SDK. |
+| **Babylon Staking** | ⚠️ BRIDGED | Native Taproot logic (Stub) + TS Payload construction. |
 | **NIP-47 (NWC)** | ✅ PRODUCTION | Native NwcManager + TS event support. |
 | **DLC (Discreet Log)** | ✅ PRODUCTION | `core/dlc-orchestrator.clar` implemented. |
 | **sBTC Bridge** | ✅ PRODUCTION | Clarity 4.0 contract in `core/stacks-bridge.clar`. |
 | **Ark** | ✅ PRODUCTION | `core/ark-vutxo.clar` implemented, Kotlin ArkManager native. |
 | **StateChain** | ✅ PRODUCTION | Native StateChainManager + TS Simulation. |
 | **Maven** | ✅ PRODUCTION | Native MavenManager + TS AI Marketplace. |
-| **Liquid** | ✅ PRODUCTION | Native LiquidManager + TS Liquidjs support. |
-| **EVM (BOB/RSK)** | ✅ PRODUCTION | Native EvmManager + TS Ethers support. |
+| **Liquid** | ⚠️ BRIDGED | Native LiquidManager (Stub) + TS Liquidjs support. |
+| **EVM (BOB/RSK)** | ⚠️ BRIDGED | Native EvmManager (Stub) + TS Ethers support. |
 | **Musig2** | ✅ PRODUCTION | Aligned with `@noble/curves`, native session management. |
-| **Stacks** | ✅ PRODUCTION | Native StacksManager + Stacks.js (TS). |
+| **Stacks** | ⚠️ BRIDGED | Native StacksManager (Stub) + Stacks.js (TS). |
 | **RGB** | ✅ BRIDGED | Native RgbManager (Stub) + AluVM Simulation (TS). |
 | **BitVM** | ✅ BRIDGED | Native BitVmManager + Optimistic logic (TS). |
 | **Web5** | ✅ PRODUCTION | Native Web5Manager + Web5 API (TS). |
-| **Yield (Yield.xyz)** | ✅ PRODUCTION | Native Yield Manager + TS yield discovery. |
-| **Insurance (Parametric)**| ✅ PRODUCTION | Native Insurance Manager + TS cover purchase. |
-| **Interoperability** | ✅ PRODUCTION | Native Interoperability Manager + 1inch/LI.FI (TS). |
-| **B2B Gateway** | ✅ PRODUCTION | Native B2bManager + Conxian Gateway integration. |
+| **Yield (Yield.xyz)** | ⚠️ BRIDGED | Native Yield Manager (Stub) + TS yield discovery. |
+| **Insurance (Parametric)**| ⚠️ BRIDGED | Native Insurance Manager (Stub) + TS cover purchase. |
+| **Interoperability** | ⚠️ BRIDGED | Native Interoperability Manager (Stub) + 1inch/LI.FI (TS). |
+| **B2B Gateway** | ⚠️ BRIDGED | Native B2bManager (Stub) + Conxian Gateway integration. |
 | **Revenue Automation** | ✅ PRODUCTION | `core/revenue-automation.clar` (1% fee) implemented. |
 | **Referral Aggregator** | ✅ PRODUCTION | `core/referral-aggregator.clar` (5-5-5 logic) implemented. |
 

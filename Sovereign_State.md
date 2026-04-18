@@ -34,4 +34,4 @@ permalink: /./Sovereign_State
 | [DOCS_ALIGNMENT] | [COMPLETED] | Jekyll frontmatter and LaTeX formula optimization. |
 
 ---
-*Last Updated: April 2026*
+*Last Updated: April 18, 2026*

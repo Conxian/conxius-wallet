@@ -55,17 +55,17 @@ The project is transitioning to a **pure native Android architecture** (Kotlin/R
 | Protocol | Status | Implementation Details |
 | :--- | :--- | :--- |
 | **Bitcoin L1** | PRODUCTION | Native BDK (BIP-84/86) |
-| **Lightning** | BRIDGED | Breez SDK (TS) + Native Breez Manager |
-| **Stacks** | BRIDGED | Stacks.js (TS) + Native Stacks Manager |
-| **Liquid** | BRIDGED | Liquidjs (TS) + Native Liquid Manager |
-| **Babylon** | BRIDGED | TS Payload + Native Babylon Manager |
+| **Lightning** | BRIDGED | Breez SDK (TS) + Native Breez Manager (Stub) |
+| **Stacks** | BRIDGED | Stacks.js (TS) + Native Stacks Manager (Stub) |
+| **Liquid** | BRIDGED | Liquidjs (TS) + Native Liquid Manager (Stub) |
+| **Babylon** | BRIDGED | TS Payload + Native Babylon Manager (Stub) |
 | **DLCs** | BRIDGED | TS Offer Flow + Native DlcManager |
-| **BOB / RSK** | BRIDGED | TS Ethers + Native EVM Manager |
+| **BOB / RSK** | BRIDGED | TS Ethers + Native EVM Manager (Stub) |
 | **RGB / BitVM** | BRIDGED | AluVM Simulation (TS) + Native Managers |
 | **Ark / StateChain** | PRODUCTION | Native V-UTXO Logic + Stacks Bridge |
 | **Web5** | BRIDGED | Web5 API (TS) + Native Web5 Manager |
-| **Yield / Insurance** | BRIDGED | TS Protocol Entry + Native Managers |
-| **Swap / B2B** | BRIDGED | TS Aggregator + Native Managers |
+| **Yield / Insurance** | BRIDGED | TS Protocol Entry + Native Managers (Stub) |
+| **Swap / B2B** | BRIDGED | TS Aggregator + Native Managers (Stub) |
 
 ---
 
