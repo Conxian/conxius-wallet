@@ -13,8 +13,7 @@ class EvmManager {
      */
     fun signTransaction(data: ByteArray, chainId: Long): String {
         Log.d(TAG, "Signing EVM Transaction for Chain ID: $chainId")
-        // Implementation of Keccak-256 hashing and ECDSA signing in the enclave.
-        return "0xevm_sig_hex_placeholder"
+        return ProductionRuntimeGuard.failClosed("EVM transaction signing")
     }
 
     /**
@@ -22,6 +21,6 @@ class EvmManager {
      */
     fun signTypedData(domainHash: ByteArray, messageHash: ByteArray): String {
         Log.d(TAG, "Signing EIP-712 Typed Data")
-        return "0x712_sig_hex_placeholder"
+        return ProductionRuntimeGuard.failClosed("EIP-712 typed data signing")
     }
 }
