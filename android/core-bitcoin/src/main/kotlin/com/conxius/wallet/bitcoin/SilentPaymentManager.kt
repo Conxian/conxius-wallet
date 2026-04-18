@@ -13,13 +13,13 @@ class SilentPaymentManager {
      */
     fun deriveSilentAddress(scanKey: ByteArray, spendKey: ByteArray): String {
         Log.d(TAG, "Deriving Silent Payment Address")
-        return "sp1_native_address_placeholder"
+        return ProductionRuntimeGuard.failClosed("Silent Payment address derivation")
     }
 
     /**
      * Scans for incoming Silent Payments.
      */
     fun scanForPayments(utxos: List<String>, scanKey: ByteArray): List<String> {
-        return emptyList()
+        return ProductionRuntimeGuard.failClosed("Silent Payment scanning")
     }
 }

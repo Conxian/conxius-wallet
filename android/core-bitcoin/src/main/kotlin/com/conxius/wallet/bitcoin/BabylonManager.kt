@@ -18,8 +18,7 @@ class BabylonManager {
      */
     fun createStakingTx(stakerPk: String, amountSats: Long, duration: Int, network: Network): String {
         Log.d(TAG, "Constructing Babylon Staking Tx for $amountSats sats")
-        // Logic for constructing the specialized Taproot script and PSBT.
-        return "unsigned_babylon_taproot_staking_tx_v1_hex_placeholder"
+        return ProductionRuntimeGuard.failClosed("Babylon staking transaction creation")
     }
 
     /**
@@ -35,6 +34,6 @@ class BabylonManager {
      */
     fun createUnbondingTx(stakingTxId: String, stakerPk: String): String {
         Log.d(TAG, "Constructing Babylon Unbonding Tx for $stakingTxId")
-        return "unsigned_unbonding_tx_hex_placeholder"
+        return ProductionRuntimeGuard.failClosed("Babylon unbonding transaction creation")
     }
 }
