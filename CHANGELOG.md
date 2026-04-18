@@ -8,7 +8,9 @@ permalink: /changelog
 
 All notable changes to the Conxius Wallet project will be documented in this file.
 
-## [1.6.0] - 2026-03-12
+## [Unreleased]
+
+## [1.9.2] - 2026-03-12
 
 ### Added
 - **Full Ecosystem Native Bridge**: Implemented native Kotlin managers for all supported protocols:
@@ -29,13 +31,13 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 - **Enhanced Security**: Integrated `PlayIntegrityPlugin` for official Google Play Integrity attestation.
 
 ### Improved
-- **Unified Protocol Fetching**: Aligned `services/protocol.ts` with the full v1.6.0 asset hierarchy.
+- **Unified Protocol Fetching**: Aligned `services/protocol.ts` with the full v1.9.2 asset hierarchy.
 - **Dependency Injection**: Refactored `ViewModelFactory` and `MainActivity` to support the expanded native manager suite.
 - **Memory Hardening**: Verified 'Zero Secret Egress' patterns across all new native modules.
 
 ### Documentation
-- Updated `PRD.md`, `IMPLEMENTATION_REGISTRY.md`, `AGENTS.md`, and `PROJECT_CONTEXT.md` to reflect the v1.6.0 state.
-- Normalized all version references to 1.6.0 across the repository.
+- Updated `PRD.md`, `IMPLEMENTATION_REGISTRY.md`, `AGENTS.md`, and `PROJECT_CONTEXT.md` to reflect the v1.9.2 state.
+- Normalized all version references to 1.9.2 across the repository.
 
 ## [1.5.0] - 2026-02-18
 ... (previous entries)

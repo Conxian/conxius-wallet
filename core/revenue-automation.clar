@@ -1,6 +1,6 @@
 ;; Revenue Automation Contract (Clarity 4.0)
 ;; Manages protocol fee extraction (1%) for Conxian ecosystem operations.
-;; Aligned with Business State v1.6.0
+;; Aligned with Business State v1.9.2
 
 ;; ----------------------------------------------------------------------------
 ;; Constants & Errors

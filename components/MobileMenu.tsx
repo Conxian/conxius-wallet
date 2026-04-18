@@ -98,7 +98,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ setActiveTab, activeTab }) => {
          <button className="w-full py-4 flex items-center justify-center gap-2 text-red-500 font-black uppercase text-xs tracking-widest hover:bg-red-500/10 rounded-2xl transition-all">
             <LogOut size={16} /> Lock Enclave
          </button>
-         <p className="text-center text-[9px] text-brand-earth mt-4 font-mono">v1.0.0-STABLE • Build 872941</p>
+         <p className="text-center text-[9px] text-brand-earth mt-4 font-mono">v1.9.2-STABLE • Build 872941</p>
       </div>
     </div>
   );

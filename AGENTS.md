@@ -11,7 +11,7 @@ working with the Conxius Wallet codebase and its B2B enhancement, the Conxian
 Gateway.
 
 **Last Updated:** 2026-03-12
-**Context:** B2B Alignment & Native Bridge (v1.6.0)
+**Context:** B2B Alignment & Native Bridge (v1.9.2)
 
 ---
 
@@ -74,9 +74,9 @@ cd android && ./gradlew :app:testDebugUnitTest
 Ensure the following files are synced:
 
 - `docs/archive/PROJECT_CONTEXT.md`: Current state and session notes.
-- `docs/business/PRD.md`: The high-authority source of truth (v1.6.0).
+- `docs/business/PRD.md`: The high-authority source of truth (v1.9.2).
 - `docs/operations/ROADMAP.md`: Technical and business milestones.
-- `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status (v1.6.0).
+- `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status (v1.9.2).
 
 ---
 
@@ -85,7 +85,7 @@ Ensure the following files are synced:
 All "High" and "Urgent" issues require COO (Sizwe Nkosi) review before promotion to \`main\`.
 See [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md) for the canonical approval path.
 
-## 🚀 Native Bridge Alignment (v1.6.0)
+## 🚀 Native Bridge Alignment (v1.9.2)
 
 The wallet utilizes a **Bridged Sovereign Architecture** where native Kotlin
 managers handle security-critical signing and protocol coordination.

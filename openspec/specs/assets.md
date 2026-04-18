@@ -4,7 +4,7 @@ layout: page
 permalink: /./openspec/specs/assets
 ---
 
-# Asset Specification (v1.6.0)
+# Asset Specification (v1.9.2)
 
 ## Derivation Paths (Native Enclave Core)
 - **Bitcoin L1**: BIP-84 (Native Segwit), BIP-86 (Taproot).

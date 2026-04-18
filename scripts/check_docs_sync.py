@@ -1,7 +1,7 @@
 import os
 import re
 
-def check_version_drift(directory, expected_version="v1.6.0"):
+def check_version_drift(directory, expected_version="v1.9.2"):
     drift_found = False
     for root, dirs, files in os.walk(directory):
         for file in files:
@@ -19,6 +19,6 @@ def check_version_drift(directory, expected_version="v1.6.0"):
 if __name__ == "__main__":
     print("Checking for documentation version drift...")
     if not check_version_drift("."):
-        print("Success: All documentation is aligned to v1.6.0.")
+        print("Success: All documentation is aligned to v1.9.2.")
     else:
         print("Warning: Version drift detected in some files.")

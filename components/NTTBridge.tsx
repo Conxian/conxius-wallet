@@ -260,7 +260,7 @@ const NTTBridge: React.FC = () => {
           <div className="flex items-center gap-4 mt-1">
             <p className="text-brand-earth text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
                 <ShieldCheck size={14} className="text-accent-earth" />
-                NTT Protocol v1.1
+                NTT Protocol v1.9.2
             </p>
             {discoveredTokens.length > 0 && (
                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded">

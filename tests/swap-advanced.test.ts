@@ -3,7 +3,7 @@ import { fetchLifiQuote } from '../services/swap';
 
 describe('Advanced Swap Service (LI.FI Integration)', () => {
     it('should fetch a LI.FI quote (Mocked)', async () => {
-        const state: any = { rpcStrategy: 'Sovereign-First', version: '1.6.0' };
+        const state: any = { rpcStrategy: 'Sovereign-First', version: '1.9.2' };
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({
