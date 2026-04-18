@@ -42,6 +42,9 @@ jobs:
           echo "Warning: AndroidManifest.xml not found at $MANIFEST_PATH. Skipping manifest security lint."
         fi
 
+    - name: Runtime contamination guard (CON-393)
+      run: bash scripts/ci/check_runtime_contamination.sh
+
     - name: Run tests
       run: pnpm test
       env:

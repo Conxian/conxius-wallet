@@ -16,8 +16,7 @@ class B2bManager {
      */
     fun signInvoice(id: String, amountSats: Long): String {
         Log.d(TAG, "Signing B2B Invoice: $id for $amountSats sats")
-        // StrongBox-backed signing for institutional authorization.
-        return "b2b_sig_${System.currentTimeMillis()}"
+        return ProductionRuntimeGuard.failClosed("B2B invoice signing")
     }
 
     /**
@@ -25,13 +24,13 @@ class B2bManager {
      */
     fun authorizeShieldedBatch(batchId: String, totalAmount: Long): String {
         Log.d(TAG, "Authorizing Shielded Batch: $batchId")
-        return "shielded_auth_hex_placeholder"
+        return ProductionRuntimeGuard.failClosed("B2B shielded batch authorization")
     }
 
     /**
      * Generates a proof of reserves for a corporate profile.
      */
     fun generateProofOfReserves(assets: List<String>): String {
-        return "por_zk_proof_placeholder"
+        return ProductionRuntimeGuard.failClosed("B2B proof-of-reserves generation")
     }
 }
