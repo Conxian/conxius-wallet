@@ -9,12 +9,12 @@ permalink: /./openspec/changes/archive/2026-03-08-universal-spec-alignment/specs
 ## ADDED Requirements
 
 ### Requirement: REQ-DOC-001 - Unified Versioning
-The system MUST ensure all PRDs and Roadmap files target version v1.6.0.
+The system MUST ensure all PRDs and Roadmap files target version v1.9.2.
 
 #### Scenario: Verify PRD Version
 - Given the Business PRD file exists
 - When I read the title
-- Then it should contain "v1.6.0"
+- Then it should contain "v1.9.2"
 
 ### Requirement: REQ-DOC-002 - Native Stack Mapping
 The system MUST explicitly map the Kotlin native modules in the Module Spec.

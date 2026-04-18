@@ -152,7 +152,7 @@ NOTE: Some sensitive identifiers in user messages may be replaced with placehold
           <div className="flex items-center gap-1 bg-border/50 px-2 py-0.5 rounded-full border border-brand-earth/50">
             <ShieldCheck size={10} className="text-green-600" />
             <span className="text-[9px] text-brand-earth font-mono uppercase tracking-widest">
-              Sovereign-Audit-v1.0
+              Sovereign-Audit-v1.9.2
             </span>
           </div>
           <button

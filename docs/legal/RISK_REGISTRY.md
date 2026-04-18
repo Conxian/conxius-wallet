@@ -68,7 +68,7 @@ The Gateway acts as a portal for institutional users to interact with their mobi
     * **Sovereign Rails:** Deployment of dedicated proxies and nodes (M12) reduces reliance on shared public infrastructure.
     * **Failsafe Mode:** If APIs fail, the wallet defaults to "Basic Mode" (Send/Receive on-chain) which requires no third parties.
 
-### 4.3 Aggregator & Oracle Risks (v1.6.0)
+### 4.3 Aggregator & Oracle Risks (v1.9.2)
 * **Description:** Malicious payload from Yield/Swap aggregator or false Oracle attestation for DLC.
 * **Mitigation:**
     * **WYSIWYS Enforced:** Users see raw payload before signing.

@@ -4,7 +4,7 @@ layout: page
 permalink: /
 ---
 
-# Conxius Wallet: The Sovereign Bitcoin Command Center (v1.6.0)
+# Conxius Wallet: The Sovereign Bitcoin Command Center (v1.9.2)
 
 ![CI](https://github.com/Conxian/conxius-wallet/actions/workflows/ci.yml/badge.svg) ![Security](https://img.shields.io/badge/Security-CXN%20Guardian-orange)
 
@@ -16,7 +16,7 @@ Provide a non-custodial mobile wallet that unifies Bitcoin-native rails, Stacks,
 
 ## Status
 
-**Production (v1.6.0)**. The architecture and supported integrations are aligned with the Phase 5 "Clean Break" migration to pure native Android infrastructure.
+**Production (v1.9.2)**. The architecture and supported integrations are aligned with the Phase 5 "Clean Break" migration to pure native Android infrastructure.
 
 ## Ownership
 
@@ -40,7 +40,7 @@ https://github.com/Conxian/conxius-wallet/blob/main/.github/CODEOWNERS
 
 Conxius Wallet follows a strict release flow:
 - **Versioning**: Semantic Versioning (SemVer) is enforced.
-- **Tags**: Production releases are tagged (e.g., \`v1.6.0\`).
+- **Tags**: Production releases are tagged (e.g., \`v1.9.2\`).
 - **Changelog**: Every release requires an entry in \`CHANGELOG.md\`.
 - **Promotion**: Changes flow from \`dev\` -> \`staged\` -> \`main\`. Promotion to \`main\` requires COO approval and successful E2E validation.
 

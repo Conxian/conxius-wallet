@@ -4,7 +4,7 @@ layout: page
 permalink: /docs/implementation-registry
 ---
 
-# Conxius Implementation Registry (v1.6.0)
+# Conxius Implementation Registry (v1.9.2)
 
 ## I. CORE PROTOCOLS
 
@@ -58,4 +58,4 @@ permalink: /docs/implementation-registry
 - **BRIDGED:** Core manager in native Kotlin, high-level logic in TS/React.
 - **TS-ONLY:** Logic resides solely in the legacy companion TS service layer.
 
-*Aligned with Nakamoto Clarity & Sovereign v1.6.0. All P0 Action items verified.*
+*Aligned with Nakamoto Clarity & Sovereign v1.9.2. All P0 Action items verified.*

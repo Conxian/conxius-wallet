@@ -157,7 +157,7 @@ const RewardsHub: React.FC = () => {
             <div className="bg-white border border-border rounded-[2.5rem] p-8 animate-in zoom-in duration-300">
                <div className="flex items-center gap-2 mb-4 text-accent-earth">
                   <Info size={16} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Economic Audit v1.0</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Economic Audit v1.9.2</span>
                </div>
                <p className="text-xs text-brand-earth leading-relaxed font-serif whitespace-pre-wrap italic">
                   {auditReport}

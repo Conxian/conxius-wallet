@@ -4,7 +4,7 @@ layout: page
 permalink: /./openspec/specs/modules
 ---
 
-# Module Specification (v1.6.0)
+# Module Specification (v1.9.2)
 
 ## Android Native Modules
 - **:core-crypto**: Kotlin. StrongBox-backed AES-GCM, biometric integration, mnemonic zeroing.

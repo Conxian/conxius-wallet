@@ -135,7 +135,7 @@ To ensure the best UX for the "Digital Citadelist," the Conxius NTT Bridge imple
     4. The Relayer submits the VAA to the destination chain, paying the gas in ETH/Native token.
 * **Ethos Alignment:** Eliminates the "Gas Token Requirement" bottleneck, making Bitcoin layers feel like a single, unified network.
 
-## 4. Aggregated Satellite Bridges (v1.6.0)
+## 4. Aggregated Satellite Bridges (v1.9.2)
 While NTT handles core Bitcoin layer transfers, LI.FI and 1inch act as satellite aggregators for broad ecosystem liquidity.
 - **Policy:** Aggregated bridges are restricted to non-core assets.
 - **Signing:** All satellite payloads must be processed via the Sovereign signing enclave.

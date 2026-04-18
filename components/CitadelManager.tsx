@@ -207,7 +207,7 @@ STATUS: AUDIT PASSED. READY FOR IMPLEMENTATION.`);
                               </div>
                               <div>
                                  <div className="flex items-center gap-3">
-                                    <span className="text-[9px] font-black uppercase text-brand-earth tracking-widest bg-off-white px-2 py-0.5 rounded">v1.2.0 Enhancement</span>
+                                    <span className="text-[9px] font-black uppercase text-brand-earth tracking-widest bg-off-white px-2 py-0.5 rounded">v1.9.2 Enhancement</span>
                                     <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${
                                        bounty.difficulty === 'Elite' ? 'text-red-500 border-red-500/20' : 
                                        bounty.difficulty === 'Intermediate' ? 'text-accent-earth border-orange-500/20' :

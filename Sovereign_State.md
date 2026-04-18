@@ -4,7 +4,7 @@ layout: page
 permalink: /./Sovereign_State
 ---
 
-# Sovereign State - Conxius Wallet (v1.6.0)
+# Sovereign State - Conxius Wallet (v1.9.2)
 
 ## Core Modules Status
 
@@ -31,6 +31,8 @@ permalink: /./Sovereign_State
 | [ARK_VUTXO] | [COMPLETED] | Native Ark V-UTXO lifecycle and Stacks anchoring. |
 | [TEE_SETTLEMENT] | [COMPLETED] | Verified TEE-verified proposal-only triggers (CON-162). |
 | [REVENUE_ENGINE] | [COMPLETED] | Clarity 4.0 protocol fee automation (1% Extraction). |
+| [ODATA_TRANSLATION] | [COMPLETED] | OData v4 translation layer for ERP integration (CON-63). |
+| [SAB_TREASURY_MAP] | [COMPLETED] | Canonical wallet destinations and handoff sequence (CON-482). |
 | [DOCS_ALIGNMENT] | [COMPLETED] | Jekyll frontmatter and LaTeX formula optimization. |
 
 ---
