@@ -40,6 +40,10 @@ class WalletViewModel(
     private val b2bManager: B2bManager
 ) : ViewModel() {
 
+    private fun failClosed(operation: String) {
+        _error.value = ProductionRuntimeGuard.message(operation)
+    }
+
     private val integrityPlugin = DeviceIntegrityPlugin()
     private val playIntegrityPlugin = PlayIntegrityPlugin()
 
@@ -136,41 +140,19 @@ class WalletViewModel(
     // --- Bridged Protocol Actions ---
 
     fun createStakingTx(amount: Long) {
-        viewModelScope.launch {
-            try {
-                val tx = babylonManager.createStakingTx("staker_pk", amount, 100, org.bitcoindevkit.Network.BITCOIN)
-                _error.value = "Staking Tx Created: $tx"
-            } catch (e: Exception) {
-                _error.value = "Staking failed: ${e.message}"
-            }
-        }
+        failClosed("Babylon staking transaction creation")
     }
 
     fun createDlcOffer(collateral: Long) {
-        viewModelScope.launch {
-            try {
-                val offer = dlcManager.createOffer("oracle_pk", "BTC/USD > 100k", collateral)
-                _error.value = "DLC Offer Created: $offer"
-            } catch (e: Exception) {
-                _error.value = "DLC failed: ${e.message}"
-            }
-        }
+        failClosed("DLC offer creation")
     }
 
     fun parseNwcRequest(eventJson: String) {
-        val result = nwcManager.parseRequest(eventJson, "secret")
-        _error.value = "NWC Request Parsed: $result"
+        failClosed("NWC request parsing")
     }
 
     fun performArkLift(amount: Long) {
-        viewModelScope.launch {
-            try {
-                val lift = arkManager.createLiftRequest(listOf("utxo1"), "asp_pk")
-                _error.value = "Ark Lift Initiated: $lift"
-            } catch (e: Exception) {
-                _error.value = "Ark Lift failed: ${e.message}"
-            }
-        }
+        failClosed("Ark lift request creation")
     }
 
     fun transferStateChain(utxoId: String, recipientPk: String) {
@@ -185,25 +167,11 @@ class WalletViewModel(
     }
 
     fun signMavenRequest(payload: String) {
-        viewModelScope.launch {
-            try {
-                val sig = mavenManager.signServiceRequest("node_id", payload)
-                _error.value = "Maven Request Signed: $sig"
-            } catch (e: Exception) {
-                _error.value = "Maven failed: ${e.message}"
-            }
-        }
+        failClosed("Maven service request signing")
     }
 
     fun deriveLiquidAddress() {
-        viewModelScope.launch {
-            try {
-                val addr = liquidManager.deriveConfidentialAddress(byteArrayOf(1, 2, 3), byteArrayOf(4, 5, 6))
-                _error.value = "Liquid Confidential Address: $addr"
-            } catch (e: Exception) {
-                _error.value = "Liquid address derivation failed: ${e.message}"
-            }
-        }
+        failClosed("Liquid confidential address derivation")
     }
 
     fun signEvmTransaction(data: ByteArray) {

@@ -13,8 +13,7 @@ class LiquidManager {
      */
     fun deriveConfidentialAddress(pubkey: ByteArray, blindingKey: ByteArray): String {
         Log.d(TAG, "Deriving Liquid Confidential Address")
-        // In Production: Uses elements-miniscript to derive the address.
-        return "tlq1_native_confidential_address_placeholder"
+        return ProductionRuntimeGuard.failClosed("Liquid confidential address derivation")
     }
 
     /**
@@ -22,6 +21,6 @@ class LiquidManager {
      */
     fun signLiquidTx(psetBase64: String): String {
         Log.d(TAG, "Signing Liquid PSET")
-        return "signed_pset_base64_placeholder"
+        return ProductionRuntimeGuard.failClosed("Liquid PSET signing")
     }
 }
