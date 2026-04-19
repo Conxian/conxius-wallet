@@ -8,7 +8,7 @@ export const NTT_FEE_CAP_USD = 50;
 
 export const calculateEffectiveFeeRate = (state: AppState): number => {
     const score = calculateSovereigntyScore(state);
-    const loyaltyDiscount = state.version === '1.6.0' ? 0.5 : 0;
+    const loyaltyDiscount = state.version === '1.9.2' ? 0.5 : 0;
     const sovereigntyMultiplier = score * 0.2;
     let effectiveFee = BASE_FEE * (1 - loyaltyDiscount) * (1 - sovereigntyMultiplier);
     return Math.max(effectiveFee, FLOOR_FEE);

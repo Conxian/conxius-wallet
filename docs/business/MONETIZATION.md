@@ -4,7 +4,7 @@ layout: page
 permalink: /docs/monetization
 ---
 
-# Conxius Monetization Strategy (v1.6.0)
+# Conxius Monetization Strategy (v1.9.2)
 
 ## 💰 Revenue Streams
 

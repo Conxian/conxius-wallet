@@ -6,43 +6,47 @@ permalink: /docs/sdk-research
 
 # SDK Research Report: Full Bitcoin Ecosystem Enhancements
 
-**Date:** 2026-02-18
-**Status:** DRAFT
-**Context:** Researching SDKs for Taproot Musig2, RGB Client-Side Validation, and Device Integrity.
+**Date:** 2026-04-18
+**Status:** ALIGNED
+**Context:** Researching SDKs for BitVM2, Babylon, Ark, and Sovereign Node Enhancements.
 
-## 1. Taproot Musig2 (BIP-327)
+## 1. BitVM Bridge (BitVM2)
 
-- **SDK:** `@noble/curves` (JavaScript/TypeScript) and `rust-secp256k1` (Rust/Kotlin).
-- **Status:** **INTEGRATED** via `@noble/curves` for Phase 4.
-- **Verification:** Initial testing shows successful 2-of-3 threshold signature aggregation on-device.
-- **Action:** Implement interactive Musig2 session management in `services/musig2.ts`.
+- **SDK:** `/bitvm/bitvm` (Rust/Script).
+- **Status:** **INTEGRATED (ALPHA)**.
+- **Verification:** Groth16 SNARK verifier implemented for optimistic proof verification on Bitcoin.
+- **Action:** Utilize `Verifier::hinted_verify` for on-chain state root verification in the Gateway.
 
-## 2. RGB Client-Side Validation
+## 2. Babylon Staking
 
-- **SDK:** `rgb-lib-wasm` (JavaScript/WASM).
+- **SDK:** `/websites/garden_finance` (JS/API).
 - **Status:** **PROTOTYPED**.
-- **Issue:** Memory constraints for full DAG validation on mobile.
-- **Action:** Transition to `rgb-lib-kotlin` (JNI) for native Android performance.
+- **Issue:** Transitioning from TS payloads to native Taproot staking via `BabylonManager.kt`.
+- **Action:** Align with `bitcoinlayers.org` risk metadata for Babylon's staking trust model.
 
-## 3. Play Integrity API (Google)
+## 3. Ark Protocol (V-UTXO)
 
-- **SDK:** `com.google.android.play:integrity` (Native Android).
-- **Status:** **PLANNED**.
-- **Goal:** Replace legacy SafetyNet for attesting device health and integrity.
-- **Action:** Implement in `DeviceIntegrityPlugin.kt`.
-
-## 4. WabiSabi (CoinJoin)
-
-- **SDK:** `WabiSabi.js` (JavaScript).
+- **SDK:** `/cyberark/ark-sdk-golang` (Go/CLI) and `/arkworks-rs/crypto-primitives` (Rust).
 - **Status:** **RESEARCH**.
-- **Constraint:** Requires a persistent Tor connection.
-- **Action:** Evaluate `Tor.js` vs. native Android Tor service for background coordination.
+- **Constraint:** Requires native V-UTXO management within the Enclave.
+- **Action:** Evaluate Rust-based primitives for high-performance mobile execution.
 
-## 5. Summary Table
+## 4. Sovereign Node & BOS Enhancements
+
+- **Benchmarking:**
+  - **Orchestration:** **Akash Network** (`/websites/akash_network`) for decentralized SDL-based deployment.
+  - **Home Servers:** **umbrelOS** (`/getumbrel/umbrel`) for self-hosted service management and Tor hidden services.
+  - **Multi-Agent Logic:** **AutoGen** (`/microsoft/autogen`) for autonomous business task orchestration and agent handoffs.
+  - **Treasury:** **Safe** (`/websites/safe_global`) for spending limits and multi-sig delegate management.
+
+## 5. Summary Table (v1.9.2 Alignment)
 
 | Technology | Preferred SDK | Target Version | Status |
 | :--- | :--- | :--- | :--- |
-| **Musig2** | `@noble/curves` | 1.1 | ✅ |
-| **RGB** | `rgb-lib-wasm` | 1.2 | 🚀 |
-| **Play Integrity**| `Play Integrity` | 1.1 | 🚀 |
-| **CoinJoin** | `WabiSabi` | 1.3 | 🔍 |
+| **BitVM2** | `bitvm/bitvm` | 1.9 | ✅ |
+| **Babylon** | `BabylonManager.kt` | 1.9 | 🚀 |
+| **Ark V-UTXO** | `ArkManager.kt` | 1.9 | 🚀 |
+| **Autonomous Ops**| `AutoGen` | 2.0 | 🔍 |
+
+---
+*Updated: April 18, 2026*

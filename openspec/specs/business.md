@@ -4,7 +4,7 @@ layout: page
 permalink: /./openspec/specs/business
 ---
 
-# Business Specification (v1.6.0)
+# Business Specification (v1.9.2)
 
 ## Vision
 Conxius Wallet: The Ultimate Multi-Chain Sovereign Interface for the Full Bitcoin Ecosystem. "The Citadel in your pocket."

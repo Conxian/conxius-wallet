@@ -9,7 +9,7 @@ permalink: /./openspec/changes/archive/2026-03-08-universal-spec-alignment/tasks
 ## 1. Documentation Alignment
 - [x] Create initial OpenSpec structure.
 - [x] Seed Business, Assets, Modules, and Submodules specs.
-- [x] Update Business PRD to v1.6.0 and align with Implementation Registry.
+- [x] Update Business PRD to v1.9.2 and align with Implementation Registry.
 - [x] Update Core PRD to reflect native Kotlin/BDK status.
 - [x] Align Roadmap with Phase 4 "Clean Break" details.
 

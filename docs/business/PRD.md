@@ -4,7 +4,7 @@ layout: page
 permalink: /prd
 ---
 
-# Conxius Wallet PRD (Full Bitcoin Ecosystem) - v1.6.0
+# Conxius Wallet PRD (Full Bitcoin Ecosystem) - v1.9.2
 
 ## 1. Executive Summary
 
@@ -50,7 +50,7 @@ The project is transitioning to a **pure native Android architecture** (Kotlin/R
 
 ---
 
-## 4. Functional Requirements (v1.6.0 Alignment)
+## 4. Functional Requirements (v1.9.2 Alignment)
 
 | Protocol | Status | Implementation Details |
 | :--- | :--- | :--- |
@@ -75,7 +75,7 @@ The project is transitioning to a **pure native Android architecture** (Kotlin/R
 
 ## 5. UI/UX STANDARDIZATION (Sovereign Earthy)
 
-As of v1.6.0, all Conxian Protocol interfaces (Conxius Wallet, Gateway, Explorer) MUST adhere to the **Sovereign Earthy** visual identity.
+As of v1.9.2, all Conxian Protocol interfaces (Conxius Wallet, Gateway, Explorer) MUST adhere to the **Sovereign Earthy** visual identity.
 
 ### 5.1. Design Ethos
 - **Foundational Palette**: 60% Ivory (#FDFBF7), 30% Pure White (#FFFFFF), 10% Earth/Brand Tones.

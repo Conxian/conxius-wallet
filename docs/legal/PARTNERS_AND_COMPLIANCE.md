@@ -45,36 +45,36 @@ permalink: /partners
 
 ## 6. DeFi & Yield Aggregators
 * **Providers:** **Yield.xyz**, **1inch**, **LI.FI**
-* **Status:** INTEGRATED (v1.6.0)
+* **Status:** INTEGRATED (v1.9.2)
 * **Compliance Role:** Pure technical routing. No custody of funds.
 * **Integration:** Unsigned payload construction via REST APIs.
 
 ## 7. Parametric Insurance
 * **Providers:** **Neptune Mutual**, **InsurAce**
-* **Status:** INTEGRATED (v1.6.0)
+* **Status:** INTEGRATED (v1.9.2)
 * **Compliance Role:** Peer-to-peer risk management.
 * **Integration:** Smart contract affiliate payloads.
 
 ## 8. Real-World Utility
 * **Providers:** **Travala**, **Silent.Link**, **Satlantis**, **CoinsPaid**
-* **Status:** INTEGRATED (v1.6.0)
+* **Status:** INTEGRATED (v1.9.2)
 * **Compliance Role:** Merchants of Record for specific goods/services.
 * **Integration:** Lightning invoices and sandboxed hand-offs.
 
 ## 6. DeFi & Yield Aggregators
 * **Providers:** **Yield.xyz**, **1inch**, **LI.FI**
-* **Status:** INTEGRATED (v1.6.0)
+* **Status:** INTEGRATED (v1.9.2)
 * **Compliance Role:** Pure technical routing. No custody of funds.
 * **Integration:** Unsigned payload construction via REST APIs.
 
 ## 7. Parametric Insurance
 * **Providers:** **Neptune Mutual**, **InsurAce**
-* **Status:** INTEGRATED (v1.6.0)
+* **Status:** INTEGRATED (v1.9.2)
 * **Compliance Role:** Peer-to-peer risk management.
 * **Integration:** Smart contract affiliate payloads.
 
 ## 8. Real-World Utility
 * **Providers:** **Travala**, **Silent.Link**, **Satlantis**, **CoinsPaid**
-* **Status:** INTEGRATED (v1.6.0)
+* **Status:** INTEGRATED (v1.9.2)
 * **Compliance Role:** Merchants of Record for specific goods/services.
 * **Integration:** Lightning invoices and sandboxed hand-offs.

@@ -4,7 +4,7 @@ layout: page
 permalink: /business
 ---
 
-**Last Updated:** 2026-04-12
+**Last Updated:** 2026-04-18
 
 ## [MARKET_FIT]
 **Status:** [COMPLETED]
@@ -12,6 +12,7 @@ permalink: /business
 - **BitcoinLayers Compliance Audit:** [COMPLETED] Reviewed Stacks, Rootstock, Liquid, BOB, B2, RGB, Ark, StateChain, BitVM, and Maven against BitcoinLayers.org. Risk warnings generated in `RISK_REGISTRY.md`.
 - **Competitor Analysis (Conclave Gap):** [COMPLETED] Refined value prop in `docs/PRODUCT_STRATEGY.md` comparing vs Ledger/Metamask/Xverse.
 - **Sovereign User Persona:** [COMPLETED] Updated `docs/PRODUCT_STRATEGY.md` with "The Digital Citadelist" persona.
+- **BOS Platformization:** [RESEARCHED] Identified path for BOS platformization via Akash-style SDL for decentralized deployment and AutoGen-style multi-agent orchestration for business logic automation.
 
 ## [RISK_COMPLIANCE]
 **Status:** [COMPLETED]
@@ -21,17 +22,18 @@ permalink: /business
 - **ZKML Verification:** [COMPLETED] Integrated CARF/BRS v1.5 compliant ZKML logic in Gateway for institutional auditability.
 
 ## [TOKENOMICS]
-**Status:** [IN PROGRESS]
+**Status:** [COMPLETED]
 
 - **NTT Bridge Economics:** [COMPLETED] Defined Gas Abstraction (sBTC-as-Gas) and 0.1% convenience fee in `MONETIZATION.md` and `docs/SOVEREIGN_BRIDGE_STRATEGY.md`.
 - **Monetization Model:** [COMPLETED] Updated `MONETIZATION.md` with B2B SDK licensing tiers and NTT fee structures.
-- **Protocol Fee Engine:** [IN PROGRESS] 1% fee extraction logic in `core/revenue-automation.clar` is being implemented (recovered).
+- **Protocol Fee Engine:** [COMPLETED] 1% fee extraction logic in `core/revenue-automation.clar` is implemented and verified.
+- **SAB Treasury Map:** [COMPLETED] Defined canonical wallet destinations and handoff sequence in `docs/operations/SAB_WALLET_MAP.md`.
 
 ## [ROADMAP]
-**Status:** [IN PROGRESS]
+**Status:** [COMPLETED]
 
 - **Milestone Expansion:** [COMPLETED] Expanded M1-M11+ in `ROADMAP.md` to remove technical and business ambiguity.
-- **Mainnet Cutover:** [PARTIAL] Critical protocol, signer, and gateway cutover tasks (CON-416, CON-417, CON-418) verified, but final P0 release candidates pending CI pass (CON-469).
+- **Mainnet Cutover:** [COMPLETED] Critical protocol, signer, and gateway cutover tasks (CON-416, CON-417, CON-418) verified. Full system alignment to v1.9.2 (CON-502) complete.
 - **Marketing Alignment:** [COMPLETED] Mapped tech features to strategic campaigns (e.g., "Hardware Without the Dongle", "Unwrap Your Bitcoin") in `ROADMAP.md`.
 
 ## [DOCUMENTATION]
