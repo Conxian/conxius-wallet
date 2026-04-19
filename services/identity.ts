@@ -44,7 +44,7 @@ export class IdentityService {
      }
 
      // Path: m/84'/0'/0'/0/0 (Standard Native Segwit)
-     const path = this.network === 'mainnet' ? "m/84'/0'/0'/0/0" : "m/84'/1'/0'/0/0";
+     const path = this.network === 'mainnet' ? "m/84'/0'/0'/0/0" : "m/84'/0'/0'/0/0";
 
      try {
          let pubkey: string;
@@ -96,7 +96,7 @@ export class IdentityService {
          return identity;
      } catch (e) {
          console.error("Identity retrieval failed", e);
-         throw new Error('Secure Enclave Identity inaccessible');
+         throw new Error('Secure Enclave Identity inaccessible', { cause: e });
      }
   }
 
@@ -112,7 +112,7 @@ export class IdentityService {
       const messageHash = Buffer.from(
         bitcoin.crypto.sha256(Buffer.from(message)),
       ).toString("hex");
-      const path = this.network === 'mainnet' ? "m/84'/0'/0'/0/0" : "m/84'/1'/0'/0/0";
+      const path = this.network === 'mainnet' ? "m/84'/0'/0'/0/0" : "m/84'/0'/0'/0/0";
 
       const sigRes = await signNative({
           vault: this.vaultName,
@@ -137,7 +137,7 @@ export class IdentityService {
           console.log("LNURL-Auth successful");
       } catch (e) {
           console.error("LNURL-Auth failed", e);
-          throw new Error('Lightning Authentication failed');
+          throw new Error('Lightning Authentication failed', { cause: e });
       }
   }
 }
