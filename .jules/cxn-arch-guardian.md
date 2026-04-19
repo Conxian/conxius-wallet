@@ -123,3 +123,13 @@ permalink: /cxn-guardian
 - **Vulnerability**: Legacy "Dark Mode" fatigue in financial dashboards.
 - **Learning**: Implementing an Ivory (#FDFBF7) base with White (#FFFFFF) operational surfaces significantly improves data legibility and institutional trust.
 - **Prevention**: Enforce the 60-30-10 palette rule in AGENTS.md to prevent "style drift" during feature expansion.
+
+## 2026-04-19 - DeFi Fail-Closed Architecture & Market Structure Risk
+**Vulnerability:** Lack of fail-closed oracle logic and tautological authentication checks (e.g., `is-admin` returning `true`) exposed the system to Hyperliquid-style market structure failures.
+**Learning:** Market structure risks—such as oracle staleness, quorum failures, and liquidation backstop gaps—are as critical as low-level smart contract exploits. A DeFi system that "fails open" (permitting operations during an oracle outage) or uses weak authentication placeholders is inherently institutional-unsafe.
+**Prevention:** Implement explicit principal verification (RBAC) using principal equality checks (`is-eq tx-sender ADMIN`). Enforce quorum-based (u3) and staleness-aware (u12 blocks) oracle aggregators that fail-closed by default. Maintain strict health factor thresholds (e.g., 150%) to provide a volatility buffer for sovereign lending.
+
+## 2026-04-19 - Production Path Contamination (Testnet Residue)
+**Vulnerability:** Hardcoded testnet derivation paths (`m/84'/1'/0'`) and legacy testnet addresses committed to the `main` branch created "production-by-naming-only" risks, potentially leading to misrouted funds or shadow-testing in production.
+**Learning:** System maturity and "production readiness" cannot be achieved by branching alone; the codebase must be purged of environment-specific assumptions. Testnet residue in production services is a P0 contamination risk that violates the "Sovereign by Design" principle.
+**Prevention:** Utilize automated "contamination guards" (regex-based CI checks) to detect non-production markers (e.g., `tb1q`, testnet derivation paths) in protected branches. Standardize environment defaults to Mainnet and derive network-specific parameters at runtime via centralized configuration.
