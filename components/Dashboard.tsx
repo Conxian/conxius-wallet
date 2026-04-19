@@ -33,8 +33,6 @@ import SilentPayments from './SilentPayments';
 
 const Dashboard: React.FC = () => {
   const appContext = useContext(AppContext);
-  if (!appContext) return null;
-  const { state } = appContext;
   const [showSend, setShowSend] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
   const [sendStep, setSendStep] = useState<'form' | 'sign' | 'broadcast'>('form');
@@ -42,7 +40,7 @@ const Dashboard: React.FC = () => {
   const [sendAmount, setSendAmount] = useState('');
   const [receiveLayer, setReceiveLayer] = useState<BitcoinLayer>('Mainnet');
   const [detailedAsset, setDetailedAsset] = useState<Asset | null>(null);
-  const [qrSrc, setQrSrc] = useState('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=bc1qcxn...root');
+  const [qrSrc, setQrSrc] = useState('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=bc1q_owner_address');
   const [qrError, setQrError] = useState(false);
   const [selectedUtxos, setSelectedUtxos] = useState<any[]>([]);
   const [psbtBase64, setPsbtBase64] = useState('');
@@ -51,10 +49,13 @@ const Dashboard: React.FC = () => {
   const [signedHex, setSignedHex] = useState('');
   const [broadcastResult, setBroadcastResult] = useState('');
 
+  if (!appContext) return null;
+  const { state } = appContext;
+
   const t = (key: string) => getTranslation(state.language, key);
 
   const totalValue = state.assets.reduce((acc: number, asset: Asset) => acc + asset.valueUsd, 0);
-  const btcAddress = "bc1qcxn...root";
+  const btcAddress = "bc1q_owner_address";
   const stxAddress = "SPCXN...root";
   const ethAddress = "0xCXN...root";
   const taprootAddress = "bc1p...root";
