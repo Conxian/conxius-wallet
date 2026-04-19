@@ -61,7 +61,7 @@ describe('Ark Service', () => {
         mockFetch.mockRejectedValue(new Error('Network Error'));
 
         const txid = await forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', 'mock_vault');
-        expect(txid).toContain('txid_forfeit_simulation');
+        expect(txid).toContain('forfeit_tx_');
     });
 
     it('should sync VTXOs for an address', async () => {
@@ -106,11 +106,11 @@ describe('Ark Redemption', () => {
 
         mockFetch.mockResolvedValueOnce({
             ok: true,
-            json: () => Promise.resolve({ txid: 'txid_redemption_real' })
+            json: () => Promise.resolve({ txid: 'redemption_tx_real' })
         });
 
         const { redeemVtxo } = await import('../services/ark');
         const txid = await redeemVtxo(mockVtxo, 'mock_vault', 'mainnet');
-        expect(txid).toContain('txid_redemption_');
+        expect(txid).toContain('redemption_tx_');
     });
 });
