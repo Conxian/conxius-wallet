@@ -4,7 +4,7 @@ layout: page
 permalink: /docs/context
 ---
 
-# Project Context: v1.6.0 Architectural Audit
+# Project Context: v1.9.2 Architectural Audit
 
 ## Session Summary (March 2026)
 
@@ -15,7 +15,7 @@ Completed a comprehensive architectural audit and enhancement alignment for Conx
 2. **Feature Alignment**: Synchronized the implementation status of RGB, Babylon Staking, and DLCs across the codebase and documentation.
 3. **Security Logic Wiring**: Reinforced the Sovereign AI layer and network sanitation, ensuring zero-leakage of cryptographic material.
 4. **B2B Integration**: Aligned the mobile core with the institutional Conxian Gateway for corporate treasury and shielded payments.
-5. **Documentation Sync**: Updated all registries and roadmaps to reflect the true v1.6.0 "PRODUCTION" state.
+5. **Documentation Sync**: Updated all registries and roadmaps to reflect the true v1.9.2 "PRODUCTION" state.
 
 ### Technical State
 - **Mobile Core**: 100% Kotlin (SDK 35), Gradle 8.13, AGP 8.4.2.
@@ -31,7 +31,7 @@ Completed a comprehensive architectural audit and enhancement alignment for Conx
 ---
 *Verified by Sovereign Architect Agent.*
 
-## UI/UX Alignment: Sovereign Earthy (v1.6.0)
+## UI/UX Alignment: Sovereign Earthy (v1.9.2)
 
 Standardized all application backgrounds to a "Bright Foundation" to align with institutional standards and the cxn-arch-guardian identity.
 

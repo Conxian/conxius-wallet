@@ -3,7 +3,7 @@ import { calculateEffectiveFeeRate, calculateNttIntegrationFee } from '../servic
 
 describe('Business Alignment & Monetization', () => {
     const mockState: any = {
-        version: '1.6.0',
+        version: '1.9.2',
         walletConfig: { backupVerified: true },
         security: { biometricUnlock: true },
         lnBackend: { endpoint: 'http://localhost' },

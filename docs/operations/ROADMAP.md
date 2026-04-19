@@ -4,7 +4,7 @@ layout: page
 permalink: /docs/roadmap
 ---
 
-# Conxius Strategic Roadmap (v1.6.0)
+# Conxius Strategic Roadmap (v1.9.2)
 
 ## 🏗️ Operational Levels
 
@@ -36,7 +36,7 @@ permalink: /docs/roadmap
 - **Focus:** Pure Native Android Migration & Sovereign Persistence.
 - **Tech:** BDK Kotlin, StrongBox-First Security, Jetpack Compose UI.
 - **Biz:** **"Citadel Native"** Launch; Transition from Capacitor to Pure Kotlin/Rust.
-- **Marketing:** **"Native Sovereignty"** (The v1.6.0 Android Release)
+- **Marketing:** **"Native Sovereignty"** (The v1.9.2 Android Release)
 
 ### Level 5: Global Sovereignty (ACTIVE)
 - **Focus:** B2B SDK & Privacy-Preserving Treasury.

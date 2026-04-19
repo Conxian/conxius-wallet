@@ -4,7 +4,7 @@ layout: page
 permalink: /./openspec/specs/submodules
 ---
 
-# Submodule Specification (v1.6.0)
+# Submodule Specification (v1.9.2)
 
 ## lib-conxian-core
 - **Scope**: Shared protocol alignment logic, API definitions, and research-backed metadata.
