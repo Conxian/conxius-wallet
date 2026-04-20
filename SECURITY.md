@@ -12,8 +12,8 @@ We currently provide security updates for the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.6.x   | :white_check_mark: |
-| < 1.9.2 | :x:                |
+| 1.9.x   | ✅ |
+| < 1.9.2 | ❌                |
 
 ## Reporting a Vulnerability
 
