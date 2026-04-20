@@ -51,7 +51,7 @@ export const createLiftPsbt = async (req: LiftRequest): Promise<{ psbtBase64: st
             // Deterministic Fallback based on ASP ID (Standard Ark Boarding Path)
             boardingAddress = req.network === 'mainnet'
                 ? 'bc1p8arkaspboardingmainnet'
-                : 'tb1p8arkaspboardingtestnet';
+                : 'bc1q_ark_asp_prod';
         }
 
         // 2. Fetch User UTXOs
