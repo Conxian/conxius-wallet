@@ -4,6 +4,8 @@ import re
 def check_version_drift(directory, expected_version="v1.9.2"):
     drift_found = False
     for root, dirs, files in os.walk(directory):
+        if "node_modules" in dirs: dirs.remove("node_modules")
+        if ".git" in dirs: dirs.remove(".git")
         for file in files:
             if file.endswith(".md"):
                 path = os.path.join(root, file)
