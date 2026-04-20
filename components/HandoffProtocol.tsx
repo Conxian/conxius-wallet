@@ -7,7 +7,7 @@ const HandoffProtocol: React.FC = () => {
   const [handoffType, setHandoffType] = useState<'mobile-to-desktop' | 'desktop-to-mobile'>('mobile-to-desktop');
   
   const generateMockWallet = () => {
-    return ["tb1q", generateRandomString(8), "xp9"].join("");
+    return ["bc1q", generateRandomString(8), "xp9"].join("");
   };
 
   const stages = [
