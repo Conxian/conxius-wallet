@@ -39,3 +39,12 @@ permalink: /business
 - **5-Second Value Prop:** [COMPLETED] Refactored `README.md` for immediate strategic clarity.
 - **Business Readability:** [COMPLETED] Reviewed and synchronized all `docs/` for strategic alignment with the Technical PRD.
 
+
+## [BOS_SYSTEM_ALIGNMENT]
+**Status:** [COMPLETED]
+
+- **OData v4 Translation:** [COMPLETED] Implemented actual OData v4 translation layer in Gateway for institutional ERP sync (CON-63).
+- **X402 Mandates:** [COMPLETED] Mapped ERP intents to x402 Mandates for automated institutional reconciliation.
+- **BitVM2 Groth16:** [COMPLETED] Verified Groth16 SNARK verifier alignment for optimistic sBTC bridge safety.
+- **Clarity 4.0 Standard:** [COMPLETED] All core contracts (Revenue, DLC, Referral) migrated to Clarity 4.0 and verified for v1.9.2 mainnet readiness.
+- **SAB Treasury Handoff:** [COMPLETED] Documented canonical wallet destination map and handoff sequence (CON-482).
