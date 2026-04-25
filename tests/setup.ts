@@ -49,8 +49,8 @@ vi.mock('../services/worker-manager', () => {
         const root = bip32.fromSeed(Buffer.from(seed));
         const child = root.derivePath(path);
         return {
-          publicKey: child.publicKey.toString('hex'),
-          privateKey: child.privateKey?.toString('hex')
+          publicKey: child.publicKey,
+          privateKey: child.privateKey
         };
       },
       clearCache: async () => {}

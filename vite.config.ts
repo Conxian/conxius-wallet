@@ -1,5 +1,5 @@
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import wasm from "vite-plugin-wasm";
@@ -13,6 +13,12 @@ export default defineConfig(({ mode }) => {
         wasm(), topLevelAwait(), react(),
         ...(!isVitest ? [nodePolyfills({ include: ["buffer", "stream", "util", "crypto", "string_decoder"], globals: { Buffer: true, global: true, process: true } })] : []),
       ],
+      optimizeDeps: {
+        include: ['json-bigint'],
+        esbuildOptions: {
+           target: 'esnext'
+        }
+      },
       test: { globals: true, environment: "node", setupFiles: "./tests/setup.ts", exclude: ["e2e/**", "node_modules/**"], server: { deps: { inline: ["generator-function", "is-generator-function", "bip32", "ecpair", "tiny-secp256k1"] } }, pool: "forks" },
       define: { "process.env": {}, "process.version": JSON.stringify("v18.0.0") },
       resolve: { alias: { "@": path.resolve(__dirname, ".") } },

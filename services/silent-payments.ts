@@ -26,10 +26,10 @@ export const deriveSilentPaymentKeys = (seed: Buffer): SilentPaymentKeys => {
     const spendNode = root.derivePath("m/352'/0'/0'/10/1");
 
     return {
-        scanKey: scanNode.privateKey!,
-        spendKey: spendNode.privateKey!,
-        scanPub: scanNode.publicKey,
-        spendPub: spendNode.publicKey
+        scanKey: Buffer.from(scanNode.privateKey!),
+        spendKey: Buffer.from(spendNode.privateKey!),
+        scanPub: Buffer.from(scanNode.publicKey),
+        spendPub: Buffer.from(spendNode.publicKey)
     };
 };
 

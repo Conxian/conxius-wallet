@@ -44,7 +44,7 @@ const Benchmarking: React.FC = () => {
   };
 
   useEffect(() => {
-    getStrategicAdvice();
+    setTimeout(getStrategicAdvice, 0);
   }, []);
 
   return (

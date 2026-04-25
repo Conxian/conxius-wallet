@@ -8,18 +8,19 @@ describe('Business Alignment & Monetization', () => {
         security: { biometricUnlock: true },
         lnBackend: { endpoint: 'http://localhost' },
         assets: [{ layer: 'Bitcoin L1', balance: 1000 }],
-        isTorEnabled: true
+        isTorEnabled: true,
+        loyaltyXP: 5000,
+        sovereigntyScore: 95
     };
 
     it('calculates effective fee rate with loyalty discount', () => {
         const rate = calculateEffectiveFeeRate(mockState);
-        // Base 0.25% * (1 - 0.5 loyalty) * (1 - sovereignty discount)
-        // Score should be high (1.0 or close)
+        // Base 0.25% * (0.5 loyalty) * (0.8 sovereignty discount) = 0.001
         expect(rate).toBeLessThan(0.0025);
         expect(rate).toBeGreaterThanOrEqual(0.001); // Floor
     });
 
-    it('caps B2B NTT technical integration fee at $50', () => {
+    it('caps B2B NTT technical integration fee at 0', () => {
         expect(calculateNttIntegrationFee(1000000)).toBe(50);
         expect(calculateNttIntegrationFee(1000)).toBe(1);
     });

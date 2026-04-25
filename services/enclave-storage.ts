@@ -83,7 +83,7 @@ export async function getEnclaveBlob(key: string, opts?: { requireBiometric?: bo
     } catch (e: any) {
       const msg = typeof e?.message === 'string' ? e.message : '';
       if ((opts?.requireBiometric ?? false) && msg.toLowerCase().includes('auth required')) {
-        throw new Error('auth required');
+        throw new Error("auth required", { cause: e });
       }
     }
     // Fallback to localStorage if native fails or item not found (for migration)
@@ -108,7 +108,7 @@ export async function setEnclaveBlob(key: string, value: string, opts?: { requir
     } catch (e: any) {
       const msg = typeof e?.message === 'string' ? e.message : '';
       if ((opts?.requireBiometric ?? false) && msg.toLowerCase().includes('auth required')) {
-        throw new Error('auth required');
+        throw new Error("auth required", { cause: e });
       }
     }
   }
@@ -124,7 +124,7 @@ export async function removeEnclaveBlob(key: string, opts?: { requireBiometric?:
     } catch (e: any) {
       const msg = typeof e?.message === 'string' ? e.message : '';
       if ((opts?.requireBiometric ?? false) && msg.toLowerCase().includes('auth required')) {
-        throw new Error('auth required');
+        throw new Error("auth required", { cause: e });
       }
     }
   }

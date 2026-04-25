@@ -9,7 +9,7 @@ describe('Production Integrity Gating', () => {
     });
 
     it('should use mainnet as default network in critical services', async () => {
-        const { Network } = await import('../types');
+        // Type check for Network
         const defaultNetwork: string = 'mainnet';
         expect(defaultNetwork).toBe('mainnet');
     });

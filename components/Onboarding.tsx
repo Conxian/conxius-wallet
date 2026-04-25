@@ -59,10 +59,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     setIsFinalizing(true);
     setTimeout(() => {
       onComplete({
-        id: '1',
-        name: 'Sovereign Enclave',
-        type: 'Native',
-        mnemonic: mnemonic.join(' '),
+        type: "single",
+        mnemonicVault: mnemonic.join(' '),
         backupVerified: true
       }, pin);
       setIsFinalizing(false);

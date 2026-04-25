@@ -202,7 +202,7 @@ describe('signer service', () => {
       };
 
       // Nostr requests don't require seed, but should still process
-      await requestEnclaveSignature(request);
+      await requestEnclaveSignature(request, "seed");
       
       const elapsed = Date.now() - startTime;
       // Should complete without error on web platform
@@ -218,7 +218,7 @@ describe('signer service', () => {
         description: 'Test'
       };
 
-      const result = await requestEnclaveSignature(request);
+      const result = await requestEnclaveSignature(request, "seed");
       const afterTime = Date.now();
 
       expect(result.timestamp).toBeGreaterThanOrEqual(beforeTime);
@@ -233,7 +233,7 @@ describe('signer service', () => {
         description: 'Test'
       };
 
-      const result = await requestEnclaveSignature(request);
+      const result = await requestEnclaveSignature(request, "seed");
 
       expect(result.signature).toBeDefined();
       expect(result.pubkey).toBeDefined();
