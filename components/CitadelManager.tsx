@@ -73,7 +73,7 @@ const CitadelManager: React.FC = () => {
   }, []);
 
   useEffect(() => {
-      syncTreasury();
+      setTimeout(syncTreasury, 0);
   }, [syncTreasury]);
 
   const bounties: Bounty[] = [

@@ -15,7 +15,7 @@ export interface FeeEstimation {
 export const estimateFees = async (sourceLayer: string, targetLayer: string, amount: string, enableGasAbstractionSwap: boolean = false, network: Network = 'mainnet'): Promise<FeeEstimation> => {
   const getFee = async (layer: string) => 0.00005; // Simplified for now
   const [sourceFee, destinationFee, btcPrice] = await Promise.all([getFee(sourceLayer), getFee(targetLayer), fetchBtcPrice()]);
-  const integratorFee = calculateNttFee(parseFloat(amount) || 0, btcPrice);
+  const integratorFee = calculateNttFee(parseFloat(amount) || 0);
   const total = sourceFee + destinationFee + 0.0001 + (enableGasAbstractionSwap ? 0.00002 : 0) + integratorFee;
   return { sourceNetworkFee: sourceFee, destinationNetworkFee: destinationFee, wormholeBridgeFee: 0.0001, gasAbstractionSwapFee: 0.00002, integratorFee, totalFee: total, efficiencyRating: 'optimal' };
 };

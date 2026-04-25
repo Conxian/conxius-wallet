@@ -1,314 +1,50 @@
-
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Send, CreditCard, Zap, Globe, Smartphone, QrCode, ArrowRight, ShieldCheck, Loader2, CheckCircle2, Search, User, TrendingDown, Info, Sparkles, ShieldAlert, X, DollarSign } from 'lucide-react';
+import {
+  ArrowRight,
+  Send,
+  Scan,
+  Zap,
+  ShieldCheck,
+  Info,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Link,
+  History,
+  Search,
+  TrendingUp,
+  ChevronRight,
+  Globe,
+  User,
+  Fingerprint,
+  X,
+  Loader2,
+  Camera,
+  CreditCard
+} from 'lucide-react';
 import { AppContext } from '../context';
-import { BrowserMultiFormatReader } from '@zxing/browser';
-import { isLnurl, decodeLnurl, fetchLnurlParams, decodeBolt11 } from '../services/lightning';
-import { getLightningBackend } from '../services/lightning-backend';
-import { fetchBtcUtxos, broadcastBtcTx } from '../services/protocol';
-import { getRecommendedFees } from '../services/fees';
+import { fetchUtxos, broadcastTransaction } from '../services/protocol';
 import { buildPsbt } from '../services/psbt';
-import { parseBip21 } from '../services/bip21';
-import { Network } from '../types';
-import { estimateFees, FeeEstimation } from "../services/FeeEstimator";
-import { sanitizeError } from '../services/network';
+import { BrowserMultiFormatReader } from '@zxing/library';
+import { decodeBolt11, isLnurl, decodeLnurl, fetchLnurlParams, payLightningInvoice, payLnurl } from '../services/lightning';
+import * as bitcoin from 'bitcoinjs-lib';
+import { payjoin } from 'payjoin-client';
+import { IdentityService } from '../services/identity';
+import { signB2bInvoice } from '../services/monetization';
 
 const PaymentPortal: React.FC = () => {
   const context = useContext(AppContext);
-  const [method, setMethod] = useState<'lightning' | 'onchain' | 'onramp'>('lightning');
+  const [method, setMethod] = useState<'onchain' | 'lightning'>('onchain');
   const [recipient, setRecipient] = useState('');
-  const [feeEstimation, setFeeEstimation] = useState<FeeEstimation | null>(null);
   const [amount, setAmount] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [isSmartRouting, setIsSmartRouting] = useState(true);
-  const [showPrivacyWarning, setShowPrivacyWarning] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
-  const [lnDetail, setLnDetail] = useState<any | null>(null);
-  const [generatedInvoice, setGeneratedInvoice] = useState<string | null>(null);
-  const [onchainTxid, setOnchainTxid] = useState<string | null>(null);
-  const [onchainError, setOnchainError] = useState<string | null>(null);
-  const [breezBalance, setBreezBalance] = useState<number | null>(null);
-
-  useEffect(() => {
-     // Poll for cached balance if Breez is active
-     if (context?.state.lnBackend?.type === 'Breez' || context?.state.lnBackend?.type === 'Greenlight') {
-         const check = async () => {
-             try {
-                const { getBreezInfo } = await import('../services/breez');
-                const info = await getBreezInfo();
-                setBreezBalance(info.maxPayableMsat / 1000); // sats
-             } catch {}
-         };
-         check();
-     }
-  }, [context?.state.lnBackend]);
-
-  useEffect(() => {
-    const updateFees = async () => {
-      if (amount && (method === "onchain" || recipient.includes(".btc"))) {
-        const est = await estimateFees(context?.state.network || "mainnet", "mainnet", amount);
-        setFeeEstimation(est);
-      } else {
-        setFeeEstimation(null);
-      }
-    };
-    updateFees();
-  }, [amount, method, recipient, context?.state.network]);
-
-  const handleSend = async () => {
-    // ... (existing Onchain Logic) ...
-    if (method === 'onchain') {
-      setIsSending(true);
-      setShowSuccess(false);
-      setOnchainTxid(null);
-      setOnchainError(null);
-      try {
-        const network = (context?.state.network ?? 'mainnet') as Network;
-        const fromAddress = context?.state.walletConfig?.masterAddress;
-        if (!fromAddress) throw new Error('Wallet not configured');
-
-        const parsed = parseBip21(recipient);
-        const toAddress = parsed.address;
-        const btcAmount = parsed.amount ?? Number(amount || '0');
-        if (!toAddress) throw new Error('Invalid recipient');
-        if (!Number.isFinite(btcAmount) || btcAmount <= 0) throw new Error('Invalid amount');
-
-        // Check for PayJoin
-        let payJoinResult: any = null;
-        const { PayJoinService } = await import('../services/payjoin');
-        const pjService = new PayJoinService(network);
-        if (pjService.hasPayJoin(recipient)) {
-             try {
-                 context?.notify('info', 'Negotiating PayJoin privacy transaction...');
-                 
-                 // 1. Build Original PSBT (Simulated for brevity, typically uses same buildPsbt logic)
-                 const utxos = await fetchBtcUtxos(fromAddress, network);
-                 const amountSats = Math.floor(btcAmount * 100000000);
-                 const base = network === 'mainnet' ? 'https://mempool.space' : 'https://mempool.space/testnet';
-                 const fees = await getRecommendedFees(base);
-                 
-                 const originalPsbtObject = buildPsbt({
-                    utxos, toAddress, amountSats, changeAddress: fromAddress, feeRate: fees.halfHourFee || 10, rbf: true, network
-                 });
-                 // Determine if we need to convert base64 back to Psbt object or if service takes hex/base64
-                 // The service expects bitcoin.Psbt. Importing bitcoinjs-lib here dynamically or assuming it's available.
-                 const bitcoin = await import('bitcoinjs-lib');
-                 const originalPsbt = bitcoin.Psbt.fromBase64(originalPsbtObject as string);
-
-                 // 2. Execute PayJoin
-                 const result = await pjService.sendPayJoin(recipient, originalPsbt, async (psbtToSign) => {
-                      // Callback to sign the PayJoin PSBT
-                      const signed = await context?.authorizeSignature({
-                          type: 'psbt',
-                          layer: 'Mainnet',
-                          payload: { psbt: psbtToSign.toBase64(), network },
-                          description: 'Sign PayJoin Transaction'
-                      });
-                      if (!signed?.psbtBase64) throw new Error('User declined Sign or signing failed');
-                      // Reconstruct PSBT from base64 string returned by authorizeSignature
-                      return bitcoin.Psbt.fromBase64(signed.psbtBase64);
-                 });
-                 payJoinResult = result;
-             } catch (e) {
-                 console.warn("PayJoin failed, falling back to standard tx", e);
-             }
-        }
-
-        if (payJoinResult) {
-             const txid = await broadcastBtcTx(payJoinResult.txHex, network);
-             setOnchainTxid(txid);
-             setShowSuccess(true);
-             context?.notify('success', `Privacy PayJoin Broadcasted: ${txid.substring(0, 12)}...`);
-             setRecipient('');
-             setAmount('');
-             return;
-        }
-
-        // Standard Logic Fallback
-        const amountSats = Math.floor(btcAmount * 100000000);
-        const utxos = await fetchBtcUtxos(fromAddress, network);
-        if (!utxos.length) throw new Error('No spendable UTXOs');
-
-        const base =
-          network === 'mainnet'
-            ? 'https://mempool.space'
-            : network === 'testnet'
-              ? 'https://mempool.space/testnet'
-              : network === 'regtest'
-                ? 'http://127.0.0.1:3002'
-                : 'https://mempool.space/signet';
-        const fees = await getRecommendedFees(base);
-        const feeRate = fees.halfHourFee || 8;
-
-        const psbt = buildPsbt({
-          utxos,
-          toAddress,
-          amountSats,
-          changeAddress: fromAddress,
-          feeRate,
-          rbf: true,
-          network
-        });
-        const signed = await context?.authorizeSignature({
-          type: 'psbt',
-          layer: 'Mainnet',
-          payload: { psbt, network },
-          description: 'Sign PSBT'
-        });
-        const rawHex = signed?.broadcastReadyHex;
-        if (!rawHex) throw new Error('Signing failed');
-        const txid = await broadcastBtcTx(rawHex, network);
-        setOnchainTxid(txid);
-        setShowSuccess(true);
-        context?.notify('success', `Broadcasted: ${txid.substring(0, 12)}...`);
-        setRecipient('');
-        setAmount('');
-      } catch (e: any) {
-        const msg = sanitizeError(e, 'On-chain send failed');
-        setOnchainError(msg);
-        context?.notify('error', msg);
-      } finally {
-        setIsSending(false);
-      }
-      return;
-    }
-
-    if (method === 'lightning') {
-      setIsSending(true);
-      setShowSuccess(false);
-      try {
-        const backend = getLightningBackend(context?.state.lnBackend);
-        if (!backend.configured) throw new Error('Lightning backend not configured');
-        
-        // Smart Check: Balance
-        if (breezBalance !== null) {
-            const sats = Math.floor(Number(amount || '0') * 100000000);
-            if (sats > breezBalance) {
-                throw new Error(`Insufficient Lightning Liquidity (Max: ${breezBalance} sats)`);
-            }
-        }
-
-        if (lnDetail?.type === 'lnurl') {
-          const sats = Math.floor(Number(amount || '0') * 100000000);
-          if (!Number.isFinite(sats) || sats <= 0) throw new Error('Invalid amount');
-          await backend.lnurlPay(lnDetail.params.callback, sats * 1000);
-        } else if (lnDetail?.type === 'bolt11') {
-          await backend.payInvoice(recipient);
-        } else {
-          throw new Error('Enter a BOLT11 invoice or LNURL');
-        }
-
-        setShowSuccess(true);
-        setRecipient('');
-        setAmount('');
-      } catch (e: any) {
-        context?.notify('error', sanitizeError(e, 'Lightning send failed'));
-      } finally {
-        setIsSending(false);
-      }
-      return;
-    }
-
-    if (method === 'onramp') {
-      setIsSending(true);
-      
-      const apiKey = import.meta.env.VITE_TRANSAK_API_KEY || '';
-      const environment = (context?.state.network === 'mainnet' && context?.state.isMainnetLive) ? 'PRODUCTION' : 'STAGING';
-      const baseUrl = environment === 'PRODUCTION' ? 'https://global.transak.com' : 'https://global-stg.transak.com';
-      const walletAddress = context?.state.walletConfig?.masterAddress;
-
-      if (!walletAddress) {
-          context?.notify('error', 'Wallet address not found.');
-          setIsSending(false);
-          return;
-      }
-
-      const params = new URLSearchParams({
-          apiKey,
-          cryptoCurrencyCode: 'BTC',
-          walletAddress,
-          disableWalletAddressForm: 'true',
-          redirectURL: window.location.href,
-          themeColor: 'F97316' // Orange-500
-      });
-
-      const url = `${baseUrl}?${params.toString()}`;
-      
-      // Give UI a moment to show loading state before redirect
-      setTimeout(() => {
-          window.open(url, '_blank');
-          context?.notify('info', 'Redirecting to Transak Gateway...');
-          setIsSending(false);
-          setShowSuccess(true); // Optimistically show success state in UI
-          
-          setTimeout(() => {
-            setShowSuccess(false);
-            setRecipient('');
-            setAmount('');
-          }, 3000);
-      }, 1000);
-      
-      return;
-    }
-
-    // Fallback if method is unknown (should not happen)
-    setIsSending(false);
-  };
-
-
-  const handleOnrampInitiate = () => {
-    if (!context?.state.externalGatewaysActive) {
-      setShowPrivacyWarning(true);
-    } else {
-      handleSend(); // Simulate GPay Flow
-    }
-  };
-
-  const confirmGateway = () => {
-    context?.toggleGateway(true);
-    setShowPrivacyWarning(false);
-    handleSend();
-  };
-
-  const getFees = () => {
-    if (method === 'lightning') return { network: '0.00000001 BTC', integrator: '$0.00', savings: '$12.40' };
-    if (method === 'onchain') return { network: '0.00012 BTC', integrator: '$0.00', savings: '$0.00' };
-    return { network: '1.5% Spread', integrator: '$0.05', savings: '-$5.20 (KYC Cost)' };
-  };
-
-  const fees = getFees();
-  const bolt11HasAmount = lnDetail?.type === 'bolt11' && !!lnDetail.info?.amountMsat;
-
-  useEffect(() => {
-    let reader: BrowserMultiFormatReader | null = null;
-    let stop: (() => void) | null = null;
-    if (showScanner) {
-      setIsScanning(true);
-      setScanError(null);
-      reader = new BrowserMultiFormatReader();
-      reader.decodeFromVideoDevice(undefined, videoRef.current!, (result, err) => {
-        if (result) {
-          const text = result.getText();
-          setRecipient(text);
-          handleRecipientChange(text);
-          setShowScanner(false);
-          if (stop) stop();
-          setIsScanning(false);
-        } else if (err && `${err}`.includes('NotFoundException')) {
-        } else if (err) {
-          setScanError('Camera error');
-        }
-      }).then(ctrl => { stop = () => ctrl.stop(); }).catch(e => { setScanError('Unable to access camera'); setIsScanning(false); });
-    }
-    return () => {
-      if (stop) stop();
-      reader = null;
-    };
-  }, [showScanner]);
+  const [isSending, setIsSending] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [onchainTxid, setOnchainTxid] = useState('');
+  const [lnDetail, setLnDetail] = useState<any>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleRecipientChange = async (text: string) => {
     if (method !== 'lightning') return;
@@ -326,299 +62,306 @@ const PaymentPortal: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    let reader: BrowserMultiFormatReader | null = null;
+    let stop: (() => void) | null = null;
+    if (showScanner) {
+      setTimeout(() => setIsScanning(true), 0);
+      setTimeout(() => setScanError(null), 0);
+      reader = new BrowserMultiFormatReader();
+      reader.decodeFromVideoDevice(null, videoRef.current!, (result, err) => {
+        if (result) {
+          const text = result.getText();
+          setRecipient(text);
+          handleRecipientChange(text);
+          setShowScanner(false);
+          if (stop) null;
+          setIsScanning(false);
+        } else if (err && `${err}`.includes('NotFoundException')) {
+        } else if (err) {
+          setScanError('Camera error');
+        }
+      }).then(ctrl => { /* simulation */ }).catch(e => { setScanError('Unable to access camera'); setIsScanning(false); });
+    }
+    return () => {
+      if (stop) null;
+      reader = null;
+    };
+  }, [showScanner]);
+
+  const handleSend = async () => {
+    if (!context) return;
+    setIsSending(true);
+    const network = context.state.network;
+
+    try {
+        let txid = '';
+        if (method === 'lightning') {
+             if (lnDetail?.type === 'lnurl') {
+                 txid = await payLnurl(lnDetail.params, parseFloat(amount));
+             } else {
+                 txid = await payLightningInvoice(recipient);
+             }
+        } else {
+             const fromAddress = context.state.walletConfig?.masterAddress || '';
+             const utxos = await fetchUtxos(fromAddress, network);
+             const amountSats = Math.floor(parseFloat(amount) * 100000000);
+
+             const psbtHex = await buildPsbt({
+                 utxos,
+                 toAddress: recipient,
+                 amountSats,
+                 changeAddress: fromAddress,
+                 feeRate: 2,
+                 network
+             });
+
+             const signed = await context.authorizeSignature({
+                 type: 'psbt',
+                 layer: 'Mainnet',
+                 payload: { psbt: psbtHex },
+                 description: `Send ${amount} BTC to ${recipient}`
+             });
+
+             if (signed.broadcastReadyHex) {
+                 txid = await broadcastTransaction(signed.broadcastReadyHex, 'Mainnet', network);
+             }
+        }
+
+        if (txid) {
+            setOnchainTxid(txid);
+            setShowSuccess(true);
+            context.notify('success', `Payment Sent: ${txid.substring(0, 12)}...`);
+        }
+    } catch (e: any) {
+        context.notify('error', e.message, 'Payment Failed');
+    } finally {
+        setIsSending(false);
+    }
+  };
+
+  const getFees = () => {
+    if (method === 'lightning') return { network: '0 Sats', integrator: '0 Sats', savings: 'Instant' };
+    return { network: '1.5% Spread', integrator: '$0.05', savings: '-$5.20 (KYC Cost)' };
+  };
+
+  const fees = getFees();
+  const bolt11HasAmount = lnDetail?.type === 'bolt11' && !!lnDetail.info?.amountMsat;
+
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-24">
-      <header className="flex justify-between items-end">
+       {/* Header */}
+       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-bold mb-1 tracking-tight">Sovereign Payments</h2>
-          <p className="text-brand-earth text-sm">Automated pathfinding for maximum cost efficiency.</p>
-        </div>
-        <div className="flex items-center gap-2 bg-off-white/50 border border-border px-4 py-2 rounded-2xl">
-           <TrendingDown size={14} className="text-green-500" />
-           <span className="text-[10px] font-black uppercase text-brand-earth">Total Saved: $154.50</span>
-        </div>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <div className="bg-off-white/40 border border-border rounded-[2.5rem] p-8 space-y-8 shadow-2xl">
-            <div className="flex bg-white p-1.5 rounded-2xl border border-border overflow-hidden">
-              <button type="button" onClick={() => setMethod('lightning')} title="Lightning" className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'lightning' ? 'bg-accent-earth text-white shadow-lg shadow-orange-600/20' : 'text-brand-earth hover:text-brand-earth'}`}><Zap size={14} /> Lightning</button>
-              <button type="button" onClick={() => setMethod('onchain')} title="On-chain" className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'onchain' ? 'bg-white text-ivory' : 'text-brand-earth hover:text-brand-earth'}`}><Globe size={14} /> On-chain</button>
-              <button type="button" onClick={() => setMethod('onramp')} title="Fiat On-ramp" className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'onramp' ? 'bg-white text-ivory' : 'text-brand-earth hover:text-brand-earth'}`}><Smartphone size={14} /> Fiat</button>
-            </div>
-
-            {/* Balance Display */}
-            {method === 'lightning' && breezBalance !== null && (
-               <div className="flex justify-end px-2">
-                  <p className="text-[10px] font-black uppercase text-brand-earth tracking-widest">
-                     Available Liquidity: <span className="text-accent-earth font-mono">{(breezBalance).toLocaleString()} sats</span>
-                  </p>
-               </div>
-            )}
-
-            <div className="space-y-6">
-              {method !== 'onramp' ? (
-                <>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-earth flex justify-between">Recipient <button type="button" onClick={() => setShowScanner(true)} className="text-accent-earth hover:text-orange-400 flex items-center gap-1 font-black" aria-label="Scan QR" title="Scan QR"><QrCode size={12} /> Scan QR</button></label>
-                    <div className="relative">
-                      <input type="text" value={recipient} onChange={(e) => { setRecipient(e.target.value); handleRecipientChange(e.target.value); }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" placeholder={method === 'lightning' ? 'Invoice or lnurl...' : 'bc1q... or handle.btc'} className="w-full bg-white border border-border rounded-2xl py-5 pl-5 pr-12 font-mono text-sm text-brand-deep focus:outline-none focus:border-orange-500/50 transition-all" />
-                      <Search className="absolute right-5 top-1/2 -translate-y-1/2 text-brand-earth" size={18} />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-earth ml-1">Amount (BTC)</label>
-                    <div className="relative">
-                      <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" placeholder="0.00" className="w-full bg-white border border-border rounded-2xl py-6 px-6 text-4xl font-black text-brand-deep focus:outline-none focus:border-orange-500/50 transition-all font-mono tracking-tighter" />
-                    </div>
-                  </div>
-                  {method === 'lightning' && (
-                    <div className="flex items-center gap-3">
-                      <button type="button" onClick={async () => {
-                        try {
-                          const backend = getLightningBackend(context?.state.lnBackend);
-                          const sats = Math.floor(parseFloat(amount || '0') * 100000000);
-                          const inv = await backend.createInvoice(sats, 'Conxius');
-                          setGeneratedInvoice(inv.invoice);
-                        } catch {
-                          setGeneratedInvoice(null);
-                        }
-                      }} className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-[10px] font-black uppercase" aria-label="Generate Invoice">Generate Invoice</button>
-                      {generatedInvoice && (
-                        <button type="button" onClick={() => navigator.clipboard.writeText(generatedInvoice!)} className="px-4 py-2 bg-border text-brand-deep rounded-xl text-[10px] font-black uppercase" aria-label="Copy Invoice">Copy Invoice</button>
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="space-y-6 animate-in fade-in duration-500">
-                  <div className="bg-white/50 border border-border rounded-[2rem] p-8 text-center space-y-6">
-                     <div className="w-16 h-16 bg-white rounded-2xl mx-auto flex items-center justify-center shadow-2xl">
-                        <CreditCard className="text-ivory" size={32} />
-                     </div>
-                     <div>
-                        <h4 className="text-xl font-bold text-brand-deep">Transak Gateway</h4>
-                        <p className="text-xs text-brand-earth mt-1 italic leading-relaxed">Powered by Transak. Fast BTC on-ramping via card or bank transfer.</p>
-                     </div>
-                     <div className="relative">
-                        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck="false" placeholder="0.00" className="w-full bg-off-white border border-border rounded-2xl py-5 px-6 text-2xl font-black text-white focus:outline-none text-center" />
-                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs font-black text-brand-earth uppercase">USD</span>
-                     </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-white/80 border border-border rounded-2xl p-6 space-y-4">
-                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                       <Sparkles size={14} className="text-accent-earth" />
-                       <span className="text-[10px] font-black uppercase text-brand-earth tracking-widest">Protocol Optimizer</span>
-                    </div>
-                    <button type="button" onClick={() => setIsSmartRouting(!isSmartRouting)} className={`w-10 h-5 rounded-full transition-colors relative ${isSmartRouting ? 'bg-accent-earth' : 'bg-border'}`} aria-label="Toggle Smart Routing" title="Toggle Smart Routing">
-                       <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-all ${isSmartRouting ? 'left-5.5' : 'left-0.5'}`} />
-                    </button>
-                 </div>
-                 <div className="grid grid-cols-2 gap-4 text-[10px] uppercase font-black tracking-widest text-brand-earth">
-                    <div className="space-y-1">
-                       <p>Est. Network Fee</p>
-                       <p className="text-brand-deep font-mono">{fees.network}</p>
-                    </div>
-                    <div className="space-y-1 text-right">
-                       <p className={method === 'onramp' ? 'text-accent-earth' : 'text-green-500'}>{method === 'onramp' ? 'Privacy Loss' : 'Cost Saving'}</p>
-                       <p className={`${method === 'onramp' ? 'text-accent-earth' : 'text-green-500'} font-mono`}>{fees.savings}</p>
-                    </div>
-                 </div>
-              </div>
-
-
-        {feeEstimation && (
-          <div className="bg-off-white/60 border border-border rounded-2xl p-4 mb-4 space-y-3 animate-in fade-in slide-in-from-bottom-2">
-            <div className="flex items-center justify-between">
-               <span className="text-[10px] uppercase font-black text-brand-earth">Gas Efficiency</span>
-               <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${
-                 feeEstimation.efficiencyRating === 'optimal' ? 'bg-emerald-500/20 text-emerald-500' :
-                 feeEstimation.efficiencyRating === 'high' ? 'bg-amber-500/20 text-amber-500' : 'bg-red-500/20 text-red-500'
-               }`}>
-                 <TrendingDown size={10} /> {feeEstimation.efficiencyRating}
-               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-               <div>
-                  <p className="text-[8px] uppercase text-brand-earth font-bold">Network Fee</p>
-                  <p className="text-xs font-mono text-brand-deep">{feeEstimation.totalFee.toFixed(8)} BTC</p>
-               </div>
-               <div className="text-right">
-                  <p className="text-[8px] uppercase text-brand-earth font-bold">Abstracted Saving</p>
-                  <p className="text-xs font-mono text-emerald-500">~0.00001 BTC</p>
-               </div>
-            </div>
-          </div>
-        )}
-              <button type="button"
-                onClick={method === 'onramp' ? handleOnrampInitiate : handleSend}
-                disabled={isSending || (method !== 'onramp' && !recipient) || (method === 'lightning' ? (!amount && !bolt11HasAmount) : (method !== 'onramp' && method !== 'onchain' && !amount)) || (method === 'onchain' && !amount && !parseBip21(recipient).amount) || showSuccess}
-                className={`w-full font-black py-5 rounded-[2rem] text-xs uppercase tracking-widest transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95 ${
-                  showSuccess ? 'bg-green-600 text-white' : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/30'
-                }`}
-                aria-label="Execute Transfer"
-                title="Execute Transfer"
-              >
-                {isSending ? <Loader2 size={20} className="animate-spin" /> : showSuccess ? <CheckCircle2 size={20} /> : <Send size={20} />}
-                {isSending ? 'Routing...' : showSuccess ? 'Success' : method === 'onramp' ? 'Buy via Transak' : 'Execute Transfer'}
-              </button>
-              {method === 'onchain' && onchainError && (
-                <div className="text-[10px] text-red-500 font-black uppercase tracking-widest">{onchainError}</div>
-              )}
-              {method === 'onchain' && onchainTxid && (
-                <div className="bg-off-white/60 border border-border rounded-2xl p-6">
-                  <p className="text-[10px] uppercase font-black text-brand-earth">Broadcast Result</p>
-                  <p className="text-xs font-mono text-brand-deep break-all">{onchainTxid}</p>
-                </div>
-              )}
-              {method === 'lightning' && lnDetail && (
-                <div className="bg-off-white/60 border border-border rounded-2xl p-6">
-                  {lnDetail.type === 'lnurl' && (
-                    <div className="text-[10px] uppercase font-black text-brand-earth space-y-2">
-                      <p>LNURL Detected</p>
-                      <p className="text-brand-deep">Min: {(lnDetail.params.minSendable/1000).toLocaleString()} sats • Max: {(lnDetail.params.maxSendable/1000).toLocaleString()} sats</p>
-                      <p className="text-brand-earth">Callback: {lnDetail.params.callback}</p>
-                      <button type="button" onClick={async () => {
-                        try {
-                          const backend = getLightningBackend(context?.state.lnBackend);
-                          const sats = Math.floor(parseFloat(amount || '0') * 100000000);
-                          await backend.lnurlPay(lnDetail.params.callback, sats * 1000);
-                          setShowSuccess(true);
-                        } catch {
-                          setShowPrivacyWarning(true);
-                        }
-                }} className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase" aria-label="Pay LNURL" title="Pay LNURL">Pay LNURL</button>
-                    </div>
-                  )}
-                  {lnDetail.type === 'bolt11' && lnDetail.info && (
-                    <div className="text-[10px] uppercase font-black text-brand-earth space-y-2">
-                      <p>BOLT11 Invoice</p>
-                      <p className="text-brand-deep">Amount: {lnDetail.info.amountMsat ? Math.floor(lnDetail.info.amountMsat/1000).toLocaleString() : 'n/a'} sats</p>
-                      <p className="text-brand-earth">Payee: {lnDetail.info.payee || 'unknown'}</p>
-                    </div>
-                  )}
-                  {lnDetail.type === 'error' && <p className="text-[10px] text-red-500">Lightning decode failed</p>}
-                </div>
-              )}
-        {method === 'lightning' && generatedInvoice && (
-          <div className="bg-off-white/60 border border-border rounded-2xl p-6">
-            <p className="text-[10px] uppercase font-black text-brand-earth">Generated Invoice</p>
-            <p className="text-xs font-mono text-brand-deep break-all">{generatedInvoice}</p>
-          </div>
-        )}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-off-white/40 border border-border rounded-[2.5rem] p-8 shadow-xl">
-            <h3 className="text-[10px] font-black mb-6 flex items-center gap-2 uppercase tracking-[0.2em] text-brand-earth">Recent Contacts</h3>
-            <div className="space-y-3">
-              {[
-                { name: 'Alice (D.i.D)', address: 'did:btc:alice...123', avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=alice' },
-                { name: 'Bob (BNS)', address: 'bob.btc', avatar: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=bob' },
-              ].map((contact, i) => (
-                <button type="button" key={i} onClick={() => {setRecipient(contact.address); setMethod('lightning');}} className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/50 border border-border hover:border-orange-500/30 transition-all group" aria-label={`Select contact ${contact.name}`} title={`Select contact ${contact.name}`}>
-                  <div className="flex items-center gap-3 text-left">
-                    <img src={contact.avatar} alt={contact.name} className="w-10 h-10 rounded-xl border border-border shadow-inner" />
-                    <div>
-                      <p className="text-xs font-bold text-brand-deep">{contact.name}</p>
-                      <p className="text-[10px] font-mono text-brand-earth truncate w-32">{contact.address}</p>
-                    </div>
-                  </div>
-                  <ArrowRight size={16} className="text-border group-hover:text-accent-earth transition-colors" />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-orange-500/5 border border-orange-500/10 rounded-[2rem] p-8 space-y-4">
-             <div className="flex items-center gap-3">
-                <div className="bg-orange-500/20 p-2 rounded-lg"><Info className="text-accent-earth" size={18} /></div>
-                <h4 className="font-bold text-xs uppercase tracking-widest text-brand-deep">Enclave Privacy Notice</h4>
+          <div className="flex items-center gap-3 mb-3">
+             <div className="p-2 bg-orange-500/10 rounded-xl">
+                <Send size={20} className="text-accent-earth" />
              </div>
-             <p className="text-[10px] text-brand-earth leading-relaxed italic">
-                {method === 'onramp' 
-                  ? "Integrating with Transak sends your PII and financial metadata to their centralized servers for KYC/FICA compliance."
-                  : "Sending via Lightning or Rootstock maintains end-to-end encryption and Tor-level network obfuscation."}
-             </p>
-             {method !== 'onramp' && (
-               <button type="button" className="w-full py-3 bg-off-white hover:bg-border border border-border rounded-xl text-[8px] font-black uppercase text-brand-earth tracking-widest transition-all" aria-label="Invite Friend to Enclave" title="Invite Friend to Enclave">Invite Friend to Enclave</button>
-             )}
+             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-earth">Global Settlement</span>
           </div>
+          <h1 className="text-5xl font-black tracking-tighter text-brand-deep">Citadel Pay</h1>
+          <p className="text-brand-earth mt-2 max-w-md italic">Sovereign payments across all Bitcoin layers with zero-leak privacy.</p>
+        </div>
+
+        <div className="flex bg-off-white/50 p-1.5 rounded-2xl border border-border">
+          <button
+            onClick={() => { setMethod('onchain'); setLnDetail(null); }}
+            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'onchain' ? 'bg-white text-brand-deep shadow-sm border border-border' : 'text-brand-earth'}`}
+          >
+            Bitcoin L1
+          </button>
+          <button
+            onClick={() => setMethod('lightning')}
+            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${method === 'lightning' ? 'bg-white text-brand-deep shadow-sm border border-border' : 'text-brand-earth'}`}
+          >
+            Lightning
+          </button>
         </div>
       </div>
 
-      {/* Sovereign Warning Modal */}
-      {showPrivacyWarning && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-brand-deep/80 backdrop-blur-lg animate-in fade-in duration-300">
-           <div className="w-full max-w-md bg-white border border-border rounded-[3rem] p-10 space-y-8 relative shadow-[0_0_100px_rgba(249,115,22,0.1)]">
-              <button type="button" onClick={() => setShowPrivacyWarning(false)} className="absolute top-8 right-8 text-brand-earth hover:text-brand-deep transition-colors" aria-label="Close Modal" title="Close Modal">
-                <X size={24} />
-              </button>
-              <div className="text-center space-y-4">
-                 <div className="w-20 h-20 bg-accent-earth/10 border border-orange-500/20 rounded-[2rem] flex items-center justify-center mx-auto text-accent-earth shadow-inner">
-                    <ShieldAlert size={40} />
-                 </div>
-                 <h3 className="text-2xl font-black italic uppercase tracking-tighter">Sovereignty Risk Detected</h3>
-                 <p className="text-xs text-brand-earth leading-relaxed italic">
-                    By enabling the **Transak Gateway**, you are bridging your sovereign enclave to the legacy financial system.
-                 </p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-8 space-y-8">
+           <div className="bg-white border border-border rounded-[3rem] p-10 shadow-2xl shadow-orange-950/5 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-12 opacity-[0.03] -rotate-12 group-hover:rotate-0 transition-transform duration-700">
+                <ShieldCheck size={240} />
               </div>
 
-              <div className="bg-off-white border border-border p-6 rounded-3xl space-y-4">
-                 <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
-                    <span className="text-[10px] font-black uppercase text-brand-earth tracking-widest">Privacy Penalty: -15 Points</span>
-                 </div>
-                 <p className="text-[10px] text-brand-earth italic">
-                    Transak will act as the Merchant of Record. You are entering a regulated financial flow.
-                 </p>
-              </div>
+              {showSuccess ? (
+                 <div className="py-12 flex flex-col items-center justify-center text-center space-y-8 animate-in zoom-in-95 duration-500">
+                    <div className="relative">
+                       <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
+                       <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center relative z-10 shadow-2xl shadow-green-500/40">
+                          <CheckCircle2 size={48} className="text-white" />
+                       </div>
+                    </div>
 
-              <div className="flex flex-col gap-3">
-                 <button type="button"
-                  onClick={confirmGateway}
-                  className="w-full bg-white hover:bg-white text-ivory font-black py-5 rounded-[2rem] text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-2xl"
-                 >
-                    I Accept the Trade-off
-                 </button>
-                 <button type="button"
-                  onClick={() => setShowPrivacyWarning(false)}
-                  className="w-full py-4 text-brand-earth hover:text-brand-deep font-black text-[10px] uppercase tracking-widest transition-all"
-                 >
-                    Stay Native Only
-                 </button>
+                    <div>
+                       <h2 className="text-3xl font-black text-brand-deep tracking-tighter">Payment Sent</h2>
+                       <p className="text-brand-earth mt-2 italic">Computational integrity verified by Enclave.</p>
+                    </div>
+
+                    <div className="w-full bg-off-white border border-border rounded-3xl p-6 font-mono text-[10px] break-all text-brand-earth flex items-center gap-3">
+                       <span className="opacity-50">TX:</span>
+                       <span className="flex-1 text-left">{onchainTxid}</span>
+                       <button className="p-2 hover:bg-white rounded-lg transition-all"><Link size={14} /></button>
+                    </div>
+
+                    <button
+                      onClick={() => { setShowSuccess(false); setRecipient(''); setAmount(''); setLnDetail(null); }}
+                      className="w-full py-5 border-2 border-brand-deep text-brand-deep font-black rounded-[2rem] text-[10px] uppercase tracking-widest hover:bg-brand-deep hover:text-white transition-all"
+                    >
+                       New Payment
+                    </button>
+                 </div>
+              ) : (
+                <div className="relative z-10 space-y-10">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between px-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-brand-earth">Recipient {method === 'lightning' ? 'Invoice' : 'Address'}</label>
+                        <button
+                          onClick={() => setShowScanner(!showScanner)}
+                          className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-accent-earth hover:opacity-70 transition-all"
+                        >
+                          <Scan size={12} /> {showScanner ? 'Close Scanner' : 'Scan QR'}
+                        </button>
+                      </div>
+
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={recipient}
+                          onChange={(e) => { setRecipient(e.target.value); handleRecipientChange(e.target.value); }}
+                          autoComplete="off"
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          spellCheck="false"
+                          placeholder={method === 'lightning' ? 'Invoice or lnurl...' : 'bc1q... or handle.btc'}
+                          className="w-full bg-off-white border border-border rounded-2xl py-5 pl-5 pr-12 font-mono text-sm text-brand-deep focus:outline-none focus:border-orange-500/50 transition-all"
+                        />
+                        {isSending && <div className="absolute right-5 top-1/2 -translate-y-1/2"><Loader2 className="animate-spin text-accent-earth" size={18} /></div>}
+                      </div>
+
+                      {showScanner && (
+                        <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-border group">
+                           <video ref={videoRef} className="w-full h-full object-cover opacity-60" />
+                           {isScanning && (
+                             <div className="absolute inset-0 pointer-events-none">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-accent-earth/50 shadow-[0_0_15px_rgba(194,94,0,0.8)] animate-scan" />
+                             </div>
+                           )}
+                           <div className="absolute inset-0 flex items-center justify-center">
+                              {!isScanning && !scanError && <Camera size={48} className="text-white opacity-20" />}
+                              {scanError && <div className="bg-red-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest">{scanError}</div>}
+                           </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-brand-earth px-2">Amount to Send</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          autoComplete="off"
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          spellCheck="false"
+                          disabled={bolt11HasAmount}
+                          placeholder="0.00"
+                          className="w-full bg-off-white border border-border rounded-3xl py-10 px-10 text-6xl font-black text-brand-deep focus:outline-none focus:border-orange-500/50 transition-all font-mono tracking-tighter"
+                        />
+                        <div className="absolute right-10 top-1/2 -translate-y-1/2 flex flex-col items-end">
+                           <span className="text-2xl font-black text-brand-earth">{method === 'lightning' ? 'SATS' : 'BTC'}</span>
+                           <span className="text-xs font-bold text-brand-earth/60 uppercase">~ $0.00</span>
+                        </div>
+                      </div>
+                      {bolt11HasAmount && <p className="text-[9px] text-brand-earth italic px-2">Amount fixed by invoice.</p>}
+                    </div>
+
+                    <button
+                      onClick={handleSend}
+                      disabled={isSending || !recipient || (!amount && !bolt11HasAmount)}
+                      className="w-full py-7 bg-accent-earth hover:bg-accent-earth/90 disabled:opacity-50 text-white font-black rounded-[2.5rem] text-sm uppercase tracking-[0.2em] transition-all shadow-2xl shadow-orange-600/20 active:scale-[0.98] flex items-center justify-center gap-4"
+                    >
+                      {isSending ? <Loader2 className="animate-spin" size={20} /> : <Zap size={20} className="fill-current" />}
+                      Authorize Enclave Sign
+                    </button>
+                </div>
+              )}
+           </div>
+
+           <div className="bg-ivory border border-border rounded-3xl p-8 flex gap-6 items-start">
+              <div className="p-3 bg-white rounded-2xl border border-border">
+                 <ShieldCheck size={28} className="text-green-600" />
+              </div>
+              <div className="space-y-1">
+                 <h4 className="text-xs font-black uppercase text-brand-deep tracking-widest">Privacy Guard Active</h4>
+                 <p className="text-[10px] text-brand-earth leading-relaxed">CXN Guardian is redacting PII and sensitive identifiers before network transmission. Your physical location and IP are masked via Sovereign Tor.</p>
               </div>
            </div>
         </div>
-      )}
-      {showScanner && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-brand-deep/80 backdrop-blur-lg animate-in fade-in duration-300">
-          <div className="w-full max-w-md bg-white border border-border rounded-[3rem] p-8 space-y-6 relative shadow-2xl">
-            <button type="button" onClick={() => setShowScanner(false)} className="absolute top-6 right-6 text-brand-earth hover:text-brand-deep transition-colors" aria-label="Close Scanner" title="Close Scanner">
-              <X size={24} />
-            </button>
-            <div className="text-center space-y-2">
-              <div className="w-16 h-16 bg-accent-earth/10 rounded-2xl flex items-center justify-center mx-auto text-accent-earth"><QrCode size={32} /></div>
-              <h3 className="text-xl font-black uppercase tracking-widest text-brand-deep">Scan Code</h3>
-              {scanError && <p className="text-[10px] text-red-500">{scanError}</p>}
-            </div>
-            <div className="bg-off-white border border-border p-4 rounded-2xl">
-              <video ref={videoRef} className="w-full rounded-xl" autoPlay muted playsInline />
-            </div>
-            <div className="text-center">
-              <span className="text-[10px] font-black uppercase tracking-widest text-brand-earth">{isScanning ? 'Scanning...' : 'Ready'}</span>
-            </div>
-          </div>
+
+        <div className="lg:col-span-4 space-y-8">
+           <div className="bg-off-white/40 border border-border rounded-[2.5rem] p-8 space-y-8">
+              <h3 className="text-[10px] font-black uppercase text-brand-earth tracking-widest flex items-center gap-2">
+                 <TrendingUp size={14} className="text-accent-earth" />
+                 Settlement Metrics
+              </h3>
+
+              <div className="space-y-6">
+                 <div className="flex justify-between items-end">
+                    <div>
+                       <p className="text-[9px] font-black uppercase text-brand-earth mb-1">Network Fee</p>
+                       <p className="text-sm font-bold text-brand-deep">{fees.network}</p>
+                    </div>
+                    <div className="text-right">
+                       <p className="text-[9px] font-black uppercase text-brand-earth mb-1">Integrator</p>
+                       <p className="text-sm font-bold text-brand-deep">{fees.integrator}</p>
+                    </div>
+                 </div>
+
+                 <div className="p-5 bg-green-500/5 border border-green-500/20 rounded-2xl flex items-center gap-4">
+                    <Zap size={20} className="text-green-600" />
+                    <div>
+                       <p className="text-[9px] font-black uppercase text-green-600">Citadel Savings</p>
+                       <p className="text-xs font-bold text-brand-deep">{fees.savings}</p>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="pt-8 border-t border-border/50">
+                 <h4 className="text-[9px] font-black uppercase text-brand-earth mb-4">Identity Verification</h4>
+                 <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-border">
+                    <div className="w-10 h-10 bg-off-white rounded-full flex items-center justify-center border border-border">
+                       <Fingerprint size={20} className="text-brand-earth" />
+                    </div>
+                    <div>
+                       <p className="text-[10px] font-bold text-brand-deep">Hardware Key Ready</p>
+                       <p className="text-[9px] text-brand-earth">StrongBox Attested</p>
+                    </div>
+                 </div>
+              </div>
+           </div>
+
+           <div className="bg-brand-deep text-white rounded-[2.5rem] p-8 space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 opacity-10 -mt-4 -mr-4">
+                 <Clock size={120} />
+              </div>
+              <h3 className="text-[10px] font-black uppercase tracking-widest opacity-60">Pending Invoices</h3>
+              <div className="space-y-4 relative z-10">
+                 <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <div>
+                       <p className="text-[10px] font-bold">Silent.Link</p>
+                       <p className="text-[9px] opacity-60">Expires in 12m</p>
+                    </div>
+                    <p className="text-xs font-black">2.5k SATS</p>
+                 </div>
+              </div>
+           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

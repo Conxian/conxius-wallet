@@ -5,7 +5,7 @@
 
 // Normalization: Strips non-printable and zero-width characters.
 // Excludes common whitespace (0x09, 0x0A, 0x0D) to preserve formatting.
-export const NORMALIZE_REGEX = /[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g;
+export const NORMALIZE_REGEX = /[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F-\x9F\u200B-\u200D\uFEFF]/g; // eslint-disable-line no-control-regex
 
 // BIP-39 Mnemonics (12-24 words) with varied separators.
 const MNEMONIC_PATTERN = "(?<![a-zA-Z0-9])(([a-z]{3,}[\\s\\W_0-9]+){11,23}[a-z]{3,})(?![a-zA-Z0-9])";

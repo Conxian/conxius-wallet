@@ -2,7 +2,7 @@ import { requestEnclaveSignature } from './signer';
 import * as bitcoin from 'bitcoinjs-lib';
 import { notificationService } from './notifications';
 import { endpointsFor, fetchWithRetry } from './network';
-import { fetchBtcUtxos } from './protocol';
+import { fetchUtxos } from './protocol';
 import { fetchBtcPrice } from './prices';
 import { Network, UTXO } from '../types';
 import { estimateVbytes } from './psbt';
@@ -55,7 +55,7 @@ export const createLiftPsbt = async (req: LiftRequest): Promise<{ psbtBase64: st
         }
 
         // 2. Fetch User UTXOs
-        const utxos = await fetchBtcUtxos(req.senderAddress, req.network);
+        const utxos = await fetchUtxos(req.senderAddress, req.network);
         if (utxos.length === 0) throw new Error('No UTXOs available for lifting');
 
         // 3. Build PSBT
