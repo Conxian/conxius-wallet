@@ -29,6 +29,7 @@ All notable changes to the Conxius Wallet project will be documented in this fil
   - `Web5Manager` (DIDs/DWNs)
 - **Bridged Sovereign Architecture**: Transitioned logic to a hybrid model where security-critical signing resides in the native enclave while protocol logic is managed in TypeScript.
 - **Enhanced Security**: Integrated `PlayIntegrityPlugin` for official Google Play Integrity attestation.
+- **Institutional ERP Integration**: Implemented OData v4 translation layer and X402 Mandate mapping in the Conxian Gateway for SAP/Oracle synchronization (CON-63).
 
 ### Improved
 - **Unified Protocol Fetching**: Aligned `services/protocol.ts` with the full v1.9.2 asset hierarchy.
