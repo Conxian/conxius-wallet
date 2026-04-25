@@ -61,7 +61,7 @@ export const encryptState = async (state: any, pin: string): Promise<string> => 
     return JSON.stringify({ v: CURRENT_VERSION, salt: saltArray, iv: ivArray, data: ctArray });
   } catch (e) {
     console.error("Encryption Failed:", e);
-    throw new Error("Enclave Encryption Failure");
+    throw new Error("Save failed", { cause: e }); //("Enclave Encryption Failure");
   } finally {
     // Memory Hardening: Clear plaintext state buffer from RAM
     encoded.fill(0);
@@ -88,7 +88,7 @@ export const decryptState = async (stored: string, pin: string): Promise<any> =>
 
     return JSON.parse(new TextDecoder().decode(decrypted));
   } catch (e) {
-    throw new Error("Invalid Credentials");
+    throw new Error("Load failed", { cause: e }); //("Invalid Credentials");
   } finally {
     // Memory Hardening: Zero-fill the decrypted state buffer
     if (decrypted) {

@@ -54,7 +54,7 @@ export const fetchChangellyQuote = async (from: string, to: string, amount: numb
             provider: 'Changelly', estimatedTime: 15
         };
     } catch (e) {
-        throw new Error(sanitizeError(e, 'Changelly quote unavailable'));
+        throw new Error(sanitizeError(e, 'Changelly quote unavailable'), { cause: e });
     }
 };
 
@@ -89,7 +89,7 @@ export const fetchLifiQuote = async (
             transactionRequest: data.transactionRequest
         };
     } catch (e) {
-        throw new Error(sanitizeError(e, 'LI.FI bridge unavailable'));
+        throw new Error(sanitizeError(e, 'LI.FI bridge unavailable'), { cause: e });
     }
 };
 
@@ -124,7 +124,7 @@ export const fetch1inchQuote = async (
             transactionRequest: data.tx
         };
     } catch (e) {
-        throw new Error(sanitizeError(e, '1inch aggregator unavailable'));
+        throw new Error(sanitizeError(e, '1inch aggregator unavailable'), { cause: e });
     }
 };
 
@@ -165,7 +165,7 @@ export const createChangellyTransaction = async (quote: SwapQuote, destAddress: 
         notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'Swap Initialized', message: `Swap for ${quote.toAmount} ${quote.toAsset} initialized.` });
         return { payinAddress: data.result.payinAddress, id: data.result.id };
     } catch (e) {
-        throw new Error(sanitizeError(e, 'Swap initialization failed'));
+        throw new Error(sanitizeError(e, 'Swap initialization failed'), { cause: e });
     }
 };
 

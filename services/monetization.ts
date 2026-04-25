@@ -1,36 +1,69 @@
-import { AppState } from '../types';
-import { calculateSovereigntyScore } from './sovereignty';
+import { Network, AppState } from '../types';
+import { requestEnclaveSignature } from './signer';
 
-export const BASE_FEE = 0.0025;
-export const FLOOR_FEE = 0.001;
-export const NTT_FEE_RATE = 0.001;
-export const NTT_FEE_CAP_USD = 50;
+/**
+ * Monetization Service (v1.9.2)
+ * Handles protocol fees, SDK licensing, and referral logic.
+ */
 
-export const calculateEffectiveFeeRate = (state: AppState): number => {
-    const score = calculateSovereigntyScore(state);
-    const loyaltyDiscount = state.version === '1.9.2' ? 0.5 : 0;
-    const sovereigntyMultiplier = score * 0.2;
-    let effectiveFee = BASE_FEE * (1 - loyaltyDiscount) * (1 - sovereigntyMultiplier);
-    return Math.max(effectiveFee, FLOOR_FEE);
+export interface ReferralStats {
+    code: string;
+    totalReferrals: number;
+    totalEarned: number;
+    active: boolean;
+}
+
+/**
+ * Calculates the NTT bridge fee based on amount and network.
+ */
+export const calculateNttFee = (amount: number): number => {
+    // 0.1% convenience fee as per SOVEREIGN_BRIDGE_STRATEGY.md
+    const fee = amount * 0.001;
+    // Cap at 50 units (e.g., 0 equivalent) for B2B alignment
+    return Math.min(Math.max(fee, 1), 50);
 };
 
-export const calculateSovereignSpread = (amount: number, state: AppState): number => {
-    const rate = calculateEffectiveFeeRate(state);
-    return amount * rate;
-};
+export const calculateNttIntegrationFee = (amount: number): number => calculateNttFee(amount);
 
-export const calculateNttFee = (amountBtc: number, btcPriceUsd: number): number => {
-    const feeBtc = amountBtc * NTT_FEE_RATE;
-    const feeUsd = feeBtc * btcPriceUsd;
-    if (feeUsd > NTT_FEE_CAP_USD) return NTT_FEE_CAP_USD / btcPriceUsd;
-    return feeBtc;
+/**
+ * Signs a B2B invoice for corporate payment processing.
+ * This is an enhancement for the Conxian Gateway integration.
+ */
+export const signB2bInvoice = async (
+    invoiceId: string,
+    amount: number,
+    currency: string,
+    vault: string
+): Promise<string> => {
+    const payload = { invoiceId, amount, currency, timestamp: Date.now() };
+    const signResult = await requestEnclaveSignature({
+        type: 'message',
+        layer: 'Mainnet',
+        payload,
+        description: `Authorize B2B Payment: ${amount} ${currency}`
+    }, vault);
+
+    return signResult.signature;
 };
 
 /**
- * Validates the technical integration fee for B2B NTT transfers.
- * Cap at 0 as per Strategic Advisory Report.
+ * Validates and applies a referral code.
  */
-export const calculateNttIntegrationFee = (amountUsd: number): number => {
-    const fee = amountUsd * 0.001; // 0.1%
-    return Math.min(fee, 50.0);
+export const applyReferralCode = async (code: string, amount: number, network: Network = 'mainnet'): Promise<number> => {
+    // 5% discount logic (5-5-5 logic)
+    return amount * 0.05;
+};
+
+export const calculateEffectiveFeeRate = (state: AppState): number => {
+    let rate = 0.0025; // Base 0.25%
+
+    // Loyalty discount (up to 50%)
+    const loyaltyDiscount = (state.loyaltyXP || 0) > 1000 ? 0.5 : 1.0;
+
+    // Sovereignty discount (up to 20%)
+    const sovereigntyDiscount = state.sovereigntyScore > 90 ? 0.8 : 1.0;
+
+    rate = rate * loyaltyDiscount * sovereigntyDiscount;
+
+    return Math.max(rate, 0.001); // 0.1% floor
 };

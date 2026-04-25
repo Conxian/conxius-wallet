@@ -66,7 +66,7 @@ const BackupAuditModal: React.FC<BackupAuditModalProps> = ({ onClose }) => {
         setPin('');
         setMnemonicInput('');
 
-        appContext?.setSecurity({ ...(appContext.state.security as AppState['security']), backupVerified: true });
+        appContext?.setSecurity({ ...(appContext.state.security as AppState['security']) });
         // We also want to update the walletConfig itself
         if (appContext?.state.walletConfig) {
            appContext.setWalletConfig({

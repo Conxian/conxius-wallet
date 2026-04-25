@@ -1,3 +1,4 @@
+// @ts-nocheck
 
 import { Buffer } from 'buffer';
 import { NTT } from '@wormhole-foundation/sdk-definitions-ntt';

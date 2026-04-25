@@ -3,7 +3,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { ArrowRight, Binary, Zap, Snowflake, Shield, Info, Tag, Edit3, Lock, Unlock, Eye, EyeOff, Search, Loader2, RefreshCw } from 'lucide-react';
 import { AppContext } from '../context';
 import { UTXO } from '../types';
-import { fetchBtcUtxos } from '../services/protocol';
+import { fetchUtxos } from '../services/protocol';
 
 const UTXOManager: React.FC = () => {
   const context = useContext(AppContext);
@@ -19,7 +19,7 @@ const UTXOManager: React.FC = () => {
     if (!activeAddress) return;
     setIsLoading(true);
     try {
-        const realUtxos = await fetchBtcUtxos(activeAddress);
+        const realUtxos = await fetchUtxos(activeAddress);
         setUtxos(realUtxos);
     } catch (e) {
         console.error("UTXO Indexer Error", e);
@@ -29,7 +29,7 @@ const UTXOManager: React.FC = () => {
   };
 
   useEffect(() => {
-    loadUtxos();
+    setTimeout(loadUtxos, 0);
   }, [activeAddress]);
 
   const toggleFreeze = (txid: string) => {

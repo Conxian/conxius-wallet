@@ -1,7 +1,7 @@
 
 export type BitcoinLayer = 'Mainnet' | 'Stacks' | 'Rootstock' | 'Ethereum' | 'Lightning' | 'Liquid' | 'Runes' | 'Ordinals' | 'BOB' | 'RGB' | 'Ark' | 'BitVM' | 'StateChain' | 'Maven' | 'B2' | 'Botanix' | 'Mezo' | 'Alpen' | 'Zulu' | 'Bison' | 'Hemi' | 'Nubit' | 'Lorenzo' | 'Citrea' | 'Babylon' | 'Merlin' | 'Bitlayer' | 'TaprootAssets' | 'Silent';
 export type AppMode = 'sovereign' | 'simulation';
-export type Network = 'mainnet' | 'testnet' | 'regtest' | 'devnet';
+export type Network = "mainnet" | "testnet" | "regtest" | "devnet";
 export type LnBackendType = "None" | "LND" | "Breez" | "Greenlight";
 export interface LnBackendConfig {
   type: LnBackendType;

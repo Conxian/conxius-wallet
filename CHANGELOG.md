@@ -10,7 +10,7 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 
 ## [Unreleased]
 
-## [1.9.2] - 2026-03-12
+## [1.9.2] - 2026-04-18
 
 ### Added
 - **Full Ecosystem Native Bridge**: Implemented native Kotlin managers for all supported protocols:

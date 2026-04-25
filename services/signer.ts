@@ -183,12 +183,12 @@ export const requestEnclaveSignature = async (
 
       if (request.layer === "Nostr") {
           const nPath = "m/44'/1237'/0'/0/0";
-          const derived = await workerManager.derivePath(seedBytes, nPath);
-          return { signature: "", pubkey: derived.publicKey, timestamp: Date.now() };
+          const derived = await workerManager.derivePath(seedBytes, nPath, "mainnet");
+          return { signature: "", pubkey: Buffer.from(derived.publicKey).toString("hex"), timestamp: Date.now() };
       }
 
-      const derived = await workerManager.derivePath(seedBytes, path);
-      pubkey = derived.publicKey;
+      const derived = await workerManager.derivePath(seedBytes, path, "mainnet");
+      pubkey = Buffer.from(derived.publicKey).toString("hex");
 
       if (derived.privateKey) {
           const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
@@ -258,7 +258,7 @@ export const deriveSovereignRoots = async (mnemonic: string, passphrase?: string
 
     // BIP-44 EVM Path (BOB, B2, RSK, etc)
     const ethChild = root.derivePath("m/44'/60'/0'/0/0");
-    const eth = publicKeyToEvmAddress(ethChild.publicKey);
+    const eth = publicKeyToEvmAddress(Buffer.from(ethChild.publicKey));
     const rbtc = eth;
 
     // BIP-44 Stacks Path
@@ -266,7 +266,7 @@ export const deriveSovereignRoots = async (mnemonic: string, passphrase?: string
     const stx = getAddressFromPublicKey(stxChild.publicKey);
 
     // Liquid
-    const liquid = deriveLiquidAddress(stxChild.publicKey);
+    const liquid = deriveLiquidAddress(Buffer.from(stxChild.publicKey));
 
     return { btc, taproot, eth, rbtc, stx, liquid, derivationPath: "m/84'/0'/0'/0/0" };
 };
