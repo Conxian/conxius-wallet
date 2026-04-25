@@ -1,7 +1,7 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { bech32m } from 'bech32';
 import { notificationService } from './notifications';
-import { checkBtcTxStatus } from './protocol';
+import { getTransactionStatus } from './protocol';
 import { requestEnclaveSignature } from './signer';
 
 export type RgbSchema = 'RGB20' | 'RGB21' | 'RGB25' | 'NIA';
@@ -111,10 +111,10 @@ export const validateConsignment = async (consignment: Consignment, network: any
         }
 
         // Real on-chain check
-        const status = await checkBtcTxStatus(consignment.anchor.txid, network);
-        if (!status.confirmed) {
+        const status = await getTransactionStatus(consignment.anchor.txid, 'Mainnet', network);
+        if (status.status !== "completed") {
             console.warn('Anchor transaction not confirmed on-chain');
-            notificationService.notify({ category: 'SYSTEM', type: 'warning', title: 'RGB', message: 'RGB Anchor Pending Confirmation' });
+            notificationService.notify({ category: 'SYSTEM', type: 'info', title: 'RGB', message: 'RGB Anchor Pending Confirmation' });
         }
     }
 

@@ -35,7 +35,7 @@ const InvestorDashboard: React.FC = () => {
     }
   };
 
-  useEffect(() => { runInstitutionalAudit(); }, []);
+  useEffect(() => { setTimeout(runInstitutionalAudit, 0); }, []);
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-500 pb-24">

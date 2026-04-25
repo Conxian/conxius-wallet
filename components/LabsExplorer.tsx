@@ -42,7 +42,7 @@ const LabsExplorer: React.FC = () => {
 
 
   const handleVerify = async () => {
-    const { verifyBitVmProof } = await import("../services/protocol");
+    const { verifyBitVmProof } = await import("@/services/bitvm");
     setIsVerifying(true);
     setVerificationResult(null);
     try {

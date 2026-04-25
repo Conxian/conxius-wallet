@@ -72,8 +72,9 @@ const NodeSettings: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchEthos(selectedPath);
-    researchLayer('Bitcoin L1');
+//     fetchEthos(selectedPath);
+//     researchLayer('Bitcoin L1');
+    setTimeout(() => { fetchEthos(selectedPath); researchLayer("Bitcoin L1"); }, 0);
     const interval = setInterval(() => {
       setSyncProgress(prev => prev < 100 ? +(prev + 0.01).toFixed(2) : 100);
       
@@ -103,7 +104,7 @@ const NodeSettings: React.FC = () => {
       status: 'online',
     };
     setNodes([...nodes, config]);
-    appContext?.setCustomNodes([...(appState?.customNodes || []), { ...config, isActive: true }]);
+    appContext?.setCustomNodes([...(appContext?.state.customNodes || []), { ...config, isActive: true }]);
     setIsAddingNode(false);
     setNewNode({ layer: 'Bitcoin L1', endpoint: '', provider: '' });
   };

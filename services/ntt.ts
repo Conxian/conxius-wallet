@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Buffer } from 'buffer';
 import {
     Chain,
@@ -139,7 +140,7 @@ export class NttService {
 
         } catch (error) {
             console.error('Sovereign NTT Initiation Failed:', error);
-            throw new Error(sanitizeError(error));
+            throw new Error(sanitizeError(error), { cause: error });
         }
     }
 

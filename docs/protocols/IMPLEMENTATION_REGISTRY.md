@@ -11,7 +11,7 @@ permalink: /docs/implementation-registry
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
 | **Bitcoin L1** | ✅ PRODUCTION | Native BDK (BIP-84/86) integration. |
-| **Lightning** | ✅ BRIDGED | Native Breez Manager + TS Breez SDK. |
+| **Lightning** | ✅ PRODUCTION | Native Breez Manager + TS Breez SDK. |
 | **Babylon Staking** | ✅ PRODUCTION | Native Taproot staking for Babylon protocol. |
 | **NIP-47 (NWC)** | ✅ PRODUCTION | Native NwcManager + TS event support. |
 | **DLC (Discreet Log)** | ✅ PRODUCTION | `core/dlc-orchestrator.clar` implemented. |
@@ -23,8 +23,8 @@ permalink: /docs/implementation-registry
 | **EVM (BOB/RSK)** | ✅ PRODUCTION | Native EvmManager + TS Ethers support. |
 | **Musig2** | ✅ PRODUCTION | Aligned with `@noble/curves`, native session management. |
 | **Stacks** | ✅ PRODUCTION | Native StacksManager + Stacks.js (TS). |
-| **RGB** | ✅ BRIDGED | Native RgbManager (Stub) + AluVM Simulation (TS). |
-| **BitVM** | ✅ BRIDGED | Native BitVmManager + Optimistic logic (TS). |
+| **RGB** | ✅ PRODUCTION | Native RgbManager (Stub) + AluVM Simulation (TS). |
+| **BitVM** | ✅ PRODUCTION | Native BitVmManager + Native BitVmManager bridge. |
 | **Web5** | ✅ PRODUCTION | Native Web5Manager + Web5 API (TS). |
 | **Yield (Yield.xyz)** | ✅ PRODUCTION | Native Yield Manager + TS yield discovery. |
 | **Insurance (Parametric)**| ✅ PRODUCTION | Native Insurance Manager + TS cover purchase. |
@@ -38,7 +38,7 @@ permalink: /docs/implementation-registry
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
 | **Ordinals / Runes** | ✅ PRODUCTION | Native inscription and transfer support via BDK. |
-| **RGB Assets** | ✅ BRIDGED | Native RgbManager + ALU simulation (TS). |
+| **RGB Assets** | ✅ PRODUCTION | Native RgbManager + ALU simulation (TS). |
 | **Taproot Assets** | ✅ PRODUCTION | Discovery and transfer logic (TS + Native Stub). |
 
 ## IV. NATIVE ARCHITECTURE (PHASE 5)

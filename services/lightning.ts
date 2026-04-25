@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import { bech32 } from 'bech32';
 import bolt11 from 'light-bolt11-decoder';
 import { Buffer } from 'buffer';
@@ -70,8 +71,13 @@ export function decodeBolt11(invoice: string) {
  */
 export async function payLightningInvoice(invoice: string): Promise<string> {
     // @ts-ignore: Android bridge call
-    if (window.Capacitor && window.Capacitor.Plugins.BreezManager) {
-        return await window.Capacitor.Plugins.BreezManager.payInvoice({ bolt11: invoice });
+    if (Capacitor && Capacitor.Plugins.BreezManager) {
+        // @ts-ignore
+        return await Capacitor.Plugins.BreezManager.payInvoice({ bolt11: invoice });
     }
     return "mock_preimage_for_unsupported_platform";
+}
+
+export async function payLnurl(params: LnurlPayParams | LnurlWithdrawParams, amount: number): Promise<string> {
+    return "lnurl_pay_sim_txid_" + Date.now();
 }

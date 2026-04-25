@@ -72,7 +72,7 @@ class NotificationService {
   async notifySecurity(title: string, message: string) {
     return this.notify({
       category: 'SECURITY',
-      type: 'warning',
+      type: 'info',
       title,
       message
     });

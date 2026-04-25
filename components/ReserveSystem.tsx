@@ -26,7 +26,7 @@ const ReserveSystem: React.FC = () => {
     try {
         const fresh = await fetchGlobalReserveMetrics();
         if (fresh) {
-            setReserves(fresh);
+            setReserves([{ asset: "Stacks (sBTC)", totalSupplied: fresh.totalSbtc, totalReserves: fresh.totalBtcLocked, collateralRatio: fresh.ratio * 100, status: "Audited" }]);
             setLastAudit("Just now");
         }
     } catch (e) {
@@ -37,7 +37,7 @@ const ReserveSystem: React.FC = () => {
   };
 
   useEffect(() => {
-    handleVerify();
+    setTimeout(handleVerify, 0);
   }, []);
 
   const chartData = reserves.map(r => ({
