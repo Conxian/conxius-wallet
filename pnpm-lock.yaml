@@ -64,10 +64,10 @@ importers:
         version: 4.18.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@zxing/browser':
         specifier: ^0.2.0
-        version: 0.2.0(@zxing/library@0.22.0)
+        version: 0.2.0(@zxing/library@0.23.0)
       '@zxing/library':
-        specifier: ^0.22.0
-        version: 0.22.0
+        specifier: ^0.23.0
+        version: 0.23.0
       bech32:
         specifier: ^2.0.0
         version: 2.0.0
@@ -99,8 +99,8 @@ importers:
         specifier: ^6.0.2-liquid.37
         version: 6.0.2-liquid.37
       lucide-react:
-        specifier: ^1.11.0
-        version: 1.11.0(react@19.2.5)
+        specifier: ^1.14.0
+        version: 1.14.0(react@19.2.5)
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -175,8 +175,8 @@ importers:
         specifier: ^4.1.5
         version: 4.1.5(vitest@4.1.5)
       '@wormhole-foundation/sdk-definitions-ntt':
-        specifier: ^4.0.17
-        version: 4.0.17(@wormhole-foundation/sdk-base@4.18.0)(@wormhole-foundation/sdk-definitions@4.18.0)
+        specifier: ^5.0.0
+        version: 5.0.0(@wormhole-foundation/sdk-base@4.18.0)(@wormhole-foundation/sdk-definitions@4.18.0)
       algosdk:
         specifier: ^3.5.2
         version: 3.5.2
@@ -1907,11 +1907,11 @@ packages:
     resolution: {integrity: sha512-iZJJh/MzPCK2FT2efEy+f3jb5C4qshoaIQ/wvuEQVjvHyFqOb0SyHgCXlNvUrJyY0+JsYP7lN5MWb0/w4uCeBw==}
     engines: {node: '>=16'}
 
-  '@wormhole-foundation/sdk-definitions-ntt@4.0.17':
-    resolution: {integrity: sha512-fQH4Pt2KOYR9L/vUfj47ifwKxDKPtJWt8GxlmQmY317GeM6nUxSqvBedPaEmHbQFrDsWruEa9MTQINIMFbE/8w==}
+  '@wormhole-foundation/sdk-definitions-ntt@5.0.0':
+    resolution: {integrity: sha512-XqBz/13L1VwbjaZ+lXWq3zVMUh2RIsElxVdtNXOXxwf2oR/9CbnSzFOsse8fB3J3CuWAXacstArxgrZEoBP1Yw==}
     peerDependencies:
-      '@wormhole-foundation/sdk-base': ^4.12.2
-      '@wormhole-foundation/sdk-definitions': ^4.12.2
+      '@wormhole-foundation/sdk-base': ^4.17.0
+      '@wormhole-foundation/sdk-definitions': ^4.17.0
 
   '@wormhole-foundation/sdk-definitions@4.18.0':
     resolution: {integrity: sha512-Zyzk1SVoGjUwWqXSt2W5NJkaB1nkNALb5qsaJUxVxFJ090t2VmTv2TXTgTKCgmgeAB+QK30TV4RzSfMeoFr4aA==}
@@ -2009,8 +2009,8 @@ packages:
     peerDependencies:
       '@zxing/library': ^0.22.0
 
-  '@zxing/library@0.22.0':
-    resolution: {integrity: sha512-BmInervZV7NwaZWX1LW64sZ4Lh4wxXYFZwGmj98ArPOkRXCtO9b8Gog0Xyh82dsYYGOeRxX+aAhLSq+hQ2XLZQ==}
+  '@zxing/library@0.23.0':
+    resolution: {integrity: sha512-6fkkoFwP8CHxl6ugnPsj74PLJgX2iRv5zczGAyt5OBzQgxFhuhF0NCEc4t4OvSr8xAv2MRLlI0Iu9ZGDZQ2urA==}
     engines: {node: '>= 24.0.0'}
 
   '@zxing/text-encoding@0.9.0':
@@ -3548,8 +3548,8 @@ packages:
     resolution: {integrity: sha512-ERJq3FOzJTxBbFjZ7iDs+NiK4VI9Wz+RdrrAB8dio1oV+YvdPzUEE4QNiT2VD51DkIbCYRUUzCRkssXCHqSnKQ==}
     engines: {node: 14 || >=16.14}
 
-  lucide-react@1.11.0:
-    resolution: {integrity: sha512-UOhjdztXCgdBReRcIhsvz2siIBogfv/lhJEIViCpLt924dO+GDms9T7DNoucI23s6kEPpe988m5N0D2ajnzb2g==}
+  lucide-react@1.14.0:
+    resolution: {integrity: sha512-+1mdWcfSJVUsaTIjN9zoezmUhfXo5l0vP7ekBMPo3jcS/aIkxHnXqAPsByszMZx/Y8oQBRJxJx5xg+RH3urzxA==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -6904,7 +6904,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@wormhole-foundation/sdk-definitions-ntt@4.0.17(@wormhole-foundation/sdk-base@4.18.0)(@wormhole-foundation/sdk-definitions@4.18.0)':
+  '@wormhole-foundation/sdk-definitions-ntt@5.0.0(@wormhole-foundation/sdk-base@4.18.0)(@wormhole-foundation/sdk-definitions@4.18.0)':
     dependencies:
       '@wormhole-foundation/sdk-base': 4.18.0
       '@wormhole-foundation/sdk-definitions': 4.18.0
@@ -7189,13 +7189,13 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@zxing/browser@0.2.0(@zxing/library@0.22.0)':
+  '@zxing/browser@0.2.0(@zxing/library@0.23.0)':
     dependencies:
-      '@zxing/library': 0.22.0
+      '@zxing/library': 0.23.0
     optionalDependencies:
       '@zxing/text-encoding': 0.9.0
 
-  '@zxing/library@0.22.0':
+  '@zxing/library@0.23.0':
     dependencies:
       ts-custom-error: 3.3.1
     optionalDependencies:
@@ -8931,7 +8931,7 @@ snapshots:
 
   lru-cache@9.1.2: {}
 
-  lucide-react@1.11.0(react@19.2.5):
+  lucide-react@1.14.0(react@19.2.5):
     dependencies:
       react: 19.2.5
 
