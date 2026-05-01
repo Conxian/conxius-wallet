@@ -26,7 +26,7 @@ export const getBountyAudit = async (bountyTitle: string, description: string) =
 export const generateReleaseNotes = async (version: string) => {
   const prompt = `Generate a high-density, professional 'Cypherpunk' style release report for Conxius Wallet SVN ${version}.
   Highlight:
-  - The transition to BSL 1.1 Licensing.
+  - The transition to MIT Licensing.
   - Integrated System Health CXN Guardian.
   - Native Wormhole NTT Bridge stabilization.
   - Sovereign Studio expansion (Ordinals/Runes).

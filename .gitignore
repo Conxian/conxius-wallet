@@ -77,7 +77,7 @@ openspec/changes/*
 /*.txt
 !/README.md
 !/CONTRIBUTING.md
-!/LICENSE.md
+!/LICENSE
 !/AGENTS.md
 !/SECURITY.md
 !/CHANGELOG.md
