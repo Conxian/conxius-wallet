@@ -43,7 +43,7 @@ bdk-android = { module = "org.bitcoindevkit:bdk-android", version.ref = "bdk" }
 bdk-jvm = { module = "org.bitcoindevkit:bdk-jvm", version.ref = "bdk" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 sqlcipher = { module = "net.zetetic:android-database-sqlcipher", version.ref = "sqlcipher" }
-sqlite-ktx = { module = "androidx.sqlite:sqlite-ktx", version = "2.4.0" }
+sqlite-ktx = { module = "androidx.sqlite:sqlite-ktx", version = "2.6.2" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
