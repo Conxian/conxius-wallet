@@ -17,6 +17,7 @@ and sovereign multi-chain management on mobile devices.
    network calls.
 3. **Local-First**: Utilize on-device TEE (The Conclave) for all cryptographic
    operations.
+4. **Security-First Ignore Policy**: We maintain strict `.gitignore` rules across all sub-projects. Never commit secrets, API keys, or keystores. Use `.env.example` templates for configuration and store actual secrets in your local `.env` or system environment.
 
 ## 🛠️ Development Standards
 
