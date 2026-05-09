@@ -17,7 +17,7 @@ This inventory identifies the main overlap signals that should be reduced so `co
 
 - `.gitmodules` -> **replace**
 - `conxian-gateway/README.md` -> **replace**
-- visible `lib-conxian-core` root reference -> **replace**
+- `lib-conxian-core/` -> **replace**
 - `openspec/specs/submodules.md` -> **narrow**
 
 Reason:
@@ -33,7 +33,7 @@ Reason:
 ### Broader architecture and operations docs
 
 - `docs/architecture/GCP_INFRASTRUCTURE.md` -> **narrow**
-- `docs/operations/SYSTEM_ALIGNMENT_ENHANCEMENT_PLAN.md` -> **move or narrow**
+- `docs/operations/SYSTEM_ALIGNMENT_ENHANCEMENT_PLAN.md` -> **move**
 - `docs/operations/VERIFICATION_PATHWAY.md` -> **narrow**
 
 Reason:
