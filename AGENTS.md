@@ -50,8 +50,8 @@ Gateway.
 - `/components`: 38 React UI components.
 - `/services`: Core business logic (32 modules).
 - `/android`: Native Android project (Phase 4/5 Native Migration).
-- `/conxian-gateway`: (Sub-project) The Conxian Gateway enhancement.
-- `/lib-conxian-core`: (Sub-project) Shared Rust/TS core library.
+- `/conxian-gateway`: External companion repository reference used for integration context (not wallet-owned implementation surface).
+- `/lib-conxian-core`: External shared core repository reference (may be pinned here as a compatibility submodule; not wallet-owned implementation surface).
 
 ---
 

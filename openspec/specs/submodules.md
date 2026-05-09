@@ -7,10 +7,9 @@ permalink: /./openspec/specs/submodules
 # Submodule Specification (v1.9.2)
 
 ## lib-conxian-core
-- **Scope**: Shared protocol alignment logic, API definitions, and research-backed metadata.
-- **Role**: Provides the backing logic for Kotlin signers and risk assessment engines.
+- **Scope**: External shared core repository for protocol alignment logic, API definitions, and research-backed metadata.
+- **Boundary**: May be tracked in this repo as a submodule reference for compatibility alignment.
 
 ## conxian-gateway
-- **Scope**: B2B entry point for sovereign services and institutional quorums.
-- **Components**: API Layer (Actix-web), Engine Layer (Risk/Ecosystem metrics).
-- **Services**: Bisq, RGB, BitVM, Changelly proxy.
+- **Scope**: External companion repository for B2B sovereign services and institutional quorums.
+- **Boundary**: Referenced for wallet integration context and API/service compatibility; not tracked as a wallet submodule.

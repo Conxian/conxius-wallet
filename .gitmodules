@@ -2,7 +2,3 @@
 	path = lib-conxian-core
 	url = https://github.com/Conxian/lib-conxian-core.git
 	branch = main
-[submodule "conxian-gateway"]
-	path = conxian-gateway
-	url = https://github.com/Conxian/conxian-gateway.git
-	branch = main

@@ -31,9 +31,10 @@ https://github.com/Conxian/conxius-wallet/blob/main/.github/CODEOWNERS
 
 ## Relationship to the Conxian stack
 
-- **Client interface** for interacting with the Conxian protocol and broader Bitcoin-layer integrations.
+- **Reference client interface** for interacting with the Conxian protocol and broader Bitcoin-layer integrations.
 - **CXN Guardian AI**: Integrated privacy layer enforcing Zero Secret Egress for all interactions.
 - **Conxian Gateway**: Consumes Gateway APIs for state, compliance, and multi-layer coordination.
+- **Boundary clarification**: `conxian-gateway` services and `lib-conxian-core` shared logic are maintained in separate companion repositories/services; this wallet repo remains the reference client surface.
 
 
 ## 📦 Release Discipline

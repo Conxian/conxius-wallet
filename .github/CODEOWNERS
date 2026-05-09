@@ -25,8 +25,6 @@
 /.github/workflows/ @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
 
 # Submodules (Infrastructure)
-/lib-conxian-core/ @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
-/conxian-gateway/ @conxian-labs/security-reviewers @botshelomokoka @admin-conxian-labs
 
 # Legal & Compliance
 /docs/legal/ @conxian-labs/compliance-team
