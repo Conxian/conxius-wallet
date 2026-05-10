@@ -22,7 +22,7 @@ found a security vulnerability, please report it to us responsibly.
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-Instead, please send an encrypted email to <security@conxian.io> (if available)
+Instead, please send an encrypted email to <security@conxian.io>
 or contact the maintainers directly through secure channels.
 
 Please include:

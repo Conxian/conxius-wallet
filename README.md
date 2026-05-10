@@ -34,8 +34,18 @@ https://github.com/Conxian/conxius-wallet/blob/main/.github/CODEOWNERS
 - **Reference client interface** for interacting with the Conxian protocol and broader Bitcoin-layer integrations.
 - **CXN Guardian AI**: Integrated privacy layer enforcing Zero Secret Egress for all interactions.
 - **Conxian Gateway**: Consumes Gateway APIs for state, compliance, and multi-layer coordination.
-- **Boundary clarification**: `conxian-gateway` services and `lib-conxian-core` shared logic are maintained in separate companion repositories/services; this wallet repo remains the reference client surface.
+- **Boundary clarification**: `conxius-wallet` is a reference client. It owns reference interaction flows and signer UX validation, but it **does not own** canonical adapter implementations, shared-core behavior, or infrastructure logic that belongs below the client layer.
+- **Boundary rule**: This repo should validate and demonstrate the platform strategy, not define it. Shared logic should move downward into strategic infrastructure repos (like `lib-conxian-core`) where appropriate.
 
+## ⚖️ Governance
+
+Conxius operates under a structured governance and operational framework:
+
+- **Operating Model**: Defined in [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md).
+- **License**: [MIT License](LICENSE).
+- **Security Policy**: [SECURITY.md](SECURITY.md) for vulnerability reporting.
+- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md) for development standards.
+- **Ownership**: [REPO_OWNERSHIP.md](REPO_OWNERSHIP.md) for detailed domain boundaries.
 
 ## 📦 Release Discipline
 
