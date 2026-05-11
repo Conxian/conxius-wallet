@@ -45,9 +45,21 @@ Before submitting a change:
 1. **Run Unit Tests**: `pnpm test`
 2. **Run E2E Tests**: `pnpm run test:e2e` (Playwright)
 3. **Verify UI**: Ensure that sensitive fields have `autoComplete="off"` and
-   other security attributes.
+   other security attributes. UI changes must align with the **Sovereign Earthy** design system defined in [PRD.md](PRD.md#5-uiux-standardization-sovereign-earthy).
 4. **Check Logs**: Ensure no sensitive data is leaked to the console or Android
    logs.
+
+## 🚦 Branch Workflow & Approvals
+
+Conxius Wallet follows a strict promotion pipeline:
+
+1. **`dev`**: Active development and testnet validation.
+2. **`staged`**: Mainnet candidate validation and security audit lane.
+3. **`main`**: Production-only.
+
+**Approval Requirements**:
+- All "High" and "Urgent" issues require **COO (Sizwe Nkosi)** review and sign-off before promotion to `main`.
+- Promotion to `main` requires successful E2E validation and compliance with the [Launch Gate](docs/operations/OPERATING_MODEL.md#launch-gate-con-129).
 
 ## 📜 Documentation & PRD Sync
 
