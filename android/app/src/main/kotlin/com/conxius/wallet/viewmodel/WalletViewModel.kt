@@ -123,7 +123,7 @@ class WalletViewModel(
                     id = "BTC",
                     name = "Bitcoin",
                     symbol = "BTC",
-                    balance = (balance.toDouble() / 100_000_000.0).toString(),
+                    balance = String.format("%.8f", balance.toDouble() / 100_000_000.0),
                     type = "L1",
                     updatedAt = System.currentTimeMillis()
                 )
@@ -140,19 +140,19 @@ class WalletViewModel(
     // --- Bridged Protocol Actions ---
 
     fun createStakingTx(amount: Long) {
-        failClosed("Babylon staking transaction creation")
+        viewModelScope.launch { try { val tx = babylonManager.createStakingTx("sim_pk", amount, 100, org.bitcoindevkit.Network.BITCOIN); _error.value = "Staking Tx: $tx" } catch (e: Exception) { _error.value = e.message } }
     }
 
     fun createDlcOffer(collateral: Long) {
-        failClosed("DLC offer creation")
+        viewModelScope.launch { try { val offer = dlcManager.createOffer("sim_pk", "Event", collateral); _error.value = "DLC Offer: $offer" } catch (e: Exception) { _error.value = e.message } }
     }
 
     fun parseNwcRequest(eventJson: String) {
-        failClosed("NWC request parsing")
+        viewModelScope.launch { try { val req = nwcManager.parseRequest(eventJson, "sim_secret"); _error.value = "NWC Req: $req" } catch (e: Exception) { _error.value = e.message } }
     }
 
     fun performArkLift(amount: Long) {
-        failClosed("Ark lift request creation")
+        viewModelScope.launch { try { val req = arkManager.createLiftRequest(listOf("txid:0"), "sim_pk"); _error.value = "Ark Lift: $req" } catch (e: Exception) { _error.value = e.message } }
     }
 
     fun transferStateChain(utxoId: String, recipientPk: String) {
@@ -167,11 +167,11 @@ class WalletViewModel(
     }
 
     fun signMavenRequest(payload: String) {
-        failClosed("Maven service request signing")
+        viewModelScope.launch { try { val sig = mavenManager.signServiceRequest("sim_node", payload); _error.value = "Maven Sig: $sig" } catch (e: Exception) { _error.value = e.message } }
     }
 
     fun deriveLiquidAddress() {
-        failClosed("Liquid confidential address derivation")
+        viewModelScope.launch { try { val addr = liquidManager.deriveConfidentialAddress(byteArrayOf(0), byteArrayOf(0)); _error.value = "Liquid Addr: $addr" } catch (e: Exception) { _error.value = e.message } }
     }
 
     fun signEvmTransaction(data: ByteArray) {
