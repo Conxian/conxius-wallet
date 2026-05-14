@@ -21,7 +21,7 @@
     "@capacitor/local-notifications": "^8.1.0",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
-    "@google/genai": "^2.2.0",
+    "@google/genai": "^2.1.0",
     "@noble/curves": "^2.2.0",
     "@noble/hashes": "^2.2.0",
     "@stacks/auth": "^7.4.0",
