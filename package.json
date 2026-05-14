@@ -45,7 +45,7 @@
     "is-generator-function": "^1.1.2",
     "light-bolt11-decoder": "^3.0.0",
     "liquidjs-lib": "^6.0.2-liquid.37",
-    "lucide-react": "^1.14.0",
+    "lucide-react": "^1.16.0",
     "node-fetch": "^3.3.2",
     "payjoin-client": "^1.0.1",
     "qrcode": "^1.5.3",
@@ -57,7 +57,7 @@
     "vite-plugin-wasm": "^3.6.0"
   },
   "devDependencies": {
-    "@aptos-labs/ts-sdk": "^6.3.1",
+    "@aptos-labs/ts-sdk": "^7.0.0",
     "@capacitor/cli": "^8.3.4",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
@@ -86,7 +86,7 @@
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.3",
-    "vite": "^8.0.12",
+    "vite": "^8.0.13",
     "vite-plugin-node-polyfills": "^0.26.0",
     "vitest": "^4.1.6"
   },
