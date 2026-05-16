@@ -20,3 +20,7 @@ updates:
     directory: "/android"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "cargo"
+    directory: "/lib-conxian-core"
+    schedule:
+      interval: "weekly"
