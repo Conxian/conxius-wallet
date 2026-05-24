@@ -119,3 +119,24 @@ export const SENSITIVE_REPLACE_PATTERNS = [
   BOLT11_REGEX,
   API_KEY_REGEX
 ];
+
+/**
+ * Phase 6 "Intelligence" Feature Flags and Runtime Guards.
+ * Controlled enforcement of AgentOps, UBI, and Nexus sync interfaces.
+ */
+export const PHASE6_FLAGS = {
+  PHASE6_AGENTOPS_READS_ENABLED: process.env.PHASE6_AGENTOPS_READS_ENABLED === 'true',
+  PHASE6_UBI_ENFORCEMENT_ENABLED: process.env.PHASE6_UBI_ENFORCEMENT_ENABLED === 'true',
+  PHASE6_NEXUS_SYNC_ENFORCEMENT_ENABLED: process.env.PHASE6_NEXUS_SYNC_ENFORCEMENT_ENABLED === 'true',
+};
+
+/**
+ * Validates that a Phase 6 operation is enabled and enforces fail-closed behavior.
+ */
+export function enforcePhase6Guard(operation: keyof typeof PHASE6_FLAGS, context: string): void {
+  if (!PHASE6_FLAGS[operation]) {
+    const errorMsg = `[SECURITY_GUARD] PHASE6 violation: ${operation} is disabled. Context: ${context}`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+}

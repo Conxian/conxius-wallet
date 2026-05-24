@@ -22,7 +22,7 @@ describe('Native Bridge Integrity', () => {
   it('should have bridge methods in WalletViewModel', () => {
     const vmContent = fs.readFileSync(path.join(process.cwd(), 'android/app/src/main/kotlin/com/conxius/wallet/viewmodel/WalletViewModel.kt'), 'utf8');
 
-    expect(vmContent).toContain('fun createStakingTx(amount: Long)');
+    expect(vmContent).toContain('fun createStakingTx(stakerPk: String, amount: Long)');
     expect(vmContent).toContain('babylonManager.createStakingTx');
   });
 });

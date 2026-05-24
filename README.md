@@ -31,18 +31,29 @@ https://github.com/Conxian/conxius-wallet/blob/main/.github/CODEOWNERS
 
 ## Relationship to the Conxian stack
 
-- **Client interface** for interacting with the Conxian protocol and broader Bitcoin-layer integrations.
+- **Reference client interface** for interacting with the Conxian protocol and broader Bitcoin-layer integrations.
 - **CXN Guardian AI**: Integrated privacy layer enforcing Zero Secret Egress for all interactions.
 - **Conxian Gateway**: Consumes Gateway APIs for state, compliance, and multi-layer coordination.
+- **Boundary clarification**: `conxius-wallet` is a reference client. It owns reference interaction flows and signer UX validation, but it **does not own** canonical adapter implementations, shared-core behavior, or infrastructure logic that belongs below the client layer.
+- **Boundary rule**: This repo should validate and demonstrate the platform strategy, not define it. Shared logic should move downward into strategic infrastructure repos (like `lib-conxian-core`) where appropriate.
 
+## ⚖️ Governance
+
+Conxius operates under a structured governance and operational framework:
+
+- **Operating Model**: Defined in [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md).
+- **License**: [MIT License](LICENSE).
+- **Security Policy**: [SECURITY.md](SECURITY.md) for vulnerability reporting.
+- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md) for development standards.
+- **Ownership**: [REPO_OWNERSHIP.md](REPO_OWNERSHIP.md) for detailed domain boundaries.
 
 ## 📦 Release Discipline
 
 Conxius Wallet follows a strict release flow:
 - **Versioning**: Semantic Versioning (SemVer) is enforced.
-- **Tags**: Production releases are tagged (e.g., \`v1.9.2\`).
-- **Changelog**: Every release requires an entry in \`CHANGELOG.md\`.
-- **Promotion**: Changes flow from \`dev\` -> \`staged\` -> \`main\`. Promotion to \`main\` requires COO approval and successful E2E validation.
+- **Tags**: Production releases are tagged (e.g., `v1.9.2`).
+- **Changelog**: Every release requires an entry in `CHANGELOG.md`.
+- **Promotion**: Changes flow from `dev` -> `staged` -> `main`. Promotion to `main` requires COO approval and successful E2E validation.
 
 ## 🚀 Key Pillars
 
