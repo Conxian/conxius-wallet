@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Asset, AppState } from "../types";
 import { fetchWithRetry, sanitizeError } from "./network";
 import { secureAuditPrompt, rehydrateResponse } from "./ai-security";
+import { enforcePhase6Guard } from "./security-constants";
 
 /**
  * Unified AI Service (Sovereign v1.1)
@@ -91,5 +92,13 @@ export const auditSpendingPolicy = async (policy: any) => {
   return callAi(prompt, {
     systemInstruction: "You are the Satoshi Risk Auditor. You specialize in Bitcoin Script and Miniscript security.",
     model: "gemini-1.5-pro",
+  });
+};
+
+export const getAgentOpsMetrics = async () => {
+  enforcePhase6Guard('PHASE6_AGENTOPS_READS_ENABLED', 'Fetching AgentOps metrics');
+  return callAi('Analyze system AgentOps efficiency and autonomous spend ratio.', {
+    systemInstruction: 'You are the AgentOps Observer.',
+    model: 'gemini-1.5-flash'
   });
 };
