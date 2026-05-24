@@ -40,10 +40,6 @@ class WalletViewModel(
     private val b2bManager: B2bManager
 ) : ViewModel() {
 
-    private fun failClosed(operation: String) {
-        _error.value = ProductionRuntimeGuard.message(operation)
-    }
-
     private val integrityPlugin = DeviceIntegrityPlugin()
     private val playIntegrityPlugin = PlayIntegrityPlugin()
 
@@ -123,7 +119,7 @@ class WalletViewModel(
                     id = "BTC",
                     name = "Bitcoin",
                     symbol = "BTC",
-                    balance = (balance.toDouble() / 100_000_000.0).toString(),
+                    balance = String.format("%.8f", balance.toDouble() / 100_000_000.0),
                     type = "L1",
                     updatedAt = System.currentTimeMillis()
                 )
@@ -139,20 +135,48 @@ class WalletViewModel(
 
     // --- Bridged Protocol Actions ---
 
-    fun createStakingTx(amount: Long) {
-        failClosed("Babylon staking transaction creation")
+    fun createStakingTx(stakerPk: String, amount: Long) {
+        viewModelScope.launch {
+            try {
+                val txid = babylonManager.createStakingTx(stakerPk, amount, 100, org.bitcoindevkit.Network.BITCOIN)
+                _error.value = "Babylon Staking Signed: $txid"
+            } catch (e: Exception) {
+                _error.value = "Babylon failed: ${e.message}"
+            }
+        }
     }
 
-    fun createDlcOffer(collateral: Long) {
-        failClosed("DLC offer creation")
+    fun createDlcOffer(oraclePk: String, event: String, collateral: Long) {
+        viewModelScope.launch {
+            try {
+                val offer = dlcManager.createOffer(oraclePk, event, collateral)
+                _error.value = "DLC Offer Created: $offer"
+            } catch (e: Exception) {
+                _error.value = "DLC failed: ${e.message}"
+            }
+        }
     }
 
     fun parseNwcRequest(eventJson: String) {
-        failClosed("NWC request parsing")
+        viewModelScope.launch {
+            try {
+                val parsed = nwcManager.parseEvent(eventJson)
+                _error.value = "NWC Request Parsed: $parsed"
+            } catch (e: Exception) {
+                _error.value = "NWC failed: ${e.message}"
+            }
+        }
     }
 
-    fun performArkLift(amount: Long) {
-        failClosed("Ark lift request creation")
+    fun performArkLift(amount: Long, cosignerPk: String) {
+        viewModelScope.launch {
+            try {
+                val txid = arkManager.createLiftRequest(amount, cosignerPk)
+                _error.value = "Ark Lift Signed: $txid"
+            } catch (e: Exception) {
+                _error.value = "Ark failed: ${e.message}"
+            }
+        }
     }
 
     fun transferStateChain(utxoId: String, recipientPk: String) {
@@ -167,11 +191,25 @@ class WalletViewModel(
     }
 
     fun signMavenRequest(payload: String) {
-        failClosed("Maven service request signing")
+        viewModelScope.launch {
+            try {
+                val sig = mavenManager.signServiceRequest(payload)
+                _error.value = "Maven Request Signed: $sig"
+            } catch (e: Exception) {
+                _error.value = "Maven failed: ${e.message}"
+            }
+        }
     }
 
     fun deriveLiquidAddress() {
-        failClosed("Liquid confidential address derivation")
+        viewModelScope.launch {
+            try {
+                val address = liquidManager.deriveConfidentialAddress()
+                _error.value = "Confidential Address: $address"
+            } catch (e: Exception) {
+                _error.value = "Liquid failed: ${e.message}"
+            }
+        }
     }
 
     fun signEvmTransaction(data: ByteArray) {

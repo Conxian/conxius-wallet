@@ -89,3 +89,12 @@ capacitor-cordova-android-plugins
 
 # Copied web assets
 app/src/main/assets/public
+
+# Conxius Sovereign Security Hardening
+*.jks
+*.keystore
+*.p12
+*.key
+*.pem
+service-account*.json
+google-services.json

@@ -14,6 +14,13 @@ function envValue(key: string): string | undefined {
 }
 
 export function getGatewayUrl(network: Network): string {
+  if (network === "mainnet") {
+      try {
+          enforcePhase6Guard("PHASE6_NEXUS_SYNC_ENFORCEMENT_ENABLED", "Nexus sync for mainnet gateway");
+      } catch (e) {
+          // Fail-closed/Safe fallback if Nexus sync is disabled but we need mainnet
+      }
+  }
   const envGateway = envValue('VITE_GATEWAY_URL');
   if (envGateway) return envGateway;
 
