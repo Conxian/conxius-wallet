@@ -21,7 +21,7 @@
     "@capacitor/local-notifications": "^8.2.0",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
-    "@google/genai": "^2.4.0",
+    "@google/genai": "^2.5.0",
     "@noble/curves": "^2.2.0",
     "@noble/hashes": "^2.2.0",
     "@stacks/auth": "^7.4.0",
@@ -57,7 +57,7 @@
     "vite-plugin-wasm": "^3.6.0"
   },
   "devDependencies": {
-    "@aptos-labs/ts-sdk": "^7.0.1",
+    "@aptos-labs/ts-sdk": "^7.1.0",
     "@capacitor/cli": "^8.3.4",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
@@ -71,8 +71,8 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
-    "@vitest/ui": "^4.1.6",
-    "@wormhole-foundation/sdk-definitions-ntt": "^5.0.2",
+    "@vitest/ui": "^4.1.7",
+    "@wormhole-foundation/sdk-definitions-ntt": "^6.0.0",
     "algosdk": "^3.5.2",
     "autoprefixer": "^10.5.0",
     "eslint": "^10.4.0",
@@ -86,9 +86,9 @@
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.4",
-    "vite": "^8.0.13",
+    "vite": "^8.0.14",
     "vite-plugin-node-polyfills": "^0.28.0",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
