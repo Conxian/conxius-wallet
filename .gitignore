@@ -106,3 +106,6 @@ openspec/changes/*
 .trae/
 .amazonq/
 .kilocode/
+node_modules/
+test-results/
+playwright-report/
