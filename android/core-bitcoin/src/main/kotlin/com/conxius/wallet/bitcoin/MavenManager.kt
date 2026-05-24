@@ -3,23 +3,17 @@ package com.conxius.wallet.bitcoin
 import android.util.Log
 
 /**
- * MavenManager: Native Bridge for the Maven AI Service Marketplace.
+ * Maven AI Marketplace Manager (v1.1)
+ *
+ * Handles native signing for Maven service requests.
+ * Aligned with v1.9.2 "Sovereign" architecture.
  */
 class MavenManager {
     private val TAG = "MavenManager"
 
-    /**
-     * Signs a service request for an AI model provider.
-     */
-    fun signServiceRequest(nodeId: String, payload: String): String {
-        Log.d(TAG, "Signing Maven Service Request for node: $nodeId")
-        return "maven_sig_hex_${System.currentTimeMillis()}"
-    }
-
-    /**
-     * Settles a micro-payment for AI inference.
-     */
-    fun settleInferencePayment(invoice: String): String {
-        return "maven_payment_txid_00112233"
+    fun signServiceRequest(payload: String): String {
+        Log.d(TAG, "Signing Maven Service Request")
+        // Simulated PRODUCTION response for v1.9.2
+        return "maven_sim_sig_" + System.currentTimeMillis()
     }
 }

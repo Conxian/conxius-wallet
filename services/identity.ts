@@ -92,6 +92,15 @@ export class IdentityService {
          }
 
          const identity = { did, web5Did, address, publicKey: pubkey };
+
+         // Phase 6 UBI Enforcement Guard
+         if (this.network === "mainnet") {
+             try {
+                 enforcePhase6Guard("PHASE6_UBI_ENFORCEMENT_ENABLED", "Validating UBI eligibility for identity");
+             } catch (e) {
+                 console.warn("Phase 6 UBI Enforcement is disabled, skipping UBI binding for now.");
+             }
+         }
          IdentityService.cache.set(cacheKey, identity);
          return identity;
      } catch (e) {
