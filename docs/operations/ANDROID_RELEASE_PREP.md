@@ -6,7 +6,7 @@ permalink: /docs/android-release-prep
 
 # Android Release Preparation Guide
 
-**Last Updated:** 2026-02-18
+**Last Updated:** 2026-05-28
 **Status:** Pre-release checklist — all items must be completed before Play Store submission.
 
 ---
@@ -68,36 +68,44 @@ permalink: /docs/android-release-prep
 
 ## 3. Android Build Configuration
 
-### 3.1 Update `build.gradle`
+### 3.1 Update `android/app/build.gradle.kts`
 
-```groovy
-// android/app/build.gradle
+```kotlin
 android {
-    defaultConfig {
-        applicationId "com.conxius.wallet"
-        versionCode 4          // Increment for each release
-        versionName "0.4.0"    // Semantic version
-    }
-    
+    val keystorePath = System.getenv("KEYSTORE_PATH")
+    val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
+    val keyAlias = System.getenv("KEY_ALIAS")
+    val keyPassword = System.getenv("KEY_PASSWORD")
+
     signingConfigs {
-        release {
-            storeFile file(System.getenv("KEYSTORE_PATH") ?: "conxius-upload.keystore")
-            storePassword System.getenv("KEYSTORE_PASSWORD")
-            keyAlias System.getenv("KEY_ALIAS") ?: "conxius-upload"
-            keyPassword System.getenv("KEY_PASSWORD")
+        create("release") {
+            storeFile = keystorePath?.let { file(it) }
+            storePassword = keystorePassword
+            this.keyAlias = keyAlias
+            this.keyPassword = keyPassword
         }
     }
-    
+
     buildTypes {
         release {
-            signingConfig signingConfigs.release
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
 ```
+
+Signing env vars expected at release build time:
+
+- `KEYSTORE_PATH`
+- `KEYSTORE_PASSWORD`
+- `KEY_ALIAS`
+- `KEY_PASSWORD`
 
 ### 3.2 ProGuard Rules
 
@@ -110,9 +118,9 @@ Ensure `proguard-rules.pro` has rules for:
 
 ### 3.3 Play Integrity (Optional Enhancement)
 
-```groovy
-// Add to dependencies in android/app/build.gradle
-implementation 'com.google.android.play:integrity:1.3.0'
+```kotlin
+// Add to dependencies in android/app/build.gradle.kts
+implementation("com.google.android.play:integrity:1.3.0")
 ```
 
 Then update `DeviceIntegrityPlugin.java` to call Play Integrity API alongside local checks.
@@ -134,9 +142,9 @@ Then update `DeviceIntegrityPlugin.java` to call Play Integrity API alongside lo
 ### Build Verification
 
 - [ ] `pnpm run build` succeeds
-- [ ] `pnpm cap sync` completes without errors
-- [ ] `./gradlew assembleRelease` produces signed APK
-- [ ] APK size is reasonable (< 50MB target)
+- [ ] `pnpm exec cap sync android` completes without errors
+- [ ] `cd android && ./gradlew bundleRelease` produces signed AAB
+- [ ] AAB size is reasonable (< 50MB target)
 - [ ] All unit tests pass (`pnpm test` — 106/106 ✅)
 - [ ] E2E tests pass (`pnpm run test:e2e`)
 
@@ -164,34 +172,53 @@ Then update `DeviceIntegrityPlugin.java` to call Play Integrity API alongside lo
 
 ### GitHub Actions Workflow
 
-The existing `.github/workflows/ci.yml` handles build/test. For release:
+Release automation is implemented in `.github/workflows/android-release.yml` and runs via `workflow_dispatch`.
 
-1. Add secrets to GitHub repo settings:
-   - `KEYSTORE_BASE64` — Base64-encoded keystore file
+1. Configure required GitHub Secrets:
+   - `KEYSTORE_BASE64` — Base64-encoded keystore file content
    - `KEYSTORE_PASSWORD`
    - `KEY_ALIAS`
    - `KEY_PASSWORD`
-   - `PLAY_SERVICE_ACCOUNT_JSON` — Google Play service account key
+   - `PLAY_SERVICE_ACCOUNT_JSON` — Google Play service account JSON
 
-2. Add a release workflow that:
-   - Builds production frontend: `pnpm run build`
-   - Syncs Capacitor: `pnpm cap sync`
-   - Builds signed AAB: `./gradlew bundleRelease`
-   - Uploads to Play Console via `r0adkll/upload-google-play`
+2. The workflow does the following:
+   - Builds production web assets: `pnpm run build`
+   - Syncs Capacitor Android project: `pnpm exec cap sync android`
+   - Decodes `${{ secrets.KEYSTORE_BASE64 }}` into a temporary file under `${RUNNER_TEMP}`
+   - Exports that path as `KEYSTORE_PATH` via `$GITHUB_ENV`
+   - Runs `cd android && ./gradlew --no-daemon bundleRelease` with signing env vars
+   - Uploads `android/app/build/outputs/bundle/release/app-release.aab` as an artifact
+   - Uploads to Google Play using `r0adkll/upload-google-play` with `PLAY_SERVICE_ACCOUNT_JSON`
+
+3. Keystore encoding helper for `KEYSTORE_BASE64`:
+
+   ```bash
+   # Linux
+   base64 -w 0 conxius-upload.keystore
+
+   # macOS
+   base64 conxius-upload.keystore | tr -d '\n'
+   ```
 
 ---
 
 ## 6. Release Commands (Manual)
 
 ```bash
+# 0. Export signing env vars (or decode KEYSTORE_BASE64 to a temp file and export KEYSTORE_PATH)
+export KEYSTORE_PATH=/absolute/path/to/conxius-upload.keystore
+export KEYSTORE_PASSWORD=<STORE_PASSWORD>
+export KEY_ALIAS=<KEY_ALIAS>
+export KEY_PASSWORD=<KEY_PASSWORD>
+
 # 1. Build frontend
 pnpm run build
 
 # 2. Sync to Android
-pnpm cap sync
+pnpm exec cap sync android
 
-# 3. Build release AAB (requires signing config)
-cd android && ./gradlew bundleRelease
+# 3. Build signed release AAB
+cd android && ./gradlew --no-daemon bundleRelease
 
 # 4. Output at: android/app/build/outputs/bundle/release/app-release.aab
 ```
