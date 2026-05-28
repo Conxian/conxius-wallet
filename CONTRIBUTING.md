@@ -61,6 +61,7 @@ reflected in the [PRD.md](https://github.com/Conxian/conxius-wallet/blob/main/do
 
 - Provide a clear and descriptive title.
 - Reference any related issues.
+- Complete the governance checklist in [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md).
 - Include screenshots or diagrams if the change involves UI or complex logic.
 - Ensure your code passes all linting and test checks.
 
