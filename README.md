@@ -21,7 +21,7 @@ Provide a non-custodial mobile wallet that unifies Bitcoin-native rails, Stacks,
 ## Ownership
 
 Ownership and review requirements are defined in the repository CODEOWNERS file:
-https://github.com/Conxian/conxius-wallet/blob/main/.github/CODEOWNERS
+https://github.com/Conxian/conxius-wallet/blob/main/CODEOWNERS
 
 ## Audience
 
