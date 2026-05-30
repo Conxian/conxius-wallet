@@ -10,27 +10,27 @@ permalink: /./SECURITY
 
 We currently provide security updates for the following versions:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.9.x   | ✅ |
-| < 1.9.2 | ❌                |
+| Version | Supported |
+| ------- | --------- |
+| 1.9.x | ✅ |
+| < 1.9.2 | ❌ |
 
 ## Reporting a Vulnerability
 
-We take the security of Conxius Wallet very seriously. If you believe you have
-found a security vulnerability, please report it to us responsibly.
+We take the security of Conxius Wallet seriously.
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-Instead, please send an encrypted email to <security@conxian.io> (if available)
-or contact the maintainers directly through secure channels.
+Instead, report privately using one of these channels:
+
+1. GitHub private vulnerability reporting for this repository.
+2. Email [security@conxian-labs.com](mailto:security@conxian-labs.com).
 
 Please include:
 
-- A description of the vulnerability.
-- Steps to reproduce the issue.
-- Potential impact.
-- Any suggested fixes.
+- a description of the vulnerability
+- steps to reproduce the issue
+- potential impact
+- any suggested fixes
 
-We will acknowledge your report within 48 hours and provide a timeline for a fix
-if necessary.
+We aim to acknowledge reports within 48 hours and will coordinate remediation responsibly.
