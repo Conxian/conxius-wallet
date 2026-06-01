@@ -37,7 +37,7 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 - **Memory Hardening**: Verified 'Zero Secret Egress' patterns across all new native modules.
 
 ### Documentation
-- Updated `PRD.md`, `IMPLEMENTATION_REGISTRY.md`, `AGENTS.md`, and `PROJECT_CONTEXT.md` to reflect the v1.9.2 state.
+- Updated `docs/business/PRD.md`, `docs/protocols/IMPLEMENTATION_REGISTRY.md`, `AGENTS.md`, and `docs/archive/PROJECT_CONTEXT.md` to reflect the v1.9.2 state.
 - Normalized all version references to 1.9.2 across the repository.
 
 ## [1.5.0] - 2026-02-18

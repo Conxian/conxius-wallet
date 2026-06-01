@@ -42,10 +42,12 @@ https://github.com/Conxian/conxius-wallet/blob/main/CODEOWNERS
 Conxius operates under a structured governance and operational framework:
 
 - **Operating Model**: Defined in [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md).
+- **Product Requirements**: [docs/business/PRD.md](docs/business/PRD.md).
+- **Sovereign State**: [docs/state/Sovereign_State.md](docs/state/Sovereign_State.md).
 - **License**: [MIT License](LICENSE).
 - **Security Policy**: [SECURITY.md](SECURITY.md) for vulnerability reporting.
 - **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md) for development standards.
-- **Ownership**: [REPO_OWNERSHIP.md](REPO_OWNERSHIP.md) for detailed domain boundaries.
+- **Ownership**: [CODEOWNERS](CODEOWNERS) for detailed domain boundaries.
 
 ## 📦 Release Discipline
 

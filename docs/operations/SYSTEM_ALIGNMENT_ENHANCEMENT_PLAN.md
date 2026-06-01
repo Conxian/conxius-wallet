@@ -22,7 +22,7 @@ This document outlines the sequential steps required to align the Conxian-Labs c
 **Goal:** Complete the transition to cxn-arch-guardian identity.
 
 - **[IDENTITY]** [COMPLETED] Rename remaining "CXN Guardian" and "cnx" identifiers in tests and auxiliary scripts.
-- **[DOCS]** Synchronize `Business_State.md` and `Sovereign_State.md` with the actual recovered code state.
+- **[DOCS]** Synchronize `docs/state/Business_State.md` and `docs/state/Sovereign_State.md` with the actual recovered code state.
 
 ## 4. Technical Verification
 **Goal:** Ensure production readiness.
