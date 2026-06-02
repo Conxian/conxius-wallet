@@ -40,6 +40,13 @@ This repository is maintained by Conxian Labs as a public product surface for th
 - Hardware-isolated signing through StrongBox and device-backed secure storage
 - Sovereign-first RPC preference for user-controlled infrastructure where supported
 
+## Governance references
+
+- Operating Model: [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md)
+- Product Requirements: [docs/business/PRD.md](docs/business/PRD.md)
+- Sovereign State: [docs/state/Sovereign_State.md](docs/state/Sovereign_State.md)
+- Ownership: [CODEOWNERS](CODEOWNERS)
+
 ## Release discipline
 
 - Semantic Versioning is enforced.
@@ -67,7 +74,9 @@ Do not disclose vulnerabilities publicly. Use [SECURITY.md](SECURITY.md) or `sec
 - [CODEOWNERS](CODEOWNERS)
 - [CHANGELOG.md](CHANGELOG.md)
 - [LICENSE](LICENSE)
-- [REPO_OWNERSHIP.md](REPO_OWNERSHIP.md)
+- [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md)
+- [docs/business/PRD.md](docs/business/PRD.md)
+- [docs/state/Sovereign_State.md](docs/state/Sovereign_State.md)
 
 ## Contact
 
