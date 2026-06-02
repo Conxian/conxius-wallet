@@ -1,14 +1,8 @@
----
-title: Conxius Wallet README
-layout: page
-permalink: /
----
-
-# Conxius Wallet: The Sovereign Bitcoin Command Center (v1.9.2)
+# Conxius Wallet
 
 ![CI](https://github.com/Conxian/conxius-wallet/actions/workflows/ci.yml/badge.svg) ![Security](https://img.shields.io/badge/Security-CXN%20Guardian-orange)
 
-Conxius is a non-custodial, "Sovereign-First" financial command center for the full Bitcoin ecosystem. Powered by the **CXN Guardian** security architecture, it bridges the security of a hardware-isolated environment (Android StrongBox/TEE) with the utility of modern DeFi, cross-chain interoperability, and real-world services.
+Conxius is a non-custodial, sovereign-first wallet for the Bitcoin ecosystem, combining hardware-isolated security with modern Bitcoin-layer integrations and services.
 
 ## Purpose
 
@@ -16,68 +10,44 @@ Provide a non-custodial mobile wallet that unifies Bitcoin-native rails, Stacks,
 
 ## Status
 
-**Production (v1.9.2)**. The architecture and supported integrations are aligned with the Phase 5 "Clean Break" migration to pure native Android infrastructure.
+**Production (v1.9.2).** This repository is the public wallet and reference client layer for the Conxian ecosystem.
 
-## Ownership
+## Scope
 
-Ownership and review requirements are defined in the repository CODEOWNERS file:
-https://github.com/Conxian/conxius-wallet/blob/main/CODEOWNERS
+This repository contains wallet application code, signer UX, and reference client flows. It does not own canonical protocol logic, shared-core behavior, or infrastructure responsibilities that belong in lower layers of the stack.
+
+## Governance relation
+
+This repository is maintained by Conxian Labs as a public product surface for the Conxian ecosystem. Governance of the underlying protocol is expected to decentralize progressively after mainnet.
 
 ## Audience
 
-- End users seeking a sovereignty-first, non-custodial wallet.
-- Mobile and security engineers working on enclave-backed key management.
-- Protocol and integration developers connecting wallet flows to the Conxian Gateway and on-chain services.
+- end users seeking a sovereignty-first, non-custodial wallet
+- mobile and security engineers working on enclave-backed key management
+- protocol and integration developers connecting wallet flows to Conxian services
 
 ## Relationship to the Conxian stack
 
-- **Reference client interface** for interacting with the Conxian protocol and broader Bitcoin-layer integrations.
-- **CXN Guardian AI**: Integrated privacy layer enforcing Zero Secret Egress for all interactions.
-- **Conxian Gateway**: Consumes Gateway APIs for state, compliance, and multi-layer coordination.
-- **Boundary clarification**: `conxius-wallet` is a reference client. It owns reference interaction flows and signer UX validation, but it **does not own** canonical adapter implementations, shared-core behavior, or infrastructure logic that belongs below the client layer.
-- **Boundary rule**: This repo should validate and demonstrate the platform strategy, not define it. Shared logic should move downward into strategic infrastructure repos (like `lib-conxian-core`) where appropriate.
+- `Conxius Wallet` is the public wallet and reference client.
+- `Conxian` is the protocol core.
+- `conxian-gateway` provides middleware and integration services.
+- `conxian_ui` provides the public web interface layer.
+- `lib-conxian-core` houses shared primitives that should live below the client layer.
 
-## ⚖️ Governance
+## Security and privacy model
 
-Conxius operates under a structured governance and operational framework:
+- Zero Secret Egress via local privacy filtering before AI or network transmission
+- Hardware-isolated signing through StrongBox and device-backed secure storage
+- Sovereign-first RPC preference for user-controlled infrastructure where supported
 
-- **Operating Model**: Defined in [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md).
-- **License**: [MIT License](LICENSE).
-- **Security Policy**: [SECURITY.md](SECURITY.md) for vulnerability reporting.
-- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md) for development standards.
-- **Ownership**: [REPO_OWNERSHIP.md](REPO_OWNERSHIP.md) for detailed domain boundaries.
+## Release discipline
 
-## 📦 Release Discipline
+- Semantic Versioning is enforced.
+- Production releases are tagged.
+- Every release requires a `CHANGELOG.md` entry.
+- Promotion to `main` requires successful validation and approval according to repository policy.
 
-Conxius Wallet follows a strict release flow:
-- **Versioning**: Semantic Versioning (SemVer) is enforced.
-- **Tags**: Production releases are tagged (e.g., `v1.9.2`).
-- **Changelog**: Every release requires an entry in `CHANGELOG.md`.
-- **Promotion**: Changes flow from `dev` -> `staged` -> `main`. Promotion to `main` requires COO approval and successful E2E validation.
-
-## 🚀 Key Pillars
-
-- **Zero-Leak Privacy**: Mandatory local redaction of PII and sensitive identifiers via CXN Guardian before any AI or network transmission.
-- **Hardware-Isolated Signing**: Cryptographic keys never leave the mobile device's Secure Enclave (StrongBox).
-- **Full Stack Bitcoin**: Native support for L1 (Segwit/Taproot), Lightning (Breez), Stacks (sBTC), Liquid (L-BTC), Rootstock, and 14+ Bitcoin L2s.
-- **Advanced Protocols**: Integrated support for Babylon Staking, Discreet Log Contracts (DLCs), and Nostr Wallet Connect (NIP-47).
-
-## 🛠️ Integrated Services (Non-Custodial)
-
-- **Unified Yield**: Access staking and lending via Yield.xyz (Lido, Aave, Stader) across 70+ networks.
-- **Liquidity Swaps**: Aggregated swaps and bridging via 1inch and LI.FI.
-- **Parametric Insurance**: On-chain protection against protocol hacks via Neptune Mutual and InsurAce.
-- **Sovereign Marketplace**: Purchase Ghost eSIMs (Silent.Link), Travel (Travala), and Event Tickets (Satlantis) via Lightning.
-- **B2B Gateway**: Turnkey merchant payment processing via CoinsPaid integration.
-
-## 🏗️ Technical Architecture
-
-- **Mobile Enclave**: Native Kotlin implementation of TEE-backed AES and RSA providers.
-- **Persistent Crypto Worker**: Background TypeScript environment for secure, session-level state management.
-- **Sovereign-First RPC**: Prioritizes user-defined custom nodes (Bitcoin Core, Stacks, etc.) over public infrastructure.
-- **CXN Guardian AI**: Local privacy filter and intent detector enforcing Zero Secret Egress.
-
-## 🧪 Development
+## Development
 
 ```bash
 pnpm install
@@ -86,5 +56,25 @@ pnpm test
 pnpm run test:e2e
 ```
 
----
-*Powered by the Conxius Enclave Protocol. Sovereignty by Design. Aligned to Phase 5 "Clean Break".*
+## Security
+
+Do not disclose vulnerabilities publicly. Use [SECURITY.md](SECURITY.md) or `security@conxian-labs.com`.
+
+## Policies
+
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [SECURITY.md](SECURITY.md)
+- [CODEOWNERS](CODEOWNERS)
+- [CHANGELOG.md](CHANGELOG.md)
+- [LICENSE](LICENSE)
+- [REPO_OWNERSHIP.md](REPO_OWNERSHIP.md)
+
+## Contact
+
+- General: [info@conxian-labs.com](mailto:info@conxian-labs.com)
+- Support: [support@conxian-labs.com](mailto:support@conxian-labs.com)
+- Security: [security@conxian-labs.com](mailto:security@conxian-labs.com)
+
+## License
+
+MIT
