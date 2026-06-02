@@ -75,6 +75,8 @@ Ensure the following files are synced:
 
 - `docs/archive/PROJECT_CONTEXT.md`: Current state and session notes.
 - `docs/business/PRD.md`: The high-authority source of truth (v1.9.2).
+- `docs/state/Business_State.md`: Business alignment and market fit.
+- `docs/state/Sovereign_State.md`: Technical implementation status.
 - `docs/operations/ROADMAP.md`: Technical and business milestones.
 - `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status (v1.9.2).
 
