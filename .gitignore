@@ -106,6 +106,9 @@ openspec/changes/*
 .trae/
 .amazonq/
 .kilocode/
+.idx/
+.jules/
+.Jules/
 node_modules/
 test-results/
 playwright-report/
