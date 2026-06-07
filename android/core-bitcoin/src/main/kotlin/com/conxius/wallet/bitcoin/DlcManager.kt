@@ -7,17 +7,27 @@ import org.bitcoindevkit.*
  * Discreet Log Contracts (DLC) Manager (v1.1)
  *
  * Provides native backing for DLC creation, acceptance, and settlement.
- * Aligned with v1.9.2 "Sovereign" architecture.
+ * Current state:
+ * - debug builds may exercise simulated flows for integration work
+ * - release builds fail closed until real production-backed DLC execution is wired
  */
 class DlcManager {
     private val TAG = "DlcManager"
+
+    private fun ensureDebugSimulationAllowed() {
+        if (!BuildConfig.DEBUG) {
+            throw IllegalStateException(
+                "Simulated DLC flow is disabled in release builds until production execution is implemented"
+            )
+        }
+    }
 
     /**
      * Creates a DLC Offer message.
      */
     fun createOffer(oraclePk: String, eventDesc: String, collateral: Long): String {
         Log.d(TAG, "Creating DLC Offer for event: $eventDesc")
-        // Simulated PRODUCTION response for v1.9.2
+        ensureDebugSimulationAllowed()
         return "{\"id\": \"dlc_offer_${System.currentTimeMillis()}\", \"oracle\": \"$oraclePk\", \"collateral\": $collateral}"
     }
 
@@ -26,7 +36,7 @@ class DlcManager {
      */
     fun acceptOffer(offerJson: String): String {
         Log.d(TAG, "Accepting DLC Offer")
-        // Simulated PRODUCTION response for v1.9.2
+        ensureDebugSimulationAllowed()
         return "{\"status\": \"accepted\", \"contractId\": \"dlc_con_sim_${System.currentTimeMillis()}\"}"
     }
 
@@ -35,7 +45,7 @@ class DlcManager {
      */
     fun settleDlc(contractId: String, oracleAttestation: String): String {
         Log.d(TAG, "Settling DLC $contractId with attestation")
-        // Simulated PRODUCTION response for v1.9.2
+        ensureDebugSimulationAllowed()
         return "dlc_settlement_sim_txid_" + System.currentTimeMillis()
     }
 
