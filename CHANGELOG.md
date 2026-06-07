@@ -10,6 +10,13 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 
 ## [Unreleased]
 
+### Changed
+- **Production-Truth Alignment**: Release builds now fail closed for the current stubbed `PlayIntegrityPlugin` path until real request + backend verification is wired end-to-end.
+- **Production-Truth Alignment**: Simulated `DlcManager` flows are now debug-only and fail closed in release builds until production-backed execution is implemented.
+
+### Documentation
+- Clarified readiness language so implemented, simulated, and production-enforced states are not conflated.
+
 ## [1.9.2] - 2026-04-18
 
 ### Added
@@ -28,7 +35,7 @@ All notable changes to the Conxius Wallet project will be documented in this fil
   - `BitVmManager` (Fraud Proofs)
   - `Web5Manager` (DIDs/DWNs)
 - **Bridged Sovereign Architecture**: Transitioned logic to a hybrid model where security-critical signing resides in the native enclave while protocol logic is managed in TypeScript.
-- **Enhanced Security**: Integrated `PlayIntegrityPlugin` for official Google Play Integrity attestation.
+- **Enhanced Security**: Integrated `PlayIntegrityPlugin` bridge for Play Integrity attestation workflows.
 - **Institutional ERP Integration**: Implemented OData v4 translation layer and X402 Mandate mapping in the Conxian Gateway for SAP/Oracle synchronization (CON-63).
 
 ### Improved
