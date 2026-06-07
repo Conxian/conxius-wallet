@@ -1,6 +1,7 @@
 package com.conxius.wallet.bitcoin
 
 import android.util.Log
+import com.conxius.wallet.BuildConfig
 import org.bitcoindevkit.*
 
 /**
