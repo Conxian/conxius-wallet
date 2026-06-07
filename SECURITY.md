@@ -34,3 +34,10 @@ Please include:
 - any suggested fixes
 
 We aim to acknowledge reports within 48 hours and will coordinate remediation responsibly.
+
+## Secret handling
+
+- do not commit `.env*` files, private keys, keystores, or API tokens
+- use `.env.example`, `.env.template`, or equivalent non-secret templates only
+- rotate any exposed credentials immediately
+- pull requests and key branches are scanned with `gitleaks` in GitHub Actions
