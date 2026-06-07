@@ -47,6 +47,18 @@ Before submitting a change:
    other security attributes.
 4. **Check Logs**: Ensure no sensitive data is leaked to the console or Android
    logs.
+5. **No Generated Artifacts**: Never commit generated or runtime artifacts
+   (e.g., `node_modules`, `dist`, `build`, or Capacitor/Cordova plugins).
+   The "Security-First Ignore Policy" is strictly enforced to prevent
+   unintentional exposure and ensure build reproducibility.
+
+### Security-First Ignore Policy
+
+To maintain production integrity and prevent secret leakage, the following rules apply to all contributions:
+- **Strict `.gitignore` Adherence**: Never use `git add -f` to override ignore rules.
+- **Environment Templates**: Only `.env.example` or `.env.template` files are permitted. Actual `.env` files must never be tracked.
+- **Artifact Exclusion**: All files in `dist/`, `build/`, `node_modules/`, and generated mobile assets/plugins must be excluded.
+- **Credential Hygiene**: Keystores (`.jks`), Private Keys (`.key`, `.pem`), and Service Account JSONs are globally ignored and must remain so.
 
 ## 📜 Documentation & PRD Sync
 
