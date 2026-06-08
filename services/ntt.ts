@@ -15,6 +15,7 @@ import { sanitizeError, endpointsFor } from './network';
 import { calculateNttFee } from './monetization';
 import { fetchBtcPrice } from './protocol';
 import { sha256 } from '@noble/hashes/sha2.js';
+import { TrustTier, BridgeSystem, validateRouteTrust } from './trust-policy';
 
 /**
  * NTT Configuration for public sBTC and other supported assets.
@@ -111,9 +112,26 @@ export class NttService {
         targetLayer: string,
         signer: Signer,
         network: Network,
-        appState?: AppState
+        appState?: AppState,
+        trustTier: TrustTier = TrustTier.T3,
+        isHardened: boolean = false
     ): Promise<string | null> {
         try {
+            // Enforce Trust Policy
+            const validation = validateRouteTrust({
+                system: BridgeSystem.WORMHOLE_NTT,
+                sourceChain: sourceLayer,
+                targetChain: targetLayer,
+                trustTier,
+                isHardened
+            });
+
+            if (!validation.allowed) {
+                // Return clear error without triggering sanitizeError redaction if possible
+                // but executeNtt is caught by try-catch below.
+                throw new Error(`Guard: ${validation.reason}`);
+            }
+
             const wh = await getWormholeContext(network, appState);
 
             const srcChain = wh.getChain(sourceLayer as Chain);
@@ -196,9 +214,27 @@ export const BRIDGE_STAGES = [
   { id: 'REDEMPTION', text: 'Redemption', userMessage: 'Arriving on destination...' },
 ];
 
-export const getRecommendedBridgeProtocol = (source: string, target: string): 'Native' | 'NTT' | 'Swap' => {
+export const getRecommendedBridgeProtocol = (
+    source: string,
+    target: string,
+    requiredTier: TrustTier = TrustTier.T3
+): 'Native' | 'NTT' | 'Swap' | 'None' => {
     const bitcoinEcosystem = ['Stacks', 'Liquid', 'Rootstock', 'BOB', 'B2', 'Botanix', 'Mezo', 'RGB', 'Ark', 'StateChain', 'Lightning'];
+
+    // Native and Swap are trust-minimized or atomic (T1/T2 equivalent)
     if (source === 'Mainnet' && bitcoinEcosystem.includes(target)) return 'Native';
     if ((source === 'Mainnet' && (target === 'Lightning' || target === 'Liquid')) || (source === 'Liquid' && target === 'Mainnet')) return 'Swap';
+
+    // For others, check if NTT (Wormhole) meets the required tier
+    const validation = validateRouteTrust({
+        system: BridgeSystem.WORMHOLE_NTT,
+        sourceChain: source,
+        targetChain: target,
+        trustTier: requiredTier,
+        isHardened: false // Default recommendation assumes standard config
+    });
+
+    if (!validation.allowed) return 'None';
+
     return 'NTT';
 };
