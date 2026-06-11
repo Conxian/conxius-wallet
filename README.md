@@ -65,13 +65,14 @@ pnpm run test:e2e
 
 ## Security
 
-Do not disclose vulnerabilities publicly. Use [SECURITY.md](SECURITY.md) or `security@conxian-labs.com`.
+Do not disclose vulnerabilities publicly. Use [SECURITY.md](SECURITY.md) or `security@conxian.io`.
 
 ## Policies
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [SECURITY.md](SECURITY.md)
 - [CODEOWNERS](CODEOWNERS)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 - [CHANGELOG.md](CHANGELOG.md)
 - [LICENSE](LICENSE)
 - [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md)
@@ -82,7 +83,11 @@ Do not disclose vulnerabilities publicly. Use [SECURITY.md](SECURITY.md) or `sec
 
 - General: [info@conxian-labs.com](mailto:info@conxian-labs.com)
 - Support: [support@conxian-labs.com](mailto:support@conxian-labs.com)
-- Security: [security@conxian-labs.com](mailto:security@conxian-labs.com)
+- Security: [security@conxian.io](mailto:security@conxian.io)
+
+## Code of Conduct
+
+All contributors and participants are expected to adhere to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
