@@ -7,6 +7,7 @@
 /CODEOWNERS @botshelomokoka @admin-conxian-labs
 /SECURITY.md @botshelomokoka @admin-conxian-labs
 /SUPPORT.md @botshelomokoka @admin-conxian-labs
+/CODE_OF_CONDUCT.md @botshelomokoka @admin-conxian-labs
 /.github/release.yml @botshelomokoka @admin-conxian-labs
 /.github/ISSUE_TEMPLATE/** @botshelomokoka @admin-conxian-labs
 /.github/PULL_REQUEST_TEMPLATE* @botshelomokoka @admin-conxian-labs
@@ -14,4 +15,3 @@
 
 # Financial and strategic registries
 /CONTRIBUTING.md @botshelomokoka @admin-conxian-labs
-/profile/README.md @botshelomokoka @admin-conxian-labs
