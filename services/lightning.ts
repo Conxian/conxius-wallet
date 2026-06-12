@@ -81,3 +81,108 @@ export async function payLightningInvoice(invoice: string): Promise<string> {
 export async function payLnurl(params: LnurlPayParams | LnurlWithdrawParams, amount: number): Promise<string> {
     return "lnurl_pay_sim_txid_" + Date.now();
 }
+
+/**
+ * SRL-1: Lightning Payment State Machine
+ */
+export type LightningPaymentState =
+  | 'INTENT_ACCEPTED'
+  | 'POLICY_VALIDATED'
+  | 'ROUTE_FEASIBLE'
+  | 'LIQUIDITY_RESERVED'
+  | 'EXECUTION_IN_FLIGHT'
+  | 'SETTLED'
+  | 'FAILED_CLOSED'
+  | 'EXPIRED';
+
+/**
+ * SRL-7: Failure Taxonomy
+ */
+export type LightningFailureClass = 'PERMANENT' | 'TRANSIENT' | 'INDETERMINATE';
+
+export interface LightningPaymentIntent {
+  id: string;
+  idempotencyKey: string;
+  fingerprint: string;
+  state: LightningPaymentState;
+  failureClass?: LightningFailureClass;
+  reasonCode?: string;
+  attemptNo: number;
+  occurredAt: number;
+  terminalOutcome?: any;
+}
+
+/**
+ * Validates state transition according to SRL-1 invariants.
+ * Prevents illegal moves like SETTLED -> FAILED_CLOSED.
+ */
+export function isValidPaymentTransition(current: LightningPaymentState, next: LightningPaymentState): boolean {
+  const terminalStates: LightningPaymentState[] = ['SETTLED', 'FAILED_CLOSED', 'EXPIRED'];
+  if (terminalStates.includes(current)) return false;
+
+  if (current === next) return false; // Strict transitions
+
+  const stateOrder: LightningPaymentState[] = [
+    'INTENT_ACCEPTED',
+    'POLICY_VALIDATED',
+    'ROUTE_FEASIBLE',
+    'LIQUIDITY_RESERVED',
+    'EXECUTION_IN_FLIGHT',
+    'SETTLED'
+  ];
+
+  const currentIndex = stateOrder.indexOf(current);
+  const nextIndex = stateOrder.indexOf(next);
+
+  if (next === 'FAILED_CLOSED' || next === 'EXPIRED') return true;
+  if (currentIndex === -1 || nextIndex === -1) return false;
+
+  // Only allow moving forward in the order
+  return nextIndex > currentIndex;
+}
+
+/**
+ * SRL-2: Idempotency & Conflict Store (Simulation)
+ * NOTE: In production, this must be persisted to encrypted local storage (Room/SQLCipher).
+ */
+const paymentIntentStore = new Map<string, LightningPaymentIntent>();
+
+export function getPaymentIntent(idempotencyKey: string): LightningPaymentIntent | undefined {
+  return paymentIntentStore.get(idempotencyKey);
+}
+
+export function savePaymentIntent(intent: LightningPaymentIntent): void {
+  paymentIntentStore.set(intent.idempotencyKey, intent);
+}
+
+/**
+ * SRL-2: Idempotency Check with conflict detection.
+ * Returns existing intent if fingerprint matches, otherwise throws 409 conflict.
+ */
+export function checkIdempotency(idempotencyKey: string, fingerprint: string): LightningPaymentIntent | null {
+  const existing = getPaymentIntent(idempotencyKey);
+  if (existing) {
+    if (existing.fingerprint !== fingerprint) {
+      throw new Error('409 Conflict: Idempotency key already used with different fingerprint');
+    }
+    return existing;
+  }
+  return null;
+}
+
+/**
+ * SRL-7: Failure Classification Helper
+ */
+export function classifyLightningError(error: any): LightningFailureClass {
+  const msg = error?.message?.toLowerCase() || '';
+  // Permanent failures: protocol violations, expired invoices, bad data.
+  if (msg.includes('invalid') || msg.includes('expired') || msg.includes('no route') || msg.includes('policy')) {
+    return 'PERMANENT';
+  }
+  // Transient failures: temporary network or peer issues.
+  if (msg.includes('timeout') || msg.includes('network') || msg.includes('temporary')) {
+    return 'TRANSIENT';
+  }
+  // Indeterminate: Unknown status, requires manual/auto reconciliation.
+  return 'INDETERMINATE';
+}
