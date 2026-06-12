@@ -107,8 +107,9 @@ class BreezBackend implements LightningBackend {
   async payInvoice(invoice: string, idempotencyKey?: string, fingerprint?: string): Promise<{ preimage?: string, state?: LightningPaymentState }> {
     let intent: LightningPaymentIntent | null = null;
 
-    if (idempotencyKey && fingerprint) {
-      intent = checkIdempotency(idempotencyKey, fingerprint);
+    // Resolve existing intent if possible
+    if (idempotencyKey) {
+      intent = checkIdempotency(idempotencyKey, fingerprint || "fp_default");
       if (intent) {
         // If terminal, return outcome
         if (intent.state === 'SETTLED' || intent.state === 'FAILED_CLOSED' || intent.state === 'EXPIRED') {
@@ -122,9 +123,11 @@ class BreezBackend implements LightningBackend {
     }
 
     if (!intent) {
+      // Improved default key with random suffix to avoid theoretical millisecond collisions
+      const defaultKey = "ik_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
       intent = {
         id: "pay_" + Math.random().toString(36).substr(2, 9),
-        idempotencyKey: idempotencyKey || "ik_" + Date.now(),
+        idempotencyKey: idempotencyKey || defaultKey,
         fingerprint: fingerprint || "fp_default",
         state: 'INTENT_ACCEPTED',
         attemptNo: 1,
@@ -141,7 +144,6 @@ class BreezBackend implements LightningBackend {
            intent.state = 'EXECUTION_IN_FLIGHT';
            savePaymentIntent(intent);
         } else if (intent.state !== 'EXECUTION_IN_FLIGHT') {
-           // Should not happen with current logic but protects against illegal transitions
            throw new Error(`Illegal state transition from ${intent.state} to EXECUTION_IN_FLIGHT`);
         }
 
