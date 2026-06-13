@@ -17,8 +17,7 @@ class RgbManager {
      */
     fun validateConsignment(consignmentHex: String): Boolean {
         Log.d(TAG, "Validating RGB Consignment...")
-        // In Production: This would use the Rust rgb-lib via JNI to verify the DAG.
-        return true
+        return ProductionRuntimeGuard.failClosed("RGB consignment validation", true)
     }
 
     /**
@@ -26,13 +25,19 @@ class RgbManager {
      */
     fun issueAsset(name: String, symbol: String, amount: Long, schema: String): String {
         Log.d(TAG, "Issuing RGB Asset: $name ($symbol)")
-        return "rgb:genesis_${System.currentTimeMillis()}"
+        return ProductionRuntimeGuard.failClosed(
+            "RGB asset issuance",
+            "rgb:genesis_${System.currentTimeMillis()}"
+        )
     }
 
     /**
      * Prepares a state transition for an RGB transfer.
      */
     fun prepareTransition(assetId: String, amount: Long, beneficiary: String): String {
-        return "rgb_transition_unsigned_hex"
+        return ProductionRuntimeGuard.failClosed(
+            "RGB state transition",
+            "rgb_transition_unsigned_hex"
+        )
     }
 }

@@ -14,8 +14,10 @@ class InteroperabilityManager {
      */
     fun signSwap(payload: ByteArray): String {
         Log.d(TAG, "Signing Swap Payload (${payload.size} bytes)")
-        // Routes to StrongBox for signing.
-        return "swap_sig_hex_00112233"
+        return ProductionRuntimeGuard.failClosed(
+            "Interoperability swap signing",
+            "swap_sig_hex_00112233"
+        )
     }
 
     /**

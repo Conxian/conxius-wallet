@@ -13,14 +13,16 @@ class BitVmManager {
      */
     fun verifyProof(proof: String): Boolean {
         Log.d(TAG, "Verifying BitVM Proof")
-        // In Production: Executes the BitVM verifier script locally.
-        return true
+        return ProductionRuntimeGuard.failClosed("BitVM proof verification", true)
     }
 
     /**
      * Signs a commitment for a BitVM challenge.
      */
     fun signCommitment(challengeId: String, response: String): String {
-        return "bitvm_commitment_sig_hex"
+        return ProductionRuntimeGuard.failClosed(
+            "BitVM commitment signing",
+            "bitvm_commitment_sig_hex"
+        )
     }
 }

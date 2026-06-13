@@ -45,6 +45,8 @@ This repository is maintained by Conxian Labs as a public product surface for th
 - Operating Model: [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md)
 - Product Requirements: [docs/business/PRD.md](docs/business/PRD.md)
 - Sovereign State: [docs/state/Sovereign_State.md](docs/state/Sovereign_State.md)
+- SDK Policy: [docs/architecture/SDK_OWNERSHIP_AND_VERSION_POLICY.md](docs/architecture/SDK_OWNERSHIP_AND_VERSION_POLICY.md)
+- Control Plane: [docs/architecture/CONTROL_PLANE_MODULES_MAP.md](docs/architecture/CONTROL_PLANE_MODULES_MAP.md)
 - Ownership: [CODEOWNERS](CODEOWNERS)
 
 ## Release discipline

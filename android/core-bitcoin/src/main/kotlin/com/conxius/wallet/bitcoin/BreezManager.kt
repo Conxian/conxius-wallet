@@ -13,7 +13,10 @@ class BreezManager {
      */
     fun startNode(apiKey: String, mnemonic: String): String {
         Log.d(TAG, "Starting Breez Lightning Node")
-        return ProductionRuntimeGuard.failClosed("Breez node startup")
+        return ProductionRuntimeGuard.failClosed(
+            "Breez node startup",
+            "breez_node_id_sim_${System.currentTimeMillis()}"
+        )
     }
 
     /**
@@ -21,13 +24,19 @@ class BreezManager {
      */
     fun payInvoice(bolt11: String): String {
         Log.d(TAG, "Paying Lightning Invoice: $bolt11")
-        return ProductionRuntimeGuard.failClosed("Breez invoice payment")
+        return ProductionRuntimeGuard.failClosed(
+            "Breez invoice payment",
+            "breez_preimage_sim_${System.currentTimeMillis()}"
+        )
     }
 
     /**
      * Receives a payment via BOLT11.
      */
     fun receivePayment(amountSats: Long, description: String): String {
-        return ProductionRuntimeGuard.failClosed("Breez payment receive")
+        return ProductionRuntimeGuard.failClosed(
+            "Breez payment receive",
+            "lnbc_invoice_sim_${System.currentTimeMillis()}"
+        )
     }
 }

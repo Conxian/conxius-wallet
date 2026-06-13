@@ -18,8 +18,10 @@ class BabylonManager {
      */
     fun createStakingTx(stakerPk: String, amountSats: Long, duration: Int, network: Network): String {
         Log.d(TAG, "Constructing Babylon Staking Tx for $amountSats sats")
-        // Simulated PRODUCTION response for v1.9.2
-        return "babylon_staking_sim_txid_" + System.currentTimeMillis()
+        return ProductionRuntimeGuard.failClosed(
+            "Babylon staking transaction",
+            "babylon_staking_sim_txid_${System.currentTimeMillis()}"
+        )
     }
 
     /**
@@ -35,7 +37,9 @@ class BabylonManager {
      */
     fun createUnbondingTx(stakingTxId: String, stakerPk: String): String {
         Log.d(TAG, "Constructing Babylon Unbonding Tx for $stakingTxId")
-        // Simulated PRODUCTION response for v1.9.2
-        return "babylon_unbonding_sim_txid_" + System.currentTimeMillis()
+        return ProductionRuntimeGuard.failClosed(
+            "Babylon unbonding transaction",
+            "babylon_unbonding_sim_txid_${System.currentTimeMillis()}"
+        )
     }
 }

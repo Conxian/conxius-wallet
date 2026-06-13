@@ -1,22 +1,29 @@
 package com.conxius.wallet.bitcoin
 
+import android.util.Log
+
 /**
- * State Chain Manager
- * Handles off-chain UTXO transfers via key-rotation for the native layer.
+ * StateChainManager (v1.1)
+ * Native bridge for Mercury-style state chain transfer signing.
  */
 class StateChainManager {
+    private val TAG = "StateChainManager"
 
     /**
-     * Prepares a key-rotation signature for a StateChain UTXO transfer.
+     * Signs a state chain transfer for a specific UTXO.
      */
-    fun signTransfer(utxoId: String, recipientPk: String, index: Int): String {
-        return "statechain_transfer_sig_rotation_v1"
+    fun signTransfer(utxoId: String, recipientPk: String, fee: Long): String {
+        Log.d(TAG, "Signing StateChain Transfer for $utxoId")
+        return ProductionRuntimeGuard.failClosed(
+            "StateChain transfer signing",
+            "statechain_sig_${System.currentTimeMillis()}"
+        )
     }
 
     /**
-     * Generates a new ephemeral keypair for the next state in the chain.
+     * Verifies a state chain commitment.
      */
-    fun rotateKey(currentPk: String): String {
-        return "statechain_new_ephemeral_pk"
+    fun verifyCommitment(commitment: String): Boolean {
+        return ProductionRuntimeGuard.failClosed("StateChain commitment verification", true)
     }
 }

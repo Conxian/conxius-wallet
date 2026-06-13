@@ -4,32 +4,35 @@ import android.util.Log
 
 /**
  * Musig2 Manager (v1.1)
- * Native bridge for BIP-327 multi-signature aggregation and signing.
+ *
+ * Native bridge for Musig2 multi-signature session management and partial signing.
  */
 class Musig2Manager {
     private val TAG = "Musig2Manager"
 
     /**
-     * Aggregates public keys for a Musig2 session.
+     * Generates a nonce for a new Musig2 session.
      */
-    fun aggregatePubkeys(pubkeys: List<ByteArray>): ByteArray {
-        Log.d(TAG, "Aggregating ${pubkeys.size} pubkeys for Musig2")
-        // In Production: Calls lib-conxian-core (Rust) to compute the aggregated key.
-        return pubkeys[0] // Placeholder
+    fun generateNonce(): String {
+        Log.d(TAG, "Generating Musig2 Nonce")
+        return "musig2_nonce_hex_${System.currentTimeMillis()}"
     }
 
     /**
-     * Generates a partial Musig2 signature for a message.
+     * Signs a message partially using the session nonce and private key.
      */
-    fun signPartial(message: ByteArray, secretKey: ByteArray, publicNonces: List<ByteArray>): ByteArray {
-        Log.d(TAG, "Generating partial Musig2 signature")
-        return ByteArray(32) { 0xab.toByte() }
+    fun signPartial(sessionData: String, messageHash: ByteArray): String {
+        Log.d(TAG, "Signing Musig2 Partial")
+        return ProductionRuntimeGuard.failClosed(
+            "Musig2 partial signing",
+            "musig2_partial_sig_hex"
+        )
     }
 
     /**
      * Aggregates partial signatures into a final Schnorr signature.
      */
-    fun aggregateSignatures(partialSigs: List<ByteArray>): ByteArray {
-        return ByteArray(64) { 0xcd.toByte() }
+    fun aggregateSignatures(partials: List<String>): String {
+        return "musig2_final_sig_hex"
     }
 }

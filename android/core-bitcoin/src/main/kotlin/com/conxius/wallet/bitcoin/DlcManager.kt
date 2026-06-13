@@ -1,7 +1,6 @@
 package com.conxius.wallet.bitcoin
 
 import android.util.Log
-import com.conxius.wallet.BuildConfig
 import org.bitcoindevkit.*
 
 /**
@@ -15,21 +14,15 @@ import org.bitcoindevkit.*
 class DlcManager {
     private val TAG = "DlcManager"
 
-    private fun ensureDebugSimulationAllowed() {
-        if (!BuildConfig.DEBUG) {
-            throw IllegalStateException(
-                "Simulated DLC flow is disabled in release builds until production execution is implemented"
-            )
-        }
-    }
-
     /**
      * Creates a DLC Offer message.
      */
     fun createOffer(oraclePk: String, eventDesc: String, collateral: Long): String {
         Log.d(TAG, "Creating DLC Offer for event: $eventDesc")
-        ensureDebugSimulationAllowed()
-        return "{\"id\": \"dlc_offer_${System.currentTimeMillis()}\", \"oracle\": \"$oraclePk\", \"collateral\": $collateral}"
+        return ProductionRuntimeGuard.failClosed(
+            "DLC offer creation",
+            "{\"id\": \"dlc_offer_${System.currentTimeMillis()}\", \"oracle\": \"$oraclePk\", \"collateral\": $collateral}"
+        )
     }
 
     /**
@@ -37,8 +30,10 @@ class DlcManager {
      */
     fun acceptOffer(offerJson: String): String {
         Log.d(TAG, "Accepting DLC Offer")
-        ensureDebugSimulationAllowed()
-        return "{\"status\": \"accepted\", \"contractId\": \"dlc_con_sim_${System.currentTimeMillis()}\"}"
+        return ProductionRuntimeGuard.failClosed(
+            "DLC offer acceptance",
+            "{\"status\": \"accepted\", \"contractId\": \"dlc_con_sim_${System.currentTimeMillis()}\"}"
+        )
     }
 
     /**
@@ -46,8 +41,10 @@ class DlcManager {
      */
     fun settleDlc(contractId: String, oracleAttestation: String): String {
         Log.d(TAG, "Settling DLC $contractId with attestation")
-        ensureDebugSimulationAllowed()
-        return "dlc_settlement_sim_txid_" + System.currentTimeMillis()
+        return ProductionRuntimeGuard.failClosed(
+            "DLC settlement",
+            "dlc_settlement_sim_txid_${System.currentTimeMillis()}"
+        )
     }
 
     /**
