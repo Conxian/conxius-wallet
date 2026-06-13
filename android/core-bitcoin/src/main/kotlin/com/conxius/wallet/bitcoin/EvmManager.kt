@@ -11,7 +11,7 @@ class EvmManager {
     /**
      * Signs an EVM transaction (Legacy, EIP-1559, or EIP-2930).
      */
-    fun signTransaction(txPayload: ByteArray, chainId: Int): String {
+    fun signTransaction(txPayload: ByteArray, chainId: Long): String {
         Log.d(TAG, "Signing EVM Transaction for chain: $chainId")
         return ProductionRuntimeGuard.failClosed(
             "EVM transaction signing",
