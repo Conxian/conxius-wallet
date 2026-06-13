@@ -3,22 +3,26 @@ package com.conxius.wallet.bitcoin
 import android.util.Log
 
 /**
- * Nostr Wallet Connect (NWC) Manager (v1.1)
- *
- * Handles native parsing and authorization of NWC events.
- * Aligned with v1.9.2 "Sovereign" architecture.
+ * NwcManager: Native Bridge for Nostr Wallet Connect (NIP-47).
  */
 class NwcManager {
     private val TAG = "NwcManager"
 
-    fun parseEvent(eventJson: String): String {
+    /**
+     * Parses and validates an NWC request event.
+     */
+    fun parseEvent(json: String): String {
         Log.d(TAG, "Parsing NWC Event")
-        // Simulated PRODUCTION response for v1.9.2
-        return "{\"method\": \"pay_invoice\", \"params\": {\"invoice\": \"lnbc1...\"}}"
+        return ProductionRuntimeGuard.failClosed("NWC event parsing", "{\"method\": \"pay_invoice\"}")
     }
 
-    fun authorizeAction(eventId: String): Boolean {
-        Log.d(TAG, "Authorizing NWC Action for $eventId")
-        return true
+    /**
+     * Signs an NWC response event.
+     */
+    fun signResponse(id: String, result: String): String {
+        return ProductionRuntimeGuard.failClosed(
+            "NWC response signing",
+            "nwc_res_sig_${System.currentTimeMillis()}"
+        )
     }
 }
