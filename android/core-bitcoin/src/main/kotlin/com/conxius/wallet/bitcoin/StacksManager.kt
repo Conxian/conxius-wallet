@@ -13,13 +13,16 @@ class StacksManager {
      */
     fun signStacksTransaction(payload: ByteArray): String {
         Log.d(TAG, "Signing Stacks Transaction (${payload.size} bytes)")
-        return ProductionRuntimeGuard.failClosed("Stacks transaction signing")
+        return ProductionRuntimeGuard.failClosed(
+            "Stacks transaction signing",
+            "stx_sig_hex_00112233"
+        )
     }
 
     /**
      * Verifies a Stacks address ownership.
      */
     fun verifyAddress(address: String, pubkey: ByteArray): Boolean {
-        return ProductionRuntimeGuard.failClosed("Stacks address verification")
+        return ProductionRuntimeGuard.failClosed("Stacks address verification", true)
     }
 }

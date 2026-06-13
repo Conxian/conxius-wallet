@@ -15,3 +15,7 @@
 
 # Financial and strategic registries
 /CONTRIBUTING.md @botshelomokoka @admin-conxian-labs
+
+# Architecture and Policy Docs
+/docs/architecture/SDK_OWNERSHIP_AND_VERSION_POLICY.md @botshelomokoka @admin-conxian-labs
+/docs/architecture/CONTROL_PLANE_MODULES_MAP.md @botshelomokoka @admin-conxian-labs
