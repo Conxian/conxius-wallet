@@ -1,6 +1,7 @@
 
 export type BitcoinLayer = 'Mainnet' | 'Stacks' | 'Rootstock' | 'Ethereum' | 'Lightning' | 'Liquid' | 'Runes' | 'Ordinals' | 'BOB' | 'RGB' | 'Ark' | 'BitVM' | 'StateChain' | 'Maven' | 'B2' | 'Botanix' | 'Mezo' | 'Alpen' | 'Zulu' | 'Bison' | 'Hemi' | 'Nubit' | 'Lorenzo' | 'Citrea' | 'Babylon' | 'Merlin' | 'Bitlayer' | 'TaprootAssets' | 'Silent';
 export type AppMode = 'sovereign' | 'simulation';
+import { Language } from "./services/i18n";
 export type Network = "mainnet" | "testnet" | "regtest" | "devnet";
 export type LnBackendType = "None" | "LND" | "Breez" | "Greenlight";
 export interface LnBackendConfig {
@@ -180,6 +181,7 @@ export interface AppState {
   utxos: UTXO[];
   isTorEnabled: boolean;
   theme: 'light' | 'dark';
+  language: Language;
   isLocked?: boolean;
   loyaltyXP?: number;
   lastAction?: number;

@@ -1,0 +1,7 @@
+# Whitelist safe documentation and test fragments
+docs/
+tests/
+*.example
+*.template
+AGENTS.md
+README.md
