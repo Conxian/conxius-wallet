@@ -13,14 +13,23 @@ export default defineConfig(({ mode }) => {
         wasm(), topLevelAwait(), react(),
         ...(!isVitest ? [nodePolyfills({ include: ["buffer", "stream", "util", "crypto", "string_decoder"], globals: { Buffer: true, global: true, process: true } })] : []),
       ],
+      resolve: {
+        alias: {
+          "@": path.resolve(__dirname, "."),
+        }
+      },
       optimizeDeps: {
-        include: ['json-bigint'],
+        include: ['json-bigint', 'algosdk'],
         esbuildOptions: {
            target: 'esnext'
         }
       },
+      build: {
+        rollupOptions: {
+          external: ['algosdk']
+        }
+      },
       test: { globals: true, environment: "node", setupFiles: "./tests/setup.ts", exclude: ["e2e/**", "node_modules/**"], server: { deps: { inline: ["generator-function", "is-generator-function", "bip32", "ecpair", "tiny-secp256k1"] } }, pool: "forks" },
       define: { "process.env": {}, "process.version": JSON.stringify("v18.0.0") },
-      resolve: { alias: { "@": path.resolve(__dirname, ".") } },
     };
 });

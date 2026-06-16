@@ -95,17 +95,5 @@
       "eslint --fix",
       "vitest related --run"
     ]
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@swc/core",
-      "bigint-buffer",
-      "bufferutil",
-      "classic-level",
-      "esbuild",
-      "protobufjs",
-      "tiny-secp256k1",
-      "utf-8-validate"
-    ]
   }
 }
