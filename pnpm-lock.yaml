@@ -68,6 +68,9 @@ importers:
       '@zxing/library':
         specifier: ^0.23.0
         version: 0.23.0
+      algosdk:
+        specifier: ^3.6.0
+        version: 3.6.0
       bech32:
         specifier: ^2.0.0
         version: 2.0.0
@@ -177,9 +180,6 @@ importers:
       '@wormhole-foundation/sdk-definitions-ntt':
         specifier: ^6.2.0
         version: 6.2.0(@wormhole-foundation/sdk-base@4.24.0)(@wormhole-foundation/sdk-definitions@4.24.0)
-      algosdk:
-        specifier: ^3.6.0
-        version: 3.6.0
       autoprefixer:
         specifier: ^10.5.0
         version: 10.5.0(postcss@8.5.15)
