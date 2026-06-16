@@ -16,17 +16,13 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           "@": path.resolve(__dirname, "."),
+          "algosdk": path.resolve(__dirname, "node_modules/algosdk/dist/esm/index.js")
         }
       },
       optimizeDeps: {
         include: ['json-bigint', 'algosdk'],
         esbuildOptions: {
            target: 'esnext'
-        }
-      },
-      build: {
-        rollupOptions: {
-          external: ['algosdk']
         }
       },
       test: { globals: true, environment: "node", setupFiles: "./tests/setup.ts", exclude: ["e2e/**", "node_modules/**"], server: { deps: { inline: ["generator-function", "is-generator-function", "bip32", "ecpair", "tiny-secp256k1"] } }, pool: "forks" },
