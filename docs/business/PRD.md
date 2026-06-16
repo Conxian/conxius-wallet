@@ -82,3 +82,14 @@ As of v1.9.2, all Conxian Protocol interfaces (Conxius Wallet, Gateway, Explorer
 - **Institutional Clarity**: High-contrast dark typography against bright surfaces to ensure financial data legibility and reduce cognitive fatigue.
 - **Atmospheric Cues**: Hero sections and primary brand headers may utilize full-bleed deep brand colors to establish presence.
 - **Interaction Model**: Use structural spacing and micro-borders (1px) for depth, minimizing heavy drop shadows to maintain a crisp, professional aesthetic.
+
+## Operating Model & Documentation Architecture (v1.9.2)
+
+### 1. Decoupled Documentation Model (CON-1208)
+- **Brand & Product Site (conxian.org)**: Primary consumer-facing surface for vision, product features, and community.
+- **Labs & Ecosystem (conxian-labs.com)**: Directory for portfolio projects, lab initiatives, and ecosystem partners.
+- **Technical Repository Docs**: Every repository owns its technical documentation (README, CHANGELOG, ARCHITECTURE, etc.), published via GitHub Pages where applicable.
+- **Internal Control Plane**: Internal governance and operating models are housed in the `docs/` directory of the core business orchestration repositories.
+
+### 2. Artifact Promotion Governance
+Promotion from `staged` to `main` for any production artifact requires explicit sign-off from the COO as defined in the [Operating Model](../operations/OPERATING_MODEL.md).

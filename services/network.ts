@@ -1,6 +1,6 @@
 import { Network, AppState } from '../types';
 import { generateRandomString } from './random';
-import { NORMALIZE_REGEX, SENSITIVE_SCAN_PATTERNS } from './security-constants';
+import { NORMALIZE_REGEX, SENSITIVE_SCAN_PATTERNS, enforcePhase6Guard } from './security-constants';
 
 let _globalAppState: AppState | undefined;
 

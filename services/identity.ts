@@ -1,6 +1,7 @@
 import { signNative, getPublicKeyNative } from './enclave-storage';
 import { Network } from '../types';
 import * as bitcoin from 'bitcoinjs-lib';
+import { enforcePhase6Guard } from "./security-constants";
 import { Web5Service } from './web5';
 
 export interface ConxiusIdentity {
