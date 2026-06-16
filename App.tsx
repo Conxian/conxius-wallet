@@ -47,6 +47,7 @@ import RewardsHub from './components/RewardsHub';
 import LabsExplorer from './components/LabsExplorer';
 import GovernancePortal from './components/GovernancePortal';
 import ReserveSystem from './components/ReserveSystem';
+import Web3Browser from './components/Web3Browser';
 import Benchmarking from './components/Benchmarking';
 import Documentation from './components/Documentation';
 import InvestorDashboard from './components/InvestorDashboard';
@@ -71,7 +72,8 @@ import ToastContainer from './components/Toast';
 import { AppContext, initialAppState } from './context';
 import { getEnclaveBlob, persistState, removeEnclaveBlob, STORAGE_KEY } from './services/enclave-storage';
 import { getTranslation } from './services/i18n';
-import { AppState, WalletConfig, SignRequest } from './types';
+import { AppState, WalletConfig, AppMode, Asset } from './types';
+import { SignRequest } from './services/signer';
 import { enforcePhase6Guard } from './services/security-constants';
 
 const BOOT_SEQUENCE = [
@@ -161,9 +163,9 @@ const App: React.FC = () => {
 
   const setWalletConfig = async (config: WalletConfig, pin?: string) => {
      const initialAssets = [
-       { id: '1', name: 'Bitcoin', symbol: 'BTC', balance: 0.42, valueUsd: 28500, change: 2.4, layer: 'Mainnet' },
-       { id: '2', name: 'Stacks', symbol: 'STX', balance: 1250, valueUsd: 1800, change: -1.2, layer: 'Stacks' },
-       { id: '3', name: 'Liquid BTC', symbol: 'L-BTC', balance: 0.05, valueUsd: 3400, change: 0.5, layer: 'Liquid' }
+       { id: '1', name: 'Bitcoin', symbol: 'BTC', balance: 0.42, valueUsd: 28500, change: 2.4, layer: 'Mainnet', type: 'Native' },
+       { id: '2', name: 'Stacks', symbol: 'STX', balance: 1250, valueUsd: 1800, change: -1.2, layer: 'Stacks', type: 'Native' },
+       { id: '3', name: 'Liquid BTC', symbol: 'L-BTC', balance: 0.05, valueUsd: 3400, change: 0.5, layer: 'Liquid', type: 'Native' }
      ];
 
      const effectiveMode = config.backupVerified ? 'sovereign' : 'simulation';
@@ -172,9 +174,9 @@ const App: React.FC = () => {
      
      const newState = { 
         ...state, 
-        mode: effectiveMode,
+        mode: effectiveMode as AppMode,
         walletConfig: config,
-        assets: initialAssets,
+        assets: initialAssets as Asset[],
         sovereigntyScore: config.backupVerified ? 100 : 70
      };
      
@@ -270,7 +272,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <AppContext.Provider value={{ state, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify: notifyUser, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, getWormholeSigner }}>
+    <AppContext.Provider value={{ state: state as any, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify: notifyUser, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, getWormholeSigner }}>
       <div className={`flex bg-ivory text-brand-deep min-h-screen selection:bg-accent-earth/30 overflow-hidden`}>
         <div className="hidden md:block">
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />

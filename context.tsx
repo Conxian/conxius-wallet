@@ -28,3 +28,30 @@ export const AppContext = createContext<{
   setRpcStrategy: (strategy: AppState["rpcStrategy"]) => void;
   getWormholeSigner: (chain: any) => any; // Typed as any to avoid circular deps in context, or import types
 } | null>(null);
+
+export const initialAppState: AppState = {
+  version: '1.9.2',
+  mode: 'sovereign',
+  network: 'mainnet',
+  privacyMode: true,
+  nodeSyncProgress: 0,
+  integratorFeesAccumulated: 0,
+  sovereigntyScore: 0,
+  isTorActive: false,
+  deploymentReadiness: 0,
+  externalGatewaysActive: false,
+  rpcStrategy: 'Sovereign-First',
+  isMainnetLive: true,
+  assets: [],
+  bounties: [],
+  dataSharing: {
+    enabled: false,
+    aiCapBoostActive: false,
+    minAskPrice: 0.0001,
+    totalEarned: 0
+  },
+  utxos: [],
+  isTorEnabled: false,
+  theme: "light",
+  language: "en"
+};

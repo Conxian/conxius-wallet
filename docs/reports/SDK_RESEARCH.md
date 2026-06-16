@@ -50,3 +50,15 @@ permalink: /docs/sdk-research
 
 ---
 *Updated: April 18, 2026*
+
+## 6. BitVM2 & Groth16 (CON-1217 Research)
+- **Integration Path**: Use `Verifier::hinted_verify` for on-chain state root verification.
+- **Chunking Strategy**: The Groth16 verification process is split into 364 independent chunks (taps) for on-chain execution.
+  - **VALIDATING_TAPS (1)**: Core arithmetic verification.
+  - **HASHING_TAPS (363)**: Hash chain verification for intermediate states.
+- **Optimization**: Utilize `/api/generate-groth16-segments` in the Gateway to handle large proofs within Bitcoin script limits.
+
+## 7. FDC3 Interoperability (CON-1181 Research)
+- **Standard**: FDC3 v2.x for financial desktop interoperability.
+- **Key Method**: `fdc3.raiseIntentForContext(context, [targetApp])` for ergonomic intent resolution.
+- **Context Type**: `fdc3.instrument` for mapping Bitcoin layer assets.

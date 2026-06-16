@@ -2,11 +2,11 @@
 
 ![CI](https://github.com/Conxian/conxius-wallet/actions/workflows/ci.yml/badge.svg) ![Security](https://img.shields.io/badge/Security-CXN%20Guardian-orange)
 
-Conxius is a non-custodial, sovereign-first wallet and reference client for the broader Conxian ecosystem.
+Conxius is a non-custodial, sovereign-first wallet for the Bitcoin ecosystem, combining hardware-isolated security with modern Bitcoin-layer integrations and services.
 
 ## Purpose
 
-Provide a non-custodial wallet that unifies Bitcoin-native rails, Stacks, and emerging L2 ecosystems behind hardware-isolated signing and privacy-first defaults.
+Provide a non-custodial mobile wallet that unifies Bitcoin-native rails, Stacks, and emerging L2 ecosystems behind hardware-isolated signing and privacy-first defaults.
 
 ## Status
 
@@ -14,11 +14,11 @@ Provide a non-custodial wallet that unifies Bitcoin-native rails, Stacks, and em
 
 ## Scope
 
-This repository contains wallet application code, signer UX, and reference client flows. It is a sovereign access and signing boundary. It does not own canonical protocol logic, protocol governance, or Labs operating authority.
+This repository contains wallet application code, signer UX, and reference client flows. It does not own canonical protocol logic, shared-core behavior, or infrastructure responsibilities that belong in lower layers of the stack.
 
 ## Governance relation
 
-This repository is maintained by Conxian-Labs as a public product and access surface around Conxian. Governance of the underlying protocol remains separate from the wallet layer.
+This repository is maintained by Conxian Labs as a public product surface for the Conxian ecosystem. Governance of the underlying protocol is expected to decentralize progressively after mainnet.
 
 ## Audience
 
@@ -29,9 +29,9 @@ This repository is maintained by Conxian-Labs as a public product and access sur
 ## Relationship to the Conxian stack
 
 - `Conxius Wallet` is the public wallet and reference client.
-- `Conxian` is the protocol and DAO-facing core.
+- `Conxian` is the protocol core.
 - `conxian-gateway` provides middleware and integration services.
-- `conxian_ui` provides the public interaction layer.
+- `conxian_ui` provides the public web interface layer.
 - `lib-conxian-core` houses shared primitives that should live below the client layer.
 
 ## Security and privacy model
