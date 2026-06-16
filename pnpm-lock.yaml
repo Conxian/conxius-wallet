@@ -54,14 +54,14 @@ importers:
         specifier: ^0.12.0
         version: 0.12.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@wormhole-foundation/sdk':
-        specifier: ^4.24.0
-        version: 4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(got@15.0.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+        specifier: ^5.0.0
+        version: 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(got@15.0.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
       '@wormhole-foundation/sdk-evm':
-        specifier: ^4.24.0
-        version: 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+        specifier: ^5.0.0
+        version: 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@wormhole-foundation/sdk-solana':
-        specifier: ^4.24.0
-        version: 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+        specifier: ^5.0.0
+        version: 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@zxing/browser':
         specifier: ^0.2.0
         version: 0.2.0(@zxing/library@0.23.0)
@@ -99,8 +99,8 @@ importers:
         specifier: ^6.0.2-liquid.37
         version: 6.0.2-liquid.37
       lucide-react:
-        specifier: ^1.18.0
-        version: 1.18.0(react@19.2.7)
+        specifier: ^1.20.0
+        version: 1.20.0(react@19.2.7)
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -137,16 +137,16 @@ importers:
         version: 8.4.0
       '@eslint/js':
         specifier: ^10.0.1
-        version: 10.0.1(eslint@10.4.1(jiti@2.7.0))
+        version: 10.0.1(eslint@10.5.0(jiti@2.7.0))
       '@playwright/test':
-        specifier: ^1.60.0
-        version: 1.60.0
+        specifier: ^1.61.0
+        version: 1.61.0
       '@solana/web3.js':
         specifier: ^1.98.4
         version: 1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.0
+        specifier: ^4.3.1
+        version: 4.3.1
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -172,11 +172,11 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
       '@vitest/ui':
-        specifier: ^4.1.8
-        version: 4.1.8(vitest@4.1.8)
+        specifier: ^4.1.9
+        version: 4.1.9(vitest@4.1.9)
       '@wormhole-foundation/sdk-definitions-ntt':
-        specifier: ^6.2.0
-        version: 6.2.0(@wormhole-foundation/sdk-base@4.24.0)(@wormhole-foundation/sdk-definitions@4.24.0)
+        specifier: ^7.0.0
+        version: 7.0.0(@wormhole-foundation/sdk-base@5.0.0)(@wormhole-foundation/sdk-definitions@5.0.0)
       algosdk:
         specifier: ^3.6.0
         version: 3.6.0
@@ -184,14 +184,14 @@ importers:
         specifier: ^10.5.0
         version: 10.5.0(postcss@8.5.15)
       eslint:
-        specifier: ^10.4.1
-        version: 10.4.1(jiti@2.7.0)
+        specifier: ^10.5.0
+        version: 10.5.0(jiti@2.7.0)
       eslint-plugin-react-hooks:
         specifier: ^7.1.1
-        version: 7.1.1(eslint@10.4.1(jiti@2.7.0))
+        version: 7.1.1(eslint@10.5.0(jiti@2.7.0))
       eslint-plugin-react-refresh:
-        specifier: ^0.5.2
-        version: 0.5.2(eslint@10.4.1(jiti@2.7.0))
+        specifier: ^0.5.3
+        version: 0.5.3(eslint@10.5.0(jiti@2.7.0))
       globals:
         specifier: ^17.6.0
         version: 17.6.0
@@ -208,14 +208,14 @@ importers:
         specifier: ^8.5.15
         version: 8.5.15
       tailwindcss:
-        specifier: ^4.3.0
-        version: 4.3.0
+        specifier: ^4.3.1
+        version: 4.3.1
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
       typescript-eslint:
-        specifier: ^8.61.0
-        version: 8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
+        specifier: ^8.61.1
+        version: 8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
       vite:
         specifier: ^8.0.16
         version: 8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0)
@@ -223,21 +223,21 @@ importers:
         specifier: ^0.28.0
         version: 0.28.0(rollup@4.59.0)(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
       vitest:
-        specifier: ^4.1.8
-        version: 4.1.8(@types/node@25.9.3)(@vitest/ui@4.1.8)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
+        specifier: ^4.1.9
+        version: 4.1.9(@types/node@25.9.3)(@vitest/ui@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
 
 packages:
 
-  '@0no-co/graphql.web@1.2.0':
-    resolution: {integrity: sha512-/1iHy9TTr63gE1YcR5idjx8UREz1s0kFhydf3bBLCXyqjhkIc6igAzTOx3zPifCwFR87tsh/4Pa9cNts6d2otw==}
+  '@0no-co/graphql.web@1.3.2':
+    resolution: {integrity: sha512-Q1+pRlLhE31GOY/2c9BAEnFTNxO7Awtc6fhhEDlxyCBQ2N0IhD32cPVvPChrK9mwBNSgRdW/sF1kd2e0ojHj1Q==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
     peerDependenciesMeta:
       graphql:
         optional: true
 
-  '@0no-co/graphqlsp@1.15.4':
-    resolution: {integrity: sha512-Nt1DVHcZ08lKRKwhiU0amXH77fSdrO6DzyjLE0DkCxfbM/N1SAs32d76y1xtCzM5H9eT0iDS7SdksgRXWJu05g==}
+  '@0no-co/graphqlsp@1.17.2':
+    resolution: {integrity: sha512-b3Et0xpXj6H8gYraDUd/hVpY0+WnkAS4cwf4fjnvWGlZhVI2Tt2EXl6lhYx+aprUM7oQ7s7Z6JfjPzBkPpj6jQ==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
       typescript: ^5.0.0 || ^6.0.0
@@ -761,10 +761,10 @@ packages:
       '@modelcontextprotocol/sdk':
         optional: true
 
-  '@gql.tada/cli-utils@1.7.4':
-    resolution: {integrity: sha512-2M5H0alO/U2bjMrsv4Qd9XSaM5cdckFDTq0UR/ytw13LV5saNfUtFCvU8NplEOhTWS25G5mAK31q1533yBEJ6g==}
+  '@gql.tada/cli-utils@1.9.1':
+    resolution: {integrity: sha512-PTWdrcnLOKQ3cOLrYOBF/QwzKnjE037jq4CibxB5IV/Pi+Vjr8YhL5W210gkpfdCOJ/YM1lM3Q6jusmzC6z4Vw==}
     peerDependencies:
-      '@0no-co/graphqlsp': ^1.12.13
+      '@0no-co/graphqlsp': ^1.16.0
       '@gql.tada/svelte-support': 1.0.3
       '@gql.tada/vue-support': 1.0.3
       graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
@@ -775,8 +775,8 @@ packages:
       '@gql.tada/vue-support':
         optional: true
 
-  '@gql.tada/internal@1.0.10':
-    resolution: {integrity: sha512-nPSX4U65HHDtK3M81Ky+OMEoGMCI28k5uesi7LisRincnPNVY0Rp2gvDigJgo+qf2RjXGdtCPiYjWSYgTqlr1g==}
+  '@gql.tada/internal@1.2.0':
+    resolution: {integrity: sha512-mbrWlSLNMCMuP7uGFm4EGFJ0oU1XqzUqykAqQ4emVLUvuERKB6Vhb3KoWdSqSCCBKm7G3WcYCYgFbaMUUMNshw==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
       typescript: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
@@ -812,8 +812,8 @@ packages:
   '@injectivelabs/core-proto-ts-v2@1.20.0':
     resolution: {integrity: sha512-gSk1aStjp4vCLwsWcuW8f46rNw6uOuiKp/1KdQ9KJeBW91nwpQXsfim6CVOZXlFytDRUcHe05pdLIw/sxRmI7Q==}
 
-  '@injectivelabs/exceptions@1.20.7':
-    resolution: {integrity: sha512-46VBS0cFrk6lpaCRDd19tWENaElpRPpLa7HgpLBQ7BTsnvJU4AA5fivx2wZ7uWFHemwF2jSsn0hGWwtITgUk5A==}
+  '@injectivelabs/exceptions@1.20.13':
+    resolution: {integrity: sha512-A8GLm/DONHmclzc9+76GhFmIOZEUelLSBaIoLrdR9X4KbIZwFdEHMUp/vbYSTgnPRVzwsSUyZCGeuKLz+ZxGww==}
 
   '@injectivelabs/grpc-web-node-http-transport@0.0.2':
     resolution: {integrity: sha512-rpyhXLiGY/UMs6v6YmgWHJHiO9l0AgDyVNv+jcutNVt4tQrmNvnpvz2wCAGOFtq5LuX/E9ChtTVpk3gWGqXcGA==}
@@ -830,29 +830,29 @@ packages:
     peerDependencies:
       google-protobuf: ^3.14.0
 
-  '@injectivelabs/indexer-proto-ts-v2@1.18.21':
-    resolution: {integrity: sha512-cheWvarEFNwQF0MRLXuFo5OMAiG8BEXXOFa1SP/Ku4aS12XYPQJscQ088RBMTvJ5yzAGNkFttZHUooAk4XUcgA==}
+  '@injectivelabs/indexer-proto-ts-v2@1.18.23':
+    resolution: {integrity: sha512-QPWAjXjSPvxqKYzyNcaizSI4/3QPzMjQ2vBheHnv2wFQyeFDlKkVKdjgFJvi+cOklcjrHbrZ/IvPvi2CyjYmBQ==}
 
   '@injectivelabs/mito-proto-ts-v2@1.17.3':
     resolution: {integrity: sha512-Fo6k1MCPT3CKUS9tbMbl/poGv7R8KHtA7RfU7mvxxVWS7MpF+LLZA6UgegfEA1iiJgIrhe+eEwEvhIOe6SiUzw==}
 
-  '@injectivelabs/networks@1.20.7':
-    resolution: {integrity: sha512-EMvCdRSr1t+hfRYkJ51qkAACZ9zNVBQFYS4Cv2Vp5nbFqXBBcghLTozSsUdsHQ/iQZ5zqxwRcDGMdgIHRTH9GQ==}
+  '@injectivelabs/networks@1.20.13':
+    resolution: {integrity: sha512-ZjD6zH4MmHMxaJFKkLrUl6z6Gl9K+pK+ToHlVj3b1kU+07GGSM7yePoUlkSoxuz1zOFPv/mmldMarpVIkmC7IA==}
 
   '@injectivelabs/olp-proto-ts-v2@1.17.6':
     resolution: {integrity: sha512-3jTAyj342TXVe8qsVcDzAUnH5vAbqoHy5jqTUxHvJtfDaJ+X0uvN6d/yj60CxmrDOyKrn6pFx0prZ6J3Tl8S6g==}
 
-  '@injectivelabs/sdk-ts@1.20.7':
-    resolution: {integrity: sha512-STLPthKNpI1XFA96G0Z3kvBBvCAmSPfLglrijDtmJ5G/lMyDFRvf4FfaIjG5KCsPVOrxaLnTtJCGOA5RaZtt2w==}
+  '@injectivelabs/sdk-ts@1.20.13':
+    resolution: {integrity: sha512-m7b6FyZ0GtdFwsdLFkdfTD2Iz3JN2R0VYX58+5VwJIXRAhw/3DuSeA6mKgOLMT0Oz6rCgjwPcq6yNoM48SOQrg==}
 
   '@injectivelabs/tc-abacus-proto-ts-v2@1.18.6':
     resolution: {integrity: sha512-Bl3MQir4UUYOB1O24PkFqbznlBoxkBfQC6e0lnnFkpn5Sno0kVaA0lWHjYG9JVoqDkwcKo3CefFQoLnv59hVZQ==}
 
-  '@injectivelabs/ts-types@1.20.7':
-    resolution: {integrity: sha512-LSPbOweAlHRLOFIVwa0Vo1+Q8mWbZrsd5NjxHz2zuGD/GVEOj3dfiD6kBGFJYh+naciQ6vtdo8ZLceztgV5ATw==}
+  '@injectivelabs/ts-types@1.20.13':
+    resolution: {integrity: sha512-g7NARy/Ke5/V5ZyAVFhHli+h3fuoc1Sa98lBipGXjkYTVF+FRnTDA9pB3Z7UCIf3VuWhTA40x+dUDVnI5F8KAg==}
 
-  '@injectivelabs/utils@1.20.7':
-    resolution: {integrity: sha512-mHnfQk+X+NxxpoFtaDzv6SqsiSCbwPB3kP9kgyzyHYLTEqYnWiBQTGOLgzy+qLc5ycJGpMdFx6n34fTHuAZ13w==}
+  '@injectivelabs/utils@1.20.13':
+    resolution: {integrity: sha512-Qgk5QOBi9lBivaYpP20lBIO3VzQVcf9JBVvCf2zy0R6dwuZreU9QLkwT03nznwpzCo2zeAOLFvPJTdsCV3QcTA==}
 
   '@injectivelabs/ws-price-oracle-proto-ts-v2@1.0.5':
     resolution: {integrity: sha512-dGCUzEurROr8RiasViZH+i2g8FJdl46Vcm6pnyUcldxHgYCztlJNDxzUc5Unqze7+9+bWeu+5QMwXhw5DrtCvA==}
@@ -935,15 +935,15 @@ packages:
     resolution: {integrity: sha512-G5qVQxMWJ/Rja7hAx7cgyPcqnFmuOm0aHJ6TgJ+1odbdMu5BxpCCKH9y/Kw5spNbO9aYk8Jf41NbHkoHYDyZHQ==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
-  '@mysten/bcs@1.9.2':
-    resolution: {integrity: sha512-kBk5xrxV9OWR7i+JhL/plQrgQ2/KJhB2pB5gj+w6GXhbMQwS3DPpOvi/zN0Tj84jwPvHMllpEl0QHj6ywN7/eQ==}
+  '@mysten/bcs@2.1.0':
+    resolution: {integrity: sha512-rIR/cDAqDfBDxmYEZXppN/on8gmh1OW0dYi/Bk2kMBZcYMTaBaEtEX1VR6g7HicVxuMbFAIP0/SQkdH7J9Y5dQ==}
 
-  '@mysten/sui@1.45.2':
-    resolution: {integrity: sha512-gftf7fNpFSiXyfXpbtP2afVEnhc7p2m/MEYc/SO5pov92dacGKOpQIF7etZsGDI1Wvhv+dpph+ulRNpnYSs7Bg==}
-    engines: {node: '>=18'}
+  '@mysten/sui@2.18.0':
+    resolution: {integrity: sha512-CW6T1giC9d3QzZPxRXjGxMnBndGf6EONBoAX3HVKn58z4smgYbbBga79IzxhRqMVPyMAhYZVaFJLqE/xjCMUOw==}
+    engines: {node: '>=22'}
 
-  '@mysten/utils@0.2.0':
-    resolution: {integrity: sha512-CM6kJcJHX365cK6aXfFRLBiuyXc5WSBHQ43t94jqlCAIRw8umgNcTb5EnEA9n31wPAQgLDGgbG/rCUISCTJ66w==}
+  '@mysten/utils@0.4.0':
+    resolution: {integrity: sha512-nHlXECBl9kE+AHF/aw5a7JVNizae8Kb71A4H18BV/sXd5/l2BaWNGWVatq05fzJo3hF78AWorDxa++1TgcBKWw==}
 
   '@napi-rs/wasm-runtime@1.1.4':
     resolution: {integrity: sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow==}
@@ -976,10 +976,6 @@ packages:
 
   '@noble/curves@1.9.1':
     resolution: {integrity: sha512-k11yZxZg+t+gWvBbIswW0yoJlu8cHOC7dhunwOzoWH/mXGBiYyR4YY6hAEK/3EUs4UpB8la1RfdRpeGsFHkWsA==}
-    engines: {node: ^14.21.3 || >=16}
-
-  '@noble/curves@1.9.4':
-    resolution: {integrity: sha512-2bKONnuM53lINoDrSmK8qP8W271ms7pygDhZt4SiLOoLwBtoHqeCFi6RG42V8zd3mLHuJFhU/Bmaqo4nX0/kBw==}
     engines: {node: ^14.21.3 || >=16}
 
   '@noble/curves@1.9.7':
@@ -1031,8 +1027,8 @@ packages:
   '@oxc-project/types@0.133.0':
     resolution: {integrity: sha512-KzkdCd6Uxqnf6l3HOw1xfatAlUURA0g14cvBYFyJ5SaNOQbOUvBr9PKArcPcrNIeRsBdgcUzOGrhKveVpvOIGA==}
 
-  '@playwright/test@1.60.0':
-    resolution: {integrity: sha512-O71yZIbAh/PxDMNGns37GHBIfrVkEVyn+AXyIa5dOTfb4/xNvRWV+Vv/NMbNCtODB/pO7vLlF2OTmMVLhmr7Ag==}
+  '@playwright/test@1.61.0':
+    resolution: {integrity: sha512-cKA5B6lpFEMyMGjxF54QihfYpB4FkEGH+qZhtArDEG+wezQAJY8Pq6C7T1SjWz+FFzt3TbyoXBQYk/0292TdJA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -1511,65 +1507,65 @@ packages:
   '@swc/wasm@1.15.11':
     resolution: {integrity: sha512-230rdYZf8ux3nIwISOQNCFrxzxpL/UFY4Khv/3UsvpEdo709j/+Tg80yXWW3DXETeZNPBV72QpvEBhXsl7Lc9g==}
 
-  '@tailwindcss/node@4.3.0':
-    resolution: {integrity: sha512-aFb4gUhFOgdh9AXo4IzBEOzBkkAxm9VigwDJnMIYv3lcfXCJVesNfbEaBl4BNgVRyid92AmdviqwBUBRKSeY3g==}
+  '@tailwindcss/node@4.3.1':
+    resolution: {integrity: sha512-6NDaqRoAMSXD1mr/RXu0HBvNE9a2n5tHPsxu9XHLws8o4Twes5rBM2205SUUiJ9goAtadrN6xTGX0UDEwp/N4A==}
 
-  '@tailwindcss/oxide-android-arm64@4.3.0':
-    resolution: {integrity: sha512-TJPiq67tKlLuObP6RkwvVGDoxCMBVtDgKkLfa/uyj7/FyxvQwHS+UOnVrXXgbEsfUaMgiVvC4KbJnRr26ho4Ng==}
+  '@tailwindcss/oxide-android-arm64@4.3.1':
+    resolution: {integrity: sha512-SVlyf61g374l5cHyg8x9kf5xmLcOaxvOTsbsqDnSsDJaKOEFZ7GCvi84VAVGpxojYOs1+3K6M0UjXfqPU8vmOQ==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [android]
 
-  '@tailwindcss/oxide-darwin-arm64@4.3.0':
-    resolution: {integrity: sha512-oMN/WZRb+SO37BmUElEgeEWuU8E/HXRkiODxJxLe1UTHVXLrdVSgfaJV7pSlhRGMSOiXLuxTIjfsF3wYvz8cgQ==}
+  '@tailwindcss/oxide-darwin-arm64@4.3.1':
+    resolution: {integrity: sha512-hVnWLwv+e/l7c4WKyVtHVrIPvYdqWHjRB3MDIqARynzFtnQg85kmQEFCbV9Ja0VVx4xXTIiDWY60Y7iz/iNoDA==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [darwin]
 
-  '@tailwindcss/oxide-darwin-x64@4.3.0':
-    resolution: {integrity: sha512-N6CUmu4a6bKVADfw77p+iw6Yd9Q3OBhe0veaDX+QazfuVYlQsHfDgxBrsjQ/IW+zywL8mTrNd0SdJT/zgtvMdA==}
+  '@tailwindcss/oxide-darwin-x64@4.3.1':
+    resolution: {integrity: sha512-Cf7abu0WVgbhU7ANgPUnSAvm7nCvMweusHb8FnaHlLfv/Caq4GYaEZg7ZImzzmjx4lIAfuS8q+eLIS7A7IzxIg==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [darwin]
 
-  '@tailwindcss/oxide-freebsd-x64@4.3.0':
-    resolution: {integrity: sha512-zDL5hBkQdH5C6MpqbK3gQAgP80tsMwSI26vjOzjJtNCMUo0lFgOItzHKBIupOZNQxt3ouPH7RPhvNhiTfCe5CQ==}
+  '@tailwindcss/oxide-freebsd-x64@4.3.1':
+    resolution: {integrity: sha512-ZZqzX2Y+GXtXXfqSfpJhDm60OoZfvLHLCgm+J7NVqgHHJjG/m9ugZI77RwTsVd4fnBJuCFP6Ae6kTJb71UdS8g==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [freebsd]
 
-  '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.0':
-    resolution: {integrity: sha512-R06HdNi7A7OEoMsf6d4tjZ71RCWnZQPHj2mnotSFURjNLdBC+cIgXQ7l81CqeoiQftjf6OOblxXMInMgN2VzMA==}
+  '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.1':
+    resolution: {integrity: sha512-/Ah/xik0LaMYfv9DZ0S/t4pBlBNYOcqtRwusjgovHkvT8ixueWCLyJjsaF5kQIckjb4IT8Q6K6p/iPmZMixYgg==}
     engines: {node: '>= 20'}
     cpu: [arm]
     os: [linux]
 
-  '@tailwindcss/oxide-linux-arm64-gnu@4.3.0':
-    resolution: {integrity: sha512-qTJHELX8jetjhRQHCLilkVLmybpzNQAtaI/gaoVoidn/ufbNDbAo8KlK2J+yPoc8wQxvDxCmh/5lr8nC1+lTbg==}
+  '@tailwindcss/oxide-linux-arm64-gnu@4.3.1':
+    resolution: {integrity: sha512-gqdFoVJlw444GvpnheZLHmvTzSxI/cOUUh2KSNejQjTcYkW062SVD+En0rUgD+QV91bz1XGIGtt1HJd48xUGbQ==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [linux]
 
-  '@tailwindcss/oxide-linux-arm64-musl@4.3.0':
-    resolution: {integrity: sha512-Z6sukiQsngnWO+l39X4pPbiWT81IC+PLKF+PHxIlyZbGNb9MODfYlXEVlFvej5BOZInWX01kVyzeLvHsXhfczQ==}
+  '@tailwindcss/oxide-linux-arm64-musl@4.3.1':
+    resolution: {integrity: sha512-Bwv9KwOvE0VKa86xPFif9b9c3Y1NxOV1P0gLti/IYaWEsQYZXDlxfGEtA8mdDZ7SG3wyNXAWYT5SIn3giL57oA==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [linux]
 
-  '@tailwindcss/oxide-linux-x64-gnu@4.3.0':
-    resolution: {integrity: sha512-DRNdQRpSGzRGfARVuVkxvM8Q12nh19l4BF/G7zGA1oe+9wcC6saFBHTISrpIcKzhiXtSrlSrluCfvMuledoCTQ==}
+  '@tailwindcss/oxide-linux-x64-gnu@4.3.1':
+    resolution: {integrity: sha512-Ymi8O8T15HYQdOUWUtTI6ldN0neHP85FC+Qz32xTcZ7iJXtem/x8ITev0o1e9e5rkqj4lONZfTRLvkmin1+tKg==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [linux]
 
-  '@tailwindcss/oxide-linux-x64-musl@4.3.0':
-    resolution: {integrity: sha512-Z0IADbDo8bh6I7h2IQMx601AdXBLfFpEdUotft86evd/8ZPflZe9COPO8Q1vw+pfLWIUo9zN/JGZvwuAJqduqg==}
+  '@tailwindcss/oxide-linux-x64-musl@4.3.1':
+    resolution: {integrity: sha512-M+P/91qJ6uILLw4k2G93GMDRAXj61SMvFQYt39AqvUqYgExXpLL5aepfns7sj4HiAQeolirQF9E0lzRvdf4zPQ==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [linux]
 
-  '@tailwindcss/oxide-wasm32-wasi@4.3.0':
-    resolution: {integrity: sha512-HNZGOUxEmElksYR7S6sC5jTeNGpobAsy9u7Gu0AskJ8/20FR9GqebUyB+HBcU/ax6BHuiuJi+Oda4B+YX6H1yA==}
+  '@tailwindcss/oxide-wasm32-wasi@4.3.1':
+    resolution: {integrity: sha512-zsM8uOeqvVGHsAXsJxsT28ttosFahLJKCLOTUBqRAtKnVgGSRitds9T432QiT8b77Yga7JIBkulIRRlJPtYhRA==}
     engines: {node: '>=14.0.0'}
     cpu: [wasm32]
     bundledDependencies:
@@ -1580,24 +1576,24 @@ packages:
       - '@emnapi/wasi-threads'
       - tslib
 
-  '@tailwindcss/oxide-win32-arm64-msvc@4.3.0':
-    resolution: {integrity: sha512-Pe+RPVTi1T+qymuuRpcdvwSVZjnll/f7n8gBxMMh3xLTctMDKqpdfGimbMyioqtLhUYZxdJ9wGNhV7MKHvgZsQ==}
+  '@tailwindcss/oxide-win32-arm64-msvc@4.3.1':
+    resolution: {integrity: sha512-aiNvSq9BsVk8V513lDKlrCFAgf8qBMPZTpgEhInL+NwQqs97mYmupVMrPrgBBSL8Pv/0zXu9MrMF9rMun1ZeNg==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [win32]
 
-  '@tailwindcss/oxide-win32-x64-msvc@4.3.0':
-    resolution: {integrity: sha512-Mvrf2kXW/yeW/OTezZlCGOirXRcUuLIBx/5Y12BaPM7wJoryG6dfS/NJL8aBPqtTEx/Vm4T4vKzFUcKDT+TKUA==}
+  '@tailwindcss/oxide-win32-x64-msvc@4.3.1':
+    resolution: {integrity: sha512-xDEyu1rg290472FEGaKHnzyDyh5QH+AlWvsU5hMoMtPpzmKlRI0jaYKCgSHDYtaQWZOYbMaduSyCwFwY4n1HmA==}
     engines: {node: '>= 20'}
     cpu: [x64]
     os: [win32]
 
-  '@tailwindcss/oxide@4.3.0':
-    resolution: {integrity: sha512-F7HZGBeN9I0/AuuJS5PwcD8xayx5ri5GhjYUDBEVYUkexyA/giwbDNjRVrxSezE3T250OU2K/wp/ltWx3UOefg==}
+  '@tailwindcss/oxide@4.3.1':
+    resolution: {integrity: sha512-yVPyo8RNkabVr3O2EhHEE0Rewu7YKzc1DhIqfL46LKveFrmu9XbDazNOJY7/GRuvw1h6u3utWnR29H/p5JPlgA==}
     engines: {node: '>= 20'}
 
-  '@tailwindcss/postcss@4.3.0':
-    resolution: {integrity: sha512-Jm05Tjx+9yCLGv5qw1c+84Psds8MnyrEQYCB+FFk2lgGiUjlRqdxke4mVTuYrj2xnVZqKim2Apr5ySuQRYAw/w==}
+  '@tailwindcss/postcss@4.3.1':
+    resolution: {integrity: sha512-dNJuNbdEJT/SWRuXTYP1WSamelsz3ztkUsdtWQPjrexysrTpaEPM40P/71knXiXLYEojqPOEGitVLLpPMS5T6A==}
 
   '@tbd54566975/dwn-sdk-js@0.5.1':
     resolution: {integrity: sha512-4xfDttiXOzs7h3PHODflHxHP7Z1HlNod6BN+HX6elXKlqOlBueORrzB72BnzVBbv35eDRJR5w2upmGsUoq3dGg==}
@@ -1742,63 +1738,63 @@ packages:
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
-  '@typescript-eslint/eslint-plugin@8.61.0':
-    resolution: {integrity: sha512-bFNvl9ZczlVb+wR2Akszf3gHfKVj/8WanXaGJ3UstTA7brNKg0cNdk6X1Psu5V7MZ2oQtzZKOEzIUehaoxbDGw==}
+  '@typescript-eslint/eslint-plugin@8.61.1':
+    resolution: {integrity: sha512-ZPlVl3PB3et/59Ne0fv/sci6ZXz4T4Hp4nTJ56i/Y0gR89ARb+KphojTq6j+56E5PIezmOIOOWyY+aWQFd+IkQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
-      '@typescript-eslint/parser': ^8.61.0
+      '@typescript-eslint/parser': ^8.61.1
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: '>=4.8.4 <6.1.0'
 
-  '@typescript-eslint/parser@8.61.0':
-    resolution: {integrity: sha512-5B7PfA2e1NQGCnDHd/0lW7W3gvp3d59Ryw54FYO8Uswxo9f6ikw3AZV+Xj/TvpImmpsiYyUqAfhC6kJID1jF6w==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-    peerDependencies:
-      eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
-      typescript: '>=4.8.4 <6.1.0'
-
-  '@typescript-eslint/project-service@8.61.0':
-    resolution: {integrity: sha512-DV42F7MLJO6Rax7SK1yg43tcnEfGUrurSpSxKuVX+a3RCTzBlH3fuxprrOJXKCJGAaw82xXocikJ0uQaqwXgGA==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-    peerDependencies:
-      typescript: '>=4.8.4 <6.1.0'
-
-  '@typescript-eslint/scope-manager@8.61.0':
-    resolution: {integrity: sha512-IWdXFHFSb6mlC3HPc7QsLDm5zYEbUla6trDEHf32D3/dnuUyXd87plScSNXSbm0/RxMvObpI17sv/EDTGrGZkA==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-
-  '@typescript-eslint/tsconfig-utils@8.61.0':
-    resolution: {integrity: sha512-O5Amvdv9ztMpxpf+vmFULGG78IE6Qwdr3bCGvqwG4nwc9H2qXkOYJJnRbRHyMkQTjv1d03olqwwwzHLMqpFePQ==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-    peerDependencies:
-      typescript: '>=4.8.4 <6.1.0'
-
-  '@typescript-eslint/type-utils@8.61.0':
-    resolution: {integrity: sha512-TuBiQYIkd97yBfInHCTKVYMbX4kvEmpOEuixIuzCU9p8BGT1SfyyO0d0IfDMbPIHcjn/hWnusUX5e8v5Xg+X8A==}
+  '@typescript-eslint/parser@8.61.1':
+    resolution: {integrity: sha512-PJ5vePq5/ognBbrIcoC5+SHO5dfpeLPzP9FpLkzWrguoYQEeeSjlJpVwOpo1JRSTEi7dRcwNy4h4dzV70PqHcg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: '>=4.8.4 <6.1.0'
 
-  '@typescript-eslint/types@8.61.0':
-    resolution: {integrity: sha512-9QTQpZ5Iin4CdIodfbDQFSeiSJKidgYJYug1P9CC2xWgUTvlmixViqDZNciMjwLBZyJnG4tGmPl97rVAFb1AJg==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-
-  '@typescript-eslint/typescript-estree@8.61.0':
-    resolution: {integrity: sha512-42zatd5qSvvcV1JdDBCLxYRznvP4eIHpPoZXdkPFnAmanA4FuZ5dibSnCBggY8hQnqajPpoGjXFdZ7fIJKQnlA==}
+  '@typescript-eslint/project-service@8.61.1':
+    resolution: {integrity: sha512-PrC4JYGmR241lYnfhmKGTXkFqv8+ymbTFgSAY0fVXpY82/QkMw5TZPl+vGzuDDU2QYJk9fIDOBTntF+yDv9LEA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       typescript: '>=4.8.4 <6.1.0'
 
-  '@typescript-eslint/utils@8.61.0':
-    resolution: {integrity: sha512-3bzFt7ImFMW/jVYwJamDoe/dMOdFLSC6pom6rRjdh4SZJEYupyMzem8e7vKZLclLfpHjlwSAXOUxtKxGXUiLqA==}
+  '@typescript-eslint/scope-manager@8.61.1':
+    resolution: {integrity: sha512-L2bdIeoQS8FlKAvONAr20w6OcLXeB+qiDKbAooS9A0Ben+iSIkBef0FxqwKWYqt5sa0i4KJtxVyVmhMylKzF5w==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@typescript-eslint/tsconfig-utils@8.61.1':
+    resolution: {integrity: sha512-UN/H4di+OO7EWx2ovME+8t31YO+KVnK0RRKEHR3kOt21/Ay8BOq3M1OMvWs5vNiqcFCYGYoxK3MXPZzmMUE+yg==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    peerDependencies:
+      typescript: '>=4.8.4 <6.1.0'
+
+  '@typescript-eslint/type-utils@8.61.1':
+    resolution: {integrity: sha512-GYRicKmVK0C4fsKgaACaknOUAq9Oa2kwsjnpFhFcS/5p4Ht5IP9OVLbgIgcK4SRk92nVHFluurg1lumD9dBcLw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: '>=4.8.4 <6.1.0'
 
-  '@typescript-eslint/visitor-keys@8.61.0':
-    resolution: {integrity: sha512-QVLZu3ZPQEE+HICQyAMZ2yLQhxf0meY/wx6Hx14YcTNj13JB3qHlX3lJ02L3fLGHgERRH71kvYDwiXIguT3AjQ==}
+  '@typescript-eslint/types@8.61.1':
+    resolution: {integrity: sha512-G+CRlPqLv7Bz1IZVs03x5K59F1veqL0EJUROAdGhKsEq8qOiRiZbI+HUojPq5l0fEGOKModD9br6lObhB8zkoA==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@typescript-eslint/typescript-estree@8.61.1':
+    resolution: {integrity: sha512-u+oQD3BqYWPc8YV9Zab4vaJElJuwOLPRc10Jm1o/qS+6Qwen14HCWwx0Seo4LnSn2wxea2Ik8DxPt2/FHmuhrg==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    peerDependencies:
+      typescript: '>=4.8.4 <6.1.0'
+
+  '@typescript-eslint/utils@8.61.1':
+    resolution: {integrity: sha512-1+P/3Dj6jvtybE1q0HQ6yBt/gq+oKJyLdEv4HdnqasaEXRSYCAsD59mXEVQnM/ULNdQxbX77tdG4jPRjIS6knA==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    peerDependencies:
+      eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
+      typescript: '>=4.8.4 <6.1.0'
+
+  '@typescript-eslint/visitor-keys@8.61.1':
+    resolution: {integrity: sha512-6fJ9MHWtK14C1DSkiMlHUSOmrVebL7150xZJBlJiL62jjhIA4JmOq6flwBgDxIdBKKdoiZRel+dfPD5MLfny3w==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@vitejs/plugin-react@6.0.2':
@@ -1814,11 +1810,11 @@ packages:
       babel-plugin-react-compiler:
         optional: true
 
-  '@vitest/expect@4.1.8':
-    resolution: {integrity: sha512-h3nDO677RDLEGlBxyQ5CW8RlMThSKSRLUePLOx09gNIWRL40edgA1GCZSZgf1W55MFAG6/Sw14KeaAnqv0NKdQ==}
+  '@vitest/expect@4.1.9':
+    resolution: {integrity: sha512-vl/rYsUKcBr3SnQn166+XR5ZQcgMx3DQhFWdfli/cWpLnLUmbxZvyrJZotLFUryib+LtArYMSTJ5RbQ57ZqrlA==}
 
-  '@vitest/mocker@4.1.8':
-    resolution: {integrity: sha512-LEiN/xe4OSIbKe9HQIp5OC24agGD9J5CnmMgsLohVVoOPWL9a2sBoR6VBx43jQZb7Kr1l4RCuyCJzcAa0+dojw==}
+  '@vitest/mocker@4.1.9':
+    resolution: {integrity: sha512-EVkXzBjrPGM+cK8/ANWgBrkUCfJfb38/EfTSO8h7pWvKkyPkpWxvR7BkD2MyItMF62C97zAEoqdpUixwR/e+Rw==}
     peerDependencies:
       msw: ^2.4.9
       vite: ^6.0.0 || ^7.0.0 || ^8.0.0
@@ -1828,25 +1824,25 @@ packages:
       vite:
         optional: true
 
-  '@vitest/pretty-format@4.1.8':
-    resolution: {integrity: sha512-9GasEBxpZ1VYIpqHf/0+YGg121uSNwCKOJqIrTwWP/TB7DmFCiaBpNl3aPZzoLWfWkuqhbH8vJIVobZkvdo2cA==}
+  '@vitest/pretty-format@4.1.9':
+    resolution: {integrity: sha512-s0iufns3iIFitdgm+YR7g1whCAaGtXz459VS9/PqyKDEEFgYIhsHOQmXgIgDuYCt7DeQmiZT0Qe2OA2p4ZPu5A==}
 
-  '@vitest/runner@4.1.8':
-    resolution: {integrity: sha512-EmVxeBAfMJvycdjd6Hm+RbFBbA9fKvo0Kx37hNpBYoYeavH3RNsBXWDooR1mgD52dCrxIIuP7UotpfiwOikvcg==}
+  '@vitest/runner@4.1.9':
+    resolution: {integrity: sha512-KXLMDtc7oe70+3mJfGrPUWPesswH+3sTxAMAMl8DG7I8IUQT4XW718dY5ID3vPUcmlu27CcKfY4P3h3I29SLJg==}
 
-  '@vitest/snapshot@4.1.8':
-    resolution: {integrity: sha512-acfZboRmAIf05DEKcBQy33VXojFJjtUdLyo7oOmV9kebb2xdU01UknNiPuPZoJZQyO7DF0gZdTGTpeAzET9QPQ==}
+  '@vitest/snapshot@4.1.9':
+    resolution: {integrity: sha512-Jc7RKGNBo8Z28WYIm0Niej4xdSPByRf6mU58VpHQkd6Zh05rlnA+twjbK5HyeIGHxrzsc3mJgS43uM0CZKzaIA==}
 
-  '@vitest/spy@4.1.8':
-    resolution: {integrity: sha512-6EevtBp6OZOPF7bmz36HrGMeP3txgVSrgebWxHOafDXGkhIzfXK14f8KF6MuFfgXXUeHxmpD3BQxkV00/3s5mA==}
+  '@vitest/spy@4.1.9':
+    resolution: {integrity: sha512-fHpsS6mIi+PiEW+vcRVOMkX1oSaPKne3VOclSFICPcGOmfKgXPU5iAah+wcNcj2xPrCCmfq99IDGf+EojhhvhA==}
 
-  '@vitest/ui@4.1.8':
-    resolution: {integrity: sha512-RUS2ZU2TsduVrI+9c12uTNaKrNUTsm6yFt3fueEUB9iKvyC2UP83F+sqIz00HQIah4UOL1TMoDAki8K0NjGvsA==}
+  '@vitest/ui@4.1.9':
+    resolution: {integrity: sha512-U/cRvtqfEPj27FI1n9cyUvi4vXXdcLhjJiI+InYKdk8hP4VrS6RXOjGL7rfFaeBc37iRKANsR6eEzIoC7lmgBQ==}
     peerDependencies:
-      vitest: 4.1.8
+      vitest: 4.1.9
 
-  '@vitest/utils@4.1.8':
-    resolution: {integrity: sha512-uOJamYALNhfJ6iolExyQM40yIQwDqYnkKtQ5VCiSe17E33H0aQ/u+1GlRuz4LZBk6Mm3sg90G9hEbmEt37C1Zg==}
+  '@vitest/utils@4.1.9':
+    resolution: {integrity: sha512-A51o8ymO5PpqlWNnBP9ZHPXDIpuMtTLlGSjN7la4US+LJzoUMyhwjA5QXlm39JexgwHKW4Xjs8Z2d3dLCXOeuA==}
 
   '@web5/agent@0.8.1':
     resolution: {integrity: sha512-W7x0yMaBcUcDQ5mbSqfoswD6gNhnnmMy4O7W3CQz/mMStcrUQoqKV8+x/DbS0MU4J7GEqJuJg1z7FrgOdkdJXg==}
@@ -1872,145 +1868,145 @@ packages:
     resolution: {integrity: sha512-6Wr7aPB4tZmdp27hJzee2fy0Tfxoo+KpPkkccCSTfto7W7KqdotNZotZGKi55wHjYBNfkCOjRn2L4XLfOUIonA==}
     engines: {node: '>=18.0.0'}
 
-  '@wormhole-foundation/sdk-algorand-core@4.24.0':
-    resolution: {integrity: sha512-aeAkmY0RmZNMc27B0FS1qJGGdu4QTNieC7wVlUgcIHg/U570cDtJmdSS51sDi+/PHhqlXDuWra8zJMG6/L8oMA==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-algorand-core@5.0.0':
+    resolution: {integrity: sha512-azgYdny4MdXclO8rf7Xp1Z/Jf28mZXLw6s7tKTzy2yg2z5gps3pLsq7so2zAezRBP7wOhRTgQQka/RlIzkTjxg==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-algorand-tokenbridge@4.24.0':
-    resolution: {integrity: sha512-QbREjsfZBBgxZ9e91FEwBz3gz0OIhv+gwERdgOQcM2WVFdlsa4kHzf2yjpKXVhY7y0VQhaHmrx9YN0YvfYsb0Q==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-algorand-tokenbridge@5.0.0':
+    resolution: {integrity: sha512-MwNor5njat0q3eXwrjboqGEO592txQ5ecAPqfyVM3YGseu7sT2CEuqT78++6uabb1r6Jm0UXVH8ysEgvx3tF5Q==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-algorand@4.24.0':
-    resolution: {integrity: sha512-w278Rk4azBUlAKD6lXPTjLv+Xfns2DXkkJDGQ8TGcl2tyTAUHqjA3rsBC47mSj6cvZ84plDklEYL6WL3bjA3OQ==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-algorand@5.0.0':
+    resolution: {integrity: sha512-2b723xKcJmyo752JvX7fMkvqoaJ6aK4eQtQH78GSJskpk6jTpJ9xjQWBXU+O7+a0VTFlMybYUb0tvjJaiA79fw==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-aptos-cctp@4.24.0':
-    resolution: {integrity: sha512-o8/P7/SKXHl8pF/M11N+LNOSmfN7htg0iAI3tj+SxNG37LrrDZgAAMzPhflYVDO37YBfaLTJ+toSq9nMoUJV8A==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-aptos-cctp@5.0.0':
+    resolution: {integrity: sha512-a6GCjlxiwfH4qiY6RUoyRJRbn8tgDsGSf2PKTNz4YIdf2bzs75MMoneb+oyFgQcFYnlAD/CGaDSyUySz52cDMA==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-aptos-core@4.24.0':
-    resolution: {integrity: sha512-osAEB5Fe+kGwE/bVUhYX1xXY4LQd8xTpmnmW83P3U3hu67xKXHotITjgsANS/17ji40vyfhKm2+/DW29sMdPfw==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-aptos-core@5.0.0':
+    resolution: {integrity: sha512-ZMvEp4J7mXlm7m9AegWrlo/KPhQ/53OqFBNJ8PfuR2BeiHURFKje76aZofRVlCWm2g8t1cysmnW1PFH5zIZH0g==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-aptos-tokenbridge@4.24.0':
-    resolution: {integrity: sha512-k7VCODqakNCC/8DKng2u1glHhHB3d+2TRnDR/ylloik7fUp1SyDyI5zFIhYxvFfB8iFnEUnjsiqZ9/wG90Splg==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-aptos-tokenbridge@5.0.0':
+    resolution: {integrity: sha512-B55DVAttUZ0fxeKyYmGU9J0nVOOmfcUjR5Ulew0u6kczvHEAJRHvbvMGVfNC5fUXP6TiGSs/oLeT0BBuhsyMMA==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-aptos@4.24.0':
-    resolution: {integrity: sha512-LWCyxwOfbmqqh2HZjV5x27X4lf36w0fpLScsFaRBK9ePhkjCnEGTAoox/Mu/VwYjWKVn+bz9K/6NmgfFiN1y7Q==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-aptos@5.0.0':
+    resolution: {integrity: sha512-qwnx+sebAJ29Q5Tv6ru4ECLh9GnR/7kfxaCbuHou1hLTKc8roO/f7q8i1RRXj4pj79lP2pSuZqBJYPolFnrOsg==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-base@4.24.0':
-    resolution: {integrity: sha512-3nKPSFtHR94296JF+Hg5FE6z1sIjytMkuB7hcTS5gSV3hyLZV8yHdD8Ux8mdKU+PKZXoMVDyO3AA2XI6rIumLQ==}
+  '@wormhole-foundation/sdk-base@5.0.0':
+    resolution: {integrity: sha512-CzSM06MgSeCrrhI1eajJ6fBnCT7oGx0HqF2LyYQpthn0mlTgQO0Gg8iDZuCjhB2/rXyceTEK8raHQ8vXyMxYog==}
 
-  '@wormhole-foundation/sdk-btc@4.24.0':
-    resolution: {integrity: sha512-5ab+I9B2rVd0cpz0UU0mD442LoElaSKIeoKGuxrPg/2nvt3aE1L+1d1uOVDMe6wgjEpYPhKUjKnyfO9xpXHA9Q==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-btc@5.0.0':
+    resolution: {integrity: sha512-iOLn2VOETWM64aV5F2Xm1VWAn3M3wuJtllyZuvQBn209xv1Km6TK1WSyrdNYw/A2lDTXg5bVdE0YQwo4x0jRyA==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-connect@4.24.0':
-    resolution: {integrity: sha512-WlBih0bor+CTNl+L8xSbiVa/aweOIpGY7lVMJJ2CSO5HFqrlkqZ81s0ZVorHonrqifIjkNotpDPZSZQzf5r4cw==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-connect@5.0.0':
+    resolution: {integrity: sha512-xJ0wyG3s6Zk4rTst/Ztafe1bs25mw6sZQ4kXYwAHo2QmAKI7kPwCgW0twhEUVYxoZHZSHkW4GmtOcG8LJaQRlw==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-cosmwasm-core@4.24.0':
-    resolution: {integrity: sha512-Vd9yDs1QUmXr/PY2xQQlkdkH9oSnDlFOhfFCnwBCousgOykB+XhJ1E5HJRFmUz9Xal8WC7oMJ6d0626Jl7wvbA==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-cosmwasm-core@5.0.0':
+    resolution: {integrity: sha512-KFTb2ZyMAdkYfUSNIZq1qY8rj625C8Tmbl9HScXbYUVp2/F0YvN5mb6+YHdsXwlZ8apvTvsDDiFWaboSb7bB2Q==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-cosmwasm-ibc@4.24.0':
-    resolution: {integrity: sha512-Z06kSn3jE0gpvOEzUYJMAhOeDtT8jig4Qq7d8/6ryNYDQIrIG0t/+GRnt2Sf4xZl97AFh7W08iqK/M533C32/g==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-cosmwasm-ibc@5.0.0':
+    resolution: {integrity: sha512-P+35LOrE1A47YtsCOszH5ziF3soeNcT9z0Cxf33wa9QS1bUNlq+BRP5jrJK4xmrppvugo/f4KL6hJmOgXwhI9Q==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-cosmwasm-tokenbridge@4.24.0':
-    resolution: {integrity: sha512-gAqYVU9jFZG7iUBfWwO05jtLIWuqlsUBEeBnHPVlXSBafKkmGlVPeqgvoTnRyXJQAKAtXm+ey3FE0CFdxrbvog==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-cosmwasm-tokenbridge@5.0.0':
+    resolution: {integrity: sha512-si/rEin1eVGsvCKl4vQUBAaOPyveAPeXrzJK+UDhaQNz8kflDwlR361gcGVij9mNGd5Xg6iX44FibYir/Qvzug==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-cosmwasm@4.24.0':
-    resolution: {integrity: sha512-xMgP7FUTfPpshHeL92mOojQ6xA1r0i60VnK7XKwQtWd+pniuUBnt6P+UxEEERQCJpSgKlAhnx0hGV4FU2lfyCg==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-cosmwasm@5.0.0':
+    resolution: {integrity: sha512-IRq4ko7biV1YxYqUXqinKNhwhgLQQdnqD1GFZDewR8o7EKu+hlVylQvGr0b5perK0Qi7fNe+IZcjnyRXOcA5Ug==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-definitions-ntt@6.2.0':
-    resolution: {integrity: sha512-QVDd7H9jFIEMw0TDGam0DCtSYyxHARW3xyzTEjodf/kvq0KHo9/h/pqTZZuhR/jewL9Q0Yb9HdnQpVIJrSOg3w==}
+  '@wormhole-foundation/sdk-definitions-ntt@7.0.0':
+    resolution: {integrity: sha512-/pvS6Q2VnMoMrqqG47BssrY5WCU9ClhhG1aOO7YmnSxnErqoA5VleC4lKF4W2D1Zwj1mYz+uB6zV6HUCv66ABw==}
     peerDependencies:
-      '@wormhole-foundation/sdk-base': ^4.21.0
-      '@wormhole-foundation/sdk-definitions': ^4.21.0
+      '@wormhole-foundation/sdk-base': ^5.0.0
+      '@wormhole-foundation/sdk-definitions': ^5.0.0
 
-  '@wormhole-foundation/sdk-definitions@4.24.0':
-    resolution: {integrity: sha512-ykwCvkbhogiS5RMReAtXTjjszu1hTPNf9d92GoqpRusD9te33mPvuTyW9NEBTh/h4yw5gcwEF9N8gkc7OWtoIg==}
+  '@wormhole-foundation/sdk-definitions@5.0.0':
+    resolution: {integrity: sha512-NB3MS7APYYu7GJS7jsz9z7zWPaEmwDzaWX0+7RPGX3WfOYHmCDMGu7fNFj5bMulDadR5OYOqJjxMw80KVpg/Qw==}
 
-  '@wormhole-foundation/sdk-evm-cctp@4.24.0':
-    resolution: {integrity: sha512-8xvZv67hVkruHOE0otIrCOW7ppJn62Z3pHIt+tJG+yZz2GFuxFfJxVSUF6j2a1etRbNKZHeLuwfEpkSkgtE4bg==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-evm-cctp@5.0.0':
+    resolution: {integrity: sha512-Mjzc2nO3ULGX5EEcG0xLKM+tYixcxDXlm1FwAKM3K77jz/aowfW2+ApJFKzKdPu4Vbh8L+WgXZbzWzzkpdN2wQ==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-evm-core@4.24.0':
-    resolution: {integrity: sha512-+Hl6GqvhlhMYke64jl9r4Ti88CUuj+UnpIepCy4d48II1wX4v4rBxT1NDtOKD+DBzUpfB8E2nCkmbGdkeRGiQA==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-evm-core@5.0.0':
+    resolution: {integrity: sha512-JTezK1KxjNoPWDdkKhGC05Wxf11w3dfiZKs1G7ZiroNES+OHCh6UMjaLH8Kjm2kW3R6zIXtp/mpR89zYsojGug==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-evm-portico@4.24.0':
-    resolution: {integrity: sha512-cc7C+q5aKU4H/riRIhbxo6fYGRLiwvbzLh0CXaYOHMm2DhIcHVCpE8WsOHjN1165HorElBXcCHNp8spfAuMKvw==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-evm-portico@5.0.0':
+    resolution: {integrity: sha512-iAJNTDZTTOce+gASRK5IhTe+MWAt39FDYRQdgyutUbztgIqdQSaOagrj9uUFsZZUVnJaLZczyTXdvKEDLrC+Zg==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-evm-tbtc@4.24.0':
-    resolution: {integrity: sha512-uApVXFxI+trcGMEv9BIEbSmrzGkYFpkbaMWi63tKD7M/wI/Bl78UuEF766yJOGLoZwAVmf6Gv7uaMJoKB0HkWg==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-evm-tbtc@5.0.0':
+    resolution: {integrity: sha512-yDIRj7UZZcIkhRwQftqpL7kd0kdye7dfSj9GnaxVII9dnllzXYlnxYSOHCIh9ZZ5ir+3qNZbXvf9e+UIqGR6yg==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-evm-tokenbridge@4.24.0':
-    resolution: {integrity: sha512-l5KJEnQPF5gkn/HhVpB9xNww7myX/0I6fagR8BBNP5YstRo8UuDAgECf85xRyMzAVQhtwh9AQ75fyCedHI0hvw==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-evm-tokenbridge@5.0.0':
+    resolution: {integrity: sha512-h7QnW4fZjqbGhyvS9lJronxlYc5/ZV/HgYoWIh3d/HrZQpeRRX2Uk0wihs2wKlplLSh5QeV8gE1v9sbQbtAyzQ==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-evm@4.24.0':
-    resolution: {integrity: sha512-kQIpTkRkyT35/Ix6YXAtTZwmSz/OOXrfKc4uw6KjVdGIF0+2oHDjZf7gOfSYspMsTaxa1IZz+xScSWvu3Dhvvw==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-evm@5.0.0':
+    resolution: {integrity: sha512-/JyiONdaqnV8JTZfFafdvwYwnasW2buiI4ek2alTZ9+Q5fJNTOXV4avjPMh7s+nEsH1xAZtRc2xtbm6X1y/Apw==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-solana-cctp@4.24.0':
-    resolution: {integrity: sha512-pLR8nidpNYjEseBU/UXCQTYc8FQOtg+GLHoeZV+g0kaw0+Ans1oto6N2B2CLysnayHfXfTYBIsErq7S2sg100w==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-solana-cctp@5.0.0':
+    resolution: {integrity: sha512-h3tqEQ8892y9jWLiv3mTt5jif0E7MQCzzJwDDCWBK5tQe2CJE/vA5AiWmQetN/viSpZRfnwdtnnoRo4QFEUFyQ==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-solana-core@4.24.0':
-    resolution: {integrity: sha512-Ao7FL4Agec/9As8aqbPnGxU65PeiS/fEPxTRBL0zKQ/Xt+O/vluOHY+jLnylppR3VfcVyqGLuIfPYq+ZX7wlXA==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-solana-core@5.0.0':
+    resolution: {integrity: sha512-++Zdkp0QvvfNOy/h0IhnxDjK3l4nGy8RhRGJsHE0X5raB//g5ftoKAcdGZ30LYwzhpUCixyqx6YejDy6g+vlHw==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-solana-tbtc@4.24.0':
-    resolution: {integrity: sha512-yCZHBVKwKVl3zjXv2dTi/6n4ipt0zduUN1JHqOi7YTrBMTBZnP1C3dGQc0GzCQx+mjSm4Hyco6phgqD0dZIbEA==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-solana-tbtc@5.0.0':
+    resolution: {integrity: sha512-r4P6MMEFmHP/ZKh9nlkYY6nNAG28SFdSt/KTjlPsQJJ+de3CEPtYIPqKaZRap4l7TEMh+E8hTAQxU7yEB/1+yA==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-solana-tokenbridge@4.24.0':
-    resolution: {integrity: sha512-ekZ7gKdmHTJNnhnL/SxIGJNVw08QY+tRxS3y1/QYCsIJKh+kTyWR3r6/DRgC03HxW8tGWCI+sC5+g8LSpPeBvA==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-solana-tokenbridge@5.0.0':
+    resolution: {integrity: sha512-ROrRi64WuCNUXmiairiBWf2rgHxIpDVsQJZGP2c0mno8rfUF5nomYS5mJYyozK+fsl5YKE0R5HaMFdEnBMlkBQ==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-solana@4.24.0':
-    resolution: {integrity: sha512-NM50j4lv6tL7i079dmE27MTEl83JGVYHdUCsCXfWzZl1wT5ENiJLLA/gcPmnozpf3Cyq4Sr/fCfdQ1iiWosaWg==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-solana@5.0.0':
+    resolution: {integrity: sha512-LC6FVAK1u0UAr2fcftUbl/9lB+LR5s6H+twUw2PpfXXEjVigufS1mB3KZdfpedhT8nMXB4W0fo+bSzF5P4Qi7w==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-stacks-core@4.24.0':
-    resolution: {integrity: sha512-zRZ6TtL2Y+VhOoU7bmYNvPGkYVopxz1pUhrlshtyiyDbNgHJrKPZ7K+7Rqn5SweW6QP9JHfCw9XsVA8k2swoXg==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-stacks-core@5.0.0':
+    resolution: {integrity: sha512-9foS2pvlt0N7qal0OjdKp+HKGBelecV/31z3L5XTLQHiPIqvJgnjvrDfzYOu6FgNYzgTBeguHOjBXOornfreww==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-stacks@4.24.0':
-    resolution: {integrity: sha512-kN6rppnvlGOTY7zvUXNBWTfgaS/XDRrcOi2/J9137g3iNXgtrT/N3pDJclvhAPxFUYKS0JvjYvQ4CLV77dfdIA==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-stacks@5.0.0':
+    resolution: {integrity: sha512-Ov3MYcCsUK8qgKI7n9rrCuS2l2TFYRv78IPdplwvOs8fupwgGnGhM6X27ZpN6j3wsDdiAYF0nxVfFXAORGU5Zg==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-sui-cctp@4.24.0':
-    resolution: {integrity: sha512-MX66ouwliinTpFsTa0w+fD2hAlzoxNyEW4UTa3yQiPIZTpm6vMjwzWMuRN7z891BKcrsww1I4o53NA0S4WCrAA==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-sui-cctp@5.0.0':
+    resolution: {integrity: sha512-T0z4ggu+FEAA6T7lszqahEfulZoVRlABBwYlFQNSva6E9vYwYbV2WdE/erH3nUnuSTYTY5+DUy/XWKJRseP4tQ==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-sui-core@4.24.0':
-    resolution: {integrity: sha512-Be35Eq1qodbxabcU+NJcucjKBqWIKyUUXNQob1Lc7S2bCfQyPpnEQ3rIzZ4R19tKpJXH/76NW8viwe9RLPFMDw==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-sui-core@5.0.0':
+    resolution: {integrity: sha512-jwMTOZ66ALk/YX88RTScDiiUSE4Fhs4KyiMfpKMfyakO1X5UEKBfiMZ1njkCdBjLfFmxHdZVgNl1XdRbO8cjwg==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-sui-tokenbridge@4.24.0':
-    resolution: {integrity: sha512-UsXiO0hXDe5lY5cXAVgPHf1PVLdTSDYoiK1U4eWbP+dDSlXvtCw4rl2s4WsX1MQWlzswExB1AbOg066s3zZpgw==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-sui-tokenbridge@5.0.0':
+    resolution: {integrity: sha512-fd0EPPzddWDJ1cs65YLwfIkkIQoUcsOPvuz76vlEqCNKotFF7cvD43dV38afgq6PRjhc2SU1TaBLVQgPFxnH8A==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-sui@4.24.0':
-    resolution: {integrity: sha512-CII8f9dj9rX0QSZuVuM8Zej4h55H+2X43BhP30TrLNN7bSH7aFzrfhgA+x83uCv1phZUMROsU+zX+KtZcM0HQw==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-sui@5.0.0':
+    resolution: {integrity: sha512-QcZZ7Zv141g73t25SeOVz9NfdpH9H5HkpTICK97casN5qQmm0gojBSLHIxd0XSaMJs7KzQreJ+QtTSZX7atPDA==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-xrpl@4.24.0':
-    resolution: {integrity: sha512-Z63gUq5kVBfL34s9fzcB97fa09ajpSYEQE0Qxu7k++qhRXp9oSie0v5cXk7RuIMvyI/pPTUUjtiIRE9bKq4y/w==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk-xrpl@5.0.0':
+    resolution: {integrity: sha512-d4gFoWp/VuAhH945V0+pALWWGn7l2BBFgRzv6pdWdXIOz6SgVlu5mZkLv7gPcXNry4vFRd5oLBZXZ7kiIaiCKA==}
+    engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk@4.24.0':
-    resolution: {integrity: sha512-FP9b7SY3c+7R6lgoIO1sPIvsf5qHflc0ReVrBttfc6qqKAsaiQDLnYThz1XG2lQZ1hg85NdJo3spD6ht+rB9WQ==}
-    engines: {node: '>=16'}
+  '@wormhole-foundation/sdk@5.0.0':
+    resolution: {integrity: sha512-f01t8gRoPlbP/AaI/EVQ8ap6s7KMa5RQwz4Z7OcVObrpFZbQRyKyf59d1iypGfrZZorsO2yCa8DMQbMZKHF2lQ==}
+    engines: {node: '>=20.19'}
 
   '@xmldom/xmldom@0.9.10':
     resolution: {integrity: sha512-A9gOqLdi6cV4ibazAjcQufGj0B1y/vDqYrcuP6d/6x8P27gRS8643Dj9o1dEKtB6O7fwxb2FgBmJS2mX7gpvdw==}
@@ -2066,8 +2062,8 @@ packages:
     peerDependencies:
       acorn: ^6.0.0 || ^7.0.0 || ^8.0.0
 
-  acorn@8.16.0:
-    resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
+  acorn@8.17.0:
+    resolution: {integrity: sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -2174,8 +2170,8 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  axios@1.17.0:
-    resolution: {integrity: sha512-J8SwNxprqqpbfenehxWYXE7CW+wM1BB4w3+N+g+/Wx40xM4rsLrfPmHHxSWIxJLYDgSY/HqlFPIYb2/S3rxafw==}
+  axios@1.18.0:
+    resolution: {integrity: sha512-E32NzpYKp++W7XRe52rHiXV2ehxmh3wbdgO7MHeFM+vqxLBYHzt0ElkiImtOBxtOmyp0yoC8C6uESVV84Y2/hw==}
 
   balanced-match@4.0.4:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
@@ -2722,8 +2718,8 @@ packages:
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
-  enhanced-resolve@5.22.0:
-    resolution: {integrity: sha512-xYcDWrpELkFzz9SpZ3PlI6Eu6eD93Yf0WLDRxikGhWJ3MAir2SNZTIVCVZqZ/NUyx8AdMc2gT9C0gPiw18kG+A==}
+  enhanced-resolve@5.21.6:
+    resolution: {integrity: sha512-aNnGCvbJ/RIyWo1IuhNdVjnNF+EjH9wpzpNHt+ci/m9He9LJvUN8wrCcXjp9cWsGNAuvSpVFTx/vraAFQ8qGjQ==}
     engines: {node: '>=10.13.0'}
 
   entities@8.0.0:
@@ -2792,8 +2788,8 @@ packages:
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0 || ^10.0.0
 
-  eslint-plugin-react-refresh@0.5.2:
-    resolution: {integrity: sha512-hmgTH57GfzoTFjVN0yBwTggnsVUF2tcqi7RJZHqi9lIezSs4eFyAMktA68YD4r5kNw1mxyY4dmkyoFDb3FIqrA==}
+  eslint-plugin-react-refresh@0.5.3:
+    resolution: {integrity: sha512-5EMmLCV98Pi4o/f/3DP/v/tNqLHMIc9I8LKClNDWhZ9JTho89/kQcitCXQBMG7sAfVRK0Ie3T2EDOzp1YXYiVA==}
     peerDependencies:
       eslint: ^9 || ^10
 
@@ -2809,8 +2805,8 @@ packages:
     resolution: {integrity: sha512-tD40eHxA35h0PEIZNeIjkHoDR4YjjJp34biM0mDvplBe//mB+IHCqHDGV7pxF+7MklTvighcCPPZC7ynWyjdTA==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
 
-  eslint@10.4.1:
-    resolution: {integrity: sha512-AyIKhnOBuOAdueD7RB3xB+YeAWScb9jHsJBgH2Hcde8InP5JYhqrRR6iTMHyTEwgENK54Cp44e4v8BwNhsuHuw==}
+  eslint@10.5.0:
+    resolution: {integrity: sha512-1y+7C+vi12bUK1IpZeaV3gsH9fHLBmPvYmPx42pvT/E9yG0IC8g3PUZZgp0+JLJl7ZDK0flc2gc+Aw9dpCvIsQ==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
     hasBin: true
     peerDependencies:
@@ -2950,6 +2946,10 @@ packages:
     resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
     engines: {node: '>= 6'}
 
+  form-data@4.0.6:
+    resolution: {integrity: sha512-vKatAh4SlVfgbv+YtmhiRjhEMJsYpsG1Y2rMQtR+SVSbytsSD1YGzDIcrAJmdFec88u/+VoGmxnl+80gL1tRCQ==}
+    engines: {node: '>= 6'}
+
   formdata-polyfill@4.0.10:
     resolution: {integrity: sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==}
     engines: {node: '>=12.20.0'}
@@ -3049,8 +3049,8 @@ packages:
     resolution: {integrity: sha512-PMIMaZuYUCK43+Z9JWEXea4kkX2b3301m81D5TS6QpfG4PmNyirzEdO/Oa2OHAN4GsjnPfvWCWsshKN2rq4/gQ==}
     engines: {node: '>=22'}
 
-  gql.tada@1.9.3:
-    resolution: {integrity: sha512-LZujwMjaYGw1A7pgJTuD2BOxXhE2gyDpdz/iCL+iAimC+8/lu3tv0qcd4fpHmcPq9zGOn1Gn/08w+WXpbcXgMQ==}
+  gql.tada@1.11.1:
+    resolution: {integrity: sha512-ZfmvPQq7SX7foxjGpVJlKNYHotyapwNlAe8OxCy8uLdUnC9KP/o6rMjrgMW9jN3udES6SsvNAXjyM/l6FssDAg==}
     hasBin: true
     peerDependencies:
       typescript: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
@@ -3093,6 +3093,10 @@ packages:
 
   hasown@2.0.3:
     resolution: {integrity: sha512-ej4AhfhfL2Q2zpMmLo7U1Uv9+PyhIZpgQLGT1F9miIGmiCJIoCgSmczFdrc97mWT4kVY72KA+WnnhJ5pghSvSg==}
+    engines: {node: '>= 0.4'}
+
+  hasown@2.0.4:
+    resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
     engines: {node: '>= 0.4'}
 
   hermes-estree@0.25.1:
@@ -3592,8 +3596,8 @@ packages:
     resolution: {integrity: sha512-ERJq3FOzJTxBbFjZ7iDs+NiK4VI9Wz+RdrrAB8dio1oV+YvdPzUEE4QNiT2VD51DkIbCYRUUzCRkssXCHqSnKQ==}
     engines: {node: 14 || >=16.14}
 
-  lucide-react@1.18.0:
-    resolution: {integrity: sha512-LZDb7H/0YfM+RJncD0hDQRCAu+vSGODqpe35TuVI8EuXaRjkczbsx7p8dY4J87F/MUSj6bpYqeI8nw8qXaAdmA==}
+  lucide-react@1.20.0:
+    resolution: {integrity: sha512-jhXLeC/7m0/tjL1nzMdKk6x256zWA6AtbhTVreHOiKPoeX2d6MK4FbyIQPpVq0E6iPWBisyy1TW+pEge/uMEuQ==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -3765,8 +3769,9 @@ packages:
     resolution: {integrity: sha512-nK28WOo+QIjBkDduTINE4JkF/UJJKyf2EJxvJKfblDpyg0Q+pkOHNTL0Qwy6NP6FhE/EnzV73BxxqcJaXY9anw==}
     engines: {node: '>= 0.4'}
 
-  obug@2.1.1:
-    resolution: {integrity: sha512-uTqF9MuPraAQ+IsnPf366RG4cP9RtUi7MLO1N3KEc+wb0a6yKpeL0lmk2IB1jY5KHPAlTc6T/JRdC/YqxHNwkQ==}
+  obug@2.1.3:
+    resolution: {integrity: sha512-9miFgM2OFba7hB+pRgvtV84pYTBaoTHohvmIgiRt6dRIzbwEOIaNaP+dIlGs2fNFoB0SeISs0Jz5WFVRid6Xyg==}
+    engines: {node: '>=12.20.0'}
 
   onetime@7.0.0:
     resolution: {integrity: sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==}
@@ -3885,13 +3890,13 @@ packages:
     resolution: {integrity: sha512-NPE8TDbzl/3YQYY7CSS228s3g2ollTFnc+Qi3tqmqJp9Vg2ovUpixcJEo2HJScN2Ez+kEaal6y70c0ehqJBJeA==}
     engines: {node: '>=10'}
 
-  playwright-core@1.60.0:
-    resolution: {integrity: sha512-9bW6zvX/m0lEbgTKJ6YppOKx8H3VOPBMOCFh2irXFOT4BbHgrx5hPjwJYLT40Lu+4qtD36qKc/Hn56StUW57IA==}
+  playwright-core@1.61.0:
+    resolution: {integrity: sha512-caX7TrY3Ml6egyDX0WUcTHDxodl/b51y5wJOdCEA36QviK/s2g081hvmGs8eaE3DWb6NYZQ6BjO/QkNRPenoPA==}
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.60.0:
-    resolution: {integrity: sha512-hheHdokM8cdqCb0lcE3s+zT4t4W+vvjpGxsZlDnikarzx8tSzMebh3UiFtgqwFwnTnjYQcsyMF8ei2mCO/tpeA==}
+  playwright@1.61.0:
+    resolution: {integrity: sha512-Z+7BeeqQPRRzklHsVFP4KTGIyMxKUmfeRA4WisM6G3/XW6nwGeX6fX9qYaDa+CiUqpOkb2f6X3nar05R3kSuJQ==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -4188,8 +4193,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  semver@7.8.3:
-    resolution: {integrity: sha512-wnilbGyMxzbY7dNOl7jpKbLSjcfeweJWU5j4+u5qW+6/wuGD9KzIGOyZnQVSBM9E7DtWaaH3CyHkppYrKYoxwg==}
+  semver@7.8.4:
+    resolution: {integrity: sha512-rUCObTnP32Q08R2uuIrt7r9PlEonuTmtuXYcW6s5kjdlj3xbnwe+21yXptAUYcMAABLkYYTtnmzb3w3EDZfueA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -4360,8 +4365,8 @@ packages:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
     engines: {node: '>=20'}
 
-  tailwindcss@4.3.0:
-    resolution: {integrity: sha512-y6nxMGB1nMW9R6k96e5gdIFzcfL/gTJRNaqGes1YvkLnPVXzWgbqFF2yLC0T8G774n24cx3Pe8XrKoniCOAH+Q==}
+  tailwindcss@4.3.1:
+    resolution: {integrity: sha512-hk+TB1m+K8CYNrP6rjQaq/Y+4Zylwpa87mLYBKCunwnnQ9p+fHb7kmSfGqyEJoxF/O6CDyABWVFEafNSYKll+Q==}
 
   tapable@2.3.3:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
@@ -4481,8 +4486,8 @@ packages:
   typeforce@1.18.0:
     resolution: {integrity: sha512-7uc1O8h1M1g0rArakJdf0uLRSSgFcYexrVoKo+bzJd32gd4gDy2L/Z+8/FjPnU9ydY3pEnVPtr9FyscYY60K1g==}
 
-  typescript-eslint@8.61.0:
-    resolution: {integrity: sha512-8y31Rd0eGTrDKqhy6vT0HtzhN+YLjQizwX3aA3hPXP/ynSfnrBXcQY5IzsP9/DM7+klX4IUncZZjkchP0z+rUw==}
+  typescript-eslint@8.61.1:
+    resolution: {integrity: sha512-V7PayAfJokV3pEHgN7/v03D1SpujhRfQtYLbLIiBfDDncdg4PAiRBfoS4cnCANK4jmAPncczi59QO3afiXUlNw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
@@ -4697,20 +4702,20 @@ packages:
       yaml:
         optional: true
 
-  vitest@4.1.8:
-    resolution: {integrity: sha512-flY6ScbCIt9HThs+C5HS7jvGOB560DJtk/Z15IQROTA6zEy49Nh8T/dofWTQL+n3vswqn87sbJNiuqw1SDp5Ig==}
+  vitest@4.1.9:
+    resolution: {integrity: sha512-nE3/LEyc0z87uHYLZebqCUOaJr2hdtuPp7BQ4BosVFnfltxgAvMG08NyrSGlPpOUWvR27c5flSmYFTNr78L9GQ==}
     engines: {node: ^20.0.0 || ^22.0.0 || >=24.0.0}
     hasBin: true
     peerDependencies:
       '@edge-runtime/vm': '*'
       '@opentelemetry/api': ^1.9.0
       '@types/node': ^20.0.0 || ^22.0.0 || >=24.0.0
-      '@vitest/browser-playwright': 4.1.8
-      '@vitest/browser-preview': 4.1.8
-      '@vitest/browser-webdriverio': 4.1.8
-      '@vitest/coverage-istanbul': 4.1.8
-      '@vitest/coverage-v8': 4.1.8
-      '@vitest/ui': 4.1.8
+      '@vitest/browser-playwright': 4.1.9
+      '@vitest/browser-preview': 4.1.9
+      '@vitest/browser-webdriverio': 4.1.9
+      '@vitest/coverage-istanbul': 4.1.9
+      '@vitest/coverage-v8': 4.1.9
+      '@vitest/ui': 4.1.9
       happy-dom: '*'
       jsdom: '*'
       vite: ^6.0.0 || ^7.0.0 || ^8.0.0
@@ -4936,13 +4941,13 @@ packages:
 
 snapshots:
 
-  '@0no-co/graphql.web@1.2.0(graphql@16.14.2)':
+  '@0no-co/graphql.web@1.3.2(graphql@16.14.2)':
     optionalDependencies:
       graphql: 16.14.2
 
-  '@0no-co/graphqlsp@1.15.4(graphql@16.14.2)(typescript@6.0.3)':
+  '@0no-co/graphqlsp@1.17.2(graphql@16.14.2)(typescript@6.0.3)':
     dependencies:
-      '@gql.tada/internal': 1.0.10(graphql@16.14.2)(typescript@6.0.3)
+      '@gql.tada/internal': 1.2.0(graphql@16.14.2)(typescript@6.0.3)
       graphql: 16.14.2
       typescript: 6.0.3
 
@@ -4979,7 +4984,7 @@ snapshots:
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
       eventemitter3: 5.0.4
-      form-data: 4.0.5
+      form-data: 4.0.6
       js-base64: 3.7.8
       jwt-decode: 4.0.0
       poseidon-lite: 0.2.1
@@ -5371,7 +5376,7 @@ snapshots:
       '@cosmjs/socket': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmjs/stream': 0.32.4
       '@cosmjs/utils': 0.32.4
-      axios: 1.17.0
+      axios: 1.18.0
       readonly-date: 1.0.0
       xstream: 11.14.0
     transitivePeerDependencies:
@@ -5389,7 +5394,7 @@ snapshots:
       '@cosmjs/socket': 0.33.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmjs/stream': 0.33.1
       '@cosmjs/utils': 0.33.1
-      axios: 1.17.0
+      axios: 1.18.0
       readonly-date: 1.0.0
       xstream: 11.14.0
     transitivePeerDependencies:
@@ -5533,9 +5538,9 @@ snapshots:
   '@esbuild/win32-x64@0.27.3':
     optional: true
 
-  '@eslint-community/eslint-utils@4.9.1(eslint@10.4.1(jiti@2.7.0))':
+  '@eslint-community/eslint-utils@4.9.1(eslint@10.5.0(jiti@2.7.0))':
     dependencies:
-      eslint: 10.4.1(jiti@2.7.0)
+      eslint: 10.5.0(jiti@2.7.0)
       eslint-visitor-keys: 3.4.3
 
   '@eslint-community/regexpp@4.12.2': {}
@@ -5556,9 +5561,9 @@ snapshots:
     dependencies:
       '@types/json-schema': 7.0.15
 
-  '@eslint/js@10.0.1(eslint@10.4.1(jiti@2.7.0))':
+  '@eslint/js@10.0.1(eslint@10.5.0(jiti@2.7.0))':
     optionalDependencies:
-      eslint: 10.4.1(jiti@2.7.0)
+      eslint: 10.5.0(jiti@2.7.0)
 
   '@eslint/object-schema@3.0.5': {}
 
@@ -5586,16 +5591,16 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@gql.tada/cli-utils@1.7.4(@0no-co/graphqlsp@1.15.4(graphql@16.14.2)(typescript@6.0.3))(graphql@16.14.2)(typescript@6.0.3)':
+  '@gql.tada/cli-utils@1.9.1(@0no-co/graphqlsp@1.17.2(graphql@16.14.2)(typescript@6.0.3))(graphql@16.14.2)(typescript@6.0.3)':
     dependencies:
-      '@0no-co/graphqlsp': 1.15.4(graphql@16.14.2)(typescript@6.0.3)
-      '@gql.tada/internal': 1.0.10(graphql@16.14.2)(typescript@6.0.3)
+      '@0no-co/graphqlsp': 1.17.2(graphql@16.14.2)(typescript@6.0.3)
+      '@gql.tada/internal': 1.2.0(graphql@16.14.2)(typescript@6.0.3)
       graphql: 16.14.2
       typescript: 6.0.3
 
-  '@gql.tada/internal@1.0.10(graphql@16.14.2)(typescript@6.0.3)':
+  '@gql.tada/internal@1.2.0(graphql@16.14.2)(typescript@6.0.3)':
     dependencies:
-      '@0no-co/graphql.web': 1.2.0(graphql@16.14.2)
+      '@0no-co/graphql.web': 1.3.2(graphql@16.14.2)
       graphql: 16.14.2
       typescript: 6.0.3
 
@@ -5631,7 +5636,7 @@ snapshots:
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
 
-  '@injectivelabs/exceptions@1.20.7':
+  '@injectivelabs/exceptions@1.20.13':
     dependencies:
       http-status-codes: 2.3.0
 
@@ -5648,7 +5653,7 @@ snapshots:
       browser-headers: 0.4.1
       google-protobuf: 3.21.4
 
-  '@injectivelabs/indexer-proto-ts-v2@1.18.21':
+  '@injectivelabs/indexer-proto-ts-v2@1.18.23':
     dependencies:
       '@protobuf-ts/grpcweb-transport': 2.11.1
       '@protobuf-ts/runtime': 2.11.1
@@ -5660,9 +5665,9 @@ snapshots:
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
 
-  '@injectivelabs/networks@1.20.7':
+  '@injectivelabs/networks@1.20.13':
     dependencies:
-      '@injectivelabs/ts-types': 1.20.7
+      '@injectivelabs/ts-types': 1.20.13
 
   '@injectivelabs/olp-proto-ts-v2@1.17.6':
     dependencies:
@@ -5670,24 +5675,24 @@ snapshots:
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
 
-  '@injectivelabs/sdk-ts@1.20.7(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@injectivelabs/sdk-ts@1.20.13(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
       '@cosmjs/amino': 0.33.0
       '@cosmjs/proto-signing': 0.33.0
       '@cosmjs/stargate': 0.33.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@injectivelabs/abacus-proto-ts-v2': 1.17.5
       '@injectivelabs/core-proto-ts-v2': 1.20.0
-      '@injectivelabs/exceptions': 1.20.7
+      '@injectivelabs/exceptions': 1.20.13
       '@injectivelabs/grpc-web': 0.0.1(google-protobuf@3.21.4)
       '@injectivelabs/grpc-web-node-http-transport': 0.0.2(@injectivelabs/grpc-web@0.0.1(google-protobuf@3.21.4))
       '@injectivelabs/grpc-web-react-native-transport': 0.0.2(@injectivelabs/grpc-web@0.0.1(google-protobuf@3.21.4))
-      '@injectivelabs/indexer-proto-ts-v2': 1.18.21
+      '@injectivelabs/indexer-proto-ts-v2': 1.18.23
       '@injectivelabs/mito-proto-ts-v2': 1.17.3
-      '@injectivelabs/networks': 1.20.7
+      '@injectivelabs/networks': 1.20.13
       '@injectivelabs/olp-proto-ts-v2': 1.17.6
       '@injectivelabs/tc-abacus-proto-ts-v2': 1.18.6
-      '@injectivelabs/ts-types': 1.20.7
-      '@injectivelabs/utils': 1.20.7
+      '@injectivelabs/ts-types': 1.20.13
+      '@injectivelabs/utils': 1.20.13
       '@injectivelabs/ws-price-oracle-proto-ts-v2': 1.0.5
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
@@ -5696,7 +5701,7 @@ snapshots:
       '@protobuf-ts/runtime-rpc': 2.11.1
       '@scure/base': 1.2.6
       '@scure/bip39': 1.6.0
-      axios: 1.17.0
+      axios: 1.18.0
       cosmjs-types: 0.9.0
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       eventemitter3: 5.0.4
@@ -5719,14 +5724,14 @@ snapshots:
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
 
-  '@injectivelabs/ts-types@1.20.7': {}
+  '@injectivelabs/ts-types@1.20.13': {}
 
-  '@injectivelabs/utils@1.20.7':
+  '@injectivelabs/utils@1.20.13':
     dependencies:
-      '@injectivelabs/exceptions': 1.20.7
-      '@injectivelabs/networks': 1.20.7
-      '@injectivelabs/ts-types': 1.20.7
-      axios: 1.17.0
+      '@injectivelabs/exceptions': 1.20.13
+      '@injectivelabs/networks': 1.20.13
+      '@injectivelabs/ts-types': 1.20.13
+      axios: 1.18.0
       bignumber.js: 9.3.1
       http-status-codes: 2.3.0
       store2: 2.14.4
@@ -5863,25 +5868,25 @@ snapshots:
     dependencies:
       multiformats: 13.4.2
 
-  '@mysten/bcs@1.9.2':
+  '@mysten/bcs@2.1.0':
     dependencies:
-      '@mysten/utils': 0.2.0
-      '@scure/base': 1.2.6
+      '@mysten/utils': 0.4.0
+      '@scure/base': 2.2.0
 
-  '@mysten/sui@1.45.2(typescript@6.0.3)':
+  '@mysten/sui@2.18.0(typescript@6.0.3)':
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.14.2)
-      '@mysten/bcs': 1.9.2
-      '@mysten/utils': 0.2.0
-      '@noble/curves': 1.9.4
-      '@noble/hashes': 1.8.0
+      '@mysten/bcs': 2.1.0
+      '@mysten/utils': 0.4.0
+      '@noble/curves': 2.2.0
+      '@noble/hashes': 2.2.0
       '@protobuf-ts/grpcweb-transport': 2.11.1
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
-      '@scure/base': 1.2.6
-      '@scure/bip32': 1.7.0
-      '@scure/bip39': 1.6.0
-      gql.tada: 1.9.3(graphql@16.14.2)(typescript@6.0.3)
+      '@scure/base': 2.2.0
+      '@scure/bip32': 2.2.0
+      '@scure/bip39': 2.2.0
+      gql.tada: 1.11.1(graphql@16.14.2)(typescript@6.0.3)
       graphql: 16.14.2
       poseidon-lite: 0.2.1
       valibot: 1.4.1(typescript@6.0.3)
@@ -5890,9 +5895,9 @@ snapshots:
       - '@gql.tada/vue-support'
       - typescript
 
-  '@mysten/utils@0.2.0':
+  '@mysten/utils@0.4.0':
     dependencies:
-      '@scure/base': 1.2.6
+      '@scure/base': 2.2.0
 
   '@napi-rs/wasm-runtime@1.1.4(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
     dependencies:
@@ -5922,10 +5927,6 @@ snapshots:
       '@noble/hashes': 1.4.0
 
   '@noble/curves@1.9.1':
-    dependencies:
-      '@noble/hashes': 1.8.0
-
-  '@noble/curves@1.9.4':
     dependencies:
       '@noble/hashes': 1.8.0
 
@@ -5961,9 +5962,9 @@ snapshots:
 
   '@oxc-project/types@0.133.0': {}
 
-  '@playwright/test@1.60.0':
+  '@playwright/test@1.61.0':
     dependencies:
-      playwright: 1.60.0
+      playwright: 1.61.0
 
   '@polka/url@1.0.0-next.29': {}
 
@@ -6168,7 +6169,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.4
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -6387,74 +6388,74 @@ snapshots:
 
   '@swc/wasm@1.15.11': {}
 
-  '@tailwindcss/node@4.3.0':
+  '@tailwindcss/node@4.3.1':
     dependencies:
       '@jridgewell/remapping': 2.3.5
-      enhanced-resolve: 5.22.0
+      enhanced-resolve: 5.21.6
       jiti: 2.7.0
       lightningcss: 1.32.0
       magic-string: 0.30.21
       source-map-js: 1.2.1
-      tailwindcss: 4.3.0
+      tailwindcss: 4.3.1
 
-  '@tailwindcss/oxide-android-arm64@4.3.0':
+  '@tailwindcss/oxide-android-arm64@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide-darwin-arm64@4.3.0':
+  '@tailwindcss/oxide-darwin-arm64@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide-darwin-x64@4.3.0':
+  '@tailwindcss/oxide-darwin-x64@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide-freebsd-x64@4.3.0':
+  '@tailwindcss/oxide-freebsd-x64@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.0':
+  '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide-linux-arm64-gnu@4.3.0':
+  '@tailwindcss/oxide-linux-arm64-gnu@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide-linux-arm64-musl@4.3.0':
+  '@tailwindcss/oxide-linux-arm64-musl@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide-linux-x64-gnu@4.3.0':
+  '@tailwindcss/oxide-linux-x64-gnu@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide-linux-x64-musl@4.3.0':
+  '@tailwindcss/oxide-linux-x64-musl@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide-wasm32-wasi@4.3.0':
+  '@tailwindcss/oxide-wasm32-wasi@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide-win32-arm64-msvc@4.3.0':
+  '@tailwindcss/oxide-win32-arm64-msvc@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide-win32-x64-msvc@4.3.0':
+  '@tailwindcss/oxide-win32-x64-msvc@4.3.1':
     optional: true
 
-  '@tailwindcss/oxide@4.3.0':
+  '@tailwindcss/oxide@4.3.1':
     optionalDependencies:
-      '@tailwindcss/oxide-android-arm64': 4.3.0
-      '@tailwindcss/oxide-darwin-arm64': 4.3.0
-      '@tailwindcss/oxide-darwin-x64': 4.3.0
-      '@tailwindcss/oxide-freebsd-x64': 4.3.0
-      '@tailwindcss/oxide-linux-arm-gnueabihf': 4.3.0
-      '@tailwindcss/oxide-linux-arm64-gnu': 4.3.0
-      '@tailwindcss/oxide-linux-arm64-musl': 4.3.0
-      '@tailwindcss/oxide-linux-x64-gnu': 4.3.0
-      '@tailwindcss/oxide-linux-x64-musl': 4.3.0
-      '@tailwindcss/oxide-wasm32-wasi': 4.3.0
-      '@tailwindcss/oxide-win32-arm64-msvc': 4.3.0
-      '@tailwindcss/oxide-win32-x64-msvc': 4.3.0
+      '@tailwindcss/oxide-android-arm64': 4.3.1
+      '@tailwindcss/oxide-darwin-arm64': 4.3.1
+      '@tailwindcss/oxide-darwin-x64': 4.3.1
+      '@tailwindcss/oxide-freebsd-x64': 4.3.1
+      '@tailwindcss/oxide-linux-arm-gnueabihf': 4.3.1
+      '@tailwindcss/oxide-linux-arm64-gnu': 4.3.1
+      '@tailwindcss/oxide-linux-arm64-musl': 4.3.1
+      '@tailwindcss/oxide-linux-x64-gnu': 4.3.1
+      '@tailwindcss/oxide-linux-x64-musl': 4.3.1
+      '@tailwindcss/oxide-wasm32-wasi': 4.3.1
+      '@tailwindcss/oxide-win32-arm64-msvc': 4.3.1
+      '@tailwindcss/oxide-win32-x64-msvc': 4.3.1
 
-  '@tailwindcss/postcss@4.3.0':
+  '@tailwindcss/postcss@4.3.1':
     dependencies:
       '@alloc/quick-lru': 5.2.0
-      '@tailwindcss/node': 4.3.0
-      '@tailwindcss/oxide': 4.3.0
+      '@tailwindcss/node': 4.3.1
+      '@tailwindcss/oxide': 4.3.1
       postcss: 8.5.15
-      tailwindcss: 4.3.0
+      tailwindcss: 4.3.1
 
   '@tbd54566975/dwn-sdk-js@0.5.1':
     dependencies:
@@ -6629,15 +6630,15 @@ snapshots:
     dependencies:
       '@types/node': 25.9.3
 
-  '@typescript-eslint/eslint-plugin@8.61.0(@typescript-eslint/parser@8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3))(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)':
+  '@typescript-eslint/eslint-plugin@8.61.1(@typescript-eslint/parser@8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
-      '@typescript-eslint/scope-manager': 8.61.0
-      '@typescript-eslint/type-utils': 8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
-      '@typescript-eslint/utils': 8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
-      '@typescript-eslint/visitor-keys': 8.61.0
-      eslint: 10.4.1(jiti@2.7.0)
+      '@typescript-eslint/parser': 8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/scope-manager': 8.61.1
+      '@typescript-eslint/type-utils': 8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/visitor-keys': 8.61.1
+      eslint: 10.5.0(jiti@2.7.0)
       ignore: 7.0.5
       natural-compare: 1.4.0
       ts-api-utils: 2.5.0(typescript@6.0.3)
@@ -6645,79 +6646,79 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)':
+  '@typescript-eslint/parser@8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/scope-manager': 8.61.0
-      '@typescript-eslint/types': 8.61.0
-      '@typescript-eslint/typescript-estree': 8.61.0(typescript@6.0.3)
-      '@typescript-eslint/visitor-keys': 8.61.0
+      '@typescript-eslint/scope-manager': 8.61.1
+      '@typescript-eslint/types': 8.61.1
+      '@typescript-eslint/typescript-estree': 8.61.1(typescript@6.0.3)
+      '@typescript-eslint/visitor-keys': 8.61.1
       debug: 4.4.3
-      eslint: 10.4.1(jiti@2.7.0)
+      eslint: 10.5.0(jiti@2.7.0)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/project-service@8.61.0(typescript@6.0.3)':
+  '@typescript-eslint/project-service@8.61.1(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.61.0(typescript@6.0.3)
-      '@typescript-eslint/types': 8.61.0
+      '@typescript-eslint/tsconfig-utils': 8.61.1(typescript@6.0.3)
+      '@typescript-eslint/types': 8.61.1
       debug: 4.4.3
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/scope-manager@8.61.0':
+  '@typescript-eslint/scope-manager@8.61.1':
     dependencies:
-      '@typescript-eslint/types': 8.61.0
-      '@typescript-eslint/visitor-keys': 8.61.0
+      '@typescript-eslint/types': 8.61.1
+      '@typescript-eslint/visitor-keys': 8.61.1
 
-  '@typescript-eslint/tsconfig-utils@8.61.0(typescript@6.0.3)':
+  '@typescript-eslint/tsconfig-utils@8.61.1(typescript@6.0.3)':
     dependencies:
       typescript: 6.0.3
 
-  '@typescript-eslint/type-utils@8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)':
+  '@typescript-eslint/type-utils@8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/types': 8.61.0
-      '@typescript-eslint/typescript-estree': 8.61.0(typescript@6.0.3)
-      '@typescript-eslint/utils': 8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/types': 8.61.1
+      '@typescript-eslint/typescript-estree': 8.61.1(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
       debug: 4.4.3
-      eslint: 10.4.1(jiti@2.7.0)
+      eslint: 10.5.0(jiti@2.7.0)
       ts-api-utils: 2.5.0(typescript@6.0.3)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/types@8.61.0': {}
+  '@typescript-eslint/types@8.61.1': {}
 
-  '@typescript-eslint/typescript-estree@8.61.0(typescript@6.0.3)':
+  '@typescript-eslint/typescript-estree@8.61.1(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/project-service': 8.61.0(typescript@6.0.3)
-      '@typescript-eslint/tsconfig-utils': 8.61.0(typescript@6.0.3)
-      '@typescript-eslint/types': 8.61.0
-      '@typescript-eslint/visitor-keys': 8.61.0
+      '@typescript-eslint/project-service': 8.61.1(typescript@6.0.3)
+      '@typescript-eslint/tsconfig-utils': 8.61.1(typescript@6.0.3)
+      '@typescript-eslint/types': 8.61.1
+      '@typescript-eslint/visitor-keys': 8.61.1
       debug: 4.4.3
       minimatch: 10.2.5
-      semver: 7.8.3
+      semver: 7.8.4
       tinyglobby: 0.2.17
       ts-api-utils: 2.5.0(typescript@6.0.3)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)':
+  '@typescript-eslint/utils@8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)':
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@10.4.1(jiti@2.7.0))
-      '@typescript-eslint/scope-manager': 8.61.0
-      '@typescript-eslint/types': 8.61.0
-      '@typescript-eslint/typescript-estree': 8.61.0(typescript@6.0.3)
-      eslint: 10.4.1(jiti@2.7.0)
+      '@eslint-community/eslint-utils': 4.9.1(eslint@10.5.0(jiti@2.7.0))
+      '@typescript-eslint/scope-manager': 8.61.1
+      '@typescript-eslint/types': 8.61.1
+      '@typescript-eslint/typescript-estree': 8.61.1(typescript@6.0.3)
+      eslint: 10.5.0(jiti@2.7.0)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/visitor-keys@8.61.0':
+  '@typescript-eslint/visitor-keys@8.61.1':
     dependencies:
-      '@typescript-eslint/types': 8.61.0
+      '@typescript-eslint/types': 8.61.1
       eslint-visitor-keys: 5.0.1
 
   '@vitejs/plugin-react@6.0.2(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))':
@@ -6725,55 +6726,55 @@ snapshots:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0)
 
-  '@vitest/expect@4.1.8':
+  '@vitest/expect@4.1.9':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@types/chai': 5.2.3
-      '@vitest/spy': 4.1.8
-      '@vitest/utils': 4.1.8
+      '@vitest/spy': 4.1.9
+      '@vitest/utils': 4.1.9
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.8(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))':
+  '@vitest/mocker@4.1.9(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))':
     dependencies:
-      '@vitest/spy': 4.1.8
+      '@vitest/spy': 4.1.9
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
       vite: 8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0)
 
-  '@vitest/pretty-format@4.1.8':
+  '@vitest/pretty-format@4.1.9':
     dependencies:
       tinyrainbow: 3.1.0
 
-  '@vitest/runner@4.1.8':
+  '@vitest/runner@4.1.9':
     dependencies:
-      '@vitest/utils': 4.1.8
+      '@vitest/utils': 4.1.9
       pathe: 2.0.3
 
-  '@vitest/snapshot@4.1.8':
+  '@vitest/snapshot@4.1.9':
     dependencies:
-      '@vitest/pretty-format': 4.1.8
-      '@vitest/utils': 4.1.8
+      '@vitest/pretty-format': 4.1.9
+      '@vitest/utils': 4.1.9
       magic-string: 0.30.21
       pathe: 2.0.3
 
-  '@vitest/spy@4.1.8': {}
+  '@vitest/spy@4.1.9': {}
 
-  '@vitest/ui@4.1.8(vitest@4.1.8)':
+  '@vitest/ui@4.1.9(vitest@4.1.9)':
     dependencies:
-      '@vitest/utils': 4.1.8
+      '@vitest/utils': 4.1.9
       fflate: 0.8.3
       flatted: 3.4.2
       pathe: 2.0.3
       sirv: 3.0.2
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
-      vitest: 4.1.8(@types/node@25.9.3)(@vitest/ui@4.1.8)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
+      vitest: 4.1.9(@types/node@25.9.3)(@vitest/ui@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
 
-  '@vitest/utils@4.1.8':
+  '@vitest/utils@4.1.9':
     dependencies:
-      '@vitest/pretty-format': 4.1.8
+      '@vitest/pretty-format': 4.1.9
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
@@ -6846,96 +6847,96 @@ snapshots:
       - supports-color
       - ws
 
-  '@wormhole-foundation/sdk-algorand-core@4.24.0':
+  '@wormhole-foundation/sdk-algorand-core@5.0.0':
     dependencies:
-      '@wormhole-foundation/sdk-algorand': 4.24.0
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-algorand': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@wormhole-foundation/sdk-algorand-tokenbridge@4.24.0':
+  '@wormhole-foundation/sdk-algorand-tokenbridge@5.0.0':
     dependencies:
-      '@wormhole-foundation/sdk-algorand': 4.24.0
-      '@wormhole-foundation/sdk-algorand-core': 4.24.0
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-algorand': 5.0.0
+      '@wormhole-foundation/sdk-algorand-core': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@wormhole-foundation/sdk-algorand@4.24.0':
+  '@wormhole-foundation/sdk-algorand@5.0.0':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-connect': 5.0.0
       algosdk: 2.7.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@wormhole-foundation/sdk-aptos-cctp@4.24.0(got@15.0.5)':
+  '@wormhole-foundation/sdk-aptos-cctp@5.0.0(got@15.0.5)':
     dependencies:
       '@aptos-labs/ts-sdk': 2.0.1(got@15.0.5)
-      '@wormhole-foundation/sdk-aptos': 4.24.0(got@15.0.5)
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-aptos': 5.0.0(got@15.0.5)
+      '@wormhole-foundation/sdk-connect': 5.0.0
     transitivePeerDependencies:
       - debug
       - got
       - supports-color
 
-  '@wormhole-foundation/sdk-aptos-core@4.24.0(got@15.0.5)':
+  '@wormhole-foundation/sdk-aptos-core@5.0.0(got@15.0.5)':
     dependencies:
-      '@wormhole-foundation/sdk-aptos': 4.24.0(got@15.0.5)
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-aptos': 5.0.0(got@15.0.5)
+      '@wormhole-foundation/sdk-connect': 5.0.0
     transitivePeerDependencies:
       - debug
       - got
       - supports-color
 
-  '@wormhole-foundation/sdk-aptos-tokenbridge@4.24.0(got@15.0.5)':
+  '@wormhole-foundation/sdk-aptos-tokenbridge@5.0.0(got@15.0.5)':
     dependencies:
-      '@wormhole-foundation/sdk-aptos': 4.24.0(got@15.0.5)
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-aptos': 5.0.0(got@15.0.5)
+      '@wormhole-foundation/sdk-connect': 5.0.0
     transitivePeerDependencies:
       - debug
       - got
       - supports-color
 
-  '@wormhole-foundation/sdk-aptos@4.24.0(got@15.0.5)':
+  '@wormhole-foundation/sdk-aptos@5.0.0(got@15.0.5)':
     dependencies:
       '@aptos-labs/ts-sdk': 2.0.1(got@15.0.5)
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-connect': 5.0.0
     transitivePeerDependencies:
       - debug
       - got
       - supports-color
 
-  '@wormhole-foundation/sdk-base@4.24.0':
+  '@wormhole-foundation/sdk-base@5.0.0':
     dependencies:
       '@scure/base': 1.2.6
       binary-layout: 1.3.2
 
-  '@wormhole-foundation/sdk-btc@4.24.0':
+  '@wormhole-foundation/sdk-btc@5.0.0':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-connect': 5.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@wormhole-foundation/sdk-connect@4.24.0':
+  '@wormhole-foundation/sdk-connect@5.0.0':
     dependencies:
-      '@wormhole-foundation/sdk-base': 4.24.0
-      '@wormhole-foundation/sdk-definitions': 4.24.0
-      axios: 1.17.0
+      '@wormhole-foundation/sdk-base': 5.0.0
+      '@wormhole-foundation/sdk-definitions': 5.0.0
+      axios: 1.18.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@wormhole-foundation/sdk-cosmwasm-core@4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@wormhole-foundation/sdk-cosmwasm-core@5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
       '@cosmjs/cosmwasm-stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@injectivelabs/sdk-ts': 1.20.7(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-cosmwasm': 4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@injectivelabs/sdk-ts': 1.20.13(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-cosmwasm': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -6945,14 +6946,14 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@wormhole-foundation/sdk-cosmwasm-ibc@4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@wormhole-foundation/sdk-cosmwasm-ibc@5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
       '@cosmjs/cosmwasm-stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@injectivelabs/sdk-ts': 1.20.7(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-cosmwasm': 4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-cosmwasm-core': 4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@injectivelabs/sdk-ts': 1.20.13(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-cosmwasm': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-cosmwasm-core': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
       cosmjs-types: 0.9.0
     transitivePeerDependencies:
       - bufferutil
@@ -6963,12 +6964,12 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@wormhole-foundation/sdk-cosmwasm-tokenbridge@4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@wormhole-foundation/sdk-cosmwasm-tokenbridge@5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
       '@cosmjs/cosmwasm-stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@injectivelabs/sdk-ts': 1.20.7(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-cosmwasm': 4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@injectivelabs/sdk-ts': 1.20.13(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-cosmwasm': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -6978,13 +6979,13 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@wormhole-foundation/sdk-cosmwasm@4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@wormhole-foundation/sdk-cosmwasm@5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
       '@cosmjs/cosmwasm-stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmjs/proto-signing': 0.32.4
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@injectivelabs/sdk-ts': 1.20.7(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@injectivelabs/sdk-ts': 1.20.13(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-connect': 5.0.0
       cosmjs-types: 0.9.0
     transitivePeerDependencies:
       - bufferutil
@@ -6995,22 +6996,22 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@wormhole-foundation/sdk-definitions-ntt@6.2.0(@wormhole-foundation/sdk-base@4.24.0)(@wormhole-foundation/sdk-definitions@4.24.0)':
+  '@wormhole-foundation/sdk-definitions-ntt@7.0.0(@wormhole-foundation/sdk-base@5.0.0)(@wormhole-foundation/sdk-definitions@5.0.0)':
     dependencies:
-      '@wormhole-foundation/sdk-base': 4.24.0
-      '@wormhole-foundation/sdk-definitions': 4.24.0
+      '@wormhole-foundation/sdk-base': 5.0.0
+      '@wormhole-foundation/sdk-definitions': 5.0.0
 
-  '@wormhole-foundation/sdk-definitions@4.24.0':
+  '@wormhole-foundation/sdk-definitions@5.0.0':
     dependencies:
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
-      '@wormhole-foundation/sdk-base': 4.24.0
+      '@wormhole-foundation/sdk-base': 5.0.0
 
-  '@wormhole-foundation/sdk-evm-cctp@4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm-cctp@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-evm': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-core': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-core': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7018,10 +7019,10 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-evm-core@4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm-core@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-evm': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7029,12 +7030,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-evm-portico@4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm-portico@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-evm': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-core': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-tokenbridge': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-core': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-tokenbridge': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7042,11 +7043,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-evm-tbtc@4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm-tbtc@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-evm': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-core': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-core': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7054,11 +7055,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-evm-tokenbridge@4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm-tokenbridge@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-evm': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-core': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-core': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7066,9 +7067,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-evm@4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-connect': 5.0.0
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7076,13 +7077,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-solana-cctp@4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-solana-cctp@5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/spl-token': 0.3.9(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-solana': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-solana': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -7091,13 +7092,13 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-solana-core@4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-solana-core@5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@coral-xyz/borsh': 0.29.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-solana': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-solana': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -7106,15 +7107,15 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-solana-tbtc@4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-solana-tbtc@5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/spl-token': 0.3.9(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-solana': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-core': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-tokenbridge': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-solana': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-core': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-tokenbridge': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -7123,14 +7124,14 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-solana-tokenbridge@4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-solana-tokenbridge@5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/spl-token': 0.3.9(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-solana': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-core': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-solana': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-core': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -7139,13 +7140,13 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-solana@4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-solana@5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@coral-xyz/borsh': 0.29.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))
       '@solana/spl-token': 0.3.9(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-connect': 5.0.0
       rpc-websockets: 7.11.2
     transitivePeerDependencies:
       - bufferutil
@@ -7155,30 +7156,30 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-stacks-core@4.24.0':
+  '@wormhole-foundation/sdk-stacks-core@5.0.0':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-stacks': 4.24.0
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-stacks': 5.0.0
     transitivePeerDependencies:
       - debug
       - encoding
       - supports-color
 
-  '@wormhole-foundation/sdk-stacks@4.24.0':
+  '@wormhole-foundation/sdk-stacks@5.0.0':
     dependencies:
       '@stacks/network': 7.3.1
       '@stacks/transactions': 7.4.0
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-connect': 5.0.0
     transitivePeerDependencies:
       - debug
       - encoding
       - supports-color
 
-  '@wormhole-foundation/sdk-sui-cctp@4.24.0(typescript@6.0.3)':
+  '@wormhole-foundation/sdk-sui-cctp@5.0.0(typescript@6.0.3)':
     dependencies:
-      '@mysten/sui': 1.45.2(typescript@6.0.3)
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-sui': 4.24.0(typescript@6.0.3)
+      '@mysten/sui': 2.18.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-sui': 5.0.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'
@@ -7186,11 +7187,11 @@ snapshots:
       - supports-color
       - typescript
 
-  '@wormhole-foundation/sdk-sui-core@4.24.0(typescript@6.0.3)':
+  '@wormhole-foundation/sdk-sui-core@5.0.0(typescript@6.0.3)':
     dependencies:
-      '@mysten/sui': 1.45.2(typescript@6.0.3)
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-sui': 4.24.0(typescript@6.0.3)
+      '@mysten/sui': 2.18.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-sui': 5.0.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'
@@ -7198,12 +7199,12 @@ snapshots:
       - supports-color
       - typescript
 
-  '@wormhole-foundation/sdk-sui-tokenbridge@4.24.0(typescript@6.0.3)':
+  '@wormhole-foundation/sdk-sui-tokenbridge@5.0.0(typescript@6.0.3)':
     dependencies:
-      '@mysten/sui': 1.45.2(typescript@6.0.3)
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-sui': 4.24.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-sui-core': 4.24.0(typescript@6.0.3)
+      '@mysten/sui': 2.18.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-sui': 5.0.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-sui-core': 5.0.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'
@@ -7211,10 +7212,10 @@ snapshots:
       - supports-color
       - typescript
 
-  '@wormhole-foundation/sdk-sui@4.24.0(typescript@6.0.3)':
+  '@wormhole-foundation/sdk-sui@5.0.0(typescript@6.0.3)':
     dependencies:
-      '@mysten/sui': 1.45.2(typescript@6.0.3)
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@mysten/sui': 2.18.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-connect': 5.0.0
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'
@@ -7222,9 +7223,9 @@ snapshots:
       - supports-color
       - typescript
 
-  '@wormhole-foundation/sdk-xrpl@4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-xrpl@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 4.24.0
+      '@wormhole-foundation/sdk-connect': 5.0.0
       xrpl: 4.6.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7232,41 +7233,41 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk@4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(got@15.0.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@wormhole-foundation/sdk@5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(got@15.0.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
-      '@wormhole-foundation/sdk-algorand': 4.24.0
-      '@wormhole-foundation/sdk-algorand-core': 4.24.0
-      '@wormhole-foundation/sdk-algorand-tokenbridge': 4.24.0
-      '@wormhole-foundation/sdk-aptos': 4.24.0(got@15.0.5)
-      '@wormhole-foundation/sdk-aptos-cctp': 4.24.0(got@15.0.5)
-      '@wormhole-foundation/sdk-aptos-core': 4.24.0(got@15.0.5)
-      '@wormhole-foundation/sdk-aptos-tokenbridge': 4.24.0(got@15.0.5)
-      '@wormhole-foundation/sdk-base': 4.24.0
-      '@wormhole-foundation/sdk-btc': 4.24.0
-      '@wormhole-foundation/sdk-connect': 4.24.0
-      '@wormhole-foundation/sdk-cosmwasm': 4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-cosmwasm-core': 4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-cosmwasm-ibc': 4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-cosmwasm-tokenbridge': 4.24.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-definitions': 4.24.0
-      '@wormhole-foundation/sdk-evm': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-cctp': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-core': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-portico': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-tbtc': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-tokenbridge': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-cctp': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-core': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-tbtc': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-tokenbridge': 4.24.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-stacks': 4.24.0
-      '@wormhole-foundation/sdk-stacks-core': 4.24.0
-      '@wormhole-foundation/sdk-sui': 4.24.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-sui-cctp': 4.24.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-sui-core': 4.24.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-sui-tokenbridge': 4.24.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-xrpl': 4.24.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-algorand': 5.0.0
+      '@wormhole-foundation/sdk-algorand-core': 5.0.0
+      '@wormhole-foundation/sdk-algorand-tokenbridge': 5.0.0
+      '@wormhole-foundation/sdk-aptos': 5.0.0(got@15.0.5)
+      '@wormhole-foundation/sdk-aptos-cctp': 5.0.0(got@15.0.5)
+      '@wormhole-foundation/sdk-aptos-core': 5.0.0(got@15.0.5)
+      '@wormhole-foundation/sdk-aptos-tokenbridge': 5.0.0(got@15.0.5)
+      '@wormhole-foundation/sdk-base': 5.0.0
+      '@wormhole-foundation/sdk-btc': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-cosmwasm': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-cosmwasm-core': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-cosmwasm-ibc': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-cosmwasm-tokenbridge': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-definitions': 5.0.0
+      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-cctp': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-core': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-portico': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-tbtc': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-tokenbridge': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-cctp': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-core': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-tbtc': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-tokenbridge': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-stacks': 5.0.0
+      '@wormhole-foundation/sdk-stacks-core': 5.0.0
+      '@wormhole-foundation/sdk-sui': 5.0.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-sui-cctp': 5.0.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-sui-core': 5.0.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-sui-tokenbridge': 5.0.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-xrpl': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'
@@ -7345,11 +7346,11 @@ snapshots:
       module-error: 1.0.2
       queue-microtask: 1.2.3
 
-  acorn-jsx@5.3.2(acorn@8.16.0):
+  acorn-jsx@5.3.2(acorn@8.17.0):
     dependencies:
-      acorn: 8.16.0
+      acorn: 8.17.0
 
-  acorn@8.16.0: {}
+  acorn@8.17.0: {}
 
   aes-js@4.0.0-beta.5: {}
 
@@ -7467,10 +7468,10 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.1.0
 
-  axios@1.17.0:
+  axios@1.18.0:
     dependencies:
       follow-redirects: 1.16.0
-      form-data: 4.0.5
+      form-data: 4.0.6
       https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
@@ -8103,7 +8104,7 @@ snapshots:
 
   emoji-regex@8.0.0: {}
 
-  enhanced-resolve@5.22.0:
+  enhanced-resolve@5.21.6:
     dependencies:
       graceful-fs: 4.2.11
       tapable: 2.3.3
@@ -8179,20 +8180,20 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-plugin-react-hooks@7.1.1(eslint@10.4.1(jiti@2.7.0)):
+  eslint-plugin-react-hooks@7.1.1(eslint@10.5.0(jiti@2.7.0)):
     dependencies:
       '@babel/core': 7.29.0
       '@babel/parser': 7.29.2
-      eslint: 10.4.1(jiti@2.7.0)
+      eslint: 10.5.0(jiti@2.7.0)
       hermes-parser: 0.25.1
       zod: 4.3.6
       zod-validation-error: 4.0.2(zod@4.3.6)
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-refresh@0.5.2(eslint@10.4.1(jiti@2.7.0)):
+  eslint-plugin-react-refresh@0.5.3(eslint@10.5.0(jiti@2.7.0)):
     dependencies:
-      eslint: 10.4.1(jiti@2.7.0)
+      eslint: 10.5.0(jiti@2.7.0)
 
   eslint-scope@9.1.2:
     dependencies:
@@ -8205,9 +8206,9 @@ snapshots:
 
   eslint-visitor-keys@5.0.1: {}
 
-  eslint@10.4.1(jiti@2.7.0):
+  eslint@10.5.0(jiti@2.7.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@10.4.1(jiti@2.7.0))
+      '@eslint-community/eslint-utils': 4.9.1(eslint@10.5.0(jiti@2.7.0))
       '@eslint-community/regexpp': 4.12.2
       '@eslint/config-array': 0.23.5
       '@eslint/config-helpers': 0.6.0
@@ -8244,8 +8245,8 @@ snapshots:
 
   espree@11.2.0:
     dependencies:
-      acorn: 8.16.0
-      acorn-jsx: 5.3.2(acorn@8.16.0)
+      acorn: 8.17.0
+      acorn-jsx: 5.3.2(acorn@8.17.0)
       eslint-visitor-keys: 5.0.1
 
   esquery@1.7.0:
@@ -8358,6 +8359,14 @@ snapshots:
       combined-stream: 1.0.8
       es-set-tostringtag: 2.1.0
       hasown: 2.0.3
+      mime-types: 2.1.35
+
+  form-data@4.0.6:
+    dependencies:
+      asynckit: 0.4.0
+      combined-stream: 1.0.8
+      es-set-tostringtag: 2.1.0
+      hasown: 2.0.4
       mime-types: 2.1.35
 
   formdata-polyfill@4.0.10:
@@ -8483,12 +8492,12 @@ snapshots:
       type-fest: 5.6.0
       uint8array-extras: 1.5.0
 
-  gql.tada@1.9.3(graphql@16.14.2)(typescript@6.0.3):
+  gql.tada@1.11.1(graphql@16.14.2)(typescript@6.0.3):
     dependencies:
-      '@0no-co/graphql.web': 1.2.0(graphql@16.14.2)
-      '@0no-co/graphqlsp': 1.15.4(graphql@16.14.2)(typescript@6.0.3)
-      '@gql.tada/cli-utils': 1.7.4(@0no-co/graphqlsp@1.15.4(graphql@16.14.2)(typescript@6.0.3))(graphql@16.14.2)(typescript@6.0.3)
-      '@gql.tada/internal': 1.0.10(graphql@16.14.2)(typescript@6.0.3)
+      '@0no-co/graphql.web': 1.3.2(graphql@16.14.2)
+      '@0no-co/graphqlsp': 1.17.2(graphql@16.14.2)(typescript@6.0.3)
+      '@gql.tada/cli-utils': 1.9.1(@0no-co/graphqlsp@1.17.2(graphql@16.14.2)(typescript@6.0.3))(graphql@16.14.2)(typescript@6.0.3)
+      '@gql.tada/internal': 1.2.0(graphql@16.14.2)(typescript@6.0.3)
       typescript: 6.0.3
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
@@ -8536,6 +8545,10 @@ snapshots:
       function-bind: 1.1.2
 
   hasown@2.0.3:
+    dependencies:
+      function-bind: 1.1.2
+
+  hasown@2.0.4:
     dependencies:
       function-bind: 1.1.2
 
@@ -8675,7 +8688,7 @@ snapshots:
 
   is-core-module@2.16.2:
     dependencies:
-      hasown: 2.0.3
+      hasown: 2.0.4
 
   is-docker@2.2.1: {}
 
@@ -9065,7 +9078,7 @@ snapshots:
 
   lru-cache@9.1.2: {}
 
-  lucide-react@1.18.0(react@19.2.7):
+  lucide-react@1.20.0(react@19.2.7):
     dependencies:
       react: 19.2.7
 
@@ -9235,7 +9248,7 @@ snapshots:
       has-symbols: 1.1.0
       object-keys: 1.1.1
 
-  obug@2.1.1: {}
+  obug@2.1.3: {}
 
   onetime@7.0.0:
     dependencies:
@@ -9361,11 +9374,11 @@ snapshots:
     dependencies:
       find-up: 5.0.0
 
-  playwright-core@1.60.0: {}
+  playwright-core@1.61.0: {}
 
-  playwright@1.60.0:
+  playwright@1.61.0:
     dependencies:
-      playwright-core: 1.60.0
+      playwright-core: 1.61.0
     optionalDependencies:
       fsevents: 2.3.2
 
@@ -9765,7 +9778,7 @@ snapshots:
 
   semver@7.8.1: {}
 
-  semver@7.8.3: {}
+  semver@7.8.4: {}
 
   set-blocking@2.0.0: {}
 
@@ -9948,7 +9961,7 @@ snapshots:
 
   tagged-tag@1.0.0: {}
 
-  tailwindcss@4.3.0: {}
+  tailwindcss@4.3.1: {}
 
   tapable@2.3.3: {}
 
@@ -10055,13 +10068,13 @@ snapshots:
 
   typeforce@1.18.0: {}
 
-  typescript-eslint@8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3):
+  typescript-eslint@8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.61.0(@typescript-eslint/parser@8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3))(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
-      '@typescript-eslint/parser': 8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
-      '@typescript-eslint/typescript-estree': 8.61.0(typescript@6.0.3)
-      '@typescript-eslint/utils': 8.61.0(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
-      eslint: 10.4.1(jiti@2.7.0)
+      '@typescript-eslint/eslint-plugin': 8.61.1(@typescript-eslint/parser@8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/parser': 8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+      '@typescript-eslint/typescript-estree': 8.61.1(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+      eslint: 10.5.0(jiti@2.7.0)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
@@ -10251,19 +10264,19 @@ snapshots:
       jiti: 2.7.0
       yaml: 2.9.0
 
-  vitest@4.1.8(@types/node@25.9.3)(@vitest/ui@4.1.8)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0)):
+  vitest@4.1.9(@types/node@25.9.3)(@vitest/ui@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0)):
     dependencies:
-      '@vitest/expect': 4.1.8
-      '@vitest/mocker': 4.1.8(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
-      '@vitest/pretty-format': 4.1.8
-      '@vitest/runner': 4.1.8
-      '@vitest/snapshot': 4.1.8
-      '@vitest/spy': 4.1.8
-      '@vitest/utils': 4.1.8
+      '@vitest/expect': 4.1.9
+      '@vitest/mocker': 4.1.9(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
+      '@vitest/pretty-format': 4.1.9
+      '@vitest/runner': 4.1.9
+      '@vitest/snapshot': 4.1.9
+      '@vitest/spy': 4.1.9
+      '@vitest/utils': 4.1.9
       es-module-lexer: 2.1.0
       expect-type: 1.3.0
       magic-string: 0.30.21
-      obug: 2.1.1
+      obug: 2.1.3
       pathe: 2.0.3
       picomatch: 4.0.4
       std-env: 4.1.0
@@ -10275,7 +10288,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 25.9.3
-      '@vitest/ui': 4.1.8(vitest@4.1.8)
+      '@vitest/ui': 4.1.9(vitest@4.1.9)
       jsdom: 29.1.1(@noble/hashes@2.2.0)
     transitivePeerDependencies:
       - msw
