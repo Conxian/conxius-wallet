@@ -1,13 +1,21 @@
 packages:
-  - '.'
+  - "."
 
+minimumReleaseAge: 60
+minimumReleaseAgeExclude:
+  - "@capacitor/*"
+  - "@vitejs/*"
+  - "vite"
+  - "vitest"
+
+strictDepBuilds: false
 allowBuilds:
-  - "@google/genai"
-  - "@swc/core"
-  - "bigint-buffer"
-  - "bufferutil"
-  - "classic-level"
-  - "esbuild"
-  - "protobufjs"
-  - "tiny-secp256k1"
-  - "utf-8-validate"
+  "@google/genai": true
+  "@swc/core": true
+  "bigint-buffer": true
+  "bufferutil": true
+  "classic-level": true
+  "esbuild": true
+  "protobufjs": true
+  "tiny-secp256k1": true
+  "utf-8-validate": true
