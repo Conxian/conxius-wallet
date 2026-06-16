@@ -8,6 +8,5 @@ paths = [
     ".gitleaks.toml",
     "CHANGELOG.md",
     "README.md",
-    "AGENTS.md",
-    "App.tsx"
+    "AGENTS.md"
 ]
