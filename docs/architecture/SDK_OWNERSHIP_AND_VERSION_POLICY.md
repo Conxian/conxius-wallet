@@ -4,10 +4,10 @@ layout: page
 permalink: /docs/sdk-policy
 ---
 
-# SDK Ownership and Version Policy (v1.0)
+# SDK Ownership and Version Policy (v1.9.2)
 
-**Date:** 2026-06-13
-**Status:** DRAFT / ALIGNING
+**Date:** 2026-06-17
+**Status:** VERIFIED
 **Issue:** CON-1178
 
 ## 1. Canonical Ownership
@@ -20,6 +20,8 @@ To maintain boundary clarity and prevent dependency sprawl, ownership of core SD
 | **BDK Kotlin** | `conxius-wallet` (:core-bitcoin) | Wallet (Native) | PRODUCTION (v0.30.0) |
 | **Wormhole SDK** | `conxian-gateway` | Wallet (BFF), UI | BRIDGED |
 | **Clarity SDK** | `conxian-nexus` | Protocol, Orbit | DEVELOPMENT |
+| **BitVM2 (Rust)** | `lib-conxian-core` | Gateway, Nexus | ALPHA |
+| **FDC3 (Native)** | `conxius-wallet` | Enterprise Plugins | RESEARCH |
 | **Enclave Primitives**| `conxius-enclave-sdk` | Wallet (:core-crypto) | SECURITY-CRITICAL |
 
 ## 2. Version Policy
@@ -47,4 +49,4 @@ To maintain boundary clarity and prevent dependency sprawl, ownership of core SD
 - **Consumers** MUST NOT bypass official SDK interfaces to access internal primitives.
 
 ---
-*Verified by Sovereign Architect Agent.*
+*Verified by Jules (v1.9.2 Alignment).*
