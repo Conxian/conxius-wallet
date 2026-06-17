@@ -49,7 +49,7 @@ jobs:
       run: bash scripts/ci/check_runtime_contamination.sh
 
     - name: Run tests
-      run: pnpm test
+      run: pnpm exec vitest run
       env:
         VITEST: true
 
