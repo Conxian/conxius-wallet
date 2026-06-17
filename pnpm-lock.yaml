@@ -54,14 +54,14 @@ importers:
         specifier: ^0.12.0
         version: 0.12.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@wormhole-foundation/sdk':
-        specifier: ^5.0.0
-        version: 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(got@15.0.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+        specifier: ^5.2.0
+        version: 5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(got@15.0.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
       '@wormhole-foundation/sdk-evm':
-        specifier: ^5.0.0
-        version: 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+        specifier: ^5.2.0
+        version: 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@wormhole-foundation/sdk-solana':
-        specifier: ^5.0.0
-        version: 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+        specifier: ^5.2.0
+        version: 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@zxing/browser':
         specifier: ^0.2.0
         version: 0.2.0(@zxing/library@0.23.0)
@@ -99,8 +99,8 @@ importers:
         specifier: ^3.0.0
         version: 3.2.0
       liquidjs-lib:
-        specifier: ^6.0.2-liquid.37
-        version: 6.0.2-liquid.37
+        specifier: ^6.0.2-liquid.38
+        version: 6.0.2-liquid.38
       lucide-react:
         specifier: ^1.20.0
         version: 1.20.0(react@19.2.7)
@@ -133,8 +133,8 @@ importers:
         version: 3.6.0(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
     devDependencies:
       '@aptos-labs/ts-sdk':
-        specifier: ^7.1.0
-        version: 7.1.0
+        specifier: ^7.1.1
+        version: 7.1.1
       '@capacitor/cli':
         specifier: ^8.4.0
         version: 8.4.0
@@ -179,7 +179,7 @@ importers:
         version: 4.1.9(vitest@4.1.9)
       '@wormhole-foundation/sdk-definitions-ntt':
         specifier: ^7.0.0
-        version: 7.0.0(@wormhole-foundation/sdk-base@5.0.0)(@wormhole-foundation/sdk-definitions@5.0.0)
+        version: 7.0.0(@wormhole-foundation/sdk-base@5.2.0)(@wormhole-foundation/sdk-definitions@5.2.0)
       autoprefixer:
         specifier: ^10.5.0
         version: 10.5.0(postcss@8.5.15)
@@ -236,8 +236,8 @@ packages:
       graphql:
         optional: true
 
-  '@0no-co/graphqlsp@1.17.2':
-    resolution: {integrity: sha512-b3Et0xpXj6H8gYraDUd/hVpY0+WnkAS4cwf4fjnvWGlZhVI2Tt2EXl6lhYx+aprUM7oQ7s7Z6JfjPzBkPpj6jQ==}
+  '@0no-co/graphqlsp@1.17.3':
+    resolution: {integrity: sha512-4PPvxDPmbntddpgMyA3VId5/E9YGdRuuS/mW+THOvtTx/C79Pf+lN28LkNNACJrF9L7YACiAJelyOkC6LqUzvw==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
       typescript: ^5.0.0 || ^6.0.0
@@ -281,8 +281,8 @@ packages:
     engines: {node: '>=20.0.0'}
     deprecated: This version is deprecated, please upgrade to 5.2.1, or the latest version
 
-  '@aptos-labs/ts-sdk@7.1.0':
-    resolution: {integrity: sha512-5GLkEBcKwH2NDD0IjzN1Bpv5Epqe0qiV2q4McUhxJlbPlFN6yWXJs+GFgEK9IOZRFpby0BW7XCUtDK/nULit2Q==}
+  '@aptos-labs/ts-sdk@7.1.1':
+    resolution: {integrity: sha512-q+/PoQRVt/F56eCdr0QkR0Qg3flewwghmbRxpZ3r5rhbCheNVZW8ME6qzliAuuWGQ8RvGCZvSwi/2gvuGeEiyg==}
     engines: {node: '>=22.0.0'}
 
   '@asamuzakjp/css-color@5.1.11':
@@ -761,8 +761,8 @@ packages:
       '@modelcontextprotocol/sdk':
         optional: true
 
-  '@gql.tada/cli-utils@1.9.1':
-    resolution: {integrity: sha512-PTWdrcnLOKQ3cOLrYOBF/QwzKnjE037jq4CibxB5IV/Pi+Vjr8YhL5W210gkpfdCOJ/YM1lM3Q6jusmzC6z4Vw==}
+  '@gql.tada/cli-utils@1.9.2':
+    resolution: {integrity: sha512-cVNs4v8ewLRYJfyAsaHbiAmd5Hm+zXEMvMhBksH58ZU87d6f8crsp2CQG6QtIqnJJw1q0CBWfWTZepGWNcL3QA==}
     peerDependencies:
       '@0no-co/graphqlsp': ^1.16.0
       '@gql.tada/svelte-support': 1.0.3
@@ -775,8 +775,8 @@ packages:
       '@gql.tada/vue-support':
         optional: true
 
-  '@gql.tada/internal@1.2.0':
-    resolution: {integrity: sha512-mbrWlSLNMCMuP7uGFm4EGFJ0oU1XqzUqykAqQ4emVLUvuERKB6Vhb3KoWdSqSCCBKm7G3WcYCYgFbaMUUMNshw==}
+  '@gql.tada/internal@1.2.1':
+    resolution: {integrity: sha512-1kPMv9KRpD6mfVwtXK+iy43U/gi4bpr4ganfhPLD0TjxpbuVJm7CtZ9wMFdwy3FjLBFN2QhwscNnL7lRPHg4vg==}
     peerDependencies:
       graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
       typescript: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
@@ -812,8 +812,8 @@ packages:
   '@injectivelabs/core-proto-ts-v2@1.20.0':
     resolution: {integrity: sha512-gSk1aStjp4vCLwsWcuW8f46rNw6uOuiKp/1KdQ9KJeBW91nwpQXsfim6CVOZXlFytDRUcHe05pdLIw/sxRmI7Q==}
 
-  '@injectivelabs/exceptions@1.20.13':
-    resolution: {integrity: sha512-A8GLm/DONHmclzc9+76GhFmIOZEUelLSBaIoLrdR9X4KbIZwFdEHMUp/vbYSTgnPRVzwsSUyZCGeuKLz+ZxGww==}
+  '@injectivelabs/exceptions@1.20.14':
+    resolution: {integrity: sha512-YkdTPpKJKzWWV71us3R15Cc1/ZQZ3cQVZZl5nyA4F6zu7kX5tFRJ28Ol48j9XhQUMCRiFkM80RstXrpdnyUwxQ==}
 
   '@injectivelabs/grpc-web-node-http-transport@0.0.2':
     resolution: {integrity: sha512-rpyhXLiGY/UMs6v6YmgWHJHiO9l0AgDyVNv+jcutNVt4tQrmNvnpvz2wCAGOFtq5LuX/E9ChtTVpk3gWGqXcGA==}
@@ -836,23 +836,23 @@ packages:
   '@injectivelabs/mito-proto-ts-v2@1.17.3':
     resolution: {integrity: sha512-Fo6k1MCPT3CKUS9tbMbl/poGv7R8KHtA7RfU7mvxxVWS7MpF+LLZA6UgegfEA1iiJgIrhe+eEwEvhIOe6SiUzw==}
 
-  '@injectivelabs/networks@1.20.13':
-    resolution: {integrity: sha512-ZjD6zH4MmHMxaJFKkLrUl6z6Gl9K+pK+ToHlVj3b1kU+07GGSM7yePoUlkSoxuz1zOFPv/mmldMarpVIkmC7IA==}
+  '@injectivelabs/networks@1.20.14':
+    resolution: {integrity: sha512-0WGQoFLQrVzQXihStQdbnnXQ6r7Jr+ViWLysBavVHEc2IQphdZL50ppb8zW0vbWbnTX+PcED0y9CAUz7LdNjnQ==}
 
   '@injectivelabs/olp-proto-ts-v2@1.17.6':
     resolution: {integrity: sha512-3jTAyj342TXVe8qsVcDzAUnH5vAbqoHy5jqTUxHvJtfDaJ+X0uvN6d/yj60CxmrDOyKrn6pFx0prZ6J3Tl8S6g==}
 
-  '@injectivelabs/sdk-ts@1.20.13':
-    resolution: {integrity: sha512-m7b6FyZ0GtdFwsdLFkdfTD2Iz3JN2R0VYX58+5VwJIXRAhw/3DuSeA6mKgOLMT0Oz6rCgjwPcq6yNoM48SOQrg==}
+  '@injectivelabs/sdk-ts@1.20.14':
+    resolution: {integrity: sha512-LSxXJTGL9XPrSnW/2IOJuOsK3qHika+ZODTYpT58Aga5EFfXsqmyBvOJsrzWmPln8j60lGeTuMAvaLPFKS2N0A==}
 
   '@injectivelabs/tc-abacus-proto-ts-v2@1.18.6':
     resolution: {integrity: sha512-Bl3MQir4UUYOB1O24PkFqbznlBoxkBfQC6e0lnnFkpn5Sno0kVaA0lWHjYG9JVoqDkwcKo3CefFQoLnv59hVZQ==}
 
-  '@injectivelabs/ts-types@1.20.13':
-    resolution: {integrity: sha512-g7NARy/Ke5/V5ZyAVFhHli+h3fuoc1Sa98lBipGXjkYTVF+FRnTDA9pB3Z7UCIf3VuWhTA40x+dUDVnI5F8KAg==}
+  '@injectivelabs/ts-types@1.20.14':
+    resolution: {integrity: sha512-hZEvou0CnWuVOS9QSSqUho4kREm0ZD2sO7s92WY9y08olLW3K02sJZyIlGs6JpZVK5zDoLGXz6nUFzOENB6Zvw==}
 
-  '@injectivelabs/utils@1.20.13':
-    resolution: {integrity: sha512-Qgk5QOBi9lBivaYpP20lBIO3VzQVcf9JBVvCf2zy0R6dwuZreU9QLkwT03nznwpzCo2zeAOLFvPJTdsCV3QcTA==}
+  '@injectivelabs/utils@1.20.14':
+    resolution: {integrity: sha512-tHkVg49zlYHDnNi6biowRlSx8GkjJkDhmxsNSJh1RVCgiYkfmUFYRM1KEiZUKewBS9bdzLyHntV+3WF7CH00Xw==}
 
   '@injectivelabs/ws-price-oracle-proto-ts-v2@1.0.5':
     resolution: {integrity: sha512-dGCUzEurROr8RiasViZH+i2g8FJdl46Vcm6pnyUcldxHgYCztlJNDxzUc5Unqze7+9+bWeu+5QMwXhw5DrtCvA==}
@@ -1895,59 +1895,59 @@ packages:
     resolution: {integrity: sha512-6Wr7aPB4tZmdp27hJzee2fy0Tfxoo+KpPkkccCSTfto7W7KqdotNZotZGKi55wHjYBNfkCOjRn2L4XLfOUIonA==}
     engines: {node: '>=18.0.0'}
 
-  '@wormhole-foundation/sdk-algorand-core@5.0.0':
-    resolution: {integrity: sha512-azgYdny4MdXclO8rf7Xp1Z/Jf28mZXLw6s7tKTzy2yg2z5gps3pLsq7so2zAezRBP7wOhRTgQQka/RlIzkTjxg==}
+  '@wormhole-foundation/sdk-algorand-core@5.2.0':
+    resolution: {integrity: sha512-Cy3r0kVrk3V1V1NcS0E1+YtVbYUvmXTRUeHVDEowbz2ZZnmXlYCIGzt9tOSDAXfQ8gHpBQmeUc+Z/V7BcXu2Hw==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-algorand-tokenbridge@5.0.0':
-    resolution: {integrity: sha512-MwNor5njat0q3eXwrjboqGEO592txQ5ecAPqfyVM3YGseu7sT2CEuqT78++6uabb1r6Jm0UXVH8ysEgvx3tF5Q==}
+  '@wormhole-foundation/sdk-algorand-tokenbridge@5.2.0':
+    resolution: {integrity: sha512-8hX0yNJ1lzyxyzGZe5dZemxi08gC7xb9SmuKP7JgcP37LGaT9xvZEKTTjSEi0I/SdgpUsbv4+Lq7YSYFC01hJg==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-algorand@5.0.0':
-    resolution: {integrity: sha512-2b723xKcJmyo752JvX7fMkvqoaJ6aK4eQtQH78GSJskpk6jTpJ9xjQWBXU+O7+a0VTFlMybYUb0tvjJaiA79fw==}
+  '@wormhole-foundation/sdk-algorand@5.2.0':
+    resolution: {integrity: sha512-vjC4kOB6mvXexlaYhyIsmQg1HjimzahVxNTsXw/ZKXT9Gi8Jll3sOeJXAEIkKUXTM5msFKnHXornP1qHXkLMOQ==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-aptos-cctp@5.0.0':
-    resolution: {integrity: sha512-a6GCjlxiwfH4qiY6RUoyRJRbn8tgDsGSf2PKTNz4YIdf2bzs75MMoneb+oyFgQcFYnlAD/CGaDSyUySz52cDMA==}
+  '@wormhole-foundation/sdk-aptos-cctp@5.2.0':
+    resolution: {integrity: sha512-8GXUCpoI/eleuPlzbuDOsQ+RX3AslPUSyItz6pNa+LBCgzTA0tedGIHCNYIl17LBiBJYalWb7Zv3QAsxEyPf/g==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-aptos-core@5.0.0':
-    resolution: {integrity: sha512-ZMvEp4J7mXlm7m9AegWrlo/KPhQ/53OqFBNJ8PfuR2BeiHURFKje76aZofRVlCWm2g8t1cysmnW1PFH5zIZH0g==}
+  '@wormhole-foundation/sdk-aptos-core@5.2.0':
+    resolution: {integrity: sha512-W6h9MCAkpzTrg/nNx+HFjmlXHDdtREajzrvlq93miMbJyr016ZkmbWyHvtFKtIMb0ANR1jzzBw9VohdIzohidA==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-aptos-tokenbridge@5.0.0':
-    resolution: {integrity: sha512-B55DVAttUZ0fxeKyYmGU9J0nVOOmfcUjR5Ulew0u6kczvHEAJRHvbvMGVfNC5fUXP6TiGSs/oLeT0BBuhsyMMA==}
+  '@wormhole-foundation/sdk-aptos-tokenbridge@5.2.0':
+    resolution: {integrity: sha512-JxJADkS7jIaowAyqlK0MtfebLmXE6+YdM4ihbXURsYzX8D3Nxf3I5/zSYMsqMHfZ9rpk3rFaafhdoTWttVQTSQ==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-aptos@5.0.0':
-    resolution: {integrity: sha512-qwnx+sebAJ29Q5Tv6ru4ECLh9GnR/7kfxaCbuHou1hLTKc8roO/f7q8i1RRXj4pj79lP2pSuZqBJYPolFnrOsg==}
+  '@wormhole-foundation/sdk-aptos@5.2.0':
+    resolution: {integrity: sha512-xyVuur0OnlQV2UKB0Slmen92IpLStne34RjnetkkGcnMmjP1Cc8MsVQmA8B3ouXwozYi1+b0PArqTotVs01scg==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-base@5.0.0':
-    resolution: {integrity: sha512-CzSM06MgSeCrrhI1eajJ6fBnCT7oGx0HqF2LyYQpthn0mlTgQO0Gg8iDZuCjhB2/rXyceTEK8raHQ8vXyMxYog==}
+  '@wormhole-foundation/sdk-base@5.2.0':
+    resolution: {integrity: sha512-tgaAf1wD9w5VaNMtBhIka20o+Tl05Q8B22Kh26B4N/CanFgERjMfLHLlW+RTtMU+6T5lrAjt1FTjykXEz75MEg==}
 
-  '@wormhole-foundation/sdk-btc@5.0.0':
-    resolution: {integrity: sha512-iOLn2VOETWM64aV5F2Xm1VWAn3M3wuJtllyZuvQBn209xv1Km6TK1WSyrdNYw/A2lDTXg5bVdE0YQwo4x0jRyA==}
+  '@wormhole-foundation/sdk-btc@5.2.0':
+    resolution: {integrity: sha512-zZD4GcYC8OhSUVWdg2VkQ71XJXk1bmC2Ti1d7gP8JdZWX5YqvdlsvgrFGuexjsfDd4Eu2rXVjwAL5DuXKphyRg==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-connect@5.0.0':
-    resolution: {integrity: sha512-xJ0wyG3s6Zk4rTst/Ztafe1bs25mw6sZQ4kXYwAHo2QmAKI7kPwCgW0twhEUVYxoZHZSHkW4GmtOcG8LJaQRlw==}
+  '@wormhole-foundation/sdk-connect@5.2.0':
+    resolution: {integrity: sha512-NtzJfkBuKKBynXDSPEksOoMl1oR6f895kd6vNn1JUX9f9RpL+gkwJ6ZUhrZ9pjPfFdA84ciHwiECmRhrcIl2pQ==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-cosmwasm-core@5.0.0':
-    resolution: {integrity: sha512-KFTb2ZyMAdkYfUSNIZq1qY8rj625C8Tmbl9HScXbYUVp2/F0YvN5mb6+YHdsXwlZ8apvTvsDDiFWaboSb7bB2Q==}
+  '@wormhole-foundation/sdk-cosmwasm-core@5.2.0':
+    resolution: {integrity: sha512-SBSzm/W8ld5ExqhvPkONums3bpDjsMEUEElIssFjvqmPx9XHX7HPTzgCSqS6zjArXhmGfdGbi7F23jDEQ4V/Ew==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-cosmwasm-ibc@5.0.0':
-    resolution: {integrity: sha512-P+35LOrE1A47YtsCOszH5ziF3soeNcT9z0Cxf33wa9QS1bUNlq+BRP5jrJK4xmrppvugo/f4KL6hJmOgXwhI9Q==}
+  '@wormhole-foundation/sdk-cosmwasm-ibc@5.2.0':
+    resolution: {integrity: sha512-WzyS1Dl0XqGZXTvMTwYVosON7/fFS5btnmfSrsNkcJmqHqgAWjlMSFOQ4AaXBoVts1EKVM8JkvH+5LEh4Znoxg==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-cosmwasm-tokenbridge@5.0.0':
-    resolution: {integrity: sha512-si/rEin1eVGsvCKl4vQUBAaOPyveAPeXrzJK+UDhaQNz8kflDwlR361gcGVij9mNGd5Xg6iX44FibYir/Qvzug==}
+  '@wormhole-foundation/sdk-cosmwasm-tokenbridge@5.2.0':
+    resolution: {integrity: sha512-S0Nx8DmPvBg65KUbygdj6lNS3SPDatV1J/MyxyaSs7FfPt8HxOUKoDeLu6BlM32GN/fPono0wjsQTrWwxBdKUw==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-cosmwasm@5.0.0':
-    resolution: {integrity: sha512-IRq4ko7biV1YxYqUXqinKNhwhgLQQdnqD1GFZDewR8o7EKu+hlVylQvGr0b5perK0Qi7fNe+IZcjnyRXOcA5Ug==}
+  '@wormhole-foundation/sdk-cosmwasm@5.2.0':
+    resolution: {integrity: sha512-ORHqE3CVIBrDIVFDYMpl98Ik+mqCgeuPB5WhkyQZ2/u1lUxtBLrvFPmgE0cgJVnF+apihwih1JkyRk2KGAX/3A==}
     engines: {node: '>=20.19'}
 
   '@wormhole-foundation/sdk-definitions-ntt@7.0.0':
@@ -1956,83 +1956,83 @@ packages:
       '@wormhole-foundation/sdk-base': ^5.0.0
       '@wormhole-foundation/sdk-definitions': ^5.0.0
 
-  '@wormhole-foundation/sdk-definitions@5.0.0':
-    resolution: {integrity: sha512-NB3MS7APYYu7GJS7jsz9z7zWPaEmwDzaWX0+7RPGX3WfOYHmCDMGu7fNFj5bMulDadR5OYOqJjxMw80KVpg/Qw==}
+  '@wormhole-foundation/sdk-definitions@5.2.0':
+    resolution: {integrity: sha512-T4AJSLnj8QE3HO9fDwfyZSwn9ZMdxE7wQrgq4npCpTSjAvKBCxfsk4Gs+aeG886xwiIt02LD3tPb3oyGVKYGnw==}
 
-  '@wormhole-foundation/sdk-evm-cctp@5.0.0':
-    resolution: {integrity: sha512-Mjzc2nO3ULGX5EEcG0xLKM+tYixcxDXlm1FwAKM3K77jz/aowfW2+ApJFKzKdPu4Vbh8L+WgXZbzWzzkpdN2wQ==}
+  '@wormhole-foundation/sdk-evm-cctp@5.2.0':
+    resolution: {integrity: sha512-toOOjfVw4XjujkaW6fRzAAd1BNCvmVwszipPAbBSquBb8ehcx/aDfaOXWZ/H33NiY7IukuAAgF1lG2wRxbgxMQ==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-evm-core@5.0.0':
-    resolution: {integrity: sha512-JTezK1KxjNoPWDdkKhGC05Wxf11w3dfiZKs1G7ZiroNES+OHCh6UMjaLH8Kjm2kW3R6zIXtp/mpR89zYsojGug==}
+  '@wormhole-foundation/sdk-evm-core@5.2.0':
+    resolution: {integrity: sha512-wn1WWhAPEq0FlFj6t3+bnB/o07NHe2z9QNG+kWp5IVp7M3ROXP5ZauMYcHLFZDxdjdkuNi8MxcPe/7XXcFxiDg==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-evm-portico@5.0.0':
-    resolution: {integrity: sha512-iAJNTDZTTOce+gASRK5IhTe+MWAt39FDYRQdgyutUbztgIqdQSaOagrj9uUFsZZUVnJaLZczyTXdvKEDLrC+Zg==}
+  '@wormhole-foundation/sdk-evm-portico@5.2.0':
+    resolution: {integrity: sha512-fSmtrK1ZoBitd/syfVI8pCLfeHH27aww1PlG7ISAjd3aGGa7lMFl8CfivKEjO7PeScKga8jbMflkIVE1ATlLaw==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-evm-tbtc@5.0.0':
-    resolution: {integrity: sha512-yDIRj7UZZcIkhRwQftqpL7kd0kdye7dfSj9GnaxVII9dnllzXYlnxYSOHCIh9ZZ5ir+3qNZbXvf9e+UIqGR6yg==}
+  '@wormhole-foundation/sdk-evm-tbtc@5.2.0':
+    resolution: {integrity: sha512-dgjJbyn865lGKcvp/KBBf2MHUfhfbmYpJPuqul4g5RzQ1txIgIKS9ITRGZ7ejU7AEdQVZa1HLUQ2KyRNuAJHsg==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-evm-tokenbridge@5.0.0':
-    resolution: {integrity: sha512-h7QnW4fZjqbGhyvS9lJronxlYc5/ZV/HgYoWIh3d/HrZQpeRRX2Uk0wihs2wKlplLSh5QeV8gE1v9sbQbtAyzQ==}
+  '@wormhole-foundation/sdk-evm-tokenbridge@5.2.0':
+    resolution: {integrity: sha512-Fk55Vudyn7z4yMiP0AtuDjHPMHn5HtzMyV+t1G94jHhui1XmOUN7ngxXzcVwmbUjHJfd+914s+HLBCkEnpmFKQ==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-evm@5.0.0':
-    resolution: {integrity: sha512-/JyiONdaqnV8JTZfFafdvwYwnasW2buiI4ek2alTZ9+Q5fJNTOXV4avjPMh7s+nEsH1xAZtRc2xtbm6X1y/Apw==}
+  '@wormhole-foundation/sdk-evm@5.2.0':
+    resolution: {integrity: sha512-0gZzGJ1m+EG1g6VjB4iyRY23RD9h2gkti1HUfjWccKXuk6os8WGcxBXqZ5P6dT20pjmE49RYx9chrqg/X8uGzg==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-solana-cctp@5.0.0':
-    resolution: {integrity: sha512-h3tqEQ8892y9jWLiv3mTt5jif0E7MQCzzJwDDCWBK5tQe2CJE/vA5AiWmQetN/viSpZRfnwdtnnoRo4QFEUFyQ==}
+  '@wormhole-foundation/sdk-solana-cctp@5.2.0':
+    resolution: {integrity: sha512-79KBOF8uG3LUyE49GtYZWxfa5N3BWltWBk+6ITfvMBCawYk2IVMTwPWtajmxXZlQt3XfAxhb4qPTedCOlHXbcQ==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-solana-core@5.0.0':
-    resolution: {integrity: sha512-++Zdkp0QvvfNOy/h0IhnxDjK3l4nGy8RhRGJsHE0X5raB//g5ftoKAcdGZ30LYwzhpUCixyqx6YejDy6g+vlHw==}
+  '@wormhole-foundation/sdk-solana-core@5.2.0':
+    resolution: {integrity: sha512-s9JjhBa+uhHFfl2kMrubj/66AJR3DSPbqn3qkO5mdyoqTTUhsdlxudJ9O44uxu64Gq1lg7yJvHR7cuJLMwt9Pg==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-solana-tbtc@5.0.0':
-    resolution: {integrity: sha512-r4P6MMEFmHP/ZKh9nlkYY6nNAG28SFdSt/KTjlPsQJJ+de3CEPtYIPqKaZRap4l7TEMh+E8hTAQxU7yEB/1+yA==}
+  '@wormhole-foundation/sdk-solana-tbtc@5.2.0':
+    resolution: {integrity: sha512-Jolf/bDZolK3xZ02Dtr0i4CSnpOET4lQtvCiRecR8f/gTqC1dI/yEx5txVLdB4z2ciAzTO8Zl1AYzdhCSJvzRA==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-solana-tokenbridge@5.0.0':
-    resolution: {integrity: sha512-ROrRi64WuCNUXmiairiBWf2rgHxIpDVsQJZGP2c0mno8rfUF5nomYS5mJYyozK+fsl5YKE0R5HaMFdEnBMlkBQ==}
+  '@wormhole-foundation/sdk-solana-tokenbridge@5.2.0':
+    resolution: {integrity: sha512-hlls7HN8dySokVN/Aawj+k7DERuJce9iD+2D5/Ru3OgO+cB1fFpQD3svZoz44MIuLSzIvdhkz0N/YErBZkBtkw==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-solana@5.0.0':
-    resolution: {integrity: sha512-LC6FVAK1u0UAr2fcftUbl/9lB+LR5s6H+twUw2PpfXXEjVigufS1mB3KZdfpedhT8nMXB4W0fo+bSzF5P4Qi7w==}
+  '@wormhole-foundation/sdk-solana@5.2.0':
+    resolution: {integrity: sha512-PJ4RyNpfJenc2GdwuNqsuR7P1CjMuMQUXflqR5HkCFYPkM+0wvX8PrDAyIYa4mfeI9Zm/plSS7dqTq6nvtLEhw==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-stacks-core@5.0.0':
-    resolution: {integrity: sha512-9foS2pvlt0N7qal0OjdKp+HKGBelecV/31z3L5XTLQHiPIqvJgnjvrDfzYOu6FgNYzgTBeguHOjBXOornfreww==}
+  '@wormhole-foundation/sdk-stacks-core@5.2.0':
+    resolution: {integrity: sha512-k5wYbRcuWx/dtUe/fQ+1VKDRB7nBW47f7DCdvSoRsOBBnHum25ASVA5mPX3ck61eJF4uVNNYUP7J3sq2Z8vETw==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-stacks@5.0.0':
-    resolution: {integrity: sha512-Ov3MYcCsUK8qgKI7n9rrCuS2l2TFYRv78IPdplwvOs8fupwgGnGhM6X27ZpN6j3wsDdiAYF0nxVfFXAORGU5Zg==}
+  '@wormhole-foundation/sdk-stacks@5.2.0':
+    resolution: {integrity: sha512-hWlnCoG1H6afHvcSznOMURqBghN98NPLaWsNsSH0PFTkTgLtCHk2yqxhTMGwKB+dHV8+3bZ5Yjx7eucTR4KhLg==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-sui-cctp@5.0.0':
-    resolution: {integrity: sha512-T0z4ggu+FEAA6T7lszqahEfulZoVRlABBwYlFQNSva6E9vYwYbV2WdE/erH3nUnuSTYTY5+DUy/XWKJRseP4tQ==}
+  '@wormhole-foundation/sdk-sui-cctp@5.2.0':
+    resolution: {integrity: sha512-qkVsImYjxVdEdjuRQ7rREQmK1Nv6z+KlMTzvzinu6RxeKD9SBTnNnjxXLdznTkKK0+xMUQF9shGUNc6VsQiYww==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-sui-core@5.0.0':
-    resolution: {integrity: sha512-jwMTOZ66ALk/YX88RTScDiiUSE4Fhs4KyiMfpKMfyakO1X5UEKBfiMZ1njkCdBjLfFmxHdZVgNl1XdRbO8cjwg==}
+  '@wormhole-foundation/sdk-sui-core@5.2.0':
+    resolution: {integrity: sha512-Nt8ni3gjQNkfWyIFjmtn6hvDkqirRj/J5POXLSXvXYVNIR6Es1HTydYzORe4EXKqruhma9is/8Y1mKq71lp8Cw==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-sui-tokenbridge@5.0.0':
-    resolution: {integrity: sha512-fd0EPPzddWDJ1cs65YLwfIkkIQoUcsOPvuz76vlEqCNKotFF7cvD43dV38afgq6PRjhc2SU1TaBLVQgPFxnH8A==}
+  '@wormhole-foundation/sdk-sui-tokenbridge@5.2.0':
+    resolution: {integrity: sha512-Vj+o4MBZt7OIP+iyxyv4pgkoK72i8nX0pXMETCUgDCHv/+LWwtC6vL6JuwJywzysBB4wzFfE3DefVS43kZ3jwA==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-sui@5.0.0':
-    resolution: {integrity: sha512-QcZZ7Zv141g73t25SeOVz9NfdpH9H5HkpTICK97casN5qQmm0gojBSLHIxd0XSaMJs7KzQreJ+QtTSZX7atPDA==}
+  '@wormhole-foundation/sdk-sui@5.2.0':
+    resolution: {integrity: sha512-8mdIkikqScS9XQ5GX8ZJzMJZfCVOz67qnVntBCne/c6m/v0jvgssDEvs0ZzIOfyGfqRwrj2L6MTSFE6jTgDUOw==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-xrpl@5.0.0':
-    resolution: {integrity: sha512-d4gFoWp/VuAhH945V0+pALWWGn7l2BBFgRzv6pdWdXIOz6SgVlu5mZkLv7gPcXNry4vFRd5oLBZXZ7kiIaiCKA==}
+  '@wormhole-foundation/sdk-xrpl@5.2.0':
+    resolution: {integrity: sha512-v014zWl9skcmwR3ZSYKbk6j4IBfgfyb4zdliHEgNcUTNNZnDdZf4c55sHpZxYnPELx15pytxpdiXhmT5dN/s8Q==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk@5.0.0':
-    resolution: {integrity: sha512-f01t8gRoPlbP/AaI/EVQ8ap6s7KMa5RQwz4Z7OcVObrpFZbQRyKyf59d1iypGfrZZorsO2yCa8DMQbMZKHF2lQ==}
+  '@wormhole-foundation/sdk@5.2.0':
+    resolution: {integrity: sha512-WQBrQL4h7dHm0XS5vzCdOCii2nzsNWaETyZgW0AamXAn5pT4B3cWGidEsE/SabQbp8BamKbpp4CxhXOezY42Bw==}
     engines: {node: '>=20.19'}
 
   '@xmldom/xmldom@0.9.10':
@@ -3076,8 +3076,8 @@ packages:
     resolution: {integrity: sha512-PMIMaZuYUCK43+Z9JWEXea4kkX2b3301m81D5TS6QpfG4PmNyirzEdO/Oa2OHAN4GsjnPfvWCWsshKN2rq4/gQ==}
     engines: {node: '>=22'}
 
-  gql.tada@1.11.1:
-    resolution: {integrity: sha512-ZfmvPQq7SX7foxjGpVJlKNYHotyapwNlAe8OxCy8uLdUnC9KP/o6rMjrgMW9jN3udES6SsvNAXjyM/l6FssDAg==}
+  gql.tada@1.11.2:
+    resolution: {integrity: sha512-oBr7ShA5/TmcwOO7BZgN1SynX2rBU+/ltysB0zXc+NCBF+9YOg6MRzJcTfLjIqDKdcE3LGxpOl0l9hBbxmyzmA==}
     hasBin: true
     peerDependencies:
       typescript: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
@@ -3566,8 +3566,8 @@ packages:
     engines: {node: '>=22.22.1'}
     hasBin: true
 
-  liquidjs-lib@6.0.2-liquid.37:
-    resolution: {integrity: sha512-AOPwqg9wtLMNxfqOf8afC+bYYrs3VBsTq/Mq/iOe0F2X3CcbgiLeSAcvOY34jbnUre6U+zmuXKP9bWmxnOG08A==}
+  liquidjs-lib@6.0.2-liquid.38:
+    resolution: {integrity: sha512-8q4u5aW1BgqxoD78Fqqeqtl9ZgWHIdLfJe634gFyLBp9xRepGDF0p2ScsqZxJfvIrwnfgCPUUicUceeZt5uUdg==}
     engines: {node: '>=8.0.0'}
 
   listr2@10.2.1:
@@ -4506,8 +4506,8 @@ packages:
     resolution: {integrity: sha512-tLq3bSNx+xSpwvAJnzrK0Ep5CLNWjvFTOp71URMaAEWBfRb9nnJiBoUe0tF8bI4ZFO3omgBR6NvnbzVUT3Ly4g==}
     engines: {node: '>=14.16'}
 
-  type-fest@5.6.0:
-    resolution: {integrity: sha512-8ZiHFm91orbSAe2PSAiSVBVko18pbhbiB3U9GglSzF/zCGkR+rxpHx6sEMCUm4kxY4LjDIUGgCfUMtwfZfjfUA==}
+  type-fest@5.7.0:
+    resolution: {integrity: sha512-1URUxUqfHFM1c+zfSPsa3gnkO7Aq21qyH75SIduNYz4SzY964rn1X2vCMQaHSHhktiw+0kPa2iyb6PUpXqB6Vg==}
     engines: {node: '>=20'}
 
   typed-array-buffer@1.0.3:
@@ -4976,9 +4976,9 @@ snapshots:
     optionalDependencies:
       graphql: 16.14.2
 
-  '@0no-co/graphqlsp@1.17.2(graphql@16.14.2)(typescript@6.0.3)':
+  '@0no-co/graphqlsp@1.17.3(graphql@16.14.2)(typescript@6.0.3)':
     dependencies:
-      '@gql.tada/internal': 1.2.0(graphql@16.14.2)(typescript@6.0.3)
+      '@gql.tada/internal': 1.2.1(graphql@16.14.2)(typescript@6.0.3)
       graphql: 16.14.2
       typescript: 6.0.3
 
@@ -5022,7 +5022,7 @@ snapshots:
     transitivePeerDependencies:
       - got
 
-  '@aptos-labs/ts-sdk@7.1.0':
+  '@aptos-labs/ts-sdk@7.1.1':
     dependencies:
       '@aptos-labs/aptos-cli': 3.0.0
       '@aptos-labs/aptos-client': 4.1.0
@@ -5622,14 +5622,14 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@gql.tada/cli-utils@1.9.1(@0no-co/graphqlsp@1.17.2(graphql@16.14.2)(typescript@6.0.3))(graphql@16.14.2)(typescript@6.0.3)':
+  '@gql.tada/cli-utils@1.9.2(@0no-co/graphqlsp@1.17.3(graphql@16.14.2)(typescript@6.0.3))(graphql@16.14.2)(typescript@6.0.3)':
     dependencies:
-      '@0no-co/graphqlsp': 1.17.2(graphql@16.14.2)(typescript@6.0.3)
-      '@gql.tada/internal': 1.2.0(graphql@16.14.2)(typescript@6.0.3)
+      '@0no-co/graphqlsp': 1.17.3(graphql@16.14.2)(typescript@6.0.3)
+      '@gql.tada/internal': 1.2.1(graphql@16.14.2)(typescript@6.0.3)
       graphql: 16.14.2
       typescript: 6.0.3
 
-  '@gql.tada/internal@1.2.0(graphql@16.14.2)(typescript@6.0.3)':
+  '@gql.tada/internal@1.2.1(graphql@16.14.2)(typescript@6.0.3)':
     dependencies:
       '@0no-co/graphql.web': 1.3.2(graphql@16.14.2)
       graphql: 16.14.2
@@ -5667,7 +5667,7 @@ snapshots:
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
 
-  '@injectivelabs/exceptions@1.20.13':
+  '@injectivelabs/exceptions@1.20.14':
     dependencies:
       http-status-codes: 2.3.0
 
@@ -5696,9 +5696,9 @@ snapshots:
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
 
-  '@injectivelabs/networks@1.20.13':
+  '@injectivelabs/networks@1.20.14':
     dependencies:
-      '@injectivelabs/ts-types': 1.20.13
+      '@injectivelabs/ts-types': 1.20.14
 
   '@injectivelabs/olp-proto-ts-v2@1.17.6':
     dependencies:
@@ -5706,24 +5706,24 @@ snapshots:
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
 
-  '@injectivelabs/sdk-ts@1.20.13(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@injectivelabs/sdk-ts@1.20.14(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
       '@cosmjs/amino': 0.33.0
       '@cosmjs/proto-signing': 0.33.0
       '@cosmjs/stargate': 0.33.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@injectivelabs/abacus-proto-ts-v2': 1.17.5
       '@injectivelabs/core-proto-ts-v2': 1.20.0
-      '@injectivelabs/exceptions': 1.20.13
+      '@injectivelabs/exceptions': 1.20.14
       '@injectivelabs/grpc-web': 0.0.1(google-protobuf@3.21.4)
       '@injectivelabs/grpc-web-node-http-transport': 0.0.2(@injectivelabs/grpc-web@0.0.1(google-protobuf@3.21.4))
       '@injectivelabs/grpc-web-react-native-transport': 0.0.2(@injectivelabs/grpc-web@0.0.1(google-protobuf@3.21.4))
       '@injectivelabs/indexer-proto-ts-v2': 1.18.23
       '@injectivelabs/mito-proto-ts-v2': 1.17.3
-      '@injectivelabs/networks': 1.20.13
+      '@injectivelabs/networks': 1.20.14
       '@injectivelabs/olp-proto-ts-v2': 1.17.6
       '@injectivelabs/tc-abacus-proto-ts-v2': 1.18.6
-      '@injectivelabs/ts-types': 1.20.13
-      '@injectivelabs/utils': 1.20.13
+      '@injectivelabs/ts-types': 1.20.14
+      '@injectivelabs/utils': 1.20.14
       '@injectivelabs/ws-price-oracle-proto-ts-v2': 1.0.5
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
@@ -5755,13 +5755,13 @@ snapshots:
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
 
-  '@injectivelabs/ts-types@1.20.13': {}
+  '@injectivelabs/ts-types@1.20.14': {}
 
-  '@injectivelabs/utils@1.20.13':
+  '@injectivelabs/utils@1.20.14':
     dependencies:
-      '@injectivelabs/exceptions': 1.20.13
-      '@injectivelabs/networks': 1.20.13
-      '@injectivelabs/ts-types': 1.20.13
+      '@injectivelabs/exceptions': 1.20.14
+      '@injectivelabs/networks': 1.20.14
+      '@injectivelabs/ts-types': 1.20.14
       axios: 1.18.0
       bignumber.js: 9.3.1
       http-status-codes: 2.3.0
@@ -5917,7 +5917,7 @@ snapshots:
       '@scure/base': 2.2.0
       '@scure/bip32': 2.2.0
       '@scure/bip39': 2.2.0
-      gql.tada: 1.11.1(graphql@16.14.2)(typescript@6.0.3)
+      gql.tada: 1.11.2(graphql@16.14.2)(typescript@6.0.3)
       graphql: 16.14.2
       poseidon-lite: 0.2.1
       valibot: 1.4.1(typescript@6.0.3)
@@ -6878,96 +6878,96 @@ snapshots:
       - supports-color
       - ws
 
-  '@wormhole-foundation/sdk-algorand-core@5.0.0':
+  '@wormhole-foundation/sdk-algorand-core@5.2.0':
     dependencies:
-      '@wormhole-foundation/sdk-algorand': 5.0.0
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-algorand': 5.2.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@wormhole-foundation/sdk-algorand-tokenbridge@5.0.0':
+  '@wormhole-foundation/sdk-algorand-tokenbridge@5.2.0':
     dependencies:
-      '@wormhole-foundation/sdk-algorand': 5.0.0
-      '@wormhole-foundation/sdk-algorand-core': 5.0.0
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-algorand': 5.2.0
+      '@wormhole-foundation/sdk-algorand-core': 5.2.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@wormhole-foundation/sdk-algorand@5.0.0':
+  '@wormhole-foundation/sdk-algorand@5.2.0':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
       algosdk: 2.7.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@wormhole-foundation/sdk-aptos-cctp@5.0.0(got@15.0.5)':
+  '@wormhole-foundation/sdk-aptos-cctp@5.2.0(got@15.0.5)':
     dependencies:
       '@aptos-labs/ts-sdk': 2.0.1(got@15.0.5)
-      '@wormhole-foundation/sdk-aptos': 5.0.0(got@15.0.5)
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-aptos': 5.2.0(got@15.0.5)
+      '@wormhole-foundation/sdk-connect': 5.2.0
     transitivePeerDependencies:
       - debug
       - got
       - supports-color
 
-  '@wormhole-foundation/sdk-aptos-core@5.0.0(got@15.0.5)':
+  '@wormhole-foundation/sdk-aptos-core@5.2.0(got@15.0.5)':
     dependencies:
-      '@wormhole-foundation/sdk-aptos': 5.0.0(got@15.0.5)
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-aptos': 5.2.0(got@15.0.5)
+      '@wormhole-foundation/sdk-connect': 5.2.0
     transitivePeerDependencies:
       - debug
       - got
       - supports-color
 
-  '@wormhole-foundation/sdk-aptos-tokenbridge@5.0.0(got@15.0.5)':
+  '@wormhole-foundation/sdk-aptos-tokenbridge@5.2.0(got@15.0.5)':
     dependencies:
-      '@wormhole-foundation/sdk-aptos': 5.0.0(got@15.0.5)
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-aptos': 5.2.0(got@15.0.5)
+      '@wormhole-foundation/sdk-connect': 5.2.0
     transitivePeerDependencies:
       - debug
       - got
       - supports-color
 
-  '@wormhole-foundation/sdk-aptos@5.0.0(got@15.0.5)':
+  '@wormhole-foundation/sdk-aptos@5.2.0(got@15.0.5)':
     dependencies:
       '@aptos-labs/ts-sdk': 2.0.1(got@15.0.5)
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
     transitivePeerDependencies:
       - debug
       - got
       - supports-color
 
-  '@wormhole-foundation/sdk-base@5.0.0':
+  '@wormhole-foundation/sdk-base@5.2.0':
     dependencies:
       '@scure/base': 1.2.6
       binary-layout: 1.3.2
 
-  '@wormhole-foundation/sdk-btc@5.0.0':
+  '@wormhole-foundation/sdk-btc@5.2.0':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@wormhole-foundation/sdk-connect@5.0.0':
+  '@wormhole-foundation/sdk-connect@5.2.0':
     dependencies:
-      '@wormhole-foundation/sdk-base': 5.0.0
-      '@wormhole-foundation/sdk-definitions': 5.0.0
+      '@wormhole-foundation/sdk-base': 5.2.0
+      '@wormhole-foundation/sdk-definitions': 5.2.0
       axios: 1.18.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@wormhole-foundation/sdk-cosmwasm-core@5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@wormhole-foundation/sdk-cosmwasm-core@5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
       '@cosmjs/cosmwasm-stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@injectivelabs/sdk-ts': 1.20.13(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-cosmwasm': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@injectivelabs/sdk-ts': 1.20.14(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-cosmwasm': 5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -6977,14 +6977,14 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@wormhole-foundation/sdk-cosmwasm-ibc@5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@wormhole-foundation/sdk-cosmwasm-ibc@5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
       '@cosmjs/cosmwasm-stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@injectivelabs/sdk-ts': 1.20.13(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-cosmwasm': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-cosmwasm-core': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@injectivelabs/sdk-ts': 1.20.14(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-cosmwasm': 5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-cosmwasm-core': 5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
       cosmjs-types: 0.9.0
     transitivePeerDependencies:
       - bufferutil
@@ -6995,12 +6995,12 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@wormhole-foundation/sdk-cosmwasm-tokenbridge@5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@wormhole-foundation/sdk-cosmwasm-tokenbridge@5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
       '@cosmjs/cosmwasm-stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@injectivelabs/sdk-ts': 1.20.13(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-cosmwasm': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@injectivelabs/sdk-ts': 1.20.14(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-cosmwasm': 5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -7010,13 +7010,13 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@wormhole-foundation/sdk-cosmwasm@5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@wormhole-foundation/sdk-cosmwasm@5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
       '@cosmjs/cosmwasm-stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@cosmjs/proto-signing': 0.32.4
       '@cosmjs/stargate': 0.32.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@injectivelabs/sdk-ts': 1.20.13(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@injectivelabs/sdk-ts': 1.20.14(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-connect': 5.2.0
       cosmjs-types: 0.9.0
     transitivePeerDependencies:
       - bufferutil
@@ -7027,22 +7027,22 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@wormhole-foundation/sdk-definitions-ntt@7.0.0(@wormhole-foundation/sdk-base@5.0.0)(@wormhole-foundation/sdk-definitions@5.0.0)':
+  '@wormhole-foundation/sdk-definitions-ntt@7.0.0(@wormhole-foundation/sdk-base@5.2.0)(@wormhole-foundation/sdk-definitions@5.2.0)':
     dependencies:
-      '@wormhole-foundation/sdk-base': 5.0.0
-      '@wormhole-foundation/sdk-definitions': 5.0.0
+      '@wormhole-foundation/sdk-base': 5.2.0
+      '@wormhole-foundation/sdk-definitions': 5.2.0
 
-  '@wormhole-foundation/sdk-definitions@5.0.0':
+  '@wormhole-foundation/sdk-definitions@5.2.0':
     dependencies:
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
-      '@wormhole-foundation/sdk-base': 5.0.0
+      '@wormhole-foundation/sdk-base': 5.2.0
 
-  '@wormhole-foundation/sdk-evm-cctp@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm-cctp@5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-core': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-evm': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-core': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7050,10 +7050,10 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-evm-core@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm-core@5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-evm': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7061,12 +7061,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-evm-portico@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm-portico@5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-core': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-tokenbridge': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-evm': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-core': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-tokenbridge': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7074,11 +7074,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-evm-tbtc@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm-tbtc@5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-core': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-evm': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-core': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7086,11 +7086,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-evm-tokenbridge@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm-tokenbridge@5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-core': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-evm': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-core': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7098,9 +7098,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-evm@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-evm@5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
       ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7108,13 +7108,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-solana-cctp@5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-solana-cctp@5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/spl-token': 0.3.9(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-solana': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-solana': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -7123,13 +7123,13 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-solana-core@5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-solana-core@5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@coral-xyz/borsh': 0.29.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-solana': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-solana': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -7138,15 +7138,15 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-solana-tbtc@5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-solana-tbtc@5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/spl-token': 0.3.9(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-solana': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-core': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-tokenbridge': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-solana': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-core': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-tokenbridge': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -7155,14 +7155,14 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-solana-tokenbridge@5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-solana-tokenbridge@5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/spl-token': 0.3.9(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-solana': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-core': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-solana': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-core': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -7171,13 +7171,13 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-solana@5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-solana@5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@coral-xyz/borsh': 0.29.0(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))
       '@solana/spl-token': 0.3.9(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
       rpc-websockets: 7.11.2
     transitivePeerDependencies:
       - bufferutil
@@ -7187,30 +7187,30 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@wormhole-foundation/sdk-stacks-core@5.0.0':
+  '@wormhole-foundation/sdk-stacks-core@5.2.0':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-stacks': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-stacks': 5.2.0
     transitivePeerDependencies:
       - debug
       - encoding
       - supports-color
 
-  '@wormhole-foundation/sdk-stacks@5.0.0':
+  '@wormhole-foundation/sdk-stacks@5.2.0':
     dependencies:
       '@stacks/network': 7.3.1
       '@stacks/transactions': 7.4.0
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
     transitivePeerDependencies:
       - debug
       - encoding
       - supports-color
 
-  '@wormhole-foundation/sdk-sui-cctp@5.0.0(typescript@6.0.3)':
+  '@wormhole-foundation/sdk-sui-cctp@5.2.0(typescript@6.0.3)':
     dependencies:
       '@mysten/sui': 2.18.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-sui': 5.0.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-sui': 5.2.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'
@@ -7218,11 +7218,11 @@ snapshots:
       - supports-color
       - typescript
 
-  '@wormhole-foundation/sdk-sui-core@5.0.0(typescript@6.0.3)':
+  '@wormhole-foundation/sdk-sui-core@5.2.0(typescript@6.0.3)':
     dependencies:
       '@mysten/sui': 2.18.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-sui': 5.0.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-sui': 5.2.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'
@@ -7230,12 +7230,12 @@ snapshots:
       - supports-color
       - typescript
 
-  '@wormhole-foundation/sdk-sui-tokenbridge@5.0.0(typescript@6.0.3)':
+  '@wormhole-foundation/sdk-sui-tokenbridge@5.2.0(typescript@6.0.3)':
     dependencies:
       '@mysten/sui': 2.18.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-sui': 5.0.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-sui-core': 5.0.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-sui': 5.2.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-sui-core': 5.2.0(typescript@6.0.3)
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'
@@ -7243,10 +7243,10 @@ snapshots:
       - supports-color
       - typescript
 
-  '@wormhole-foundation/sdk-sui@5.0.0(typescript@6.0.3)':
+  '@wormhole-foundation/sdk-sui@5.2.0(typescript@6.0.3)':
     dependencies:
       '@mysten/sui': 2.18.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'
@@ -7254,9 +7254,9 @@ snapshots:
       - supports-color
       - typescript
 
-  '@wormhole-foundation/sdk-xrpl@5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@wormhole-foundation/sdk-xrpl@5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@wormhole-foundation/sdk-connect': 5.0.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
       xrpl: 4.6.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -7264,41 +7264,41 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@wormhole-foundation/sdk@5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(got@15.0.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
+  '@wormhole-foundation/sdk@5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(got@15.0.5)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)':
     dependencies:
-      '@wormhole-foundation/sdk-algorand': 5.0.0
-      '@wormhole-foundation/sdk-algorand-core': 5.0.0
-      '@wormhole-foundation/sdk-algorand-tokenbridge': 5.0.0
-      '@wormhole-foundation/sdk-aptos': 5.0.0(got@15.0.5)
-      '@wormhole-foundation/sdk-aptos-cctp': 5.0.0(got@15.0.5)
-      '@wormhole-foundation/sdk-aptos-core': 5.0.0(got@15.0.5)
-      '@wormhole-foundation/sdk-aptos-tokenbridge': 5.0.0(got@15.0.5)
-      '@wormhole-foundation/sdk-base': 5.0.0
-      '@wormhole-foundation/sdk-btc': 5.0.0
-      '@wormhole-foundation/sdk-connect': 5.0.0
-      '@wormhole-foundation/sdk-cosmwasm': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-cosmwasm-core': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-cosmwasm-ibc': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-cosmwasm-tokenbridge': 5.0.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
-      '@wormhole-foundation/sdk-definitions': 5.0.0
-      '@wormhole-foundation/sdk-evm': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-cctp': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-core': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-portico': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-tbtc': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-evm-tokenbridge': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-cctp': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-core': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-tbtc': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-solana-tokenbridge': 5.0.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
-      '@wormhole-foundation/sdk-stacks': 5.0.0
-      '@wormhole-foundation/sdk-stacks-core': 5.0.0
-      '@wormhole-foundation/sdk-sui': 5.0.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-sui-cctp': 5.0.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-sui-core': 5.0.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-sui-tokenbridge': 5.0.0(typescript@6.0.3)
-      '@wormhole-foundation/sdk-xrpl': 5.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-algorand': 5.2.0
+      '@wormhole-foundation/sdk-algorand-core': 5.2.0
+      '@wormhole-foundation/sdk-algorand-tokenbridge': 5.2.0
+      '@wormhole-foundation/sdk-aptos': 5.2.0(got@15.0.5)
+      '@wormhole-foundation/sdk-aptos-cctp': 5.2.0(got@15.0.5)
+      '@wormhole-foundation/sdk-aptos-core': 5.2.0(got@15.0.5)
+      '@wormhole-foundation/sdk-aptos-tokenbridge': 5.2.0(got@15.0.5)
+      '@wormhole-foundation/sdk-base': 5.2.0
+      '@wormhole-foundation/sdk-btc': 5.2.0
+      '@wormhole-foundation/sdk-connect': 5.2.0
+      '@wormhole-foundation/sdk-cosmwasm': 5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-cosmwasm-core': 5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-cosmwasm-ibc': 5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-cosmwasm-tokenbridge': 5.2.0(bufferutil@4.1.0)(google-protobuf@3.21.4)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.3.6)
+      '@wormhole-foundation/sdk-definitions': 5.2.0
+      '@wormhole-foundation/sdk-evm': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-cctp': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-core': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-portico': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-tbtc': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-evm-tokenbridge': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-cctp': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-core': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-tbtc': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-solana-tokenbridge': 5.2.0(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)
+      '@wormhole-foundation/sdk-stacks': 5.2.0
+      '@wormhole-foundation/sdk-stacks-core': 5.2.0
+      '@wormhole-foundation/sdk-sui': 5.2.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-sui-cctp': 5.2.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-sui-core': 5.2.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-sui-tokenbridge': 5.2.0(typescript@6.0.3)
+      '@wormhole-foundation/sdk-xrpl': 5.2.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
       - '@gql.tada/vue-support'
@@ -8520,15 +8520,15 @@ snapshots:
       keyv: 5.6.0
       lowercase-keys: 4.0.1
       responselike: 4.0.2
-      type-fest: 5.6.0
+      type-fest: 5.7.0
       uint8array-extras: 1.5.0
 
-  gql.tada@1.11.1(graphql@16.14.2)(typescript@6.0.3):
+  gql.tada@1.11.2(graphql@16.14.2)(typescript@6.0.3):
     dependencies:
       '@0no-co/graphql.web': 1.3.2(graphql@16.14.2)
-      '@0no-co/graphqlsp': 1.17.2(graphql@16.14.2)(typescript@6.0.3)
-      '@gql.tada/cli-utils': 1.9.1(@0no-co/graphqlsp@1.17.2(graphql@16.14.2)(typescript@6.0.3))(graphql@16.14.2)(typescript@6.0.3)
-      '@gql.tada/internal': 1.2.0(graphql@16.14.2)(typescript@6.0.3)
+      '@0no-co/graphqlsp': 1.17.3(graphql@16.14.2)(typescript@6.0.3)
+      '@gql.tada/cli-utils': 1.9.2(@0no-co/graphqlsp@1.17.3(graphql@16.14.2)(typescript@6.0.3))(graphql@16.14.2)(typescript@6.0.3)
+      '@gql.tada/internal': 1.2.1(graphql@16.14.2)(typescript@6.0.3)
       typescript: 6.0.3
     transitivePeerDependencies:
       - '@gql.tada/svelte-support'
@@ -9041,7 +9041,7 @@ snapshots:
     optionalDependencies:
       yaml: 2.9.0
 
-  liquidjs-lib@6.0.2-liquid.37:
+  liquidjs-lib@6.0.2-liquid.38:
     dependencies:
       '@types/randombytes': 2.0.3
       bech32: 2.0.0
@@ -10087,7 +10087,7 @@ snapshots:
 
   type-fest@3.13.1: {}
 
-  type-fest@5.6.0:
+  type-fest@5.7.0:
     dependencies:
       tagged-tag: 1.0.0
 
