@@ -1,0 +1,19 @@
+name: Cleanup Artifacts
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0' # Weekly cleanup
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Remove build artifacts
+        run: |
+          rm -rf android/app/build/
+          rm -rf android/.gradle/
+          rm -rf node_modules/
+          rm -rf dist/

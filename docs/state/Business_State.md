@@ -1,44 +1,24 @@
 ---
 title: Business State
 layout: page
-permalink: /business
+permalink: /docs/state/business
 ---
 
-**Last Updated:** 2026-04-18
+# Business State (v1.9.2)
 
-## [MARKET_FIT]
-**Status:** [COMPLETED]
+**Context:** B2B Alignment & Mainnet Readiness.
+**Status:** ALIGNED
 
-- **BitcoinLayers Compliance Audit:** [COMPLETED] Reviewed Stacks, Rootstock, Liquid, BOB, B2, RGB, Ark, StateChain, BitVM, and Maven against BitcoinLayers.org. Risk warnings generated in `RISK_REGISTRY.md`.
-- **Competitor Analysis (Conclave Gap):** [COMPLETED] Refined value prop in `docs/PRODUCT_STRATEGY.md` comparing vs Ledger/Metamask/Xverse.
-- **Sovereign User Persona:** [COMPLETED] Updated `docs/PRODUCT_STRATEGY.md` with "The Digital Citadelist" persona.
-- **BOS Platformization:** [RESEARCHED] Identified path for BOS platformization via Akash-style SDL for decentralized deployment and AutoGen-style multi-agent orchestration for business logic automation.
+## 🎯 Market Positioning
+- **Target**: High-net-worth individuals, institutional treasuries, and sovereign operators.
+- **Offer**: Conxius Wallet (Retail/Pro), Conxian Gateway (Institutional), Conxius Enclave SDK (Developer).
 
-## [RISK_COMPLIANCE]
-**Status:** [COMPLETED]
+## 💰 Monetization
+- **Protocol Fees**: 1% on sBTC and bridge transactions (Revenue Automation).
+- **Referral**: 5-5-5 revenue share model for ecosystem growth.
+- **Enterprise**: Tiered SaaS and support for Gateway/SDK.
 
-- **Risk Registry Update:** [COMPLETED] Audited and documented BOB (Build On Bitcoin) and B2 Network risks in `RISK_REGISTRY.md`.
-- **Regulatory Alignment:** [COMPLETED] Verified partner-delegated flows in `PARTNERS_AND_COMPLIANCE.md`.
-- **ZKML Verification:** [COMPLETED] Integrated CARF/BRS v1.5 compliant ZKML logic in Gateway for institutional auditability.
-
-## [TOKENOMICS]
-**Status:** [COMPLETED]
-
-- **NTT Bridge Economics:** [COMPLETED] Defined Gas Abstraction (sBTC-as-Gas) and 0.1% convenience fee in `MONETIZATION.md` and `docs/SOVEREIGN_BRIDGE_STRATEGY.md`.
-- **Monetization Model:** [COMPLETED] Updated `MONETIZATION.md` with B2B SDK licensing tiers and NTT fee structures.
-- **Protocol Fee Engine:** [COMPLETED] 1% fee extraction logic in `core/revenue-automation.clar` is implemented and verified.
-- **SAB Treasury Map:** [COMPLETED] Defined canonical wallet destinations and handoff sequence in `docs/operations/SAB_WALLET_MAP.md`.
-
-## [ROADMAP]
-**Status:** [COMPLETED]
-
-- **Milestone Expansion:** [COMPLETED] Expanded M1-M11+ in `ROADMAP.md` to remove technical and business ambiguity.
-- **Mainnet Cutover:** [COMPLETED] Critical protocol, signer, and gateway cutover tasks (CON-416, CON-417, CON-418) verified. Full system alignment to v1.9.2 (CON-502) complete.
-- **Marketing Alignment:** [COMPLETED] Mapped tech features to strategic campaigns (e.g., "Hardware Without the Dongle", "Unwrap Your Bitcoin") in `ROADMAP.md`.
-
-## [DOCUMENTATION]
-**Status:** [COMPLETED]
-
-- **5-Second Value Prop:** [COMPLETED] Refactored `README.md` for immediate strategic clarity.
-- **Readiness Gate:** [COMPLETED] Created canonical `docs/CSF_MAINNET_READINESS_GATE.md` as the launch source of truth.
-- **Business Readability:** [COMPLETED] Reviewed and synchronized all `docs/` for strategic alignment with the Technical PRD.
+## 🤝 Partnerships
+- **Custody**: Non-custodial preference; integration with Safe for institutional limits.
+- **Liquidity**: 1inch/LI.FI for cross-chain swaps.
+- **Compliance**: Local-first FDC3-compatible institutional workflows.
