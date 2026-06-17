@@ -91,6 +91,7 @@
     "vitest": "^4.1.9"
   },
   "lint-staged": {
+    "*": "gitleaks protect --staged --verbose",
     "*.{ts,tsx}": [
       "eslint --fix",
       "vitest related --run"
