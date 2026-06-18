@@ -102,8 +102,8 @@ importers:
         specifier: ^6.0.2-liquid.38
         version: 6.0.2-liquid.38
       lucide-react:
-        specifier: ^1.20.0
-        version: 1.20.0(react@19.2.7)
+        specifier: ^1.21.0
+        version: 1.21.0(react@19.2.7)
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -133,8 +133,8 @@ importers:
         version: 3.6.0(vite@8.0.16(@types/node@25.9.3)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
     devDependencies:
       '@aptos-labs/ts-sdk':
-        specifier: ^7.1.1
-        version: 7.1.1
+        specifier: ^7.1.2
+        version: 7.1.2
       '@capacitor/cli':
         specifier: ^8.4.0
         version: 8.4.0
@@ -178,8 +178,8 @@ importers:
         specifier: ^4.1.9
         version: 4.1.9(vitest@4.1.9)
       '@wormhole-foundation/sdk-definitions-ntt':
-        specifier: ^7.0.0
-        version: 7.0.0(@wormhole-foundation/sdk-base@5.2.0)(@wormhole-foundation/sdk-definitions@5.2.0)
+        specifier: ^7.1.0
+        version: 7.1.0(@wormhole-foundation/sdk-base@5.2.0)(@wormhole-foundation/sdk-definitions@5.2.0)
       autoprefixer:
         specifier: ^10.5.0
         version: 10.5.0(postcss@8.5.15)
@@ -281,8 +281,8 @@ packages:
     engines: {node: '>=20.0.0'}
     deprecated: This version is deprecated, please upgrade to 5.2.1, or the latest version
 
-  '@aptos-labs/ts-sdk@7.1.1':
-    resolution: {integrity: sha512-q+/PoQRVt/F56eCdr0QkR0Qg3flewwghmbRxpZ3r5rhbCheNVZW8ME6qzliAuuWGQ8RvGCZvSwi/2gvuGeEiyg==}
+  '@aptos-labs/ts-sdk@7.1.2':
+    resolution: {integrity: sha512-Lk3fuevXPWrIYQh24UgRB/ZvFi9hsA+qenLAyJj8eFvAqn15Ft+SIux9zqVrEqemwG6mEWwFTp6p1gOXVH+phQ==}
     engines: {node: '>=22.0.0'}
 
   '@asamuzakjp/css-color@5.1.11':
@@ -1950,8 +1950,8 @@ packages:
     resolution: {integrity: sha512-ORHqE3CVIBrDIVFDYMpl98Ik+mqCgeuPB5WhkyQZ2/u1lUxtBLrvFPmgE0cgJVnF+apihwih1JkyRk2KGAX/3A==}
     engines: {node: '>=20.19'}
 
-  '@wormhole-foundation/sdk-definitions-ntt@7.0.0':
-    resolution: {integrity: sha512-/pvS6Q2VnMoMrqqG47BssrY5WCU9ClhhG1aOO7YmnSxnErqoA5VleC4lKF4W2D1Zwj1mYz+uB6zV6HUCv66ABw==}
+  '@wormhole-foundation/sdk-definitions-ntt@7.1.0':
+    resolution: {integrity: sha512-1i6xdreqkg8e96ocmZOkL41TEF191SDl9DtfIfVPMQdTzv3iTSjMLkFOQats6Kuzl2CQ06yU2NYKQftfhe8qsA==}
     peerDependencies:
       '@wormhole-foundation/sdk-base': ^5.0.0
       '@wormhole-foundation/sdk-definitions': ^5.0.0
@@ -3627,8 +3627,8 @@ packages:
     resolution: {integrity: sha512-ERJq3FOzJTxBbFjZ7iDs+NiK4VI9Wz+RdrrAB8dio1oV+YvdPzUEE4QNiT2VD51DkIbCYRUUzCRkssXCHqSnKQ==}
     engines: {node: 14 || >=16.14}
 
-  lucide-react@1.20.0:
-    resolution: {integrity: sha512-jhXLeC/7m0/tjL1nzMdKk6x256zWA6AtbhTVreHOiKPoeX2d6MK4FbyIQPpVq0E6iPWBisyy1TW+pEge/uMEuQ==}
+  lucide-react@1.21.0:
+    resolution: {integrity: sha512-reEZMXq8Qdd5jg5XYkQ5TR1fB/GiQ7ih4vcrthYDtgjSDwh0i6/YLiGjsWsIwgN49gpAnd4J2elSNzncMEEUUQ==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -5022,7 +5022,7 @@ snapshots:
     transitivePeerDependencies:
       - got
 
-  '@aptos-labs/ts-sdk@7.1.1':
+  '@aptos-labs/ts-sdk@7.1.2':
     dependencies:
       '@aptos-labs/aptos-cli': 3.0.0
       '@aptos-labs/aptos-client': 4.1.0
@@ -7027,7 +7027,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@wormhole-foundation/sdk-definitions-ntt@7.0.0(@wormhole-foundation/sdk-base@5.2.0)(@wormhole-foundation/sdk-definitions@5.2.0)':
+  '@wormhole-foundation/sdk-definitions-ntt@7.1.0(@wormhole-foundation/sdk-base@5.2.0)(@wormhole-foundation/sdk-definitions@5.2.0)':
     dependencies:
       '@wormhole-foundation/sdk-base': 5.2.0
       '@wormhole-foundation/sdk-definitions': 5.2.0
@@ -9109,7 +9109,7 @@ snapshots:
 
   lru-cache@9.1.2: {}
 
-  lucide-react@1.20.0(react@19.2.7):
+  lucide-react@1.21.0(react@19.2.7):
     dependencies:
       react: 19.2.7
 
