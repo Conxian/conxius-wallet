@@ -1,6 +1,3 @@
-# .gitguardian.yaml
-# Configure GitGuardian to ignore safe patterns and files
-
 version: 2
 secret:
   ignore-paths:
