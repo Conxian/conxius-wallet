@@ -32,6 +32,19 @@
                 <data android:scheme="@string/custom_url_scheme" />
             </intent-filter>
 
+            <!-- FDC3 Intent Handlers -->
+            <intent-filter>
+                <action android:name="com.finos.fdc3.intent.VIEW_INSTRUMENT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/vnd.fdc3.instrument+json" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="com.finos.fdc3.intent.INITIATE_SETTLEMENT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/vnd.fdc3.settlement+json" />
+            </intent-filter>
+
         </activity>
 
         <provider
