@@ -1,0 +1,13 @@
+# .gitguardian.yaml
+# Configure GitGuardian to ignore safe patterns and files
+
+version: 2
+# Ignore findings by secret type or globally for specific files
+# NOTE: This only works for files that are not already ignored by .gitignore
+# Documentation and tests with construction fragments are handled here
+ignore:
+  paths:
+    - tests/*.test.ts
+    - docs/**/*.md
+    - README.md
+    - .gitleaksignore

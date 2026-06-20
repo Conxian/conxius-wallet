@@ -22,7 +22,7 @@ describe('BitVM Service', () => {
         expect(result).toBe(true);
         expect(notificationService.notify).toHaveBeenCalledWith(expect.objectContaining({
             title: 'BitVM',
-            message: 'Proof Verified Successfully'
+            message: 'Proof Verified via 364-Tap Hash Chain'
         }));
     });
 
@@ -31,7 +31,7 @@ describe('BitVM Service', () => {
         expect(result).toBe(false);
         expect(notificationService.notify).toHaveBeenCalledWith(expect.objectContaining({
             title: 'BitVM',
-            message: 'Fraud Proof Invalid'
+            message: 'Fraud Proof Invalid: Hash Chain Mismatch'
         }));
     });
 
