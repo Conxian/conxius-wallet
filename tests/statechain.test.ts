@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { transferStateChainUtxo } from '../services/statechain';
+import { transferStateChainUtxo, withdrawStateChainUtxo } from '../services/statechain';
 
 // Mock dependencies
 vi.mock('../services/notifications', () => ({
@@ -25,12 +25,12 @@ vi.mock('../services/network', () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-beforeEach(() => {
-    vi.clearAllMocks();
-    mockFetch.mockReset();
-});
-
 describe('StateChain Service', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockFetch.mockReset();
+    });
+
     it('should transfer a StateChain UTXO using Enclave', async () => {
         mockFetch.mockResolvedValueOnce({
             ok: true,
@@ -46,5 +46,22 @@ describe('StateChain Service', () => {
         
         expect(result.nextIndex).toBe(1);
         expect(result.signature).toBe('mock_schnorr_signature_hex');
+        expect(result.txid).toBe('statechain_txid_123');
+    });
+
+    it('should withdraw a StateChain UTXO to L1', async () => {
+        mockFetch.mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve({ txid: 'withdrawal_txid_456' })
+        });
+
+        const txid = await withdrawStateChainUtxo(
+            'sc:utxo-1',
+            'bc1q_dest',
+            'mock-vault-data'
+        );
+
+        expect(txid).toBeDefined();
+        expect(txid).toContain('txid_withdrawal_');
     });
 });
