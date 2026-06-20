@@ -48,7 +48,11 @@ permalink: /docs/sdk-research
 - **Sanitization**: Outgoing prompts are audited to strip PII and sensitive cryptographic identifiers (addresses, mnemonics, extended keys).
 - **Normalization**: ZWC (Zero Width Character) normalization strips obfuscation to prevent bypasses.
 
-## 6. Summary Table (v1.9.2 Alignment)
+## 6. Extended Research Matrix
+
+- See `docs/reports/GAP_MATRIX_2026.md` for detailed gap analysis and candidate scoring.
+
+## 7. Summary Table (v1.9.2 Alignment)
 
 | Technology | Preferred SDK | Target Version | Status |
 | :--- | :--- | :--- | :--- |
