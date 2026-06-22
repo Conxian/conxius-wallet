@@ -1,51 +1,26 @@
----
-title: Project Context
-layout: page
-permalink: /docs/context
----
+# PROJECT CONTEXT (June 2026)
 
-# Project Context: v1.9.2 Architectural Audit
+**Current Status:** v1.9.2 Protocol Expansion
+**Active Research:** BitVM2, Ark, FDC3, AI Security
 
-## Session Summary (March 2026)
+## 1. Executive Summary
+Conxius Wallet is a sovereign-first mobile wallet leveraging a Bridged Sovereign Architecture. We are currently expanding support for institutional interoperability (FDC3) and advanced Bitcoin Layer 2 protocols (BitVM2, Ark).
 
-Completed a comprehensive architectural audit and enhancement alignment for Conxius Wallet (Mobile) and Conxian Gateway (B2B).
+## 2. Technical Milestones (v1.9.2)
+- **FDC3 Native Bridge**: Bridged TypeScript FDC3 calls to Native Android Intents (`services/fdc3.ts` -> `Fdc3Plugin.kt`).
+- **BitVM2 Orchestration**: Implemented the 364-tap verification floor in `services/bitvm.ts` for Groth16 optimistic proof verification.
+- **Ark V-UTXO Management**: Aligned `ArkManager.kt` with deterministic Blake2s PRF derivation logic.
+- **AI Security**: Implemented outgoing prompt sanitization and ZWC normalization in `services/ai-security.ts`.
 
-### Key Accomplishments
-1. **Native Protocol Hardening**: Finalized the "Clean Break" migration by implementing/hardening 15+ native Kotlin managers in the `:core-bitcoin` module.
-2. **Feature Alignment**: Synchronized the implementation status of RGB, Babylon Staking, and DLCs across the codebase and documentation.
-3. **Security Logic Wiring**: Reinforced the Sovereign AI layer and network sanitation, ensuring zero-leakage of cryptographic material.
-4. **B2B Integration**: Aligned the mobile core with the institutional Conxian Gateway for corporate treasury and shielded payments.
-5. **Documentation Sync**: Updated all registries and roadmaps to reflect the true v1.9.2 "PRODUCTION" state.
+## 3. Active Gaps & Research
+- **Native Rust Worker**: Transitioning BitVM2 segmentation and Blake2s PRF from mocks to high-performance Rust FFI.
+- **RGB Light Client**: Researching pruned validation proofs for client-side validation on mobile devices.
+- **Taproot Asset Light Client**: Porting verification logic to `BdkManager.kt`.
 
-### Technical State
-- **Mobile Core**: 100% Kotlin (SDK 35), Gradle 8.13, AGP 8.4.2.
-- **Security**: StrongBox-backed AES-GCM-256 with Play Integrity gating.
-- **Protocols**: Full Bitcoin Ecosystem (L1, Lightning, L2s, DLC, RGB, Taproot Assets).
-- **Tests**: 250+ Vitest cases passing (including security and protocol alignment).
-
-### Future Steps (Level 5)
-- Transition from BRIDGED to PRODUCTION for the remaining EVM and Web5 layers.
-- Expand B2B SDK for institutional white-labeling.
-- Implement WabiSabi coinjoin coordinator in Rust core.
+## 4. CI/CD & Governance
+- **Hardening**: Pinned pnpm to `10.30.3`. Pinned GitHub Actions to stable SHAs.
+- **Security**: Gitleaks and GitGuardian integrated for secret scanning.
+- **Fail-Closed**: `ProductionRuntimeGuard.kt` enforces security for non-production paths.
 
 ---
-*Verified by Sovereign Architect Agent.*
-
-## UI/UX Alignment: Sovereign Earthy (v1.9.2)
-
-Standardized all application backgrounds to a "Bright Foundation" to align with institutional standards and the cxn-arch-guardian identity.
-
-### Changes:
-- **Ivory Base**: Replaced all dark zinc/black backgrounds with Ivory (#FDFBF7).
-- **White Surfaces**: Updated cards, modals, and operational sections to White (#FFFFFF).
-- **Typography**: Shifted to high-contrast Dark Earth/Deep Black (#121212) for enhanced legibility.
-- **Accents**: Reserved Earthy tones (#C25E00) for branding and interaction cues.
-- **Persistence**: Updated Tailwind config, global CSS, and core React components.
-
-## [v1.9.2_ALIGNMENT_AUDIT]
-**Date:** 2026-04-25
-**Actions:**
-- **Gateway Logic Recovery:** Implemented actual OData v4 translation and X402 Mandate mapping (CON-63).
-- **Linear Realignment:** Verified and updated dependency remediation (CON-508) and supply-chain schemas (CON-504).
-- **Security Sweep:** Verified zero-leak redaction (CON-305) and production-only settlement proposal paths (CON-162).
-- **Contract Adherence:** Verified all core contracts are Clarity 4.0 compliant and aligned with protocol vault SP3FBR...
+*Updated: June 22, 2026*
