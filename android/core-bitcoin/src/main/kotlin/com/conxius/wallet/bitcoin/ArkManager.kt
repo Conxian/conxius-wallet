@@ -1,6 +1,8 @@
 package com.conxius.wallet.bitcoin
 
 import android.util.Log
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.security.MessageDigest
 
 /**
@@ -16,7 +18,7 @@ class ArkManager {
     /**
      * Derives a deterministic V-UTXO index using Blake2s PRF logic.
      * Implementation follows arkworks-rs/crypto-primitives.
-     * Fixed 32-byte input structure.
+     * Fixed-width derivation input: SHA256(path bytes) + LeBytes(index).
      */
     fun deriveVutxoIndex(seed: ByteArray, path: String, index: Int): ByteArray {
         Log.d(TAG, "Deriving V-UTXO index for $path/$index using PRF")
@@ -27,8 +29,16 @@ class ArkManager {
         val digest = MessageDigest.getInstance("SHA-256")
         digest.update(seed)
 
-        // Input construction: Path bytes + LeBytes(index)
-        val input = "$path/$index".toByteArray().copyOf(32)
+        // Fixed-width input construction: SHA256(path bytes) + LeBytes(index)
+        // Keeps deterministic behavior while preserving long-path entropy and index uniqueness.
+        val pathHash = MessageDigest.getInstance("SHA-256").digest(path.toByteArray(Charsets.UTF_8))
+        val indexBytes = ByteBuffer
+            .allocate(Int.SIZE_BYTES)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .putInt(index)
+            .array()
+
+        val input = pathHash + indexBytes
         digest.update(input)
 
         return ProductionRuntimeGuard.failClosed(
