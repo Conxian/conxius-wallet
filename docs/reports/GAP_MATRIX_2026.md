@@ -2,55 +2,66 @@
 
 **Date:** 2026-06-22
 **Status:** UPDATED
-**Scope:** BitVM2, Ark Protocol, FDC3 v2.x
+**Scope:** BitVM2, Ark, FDC3, RGB, Liquid, Babylon, Silent Payments
 
 ## 1. Candidate Scoring
 
 | Candidate | Maturity | Mobile-Friendly | Security | Total Score | Notes |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| **BitVM2 (Alpha)** | 3/5 | 3/5 | 5/5 | **11/15** | Orchestration (364 taps) implemented in TS. Needs native Rust worker. |
-| **Ark (V-UTXO)** | 4/5 | 4/5 | 5/5 | **13/15** | Well-defined PRF (Blake2s). High enclave compatibility. |
+| **Ark (V-UTXO)** | 4/5 | 4/5 | 5/5 | **13/15** | PRF (Blake2s) logic in Kotlin. High enclave compatibility. |
 | **FDC3 (Standard)** | 5/5 | 4/5 | 4/5 | **13/15** | Mature standard. Android Intent mapping & TS bridge implemented. |
+| **Liquid (Sidechain)** | 4/5 | 5/5 | 4/5 | **13/15** | Elements-based. Native signing/blinding stubs need FFI. |
+| **Silent Payments** | 4/5 | 4/5 | 5/5 | **13/15** | BIP-352 implemented in TS. Native scanning is a stub. |
+| **BitVM2 (Alpha)** | 3/5 | 3/5 | 5/5 | **11/15** | Orchestration (364 taps) implemented. Needs native BN254 worker. |
+| **RGB Protocol** | 3/5 | 3/5 | 5/5 | **11/15** | ALU simulation in TS. Native manager is a stub. |
+| **Babylon Staking** | 3/5 | 3/5 | 5/5 | **11/15** | Native Taproot staking implemented. Finality provider gaps. |
 
-## 2. Identified Gaps
+## 2. Identified Gaps (Updated)
 
-### G1: BitVM2 Tap Orchestration
-- **Gap**: High computational and network cost to manage 364 transactions on a mobile device.
-- **Remediation**: Implemented 364-tap segmentation in `services/bitvm.ts`. Use a "Sovereign Worker" (Rust/Wasm) to pre-calculate and verify segments before signing in the Enclave.
+### G1: BitVM2 Native Verification
+- **Gap**: The 364-tap verification relies on a mocked FFI call in `BitVmManager.kt`.
+- **Status**: **STUBBED**.
+- **Remediation**: Integrate `bitvm-rs` via JNI/FFI for BN254 pairing and script execution.
 
-### G2: Ark V-UTXO Determinism
-- **Gap**: Ensuring V-UTXO indexes are deterministic across device restores without heavy server-side state.
-- **Remediation**: Aligned `ArkManager.kt` with `Blake2s` PRF logic (`PRF(Seed, Input)`) as per arkworks research.
+### G2: Ark V-UTXO PRF Alignment
+- **Gap**: `ArkManager.kt` uses SHA-256 as a placeholder for Blake2s evaluation.
+- **Status**: **PARTIAL**.
+- **Remediation**: Swap SHA-256 for a proper Blake2s implementation (e.g., from BouncyCastle or Rust FFI) to match arkworks specs.
 
-### G3: FDC3 Native Bridge
-- **Gap**: Lack of a standardized Android Intent filter for FDC3 context types (e.g., `fdc3.instrument`).
-- **Remediation**: Defined `com.conxius.wallet.FDC3_RESOLVER` intent filter in `AndroidManifest.xml` and bridged via `services/fdc3.ts` to `Fdc3Plugin.kt`.
+### G3: RGB / Taproot Asset Light Validation
+- **Gap**: Client-Side Validation (CSV) is simulated in TS; native managers are stubs.
+- **Status**: **STUBBED**.
+- **Remediation**: Implement `rgb-lib-wasm` bridge or native Rust worker for DAG validation.
 
-## 3. Implementation Status (June 2026)
+### G4: Liquid Confidentiality
+- **Gap**: Blinding and signing in `LiquidManager.kt` are fail-closed stubs.
+- **Status**: **STUBBED**.
+- **Remediation**: Port elements-lib signing logic to native Kotlin or Rust FFI.
 
-**Primary Candidate: Ark V-UTXO Management**
-- *Initialization*: `ArkManager.kt` updated with PRF structure.
-- *Status*: **IMPLEMENTED (Mocked PRF)**.
+### G5: Silent Payment Scanning Performance
+- **Gap**: BIP-352 scanning is compute-heavy; currently stubbed in native.
+- **Status**: **STUBBED**.
+- **Remediation**: Implement optimized elliptic curve point additions in native code to handle block scanning.
 
-**Secondary Candidate: FDC3 Native Resolver**
-- *Initialization*: `Fdc3Plugin.kt`, `AndroidManifest.xml`, and `services/fdc3.ts` integrated.
-- *Status*: **IMPLEMENTED**.
+### G6: CI/CD Secret Scanning Failure
+- **Gap**: `secret-scan.yml` fails due to missing `GITGUARDIAN_API_KEY`.
+- **Status**: **FAILING**.
+- **Remediation**: Add the API key to repository secrets.
 
-**Orchestration: BitVM2 Verification Floor**
-- *Initialization*: `services/bitvm.ts` updated with 364-tap orchestration.
-- *Status*: **IMPLEMENTED**.
+### G7: Cross-Repo Synergy
+- **Gap**: `conxius-platform` CI checks are failing (CON-1230/31/32).
+- **Status**: **FAILING**.
+- **Remediation**: Triage baseline failures in the platform repository.
 
-## 4. Extended Protocol Research (RGB & Taproot Assets)
+## 3. Implementation Status & Best Candidate
 
-| Protocol | Preferred SDK | Gaps | Score |
-| :--- | :--- | :--- | :---: |
-| **RGB Protocol** | `rgb-tools/rgb-lib` | Large client-side data storage for validation. | 11/15 |
-| **Taproot Assets** | `lightninglabs/tapd` | Heavy daemon (tapd) dependency; needs mobile-native light client. | 12/15 |
+**Best Candidate: Silent Payments (BIP-352)**
+- **Rationale**: High score (13/15), strong user privacy demand, and TS logic is already mature. Native scanning would provide an immediate performance boost for the mobile app.
+- **Next Step**: Implement native SP scanning in `SilentPaymentManager.kt`.
 
-### G4: RGB Client-Side Validation (CSV)
-- **Gap**: Validating RGB contracts requires historical DAG data which can be gigabytes.
-- **Remediation**: Implement a "Consensus-Checked" light validation model where a trusted BitVM2 verifier (or Sovereign Node) provides pruned validation proofs.
+**Alternative: Ark V-UTXO PRF Refinement**
+- **Rationale**: Critical for deterministic sovereign recovery.
+- **Next Step**: Replace SHA-256 with Blake2s in `ArkManager.kt`.
 
-### G5: Taproot Asset Light Client
-- **Gap**: No official mobile-native light client for Taproot Assets that doesn't require a full `tapd` instance.
-- **Remediation**: Port core Taproot Asset commitment verification logic to the `BdkManager.kt` via Rust FFI.
+---
+*Aligned with v1.9.2 Research Findings and Production Audit.*
