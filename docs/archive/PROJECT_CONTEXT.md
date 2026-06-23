@@ -24,3 +24,10 @@ Conxius Wallet is a sovereign-first mobile wallet leveraging a Bridged Sovereign
 
 ---
 *Updated: June 22, 2026*
+
+## Session Notes (2026-06-22)
+- **Gap Audit**: Completed full audit of protocol stubs across services/ and android/.
+- **Research Expansion**: Updated GAP_MATRIX_2026.md with scores for Liquid, Silent Payments, and Babylon.
+- **Remediation Mapping**: Created v1.9.2_CODE_GAP_MAPPING.md to link stubs to implementation tracks.
+- **Linear Initialization**: Created CON-1281 (Silent Payments), CON-1282 (Ark PRF), and CON-1283 (GitGuardian Fix).
+- **Environment Alignment**: Standardized pnpm environment and verified core protocol tests.
