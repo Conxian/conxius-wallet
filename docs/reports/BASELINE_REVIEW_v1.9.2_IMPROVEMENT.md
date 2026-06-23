@@ -27,7 +27,7 @@ The `docs/reports/v1.9.2_PRODUCTION_AUDIT.md` claimed that "Landing Pages: docs/
 - Documentation links verified for relative path correctness.
 
 ### Documentation updated
-- All directory-level indices in `docs/` are now present and linked.
+- Added and linked directory-level indices for `docs/business/`, `docs/state/`, and `docs/archive/`.
 
 ### Follow-up items
 - Standardize indices for other sub-directories like `docs/protocols/` and `docs/testing/` if necessary.
