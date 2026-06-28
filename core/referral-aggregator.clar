@@ -23,9 +23,9 @@
 (define-constant ERR-NOT-AUTHORIZED (err u400))
 (define-constant ERR-CODE-EXISTS (err u401))
 (define-constant ERR-CODE-NOT-FOUND (err u402))
-(define-constant TREASURY 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE)
 
 (define-data-var contract-owner principal tx-sender)
+(define-data-var treasury principal tx-sender)
 
 ;; ----------------------------------------------------------------------------
 ;; Public Functions
@@ -44,6 +44,15 @@
         active: true
       }
     )
+    (ok true)
+  )
+)
+
+;; @desc Update treasury destination (Owner only)
+(define-public (set-treasury (new-treasury principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (var-set treasury new-treasury)
     (ok true)
   )
 )
@@ -71,7 +80,7 @@
 
     ;; 2. Transfer Fees (Simplified for this recovery)
     (try! (stx-transfer? kickback tx-sender (get address ref-data)))
-    (try! (stx-transfer? treasury-cut tx-sender TREASURY))
+    (try! (stx-transfer? treasury-cut tx-sender (var-get treasury)))
 
     (print { event: "referral-applied", code: code, amount: amount, kickback: kickback })
     (ok kickback)
