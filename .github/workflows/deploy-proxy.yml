@@ -24,17 +24,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@9c091bbf873cbb8b7a961c67208f4c34cd465615 # v7.0.0
 
       # Authenticate to Google Cloud using SA Key stored in secrets
       - name: Google Auth
         id: auth
-        uses: google-github-actions/auth@v2.1.8
+        uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8ca # v2.1.8
         with:
           credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2.1.2
+        uses: google-github-actions/setup-gcloud@618e290b993df2e4288cf80893001f8fca2626fd # v2.1.2
 
       - name: Configure Docker Auth
         run: |
