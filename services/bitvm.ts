@@ -34,6 +34,9 @@ export const verifyBridgeProof = async (proof: string, network: Network = 'mainn
     try {
         // 1. Fetch segments via Native Bridge / BitVmManager.kt
         // Logic splits into [arithmetic_tap, ...hash_chain_taps]
+        const { BITVM_API } = endpointsFor(network);
+        // Realistically this would fetch segments from the Settlement Engine BFF
+        // const segments = await fetchWithRetry(`${BITVM_API}/segments?proof=${proof}`).then(res => res.json());
         const segments = Array.from({ length: NUM_TAPS }, (_, i) =>
             i < VALIDATING_TAPS ? `val_tap_${i}` : `hash_tap_${i - VALIDATING_TAPS}`
         );
