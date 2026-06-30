@@ -32,6 +32,15 @@ if (!globalThis.crypto) {
 // Ensure URL is globally available
 import { URL } from 'url';
 // @ts-ignore
+globalThis.URL = URL;
+
+// Mock @capacitor/core for all tests
+vi.mock('@capacitor/core', () => ({
+  Capacitor: { getPlatform: () => 'web', isNativePlatform: () => false },
+  registerPlugin: () => ({}),
+  Plugins: {},
+  WebPlugin: class {},
+}));
 
 // Mock worker-manager
 vi.mock('../services/worker-manager', () => {
@@ -44,6 +53,7 @@ vi.mock('../services/worker-manager', () => {
       },
       derivePath: async (seed: Uint8Array, path: string) => {
         const { BIP32Factory } = await import('bip32');
+        const { Buffer } = await import('buffer');
         const ecc = await import('tiny-secp256k1');
         const bip32 = BIP32Factory(ecc);
         const root = bip32.fromSeed(Buffer.from(seed));

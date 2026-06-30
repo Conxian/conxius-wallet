@@ -3,9 +3,11 @@ import { fetchBabylonStats, createBabylonStakeTransaction } from '../services/ba
 
 describe('Babylon Staking Service', () => {
     it('should fetch Babylon stats', async () => {
+        global.fetch = vi.fn().mockRejectedValue(new Error('network unavailable'));
         const stats = await fetchBabylonStats();
         expect(stats.totalStaked).toBeGreaterThan(0);
         expect(stats.apy).toBe(3.5);
+        global.fetch = undefined as any;
     });
 
     it('should construct a Babylon stake transaction payload (Mocked)', async () => {
