@@ -14,7 +14,7 @@
 ;; Data Variables
 ;; ----------------------------------------------------------------------------
 ;; @desc The primary treasury vault for protocol fees
-(define-data-var protocol-vault principal 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE)
+(define-data-var protocol-vault principal tx-sender)
 (define-data-var contract-owner principal tx-sender)
 
 ;; ----------------------------------------------------------------------------
