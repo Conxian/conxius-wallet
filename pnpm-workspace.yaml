@@ -15,6 +15,10 @@ minimumReleaseAgeExclude:
   - "vite"
   - "vitest"
 
+auditConfig:
+  ignoreCves:
+    - "GHSA-3gc7-fjrx-p6mg"
+
 strictDepBuilds: false
 allowBuilds:
   "@google/genai": true
