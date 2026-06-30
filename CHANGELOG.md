@@ -12,10 +12,21 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 
 ### Added
 - **Lightning Resilience Implementation**: Integrated SRL-1, SRL-2, and SRL-7 in the TypeScript layer, adding payment state machines, concurrent execution guards (idempotency), and bounded retry logic for Breez (CON-688).
+- **BitVM2 Verification Floor**: Implemented BitVM2 orchestrator spec and verification floor (CON-1264).
+- **FDC3 Native Resolver**: Added FDC3 native resolver support with intent handlers.
+- **Ark VTXO Management**: Added Ark VTXO manager and verification tests.
 
 ### Changed
 - **Breez Payment Flow Hardening**: Fixed a critical bug in the idempotency implementation where concurrent calls could bypass state transition checks.
 - **State Machine Invariants**: Enforced strict monotonic state transitions for Lightning payments to prevent illegal terminal state modifications.
+- **CI Hardening**: Pinned all GitHub Actions to SHAs, added WASM single-fork vitest config, added dependency review workflow.
+
+### Security
+- **pnpm Overrides**: Added version overrides for protobufjs, lodash, ws, undici, and form-data to resolve 23 transitive vulnerabilities (29→6 vulns).
+- **Security Journal**: Added `.jules/` hardening journal with vulnerability patterns and prevention guides.
+
+### Operations
+- **COO Branch Alignment (2026-06-30)**: Archived 13 stale branches superseded by direct-to-main merges. Declared full production operational state.
 
 ## [1.9.2] - 2026-04-18
 
