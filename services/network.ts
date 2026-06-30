@@ -1,6 +1,6 @@
 import { Network, AppState } from '../types';
 import { generateRandomString } from './random';
-import { NORMALIZE_REGEX, SENSITIVE_SCAN_PATTERNS, enforcePhase6Guard } from './security-constants';
+import { NORMALIZE_REGEX, SENSITIVE_SCAN_PATTERNS, MASHED_MNEMONIC_SCAN, enforcePhase6Guard } from './security-constants';
 
 let _globalAppState: AppState | undefined;
 
@@ -224,8 +224,18 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
   const strippedMessage = String(message).replace(NORMALIZE_REGEX, "");
   const spacedMessage = String(message).replace(NORMALIZE_REGEX, " ");
 
+  // Guard: truncate inputs for MASHED_MNEMONIC_SCAN to prevent catastrophic
+  // backtracking (CON-393). The regex ([a-z]{3,}){12} backtracks exponentially
+  // on long alphanumeric strings. 12 words × 8 chars (BIP-39 max) = 96 max.
+  const MAX_MASHED_LEN = 96;
+  const mashedInputs = [strippedScan, spacedScan, strippedMessage, spacedMessage]
+    .map(s => s.length > MAX_MASHED_LEN ? s.slice(0, MAX_MASHED_LEN) : s);
+
   // Using non-global scanner patterns to avoid stateful behavior with .test()
   const isSensitive = SENSITIVE_SCAN_PATTERNS.some((p) => {
+    if (p === MASHED_MNEMONIC_SCAN) {
+      return mashedInputs.some(s => p.test(s));
+    }
     return p.test(strippedScan) || p.test(spacedScan) || p.test(strippedMessage) || p.test(spacedMessage);
   });
 

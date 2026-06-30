@@ -68,7 +68,7 @@ describe('sanitizeError Hardening & Regression', () => {
     const githubKey = ['github', 'pat'].join('_') + '_' + 'A'.repeat(80);
     expect(sanitizeError(`Leaked: ${githubKey}`)).toBe('Protocol Error');
 
-    const awsKey = ['AKIA', '123456789012'].join('');
+    const awsKey = ['AKIA', '1234567890123456'].join('');
     expect(sanitizeError(`Leaked: ${awsKey}`)).toBe('Protocol Error');
   });
 });
