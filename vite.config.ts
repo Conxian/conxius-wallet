@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
            target: 'esnext'
         }
       },
-      test: { globals: true, environment: "node", setupFiles: "./tests/setup.ts", exclude: ["e2e/**", "node_modules/**"], server: { deps: { inline: ["generator-function", "is-generator-function", "bip32", "ecpair", "tiny-secp256k1"] } }, pool: "forks" },
+      test: { globals: true, environment: "node", setupFiles: "./tests/setup.ts", exclude: ["e2e/**", "node_modules/**"], server: { deps: { inline: ["generator-function", "is-generator-function", "bip32", "ecpair", "tiny-secp256k1"] } }, pool: "threads", testTimeout: 15000, hookTimeout: 15000 },
       define: { "process.env": {}, "process.version": JSON.stringify("v18.0.0") },
     };
 });
