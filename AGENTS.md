@@ -10,8 +10,8 @@ Welcome, Sovereign Agent. This document provides instructions and context for
 working with the Conxius Wallet codebase and its B2B enhancement, the Conxian
 Gateway.
 
-**Last Updated:** 2026-04-18
-**Context:** B2B Alignment & Native Bridge (v1.9.2)
+**Last Updated:** 2026-06-30
+**Context:** Production Operational State (v1.9.2) — COO Alignment Complete
 
 ---
 
@@ -47,11 +47,16 @@ Gateway.
 
 ## 📁 Key Directories (Conxius)
 
-- `/components`: 38 React UI components.
-- `/services`: Core business logic (32 modules).
-- `/android`: Native Android project (Phase 4/5 Native Migration).
-- `/conxian-gateway`: (Sub-project) The Conxian Gateway enhancement.
-- `/lib-conxian-core`: (Sub-project) Shared Rust/TS core library.
+- `/components`: React UI components.
+- `/services`: Core business logic (32 modules including fdc3.ts, trust-policy.ts).
+- `/android`: Native Android project (Native Migration complete).
+- `/core`: Core TypeScript modules.
+- `/contracts`: Clarity smart contracts.
+- `/docs`: Operational, architectural, and state documentation.
+- `/tests`: Vitest unit + Playwright e2e tests (50+ test files).
+- `/e2e`: End-to-end Playwright specs.
+- `/openspec`: OpenSpec change proposals and tracking.
+- `/scripts`: CI and build scripts.
 
 ---
 
@@ -84,8 +89,26 @@ Ensure the following files are synced:
 
 ## 📋 Operating Model & Approvals
 
-All "High" and "Urgent" issues require COO (Sizwe Nkosi) review before promotion to \`main\`.
+All "High" and "Urgent" issues require COO review before promotion to \`main\`.
 See [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md) for the canonical approval path.
+
+### Branch Hygiene (2026-06-30 COO Alignment)
+
+On 2026-06-30, 13 stale branches were archived after COO review. All represented
+work that was superseded by direct-to-main merges (PRs #307–#351). Main already
+contains better implementations (e.g., `ProductionRuntimeGuard.failClosed()` for
+fail-closed enforcement across all native managers).
+
+Key artifacts preserved from branches:
+- `.jules/cxn-arch-guardian.md` — security vulnerability journal
+- `.jules/sentinel.md` — security sentinel learnings
+- `.vscode/extensions.json` — recommended VS Code extensions
+
+### Security Journal
+
+The `.jules/` directory contains a hardening journal documenting discovered
+vulnerabilities, root causes, and prevention patterns. Reference these before
+implementing new security-sensitive code paths.
 
 ## 🚀 Native Bridge Alignment (v1.9.2)
 
