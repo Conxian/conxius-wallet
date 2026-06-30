@@ -1,6 +1,6 @@
 import { BitcoinLayer } from './types';
 
-export const APP_VERSION = '0.3.0';
+export const APP_VERSION = '1.9.2';
 
 export const INITIAL_BOUNTIES: any[] = [
   { id: '1', title: 'Implement BIP-352 SP', description: 'Integrate Silent Payments for enhanced privacy.', reward: '0.005 BTC', category: 'Security', status: 'Open', difficulty: 'Elite', expiry: '2026-06-01' },
