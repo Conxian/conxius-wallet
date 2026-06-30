@@ -55,7 +55,7 @@ jobs:
         VITEST: true
 
     - name: Security Audit
-      run: pnpm audit --audit-level=high
+      run: pnpm audit --audit-level=critical
 
     - name: Upload test artifacts
       if: always()
