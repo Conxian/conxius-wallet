@@ -158,6 +158,10 @@ export class NttService {
 
         } catch (error) {
             console.error('Sovereign NTT Initiation Failed:', error);
+            // Guard errors are internally generated and never contain secrets.
+            // Re-throw directly to preserve the exact message for tests/consumers.
+            const msg = error instanceof Error ? error.message : String(error);
+            if (msg.startsWith('Guard: ')) throw error;
             throw new Error(sanitizeError(error), { cause: error });
         }
     }
