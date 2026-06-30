@@ -13,7 +13,8 @@ export const MNEMONIC_REGEX = new RegExp(MNEMONIC_PATTERN, "gi");
 export const MNEMONIC_SCAN = new RegExp(MNEMONIC_PATTERN, "i");
 
 // Mashed mnemonics (concatenated words after ZWC stripping).
-const MASHED_MNEMONIC_PATTERN = "(?<![a-zA-Z0-9])([a-z]{3,}){12}(?![a-zA-Z0-9])";
+// Word length bounded to {3,8} (BIP-39 max) to prevent catastrophic backtracking.
+const MASHED_MNEMONIC_PATTERN = "(?<![a-zA-Z0-9])([a-z]{3,8}){12}(?![a-zA-Z0-9])";
 export const MASHED_MNEMONIC_REGEX = new RegExp(MASHED_MNEMONIC_PATTERN, "gi");
 export const MASHED_MNEMONIC_SCAN = new RegExp(MASHED_MNEMONIC_PATTERN, "i");
 
