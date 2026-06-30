@@ -11,12 +11,13 @@ android {
     val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
     val keyAlias = System.getenv("KEY_ALIAS")
     val keyPassword = System.getenv("KEY_PASSWORD")
+    val versionCodeEnv = System.getenv("VERSION_CODE")
 
     defaultConfig {
         applicationId = "com.conxius.wallet"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
+        versionCode = versionCodeEnv?.toIntOrNull() ?: 1
         versionName = "1.9.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
