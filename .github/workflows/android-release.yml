@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       track:
-        description: Google Play track to upload to
+        description: Google Play track to upload to (set to 'skip' to publish APK only)
         required: true
         default: internal
         type: choice
@@ -13,6 +13,7 @@ on:
           - alpha
           - beta
           - production
+          - skip
       status:
         description: Release status in Google Play
         required: true
@@ -28,11 +29,23 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@9c091bbf873cbb8b7a961c67208f4c34cd465615 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Derive version metadata
+        id: version
+        shell: bash
+        run: |
+          VERSION_NAME=$(node -p "require('./package.json').version")
+          VERSION_CODE=$(echo "$VERSION_NAME" | awk -F. '{ printf "%d%02d%02d", $1, $2, $3 }')
+          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
 
       - name: Setup Java
         uses: actions/setup-java@dc8d26568cedb6be26d3a6ab0898d0b5c9f06375 # v5.3.0
@@ -71,7 +84,7 @@ jobs:
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_FILE"
           echo "KEYSTORE_PATH=$KEYSTORE_FILE" >> "$GITHUB_ENV"
 
-      - name: Build signed Android App Bundle
+      - name: Build signed Android App Bundle (AAB)
         working-directory: android
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -79,14 +92,38 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew --no-daemon bundleRelease
 
-      - name: Upload signed bundle artifact
+      - name: Build signed APK (universal)
+        working-directory: android
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Generate checksums
+        shell: bash
+        run: |
+          APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
+          sha256sum "$APK_PATH" > "conxius-wallet-v${{ steps.version.outputs.version_name }}.apk.sha256"
+
+      - name: Upload AAB artifact
         uses: actions/upload-artifact@4cec3d8d14a89d7e5e0c327757b26447a6577a77 # v4.6.1
         with:
           name: android-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@4cec3d8d14a89d7e5e0c327757b26447a6577a77 # v4.6.1
+        with:
+          name: android-release-apk
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            conxius-wallet-v*.apk.sha256
+          if-no-files-found: error
+
       - name: Upload to Google Play
+        if: inputs.track != 'skip'
         uses: r0adkll/upload-google-play@b9b0e8f98badecb6b5c6c2130b57810ac27104a1 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
@@ -94,6 +131,50 @@ jobs:
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: ${{ inputs.track }}
           status: ${{ inputs.status }}
+
+      - name: Create git tag
+        shell: bash
+        run: |
+          TAG="v${{ steps.version.outputs.version_name }}"
+          git config user.name "conxius-ci"
+          git config user.email "ci@conxian.io"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping."
+          else
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@18419c82956a769be9cfcd15aa5a5a916ff45800 # v2.0.9
+        with:
+          tag_name: v${{ steps.version.outputs.version_name }}
+          name: Conxius Wallet v${{ steps.version.outputs.version_name }}
+          body: |
+            ## Conxius Wallet v${{ steps.version.outputs.version_name }}
+
+            📱 **Android APK** — attached below. Verify with SHA-256 checksum.
+
+            ### Verification
+            ```sh
+            sha256sum -c conxius-wallet-v${{ steps.version.outputs.version_name }}.apk.sha256
+            ```
+
+            ### Sovereign Distribution
+            Add this release feed to [Obtainium](https://obtainium.imranr.dev/):
+            ```
+            https://github.com/Conxian/conxius-wallet/releases
+            ```
+
+            ### Google Play
+            Track: `${{ inputs.track }}`
+
+            ---
+            *This release was created by Conxius CI on behalf of Conxian Labs.*
+          files: |
+            android/app/build/outputs/apk/release/app-release.apk
+            conxius-wallet-v${{ steps.version.outputs.version_name }}.apk.sha256
+          generate_release_notes: true
 
       - name: Cleanup temporary keystore
         if: always()
