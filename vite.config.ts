@@ -31,11 +31,10 @@ export default defineConfig(({ mode }) => {
         setupFiles: "./tests/setup.ts",
         exclude: ["e2e/**", "node_modules/**"],
         deps: { inline: ["generator-function", "is-generator-function", "bip32", "ecpair", "tiny-secp256k1"] },
-        pool: "forks",
+        pool: "threads",
         testTimeout: 30000,
         hookTimeout: 30000,
       },
-      poolOptions: { forks: { singleFork: true } },
       define: { "process.env": {}, "process.version": JSON.stringify("v18.0.0") },
     };
 });
