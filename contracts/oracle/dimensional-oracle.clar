@@ -4,7 +4,7 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u500))
 
-(define-data-var aggregator-contract principal 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.oracle-aggregator)
+(define-data-var aggregator-contract principal .oracle-aggregator)
 
 ;; @desc Update the parent aggregator principal
 (define-public (set-aggregator (new-aggregator principal))

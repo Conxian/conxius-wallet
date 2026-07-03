@@ -1,0 +1,23 @@
+packages:
+  - "."
+
+allowBuilds:
+  '@google/genai': true
+  '@swc/core': true
+  bigint-buffer: true
+  bufferutil: true
+  classic-level: true
+  esbuild: true
+  protobufjs: true
+  tiny-secp256k1: true
+  utf-8-validate: true
+
+onlyBuiltDependencies:
+  - "@swc/core"
+  - "bigint-buffer"
+  - "bufferutil"
+  - "classic-level"
+  - "esbuild"
+  - "protobufjs"
+  - "tiny-secp256k1"
+  - "utf-8-validate"
