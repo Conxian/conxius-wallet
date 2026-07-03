@@ -60,8 +60,16 @@ export const calculateEffectiveFeeRate = (state: AppState): number => {
     // Loyalty discount (up to 50%)
     const loyaltyDiscount = (state.loyaltyXP || 0) > 1000 ? 0.5 : 1.0;
 
+    // Backward-compatible sovereignty score derivation for legacy/partial state snapshots.
+    const effectiveSovereigntyScore =
+        typeof state.sovereigntyScore === 'number' && Number.isFinite(state.sovereigntyScore)
+            ? state.sovereigntyScore
+            : state.walletConfig?.backupVerified
+              ? 100
+              : 70;
+
     // Sovereignty discount (up to 20%)
-    const sovereigntyDiscount = state.sovereigntyScore > 90 ? 0.8 : 1.0;
+    const sovereigntyDiscount = effectiveSovereigntyScore > 90 ? 0.8 : 1.0;
 
     rate = rate * loyaltyDiscount * sovereigntyDiscount;
 

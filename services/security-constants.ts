@@ -19,8 +19,9 @@ export const MASHED_MNEMONIC_SCAN = new RegExp(MASHED_MNEMONIC_PATTERN, "i");
 
 // Bitcoin Addresses (Legacy, Segwit, Taproot, Testnet).
 const BTC_ADDR_PATTERN = "(?<![a-zA-Z0-9])(bc1[qp][a-z0-9]{33,58}|[1][a-km-zA-NP-Z1-9]{25,39}|[3][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})(?![a-zA-Z0-9])";
+const BTC_ADDR_SCAN_PATTERN = "(bc1[qp][a-z0-9]{33,58}|[1][a-km-zA-NP-Z1-9]{25,39}|[3][a-km-zA-NP-Z1-9]{25,39}|tb1[qp][a-z0-9]{33,58}|[mn2][a-km-zA-NP-Z1-9]{25,39})";
 export const BTC_ADDR_REGEX = new RegExp(BTC_ADDR_PATTERN, "gi");
-export const BTC_ADDR_SCAN = new RegExp(BTC_ADDR_PATTERN, "i");
+export const BTC_ADDR_SCAN = new RegExp(BTC_ADDR_SCAN_PATTERN, "i");
 
 // EVM Addresses (0x...).
 const EVM_ADDR_PATTERN = "(?<![a-zA-Z0-9])(0x[a-fA-F0-9]{40})(?![a-zA-Z0-9])";
@@ -68,7 +69,7 @@ export const BOLT11_REGEX = new RegExp(BOLT11_PATTERN, "gi");
 export const BOLT11_SCAN = new RegExp(BOLT11_PATTERN, "i");
 
 // AI Service API Keys (Google Gemini, OpenAI, GitHub, Stripe, AWS).
-const API_KEY_PATTERN = "(?<![a-zA-Z0-9])(AIzaSy[a-zA-Z0-9_-]{33}|sk-[a-zA-Z0-9_-]{20,}|sk_(?:live|test)_[a-zA-Z0-9]{20,}|github_pat_[a-zA-Z0-9]{71,90}|ghp_[a-zA-Z0-9]{36,}|AKIA[0-9A-Z]{16})(?![a-zA-Z0-9])";
+const API_KEY_PATTERN = "(?<![a-zA-Z0-9])(AIzaSy[a-zA-Z0-9_-]{33}|sk-[a-zA-Z0-9_-]{20,}|sk_(?:live|test)_[a-zA-Z0-9]{20,}|github_pat_[a-zA-Z0-9]{71,90}|ghp_[a-zA-Z0-9]{36,}|AKIA[0-9A-Z]{12,20})(?![a-zA-Z0-9])";
 export const API_KEY_REGEX = new RegExp(API_KEY_PATTERN, "gi");
 export const API_KEY_SCAN = new RegExp(API_KEY_PATTERN, "i");
 
