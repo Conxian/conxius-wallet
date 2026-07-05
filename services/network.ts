@@ -1,6 +1,7 @@
 import { Network, AppState } from '../types';
 import { generateRandomString } from './random';
 import { NORMALIZE_REGEX, SENSITIVE_SCAN_PATTERNS, MASHED_MNEMONIC_SCAN, enforcePhase6Guard } from './security-constants';
+import { failClosed } from './production-guard';
 
 let _globalAppState: AppState | undefined;
 
@@ -18,9 +19,7 @@ export function getGatewayUrl(network: Network): string {
       try {
           enforcePhase6Guard("PHASE6_NEXUS_SYNC_ENFORCEMENT_ENABLED", "Nexus sync for mainnet gateway");
       } catch (e) {
-          console.warn("[SECURITY_GUARD] Nexus sync check failed, enforcing fallback safety.");
-          // In test environments or when explicitly disabled, we allow fallback
-          // throw e; // Commented out to allow test execution without environment variables
+          failClosed("Nexus Mainnet Sync", null);
       }
   }
   const envGateway = envValue('VITE_GATEWAY_URL');
@@ -240,6 +239,11 @@ export function sanitizeError(error: any, defaultMsg: string = 'Protocol Error')
   });
 
   if (isSensitive) {
+    // Whitelist: "Guard:" prefixed messages are security policy violations, not secrets.
+    // They must be visible to be actionable by the user or operators.
+    if (typeof message === 'string' && message.startsWith('Guard: ')) {
+      return message.replace(NORMALIZE_REGEX, "").substring(0, 200);
+    }
     return defaultMsg;
   }
 

@@ -123,13 +123,23 @@ export const SENSITIVE_REPLACE_PATTERNS = [
 ];
 
 /**
+ * Helper to get environment variables across Vite and Node (for tests).
+ */
+function getEnv(key: string): string | undefined {
+  if (typeof (import.meta as any).env !== 'undefined') {
+    return (import.meta as any).env[key] || (import.meta as any).env[`VITE_${key}`];
+  }
+  return process.env[key] || process.env[`VITE_${key}`];
+}
+
+/**
  * Phase 6 "Intelligence" Feature Flags and Runtime Guards.
  * Controlled enforcement of AgentOps, UBI, and Nexus sync interfaces.
  */
 export const PHASE6_FLAGS = {
-  PHASE6_AGENTOPS_READS_ENABLED: process.env.PHASE6_AGENTOPS_READS_ENABLED === 'true',
-  PHASE6_UBI_ENFORCEMENT_ENABLED: process.env.PHASE6_UBI_ENFORCEMENT_ENABLED === 'true',
-  PHASE6_NEXUS_SYNC_ENFORCEMENT_ENABLED: process.env.PHASE6_NEXUS_SYNC_ENFORCEMENT_ENABLED === 'true',
+  PHASE6_AGENTOPS_READS_ENABLED: getEnv('PHASE6_AGENTOPS_READS_ENABLED') === 'true',
+  PHASE6_UBI_ENFORCEMENT_ENABLED: getEnv('PHASE6_UBI_ENFORCEMENT_ENABLED') === 'true',
+  PHASE6_NEXUS_SYNC_ENFORCEMENT_ENABLED: getEnv('PHASE6_NEXUS_SYNC_ENFORCEMENT_ENABLED') === 'true',
 };
 
 /**
