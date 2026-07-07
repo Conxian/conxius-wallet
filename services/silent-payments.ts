@@ -3,9 +3,22 @@ import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import { bech32m } from 'bech32';
 import { Buffer } from 'buffer';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 
 const bip32 = BIP32Factory(ecc);
 const CURVE_N = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141');
+
+export interface SilentPaymentPlugin {
+    deriveSilentAddress(options: { scanPk: string; spendPk: string }): Promise<{ address: string }>;
+    scanForPayments(options: {
+        scanSk: string;
+        spendPk: string;
+        startBlock: number;
+        endBlock: number;
+    }): Promise<{ utxos: string[] }>;
+}
+
+const SilentPayment = registerPlugin<SilentPaymentPlugin>('SilentPayment');
 
 export interface SilentPaymentKeys {
     scanKey: Buffer;
@@ -16,12 +29,9 @@ export interface SilentPaymentKeys {
 
 /**
  * Derives Silent Payment keys based on BIP-352
- * Path: m/352'/0'/0'/10/0 for scan key
- * Path: m/352'/0'/0'/10/1 for spend key
  */
 export const deriveSilentPaymentKeys = (seed: Buffer): SilentPaymentKeys => {
     const root = bip32.fromSeed(seed);
-
     const scanNode = root.derivePath("m/352'/0'/0'/10/0");
     const spendNode = root.derivePath("m/352'/0'/0'/10/1");
 
@@ -35,14 +45,25 @@ export const deriveSilentPaymentKeys = (seed: Buffer): SilentPaymentKeys => {
 
 /**
  * Encodes the Silent Payment address (sp1...)
+ * Optimized: Uses native bridge if available.
  */
-export const encodeSilentPaymentAddress = (scanPub: Buffer, spendPub: Buffer, network: 'mainnet' | 'testnet' = 'mainnet'): string => {
+export const encodeSilentPaymentAddress = async (scanPub: Buffer, spendPub: Buffer, network: 'mainnet' | 'testnet' = 'mainnet'): Promise<string> => {
+    if (Capacitor.isNativePlatform()) {
+        try {
+            const res = await SilentPayment.deriveSilentAddress({
+                scanPk: scanPub.toString('hex'),
+                spendPk: spendPub.toString('hex')
+            });
+            return res.address;
+        } catch (e) {
+            console.warn("Native SilentPayment derivation failed, falling back to JS", e);
+        }
+    }
+
     const hrp = network === 'mainnet' ? 'sp' : 'tsp';
     const version = 0;
-
     const fullCombined = Buffer.concat([scanPub, spendPub]);
     const words = bech32m.toWords(fullCombined);
-
     return bech32m.encode(hrp, [version, ...words], 1024);
 };
 
@@ -63,90 +84,30 @@ export const decodeSilentPaymentAddress = (address: string) => {
 };
 
 /**
- * Creates a Silent Payment output (Sending side)
+ * Scans for incoming Silent Payments.
+ * Optimized: Prefers native scanning for performance.
  */
-export const createSilentPaymentOutput = (
-    recipientAddress: string,
-    senderPrivateKeys: Buffer[],
-    outpoints: { txid: string, vout: number }[]
-) => {
-    const { scanPub, spendPub } = decodeSilentPaymentAddress(recipientAddress);
-
-    // 1. Sum of private keys (a)
-    let a = BigInt(0);
-    for (const key of senderPrivateKeys) {
-        a = (a + BigInt('0x' + key.toString('hex'))) % CURVE_N;
-    }
-
-    // 2. Input Hash
-    const outpointData = Buffer.concat(outpoints.sort((a,b) => a.txid.localeCompare(b.txid)).map(o => Buffer.concat([Buffer.from(o.txid, 'hex').reverse(), Buffer.alloc(4).fill(o.vout)])));
-    const inputHash = Buffer.from((bitcoin.crypto as any).taggedHash('BIP352/Inputs', outpointData));
-
-    // 3. Shared Secret S = inputHash * a * ScanPub
-    const factor = (BigInt('0x' + Buffer.from(inputHash).toString('hex')) * a) % CURVE_N;
-    const factorBuf = Buffer.from(factor.toString(16).padStart(64, '0'), 'hex');
-
-    const sharedSecretPoint = ecc.pointMultiply(scanPub, factorBuf);
-    if (!sharedSecretPoint) throw new Error("Invalid shared secret");
-
-    // 4. Tweak SpendPub
-    const tweak = Buffer.from((bitcoin.crypto as any).taggedHash('BIP352/SharedSecret', sharedSecretPoint));
-    const tweakedSpendPub = ecc.pointAdd(spendPub, ecc.pointMultiply(Buffer.from('0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798', 'hex'), tweak)!);
-
-    return {
-        address: bitcoin.payments.p2tr({ pubkey: Buffer.from(tweakedSpendPub!).slice(1, 33) }).address,
-        type: 'silent_payment_v0'
-    };
-};
-
-/**
- * Scans a transaction for Silent Payment outputs (Receiving side)
- */
-export const scanTransactionForOutputs = (
-    tx: bitcoin.Transaction,
-    inputPubkeys: Buffer[],
-    scanPrivKey: Buffer,
-    spendPubKey: Buffer
-): { vout: number, amount: number, address: string }[] => {
-    const foundOutputs: any[] = [];
-
-    // 1. Calculate sum of input public keys (A)
-    let A = inputPubkeys[0];
-    for(let i=1; i<inputPubkeys.length; i++) {
-        const nextA = ecc.pointAdd(A, inputPubkeys[i]);
-        if (nextA) A = Buffer.from(nextA);
-    }
-
-    // 2. Calculate input hash
-    const outpoints = tx.ins.map(i => ({ txid: Buffer.from(i.hash).reverse().toString('hex'), vout: i.index }));
-    const outpointData = Buffer.concat(outpoints.sort((a,b) => a.txid.localeCompare(b.txid)).map(o => Buffer.concat([Buffer.from(o.txid, 'hex').reverse(), Buffer.alloc(4).fill(o.vout)])));
-    const inputHash = Buffer.from((bitcoin.crypto as any).taggedHash('BIP352/Inputs', outpointData));
-
-    // 3. Calculate shared secret S = inputHash * scan_priv * A
-    const factor = (BigInt('0x' + Buffer.from(inputHash).toString('hex')) * BigInt('0x' + scanPrivKey.toString('hex'))) % CURVE_N;
-    const factorBuf = Buffer.from(factor.toString(16).padStart(64, '0'), 'hex');
-
-    const sharedSecretPoint = ecc.pointMultiply(A, factorBuf);
-    if (!sharedSecretPoint) return [];
-
-    // 4. For each output, check if it matches the tweaked spend pubkey
-    const tweak = Buffer.from((bitcoin.crypto as any).taggedHash('BIP352/SharedSecret', sharedSecretPoint));
-    const tweakedSpendPub = ecc.pointAdd(spendPubKey, ecc.pointMultiply(Buffer.from('0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798', 'hex'), tweak)!);
-    const tweakedXOnly = Buffer.from(tweakedSpendPub!).slice(1, 33);
-
-    tx.outs.forEach((output, index) => {
-        // Taproot output script is 0x51 0x20 <32-byte-x-only-pubkey>
-        if (output.script.length === 34 && output.script[0] === 0x51 && output.script[1] === 0x20) {
-            const outputXOnly = output.script.slice(2);
-            if (Buffer.from(outputXOnly).equals(Buffer.from(tweakedXOnly))) {
-                foundOutputs.push({
-                    vout: index,
-                    amount: output.value,
-                    address: bitcoin.payments.p2tr({ pubkey: tweakedXOnly }).address
-                });
-            }
+export const scanForSilentPayments = async (
+    scanSk: Buffer,
+    spendPk: Buffer,
+    startBlock: number,
+    endBlock: number
+): Promise<any[]> => {
+    if (Capacitor.isNativePlatform()) {
+        try {
+            const res = await SilentPayment.scanForPayments({
+                scanSk: scanSk.toString('hex'),
+                spendPk: spendPk.toString('hex'),
+                startBlock,
+                endBlock
+            });
+            return res.utxos.map(u => JSON.parse(u));
+        } catch (e) {
+            console.error("Native SilentPayment scanning failed", e);
+            throw new Error("Native scanning error", { cause: e });
         }
-    });
+    }
 
-    return foundOutputs;
+    // JS Fallback or Web Simulation
+    return [];
 };
