@@ -22,10 +22,10 @@ describe('Sovereign Protocol Refinement', () => {
         expect(getUnifiedBitcoinBalance(assets)).toBe(150);
     });
 
-    it('derives BIP-352 keys correctly', () => {
+    it('derives BIP-352 keys correctly', async () => {
         const seed = Buffer.alloc(64).fill(0x02);
         const keys = deriveSilentPaymentKeys(seed);
-        const addr = encodeSilentPaymentAddress(keys.scanPub, keys.spendPub, 'testnet');
+        const addr = await encodeSilentPaymentAddress(keys.scanPub, keys.spendPub, 'testnet');
         expect(addr.startsWith('tsp1')).toBe(true);
     });
 

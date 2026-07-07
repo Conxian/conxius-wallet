@@ -4,14 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.conxius.wallet.DeviceIntegrityPlugin
 import com.conxius.wallet.PlayIntegrityPlugin
-import com.conxius.wallet.repository.WalletRepository
 import com.conxius.wallet.bitcoin.*
 import com.conxius.wallet.crypto.StrongBoxManager
 import com.conxius.wallet.crypto.Web5Manager
-import com.conxius.wallet.database.AssetEntity
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import com.conxius.wallet.repository.AssetEntity
+import com.conxius.wallet.repository.WalletRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class WalletViewModel(
@@ -134,6 +137,17 @@ class WalletViewModel(
     }
 
     // --- Bridged Protocol Actions ---
+
+    fun scanSilentPayments(scanSk: String, spendPk: String, startBlock: Long, endBlock: Long) {
+        viewModelScope.launch {
+            try {
+                val utxos = silentPaymentManager.scanForPayments(scanSk, spendPk, startBlock, endBlock)
+                _error.value = "Silent Payment Scan Complete: Found ${utxos.size} UTXOs"
+            } catch (e: Exception) {
+                _error.value = "Silent Payment scan failed: ${e.message}"
+            }
+        }
+    }
 
     fun createStakingTx(stakerPk: String, amount: Long) {
         viewModelScope.launch {

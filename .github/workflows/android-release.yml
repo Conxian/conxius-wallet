@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bbf873cbb8b7a961c67208f4c34cd465615 # v7.0.0
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
@@ -48,18 +48,18 @@ jobs:
           echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
 
       - name: Setup Java
-        uses: actions/setup-java@dc8d26568cedb6be26d3a6ab0898d0b5c9f06375 # v5.3.0
+        uses: actions/setup-java@v4.5.0
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a0dca97e80a5f4bb8dec8dc1c12a5a3e059 # v6.4.0
+        uses: actions/setup-node@v4.2.0
         with:
           node-version: 22.x
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@0ebf47132cd2d4f08ca13ae2be949145cd17ab1d # v6.0.9
+        uses: pnpm/action-setup@v4.1.0
         with:
           version: 10.30.3
           run_install: false
@@ -107,14 +107,14 @@ jobs:
           sha256sum "$APK_PATH" > "conxius-wallet-v${{ steps.version.outputs.version_name }}.apk.sha256"
 
       - name: Upload AAB artifact
-        uses: actions/upload-artifact@4cec3d8d14a89d7e5e0c327757b26447a6577a77 # v4.6.1
+        uses: actions/upload-artifact@v4.6.1
         with:
           name: android-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@4cec3d8d14a89d7e5e0c327757b26447a6577a77 # v4.6.1
+        uses: actions/upload-artifact@v4.6.1
         with:
           name: android-release-apk
           path: |
