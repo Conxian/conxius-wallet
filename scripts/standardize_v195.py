@@ -1,5 +1,4 @@
 import os
-import re
 
 VERSION = "1.9.5"
 ROOT_DIR = "."
