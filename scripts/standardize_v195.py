@@ -2,6 +2,15 @@ import os
 
 VERSION = "1.9.5"
 ROOT_DIR = "."
+IMMUTABLE_FILES = {"CHANGELOG.md"}
+IMMUTABLE_DIR_PREFIXES = ("docs/archive/", "archives/")
+
+
+def is_immutable_record(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    if normalized in IMMUTABLE_FILES:
+        return True
+    return normalized.startswith(IMMUTABLE_DIR_PREFIXES)
 
 def main():
     print(f"Standardizing to {VERSION}...")
@@ -18,6 +27,10 @@ def main():
                 continue
 
             path = os.path.join(root, file)
+            rel_path = os.path.relpath(path, ROOT_DIR)
+            if is_immutable_record(rel_path):
+                continue
+
             try:
                 with open(path, 'r', encoding='utf-8') as f:
                     content = f.read()
