@@ -4,7 +4,7 @@ layout: page
 permalink: /docs/state/sovereign
 ---
 
-# Sovereign State (v1.9.2)
+# Sovereign State (v1.9.5)
 
 **Context:** Phase 5 Native Migration Complete. COO Alignment Complete (2026-06-30).
 **Status:** ALIGNED — Full Production Operational State

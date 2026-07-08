@@ -1,7 +1,7 @@
 /**
  * Conxius Bridge & Messaging Trust Policy Engine
  * Enforces approved trust-tier constraints for cross-chain operations.
- * Aligned with v1.9.2 Sovereign Architecture.
+ * Aligned with v1.9.5 Sovereign Architecture.
  */
 
 export enum TrustTier {

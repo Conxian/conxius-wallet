@@ -7,7 +7,7 @@ import org.bitcoindevkit.Network
  * Babylon Bitcoin Staking Manager (v1.1)
  *
  * Handles native Taproot staking transactions for the Babylon protocol.
- * Aligned with v1.9.2 "Sovereign" architecture.
+ * Aligned with v1.9.5 "Sovereign" architecture.
  */
 class BabylonManager {
     private val TAG = "BabylonManager"

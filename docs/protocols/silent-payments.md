@@ -20,4 +20,4 @@ The scanning loop in native Kotlin allows for high-performance block processing 
 All native scanning operations are protected by `ProductionRuntimeGuard.failClosed()`.
 
 ---
-*Verified by v1.9.2 Production Audit.*
+*Verified by v1.9.5 Production Audit.*

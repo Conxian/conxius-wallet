@@ -2,7 +2,7 @@ import { Network, AppState } from '../types';
 import { requestEnclaveSignature } from './signer';
 
 /**
- * Monetization Service (v1.9.2)
+ * Monetization Service (v1.9.5)
  * Handles protocol fees, SDK licensing, and referral logic.
  */
 

@@ -1,7 +1,7 @@
 {
   "name": "Conxius Wallet",
   "short_name": "Conxius",
-  "version": "1.9.2",
+  "version": "1.9.5",
   "description": "Hardened Bitcoin Multi-Layer Sovereign Enclave with Native NTT Bridging.",
   "requestFramePermissions": [
     "camera"
