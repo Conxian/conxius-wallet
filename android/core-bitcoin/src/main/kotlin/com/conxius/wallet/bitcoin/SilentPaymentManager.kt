@@ -5,7 +5,7 @@ import android.util.Log
 /**
  * SilentPaymentManager: Native Bridge for BIP-352 Silent Payments.
  * Provides private address derivation and optimized scanning capabilities.
- * Aligned with v1.9.2 "Sovereign" architecture.
+ * Aligned with v1.9.5 "Sovereign" architecture.
  */
 class SilentPaymentManager {
     private val TAG = "SilentPaymentManager"

@@ -19,7 +19,7 @@ describe('Yield Service (Yield.xyz Integration)', () => {
     });
 
     it('should construct a yield transaction payload', async () => {
-        const state: any = { rpcStrategy: 'Sovereign-First', version: '1.9.2' };
+        const state: any = { rpcStrategy: 'Sovereign-First', version: '1.9.5' };
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({

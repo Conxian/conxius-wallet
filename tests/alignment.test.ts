@@ -1,20 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fetchGlobalReserveMetrics } from '../services/protocol';
 
+vi.mock('../services/signer', () => ({
+    requestEnclaveSignature: vi.fn().mockResolvedValue('mock-signature'),
+    derivePath: vi.fn().mockResolvedValue({
+        publicKey: '02' + '0'.repeat(64),
+        privateKey: '01'.repeat(32)
+    })
+}));
+
 describe('BOS State Alignment', () => {
   it('should fetch and normalize reserve metrics correctly', async () => {
-    // Repeated chars for mock hex to avoid CI scanners
-    const mockPubkey = '02' + '0'.repeat(64);
-    const mockPrivkey = '01'.repeat(32);
-
-    vi.mock('../services/signer', () => ({
-        requestEnclaveSignature: vi.fn().mockResolvedValue('mock-signature'),
-        derivePath: vi.fn().mockResolvedValue({
-            publicKey: '02' + '0'.repeat(64),
-            privateKey: '01'.repeat(32)
-        })
-    }));
-
     global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({

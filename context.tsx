@@ -30,7 +30,7 @@ export const AppContext = createContext<{
 } | null>(null);
 
 export const initialAppState: AppState = {
-  version: '1.9.2',
+  version: '1.9.5',
   mode: 'sovereign',
   network: 'mainnet',
   privacyMode: true,

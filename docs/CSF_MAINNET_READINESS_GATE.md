@@ -29,7 +29,7 @@ This document tracks the final launch readiness for ConxianCSF mainnet deploymen
 - [x] 144-block time-lock enforced for external triggers in TEE.
 
 ### 4. Release Hygiene
-- [x] Version v1.9.2 pinned across all relevant repositories.
+- [x] Version v1.9.5 pinned across all relevant repositories.
 - [x] READMEs updated with Purpose and Status sections.
 - [x] Principal cutover (ST -> SP) complete in configuration.
 - [x] LICENSE (MIT) added to root directory.
@@ -45,7 +45,7 @@ This document tracks the final launch readiness for ConxianCSF mainnet deploymen
 - COO approval path integrated (CON-224).
 - Stacks principals validated; all testnet ST... remnants purged from production services.
 - Protocol vault SP3FBR... configured as canonical sBTC token principal in NTT.
-- Full system alignment to v1.9.2 standards complete.
+- Full system alignment to v1.9.5 standards complete.
 
 As of April 18, 2026, all critical launch blockers for ConxianCSF are resolved.
 

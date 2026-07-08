@@ -29,7 +29,7 @@ fun ConxiusTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    // Note: Conxius v1.9.2 mandates the 'Sovereign Earthy' bright foundation.
+    // Note: Conxius v1.9.5 mandates the 'Sovereign Earthy' bright foundation.
     // Dark theme is currently suppressed for primary operational views.
     MaterialTheme(
         colorScheme = LightColorScheme,
