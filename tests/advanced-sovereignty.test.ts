@@ -36,13 +36,13 @@ describe('Advanced Sovereignty Features', () => {
     });
 
     describe('Silent Payments (BIP-352)', () => {
-        it('derives consistent keys from a seed', () => {
+        it('derives consistent keys from a seed', async () => {
             const seed = Buffer.alloc(64).fill(0x01);
             const keys = deriveSilentPaymentKeys(seed);
             expect(keys.scanPub.length).toBe(33);
             expect(keys.spendPub.length).toBe(33);
 
-            const addr = encodeSilentPaymentAddress(keys.scanPub, keys.spendPub, 'mainnet');
+            const addr = await encodeSilentPaymentAddress(keys.scanPub, keys.spendPub, 'mainnet');
             expect(addr.startsWith('sp1')).toBe(true);
         });
     });

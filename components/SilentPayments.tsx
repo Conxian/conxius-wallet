@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Shield, Eye, EyeOff, QrCode, Copy, RefreshCcw, Info, Zap, ChevronRight, Lock, Ghost } from 'lucide-react';
+import { QrCode, Copy, Info, Zap, ChevronRight, Lock, Ghost, Eye, EyeOff } from 'lucide-react';
 import { AppContext } from '../context';
 import { deriveSilentPaymentKeys, encodeSilentPaymentAddress } from '../services/silent-payments';
 import { Buffer } from 'buffer';
@@ -14,19 +14,22 @@ const SilentPayments: React.FC = () => {
   const [spendPub, setSpendPub] = useState<string>('');
 
   useEffect(() => {
+    let isMounted = true;
     if (walletConfig?.mnemonicVault || walletConfig?.masterAddress) {
         // In a real app, this would use a secure decrypted seed from the enclave
         const mockSeed = Buffer.alloc(64).fill(0xac);
         const keys = deriveSilentPaymentKeys(mockSeed);
-        const addr = encodeSilentPaymentAddress(keys.scanPub, keys.spendPub, network === 'testnet' ? 'testnet' : 'mainnet');
 
-        // Wrap in timeout to avoid synchronous setState in effect warning
-        setTimeout(() => {
-            setSilentAddress(addr);
-            setScanPub(keys.scanPub.toString('hex'));
-            setSpendPub(keys.spendPub.toString('hex'));
-        }, 0);
+        encodeSilentPaymentAddress(keys.scanPub, keys.spendPub, network === 'testnet' ? 'testnet' : 'mainnet')
+            .then(addr => {
+                if (isMounted) {
+                    setSilentAddress(addr);
+                    setScanPub(keys.scanPub.toString('hex'));
+                    setSpendPub(keys.spendPub.toString('hex'));
+                }
+            });
     }
+    return () => { isMounted = false; };
   }, [walletConfig, network]);
 
   return (
