@@ -64,4 +64,4 @@
 - **Next Step**: Replace SHA-256 with Blake2s in `ArkManager.kt`.
 
 ---
-*Aligned with v1.9.2 Research Findings and Production Audit.*
+*Aligned with v1.9.5 Research Findings and Production Audit.*

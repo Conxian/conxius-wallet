@@ -14,7 +14,7 @@ assignees: []
 - **Parent Issue**: [CON-YYY](https://linear.app/conxian-labs/issue/CON-YYY)
 
 ## Acceptance Criteria
-- [ ] Logic implemented and aligned with v1.9.2
+- [ ] Logic implemented and aligned with v1.9.5
 - [ ] Tests passing locally
 - [ ] Documentation updated
 - [ ] Zero Secret Egress verified

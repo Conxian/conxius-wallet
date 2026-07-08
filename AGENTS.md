@@ -11,7 +11,7 @@ working with the Conxius Wallet codebase and its B2B enhancement, the Conxian
 Gateway.
 
 **Last Updated:** 2026-06-30
-**Context:** Production Operational State (v1.9.2) — COO Alignment Complete
+**Context:** Production Operational State (v1.9.5) — COO Alignment Complete
 
 ---
 
@@ -79,11 +79,11 @@ cd android && ./gradlew :app:testDebugUnitTest
 Ensure the following files are synced:
 
 - `docs/archive/PROJECT_CONTEXT.md`: Current state and session notes.
-- `docs/business/PRD.md`: The high-authority source of truth (v1.9.2).
+- `docs/business/PRD.md`: The high-authority source of truth (v1.9.5).
 - `docs/state/Business_State.md`: Business alignment and market fit.
 - `docs/state/Sovereign_State.md`: Technical implementation status.
 - `docs/operations/ROADMAP.md`: Technical and business milestones.
-- `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status (v1.9.2).
+- `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status (v1.9.5).
 
 ---
 
@@ -110,7 +110,7 @@ The `.jules/` directory contains a hardening journal documenting discovered
 vulnerabilities, root causes, and prevention patterns. Reference these before
 implementing new security-sensitive code paths.
 
-## 🚀 Native Bridge Alignment (v1.9.2)
+## 🚀 Native Bridge Alignment (v1.9.5)
 
 The wallet utilizes a **Bridged Sovereign Architecture** where native Kotlin
 managers handle security-critical signing and protocol coordination.

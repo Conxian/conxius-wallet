@@ -4,7 +4,7 @@ layout: page
 permalink: /docs/sdk-policy
 ---
 
-# SDK Ownership and Version Policy (v1.9.2)
+# SDK Ownership and Version Policy (v1.9.5)
 
 **Date:** 2026-06-17
 **Status:** VERIFIED
@@ -49,4 +49,4 @@ To maintain boundary clarity and prevent dependency sprawl, ownership of core SD
 - **Consumers** MUST NOT bypass official SDK interfaces to access internal primitives.
 
 ---
-*Verified by Jules (v1.9.2 Alignment).*
+*Verified by Jules (v1.9.5 Alignment).*

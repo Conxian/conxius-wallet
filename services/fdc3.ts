@@ -16,7 +16,7 @@ const Fdc3 = registerPlugin<Fdc3Plugin>('Fdc3');
 /**
  * FDC3 Service
  * Bridges financial intents between corporate treasury apps and the wallet.
- * Aligned with v1.9.2 Native Resolver (CON-1181).
+ * Aligned with v1.9.5 Native Resolver (CON-1181).
  */
 export const fdc3Service = {
   /**

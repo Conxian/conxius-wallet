@@ -13,7 +13,7 @@ We currently provide security updates for the following versions:
 | Version | Supported |
 | ------- | --------- |
 | 1.9.x | ✅ |
-| < 1.9.2 | ❌ |
+| < 1.9.5 | ❌ |
 
 ## Reporting a Vulnerability
 

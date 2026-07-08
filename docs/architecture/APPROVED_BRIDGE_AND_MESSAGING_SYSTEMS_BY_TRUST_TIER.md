@@ -53,4 +53,4 @@ Every operation must include a canonical proof envelope:
 
 ---
 
-*Verified by Conxius Sovereign Architecture v1.9.2.*
+*Verified by Conxius Sovereign Architecture v1.9.5.*
