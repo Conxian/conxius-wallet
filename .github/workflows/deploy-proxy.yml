@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bbf873cbb8b7a961c67208f4c34cd465615 # v7.0.0
+        uses: actions/checkout@v4.2.2
 
       # Authenticate to Google Cloud using SA Key stored in secrets
       - name: Google Auth
