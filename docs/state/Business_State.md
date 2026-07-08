@@ -4,7 +4,7 @@ layout: page
 permalink: /docs/state/business
 ---
 
-# Business State (v1.9.2)
+# Business State (v1.9.5)
 
 **Context:** B2B Alignment & Mainnet Readiness. COO Alignment (2026-06-30).
 **Status:** ALIGNED — Full Production Operational

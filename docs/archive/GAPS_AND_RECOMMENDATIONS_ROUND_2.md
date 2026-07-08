@@ -6,11 +6,11 @@ permalink: /docs/gap-analysis-r2
 
 # Gap Analysis & Recommendations (Round 2) - 2026-03-12
 
-## 1. Protocol Implementation Gaps (RESOLVED in v1.9.2)
+## 1. Protocol Implementation Gaps (RESOLVED in v1.9.5)
 
 The "Bridged Sovereign" architecture has been fully established in this round:
 
-| Protocol | Previous Reality | v1.9.2 Status | Improvement |
+| Protocol | Previous Reality | v1.9.5 Status | Improvement |
 | :--- | :--- | :--- | :--- |
 | **Lightning** | TS-Only | ✅ BRIDGED | Integrated Native Breez Manager. |
 | **Liquid** | TS-Only | ✅ BRIDGED | Integrated Native Liquid Manager. |
@@ -32,6 +32,6 @@ All required native managers have been implemented in the `:core-bitcoin` and `:
 
 ## 4. Documentation Alignment
 
-- **PRD v1.9.2** now correctly defines the "Bridged Sovereign" architecture.
+- **PRD v1.9.5** now correctly defines the "Bridged Sovereign" architecture.
 - **Implementation Registry** reflects the actual native bridge status.
 - **Agent Guide** updated to prioritize native manager usage for all protocol work.

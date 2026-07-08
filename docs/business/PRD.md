@@ -4,7 +4,7 @@ layout: page
 permalink: /prd
 ---
 
-# Conxius Wallet PRD (Full Bitcoin Ecosystem) - v1.9.2
+# Conxius Wallet PRD (Full Bitcoin Ecosystem) - v1.9.5
 
 ## 1. Executive Summary
 
@@ -50,7 +50,7 @@ The project is transitioning to a **pure native Android architecture** (Kotlin/R
 
 ---
 
-## 4. Functional Requirements (v1.9.2 Alignment)
+## 4. Functional Requirements (v1.9.5 Alignment)
 
 | Protocol | Status | Implementation Details |
 | :--- | :--- | :--- |
@@ -75,7 +75,7 @@ The project is transitioning to a **pure native Android architecture** (Kotlin/R
 
 ## 5. UI/UX STANDARDIZATION (Sovereign Earthy)
 
-As of v1.9.2, all Conxian Protocol interfaces (Conxius Wallet, Gateway, Explorer) MUST adhere to the **Sovereign Earthy** visual identity.
+As of v1.9.5, all Conxian Protocol interfaces (Conxius Wallet, Gateway, Explorer) MUST adhere to the **Sovereign Earthy** visual identity.
 
 ### 5.1. Design Ethos
 - **Foundational Palette**: 60% Ivory (#FDFBF7), 30% Pure White (#FFFFFF), 10% Earth/Brand Tones.
@@ -83,7 +83,7 @@ As of v1.9.2, all Conxian Protocol interfaces (Conxius Wallet, Gateway, Explorer
 - **Atmospheric Cues**: Hero sections and primary brand headers may utilize full-bleed deep brand colors to establish presence.
 - **Interaction Model**: Use structural spacing and micro-borders (1px) for depth, minimizing heavy drop shadows to maintain a crisp, professional aesthetic.
 
-## Operating Model & Documentation Architecture (v1.9.2)
+## Operating Model & Documentation Architecture (v1.9.5)
 
 ### 1. Decoupled Documentation Model (CON-1208)
 - **Brand & Product Site (conxian.org)**: Primary consumer-facing surface for vision, product features, and community.

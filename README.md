@@ -10,7 +10,7 @@ Provide a non-custodial mobile wallet that unifies Bitcoin-native rails, Stacks,
 
 ## Status
 
-**Production (v1.9.2).** This repository is the public wallet and reference client layer for the Conxian ecosystem.
+**Production (v1.9.5).** This repository is the public wallet and reference client layer for the Conxian ecosystem.
 
 ## Scope
 

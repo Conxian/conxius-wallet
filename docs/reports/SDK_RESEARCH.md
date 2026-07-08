@@ -52,7 +52,7 @@ permalink: /docs/sdk-research
 
 - See `docs/reports/GAP_MATRIX_2026.md` for detailed gap analysis and candidate scoring.
 
-## 7. Summary Table (v1.9.2 Alignment)
+## 7. Summary Table (v1.9.5 Alignment)
 
 | Technology | Preferred SDK | Target Version | Status |
 | :--- | :--- | :--- | :--- |

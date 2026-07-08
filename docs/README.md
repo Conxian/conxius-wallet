@@ -4,7 +4,7 @@ layout: page
 permalink: /docs/
 ---
 
-# Conxius Wallet Documentation (v1.9.2)
+# Conxius Wallet Documentation (v1.9.5)
 
 Welcome to the official technical documentation for the Conxius Wallet, the sovereign-first mobile gateway for the Bitcoin ecosystem.
 
@@ -37,4 +37,4 @@ Welcome to the official technical documentation for the Conxius Wallet, the sove
 - [Native Bridge Research](protocols/NATIVE_BRIDGE_RESEARCH.md)
 
 ---
-*Sovereignty is a journey. This documentation tracks our path to v1.9.2 and beyond.*
+*Sovereignty is a journey. This documentation tracks our path to v1.9.5 and beyond.*
