@@ -31,7 +31,7 @@ compatibility with the Nakamoto release. This includes:
 
 ### Vitest & pnpm
 
-We use **pnpm** for dependency management and **Vitest** for our test suites.
+We use **pnpm** (strictly version `10.30.3`) for dependency management and **Vitest** for our test suites.
 
 - All new features MUST include comprehensive unit tests.
 - Tests should be located in the `/tests` directory.
@@ -41,13 +41,17 @@ We use **pnpm** for dependency management and **Vitest** for our test suites.
 
 Before submitting a change:
 
-1. **Run Unit Tests**: `pnpm test`
+1. **Local Hygiene & Security**: Run `pnpm run verify`. This script is the primary gate and performs:
+   - Environment version checks (pnpm 10.30.3)
+   - Runtime contamination guards (detects simulated/debug leaks in production paths)
+   - Unit tests execution (Vitest)
+   - Production build verification (TSC + Vite)
 2. **Run E2E Tests**: `pnpm run test:e2e` (Playwright)
 3. **Verify UI**: Ensure that sensitive fields have `autoComplete="off"` and
    other security attributes.
-4. **Check Logs**: Ensure no sensitive data is leaked to the console or Android
+5. **Check Logs**: Ensure no sensitive data is leaked to the console or Android
    logs.
-5. **No Generated Artifacts**: Never commit generated or runtime artifacts
+6. **No Generated Artifacts**: Never commit generated or runtime artifacts
    (e.g., `node_modules`, `dist`, `build`, or Capacitor/Cordova plugins).
    The "Security-First Ignore Policy" is strictly enforced to prevent
    unintentional exposure and ensure build reproducibility.
@@ -63,11 +67,19 @@ To maintain production integrity and prevent secret leakage, the following rules
 ## 📜 Documentation & PRD Sync
 
 Conxius follows an **Anti-Drift** policy. Any architectural change must be
-reflected in the [PRD.md](https://github.com/Conxian/conxius-wallet/blob/main/docs/business/PRD.md) and tracked in [IMPLEMENTATION_REGISTRY.md](https://github.com/Conxian/conxius-wallet/blob/main/docs/protocols/IMPLEMENTATION_REGISTRY.md).
+reflected in the [PRD.md](docs/business/PRD.md) and tracked in [IMPLEMENTATION_REGISTRY.md](docs/protocols/IMPLEMENTATION_REGISTRY.md).
 
 - If you add a new chain or protocol, update the **Layer Unification Matrix**.
 - If you modify internal logic, update the corresponding documentation sections
   from **Pending** to **Active**.
+
+## ⚖️ Governance & Approval
+
+Conxius follows a formal operational governance model as defined in [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md).
+
+- **COO Sign-off**: All "High" and "Urgent" impact changes require review and explicit sign-off from the COO (**Sizwe Nkosi**) before promotion to `main`.
+- **Security Audit**: Changes to native managers or cryptographic primitives require a mandatory security review.
+- **Protocol Alignment**: PRs must align with the current **PRD** and **Sovereign State** documentation.
 
 ## 🎁 Pull Request Guidelines
 
