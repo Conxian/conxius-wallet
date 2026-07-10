@@ -56,12 +56,29 @@ This repository is maintained by Conxian Labs as a public product surface for th
 - Every release requires a `CHANGELOG.md` entry.
 - Promotion to `main` requires successful validation and approval according to repository policy.
 
+## Prerequisites
+
+- **Node.js**: `22.x` (LTS recommended)
+- **Package Manager**: `pnpm` (strictly version `10.30.3`)
+- **Android Development**: Android Studio with SDK 35 and Java/JVM 21
+- **Capacitor CLI**: For mobile bridge operations
+
 ## Development
 
 ```bash
+# Install dependencies (requires pnpm 10.30.3)
 pnpm install
+
+# Run the local hygiene and verification suite (Security + Tests + Build)
+pnpm run verify
+
+# Start development server
 pnpm run dev
+
+# Run unit tests
 pnpm test
+
+# Run E2E tests
 pnpm run test:e2e
 ```
 
