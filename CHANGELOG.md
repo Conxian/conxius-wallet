@@ -8,7 +8,7 @@ permalink: /changelog
 
 All notable changes to the Conxius Wallet project will be documented in this file.
 
-## [Unreleased]
+## [1.9.5] - 2026-07-08
 
 ### Added
 - **Lightning Resilience Implementation**: Integrated SRL-1, SRL-2, and SRL-7 in the TypeScript layer, adding payment state machines, concurrent execution guards (idempotency), and bounded retry logic for Breez (CON-688).
