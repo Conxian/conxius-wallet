@@ -59,14 +59,14 @@ This repository is maintained by Conxian Labs as a public product surface for th
 ## Prerequisites
 
 - **Node.js**: `22.x` (LTS recommended)
-- **Package Manager**: `pnpm` (strictly version `10.30.3`)
+- **Package Manager**: `pnpm` (strictly version `11.13.0`)
 - **Android Development**: Android Studio with SDK 35 and Java/JVM 21
 - **Capacitor CLI**: For mobile bridge operations
 
 ## Development
 
 ```bash
-# Install dependencies (requires pnpm 10.30.3)
+# Install dependencies (requires pnpm 11.13.0)
 pnpm install
 
 # Run the local hygiene and verification suite (Security + Tests + Build)
