@@ -31,7 +31,7 @@ compatibility with the Nakamoto release. This includes:
 
 ### Vitest & pnpm
 
-We use **pnpm** (strictly version `10.30.3`) for dependency management and **Vitest** for our test suites.
+We use **pnpm** (strictly version `11.13.0`) for dependency management and **Vitest** for our test suites.
 
 - All new features MUST include comprehensive unit tests.
 - Tests should be located in the `/tests` directory.
@@ -42,7 +42,7 @@ We use **pnpm** (strictly version `10.30.3`) for dependency management and **Vit
 Before submitting a change:
 
 1. **Local Hygiene & Security**: Run `pnpm run verify`. This script is the primary gate and performs:
-   - Environment version checks (pnpm 10.30.3)
+   - Environment version checks (pnpm 11.13.0)
    - Runtime contamination guards (detects simulated/debug leaks in production paths)
    - Unit tests execution (Vitest)
    - Production build verification (TSC + Vite)
