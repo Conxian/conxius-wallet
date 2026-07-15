@@ -4,8 +4,8 @@ set -euo pipefail
 
 echo "--- 🛠️ Environment Check ---"
 PNPM_VERSION=$(pnpm -v)
-if [[ "$PNPM_VERSION" != "10.30.3" ]]; then
-    echo "::error::pnpm version mismatch. Expected 10.30.3, got $PNPM_VERSION"
+if [[ "$PNPM_VERSION" != "11.13.0" ]]; then
+    echo "::error::pnpm version mismatch. Expected 11.13.0, got $PNPM_VERSION"
     false
 fi
 
