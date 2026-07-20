@@ -1,5 +1,12 @@
 # Conxius Wallet has no approved cleartext network exceptions.
 #
-# If a temporary exception is ever required, add one documented entry in the
-# form `host=<fully-qualified-host>` and update the release/security review
-# record before changing the Android manifest or network security config.
+# If a temporary exception is ever required, add one entry that exactly mirrors
+# an enabled <domain> in the manifest-referenced network security config:
+#
+#   host=api.example.com
+#   host=api.example.com;includeSubdomains=true
+#
+# Exact hosts are the default. Global usesCleartextTraffic=true, global or
+# base-config cleartext enablement, wildcard hosts, IP addresses, and invalid
+# or single-label hosts are never supported. Every entry must be used by the
+# referenced configuration; stale entries fail validation.

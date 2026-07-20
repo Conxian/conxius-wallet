@@ -6,15 +6,16 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
+from pathlib import PurePosixPath
 
 
 USES_PATTERN = re.compile(r"^\s*uses:\s*([^\s#]+)")
-REMOTE_ACTION_PATTERN = re.compile(r"^[^\s/@]+/[^\s@]+(?:/[^\s@]+)?@([0-9a-fA-F]{40})$")
+REMOTE_ACTION_PATTERN = re.compile(r"^[^\s/@]+/[^\s@]+@[0-9a-fA-F]{40}$")
 
 
 def check_workflows(workflow_root: Path) -> list[str]:
     errors: list[str] = []
-    workflow_files = sorted((*workflow_root.glob("*.yml"), *workflow_root.glob("*.yaml")))
+    workflow_files = sorted((*workflow_root.rglob("*.yml"), *workflow_root.rglob("*.yaml")))
     if not workflow_files:
         return [f"no workflow files found under {workflow_root}"]
 
@@ -25,8 +26,14 @@ def check_workflows(workflow_root: Path) -> list[str]:
                 continue
 
             reference = match.group(1)
-            if reference.startswith(("./", ".github/")):
-                errors.append(f"{path}:{line_number}: local action/workflow reference is not allowed: {reference}")
+            if reference.startswith("./"):
+                local_path = PurePosixPath(reference[2:])
+                if "@" in reference or ".." in local_path.parts:
+                    errors.append(f"{path}:{line_number}: local reference must stay within the repository: {reference}")
+                continue
+
+            if reference.startswith(".github/"):
+                errors.append(f"{path}:{line_number}: local references must use the ./... form: {reference}")
                 continue
 
             if not REMOTE_ACTION_PATTERN.fullmatch(reference):

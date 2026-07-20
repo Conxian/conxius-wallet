@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { collectReleaseVersions, validateReleaseVersions } from '../../scripts/ci/check_release_version.mjs';
 
 const temporaryRoots = [];
+const repositoryRoot = resolve(dirname(new URL(import.meta.url).pathname), '../..');
+const deriveVersionCode = resolve(repositoryRoot, 'scripts/ci/derive_android_version_code.mjs');
 
 afterEach(() => {
   for (const root of temporaryRoots.splice(0)) {
@@ -46,4 +49,15 @@ describe('release version consistency', () => {
       /Expected release tag v1\.9\.5/,
     );
   });
+
+  it('derives a positive Android versionCode from the strict release version', () => {
+    expect(execFileSync('node', [deriveVersionCode, '1.9.5'], { encoding: 'utf8' }).trim()).toBe('10905');
+  });
+
+  it.each(['1.9', '1.9.5-beta', '0.0.0', '214748.3648.0'])(
+    'rejects an invalid versionCode input: %s',
+    (version) => {
+      expect(() => execFileSync('node', [deriveVersionCode, version], { encoding: 'utf8' })).toThrow();
+    },
+  );
 });

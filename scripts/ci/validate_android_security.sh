@@ -8,6 +8,7 @@ ACTIVITY_PATH="${ANDROID_MAIN_ACTIVITY_PATH:-$ROOT_DIR/android/app/src/main/kotl
 BUILD_PATH="${ANDROID_APP_BUILD_PATH:-$ROOT_DIR/android/app/build.gradle.kts}"
 RULES_PATH="${ANDROID_DATA_EXTRACTION_RULES_PATH:-$ROOT_DIR/android/app/src/main/res/xml/data_extraction_rules.xml}"
 ALLOWLIST_PATH="${ANDROID_CLEARTEXT_ALLOWLIST_PATH:-$ROOT_DIR/scripts/ci/android-cleartext-allowlist.txt}"
+CLEARTEXT_VALIDATOR="${ANDROID_CLEARTEXT_VALIDATOR_PATH:-$ROOT_DIR/scripts/ci/validate_android_cleartext.py}"
 
 fail() {
   printf '::error::Android security policy: %s\n' "$1" >&2
@@ -24,6 +25,7 @@ require_file "$ACTIVITY_PATH"
 require_file "$BUILD_PATH"
 require_file "$RULES_PATH"
 require_file "$ALLOWLIST_PATH"
+require_file "$CLEARTEXT_VALIDATOR"
 
 MANIFEST_CONTENT="$(<"$MANIFEST_PATH")"
 BUILD_CONTENT="$(<"$BUILD_PATH")"
@@ -68,18 +70,7 @@ grep -Eq 'release[[:space:]]*\{' <<<"$BUILD_CONTENT" \
 grep -Eq 'isDebuggable[[:space:]]*=[[:space:]]*false' <<<"$BUILD_CONTENT" \
   || fail "release build type must explicitly set isDebuggable=false"
 
-cleartext_matches="$(grep -RIlE "android:usesCleartextTraffic[[:space:]]*=[[:space:]]*['\"]true['\"]|cleartextTrafficPermitted[[:space:]]*=[[:space:]]*['\"]true['\"]" "$ROOT_DIR/android/app/src/main" || true)"
-if [[ -n "$cleartext_matches" ]]; then
-  allowlisted_hosts="$(grep -Ev '^[[:space:]]*(#|$)' "$ALLOWLIST_PATH" || true)"
-  [[ -n "$allowlisted_hosts" ]] \
-    || fail "cleartext traffic was found in $cleartext_matches but no documented host is allowlisted in $ALLOWLIST_PATH"
-  while IFS= read -r entry; do
-    [[ "$entry" =~ ^host=[A-Za-z0-9.-]+$ ]] \
-      || fail "invalid cleartext allowlist entry '$entry'; expected host=<fully-qualified-host>"
-  done <<<"$allowlisted_hosts"
-  printf 'Android security policy: cleartext configuration is present and explicitly allowlisted in %s.\n' "$ALLOWLIST_PATH"
-else
-  printf 'Android security policy: no cleartext traffic configuration detected.\n'
-fi
+python3 "$CLEARTEXT_VALIDATOR" "$MANIFEST_PATH" "$ALLOWLIST_PATH" \
+  || fail "cleartext traffic validation failed"
 
 printf 'Android security policy passed: manifest, backup/data extraction, FLAG_SECURE, release debuggability, and cleartext controls are fail-closed.\n'

@@ -46,12 +46,14 @@ A repository administrator must configure and verify:
    not create or configure that environment.
 3. **Release credentials:** provide the Android signing values
    `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, and `KEY_PASSWORD` to
-   the verification job, and provide `PLAY_SERVICE_ACCOUNT_JSON` to the
-   `production` environment. Keep signing material and service-account JSON
-   out of the repository and logs. If the GitHub organization requires a
-   Gitleaks organization license for the pinned action, provision the required
-   license secret as an external prerequisite; the required scan has no
-   conditional secret-presence bypass.
+   the verification job, provide the public upload-certificate SHA-256
+   fingerprint as the repository variable `ANDROID_SIGNING_CERT_SHA256`, and
+   provide `PLAY_SERVICE_ACCOUNT_JSON` to the `production` environment. Keep
+   signing material and service-account JSON out of the repository and logs;
+   only the public certificate fingerprint is extracted into release metadata.
+   Provision the required `GITLEAKS_LICENSE` secret for the mandatory pinned
+   Gitleaks action. The required scan has no conditional secret-presence bypass
+   and fails clearly when that license is unavailable.
 4. **Review ownership:** retain the COO, lead-engineering, and security review
    path required by [OPERATING_MODEL.md](OPERATING_MODEL.md) for high-impact
    release changes. Do not infer reviewer identities from this document.
@@ -79,9 +81,11 @@ workflow. This implementation does not create or modify a tag or release.
   already covered by the required Android lint, unit-test, security-policy, and
   release-build gates; adding an unbuildable CodeQL matrix would weaken rather
   than strengthen the proof path.
-- `.github/workflows/android-release.yml` builds once, uploads the verified
-  payload, attests its checksums, and makes production publication consume that
-  downloaded payload under the `production` environment.
+- `.github/workflows/android-release.yml` builds once, extracts and verifies
+  APK/AAB package identity, version, versionCode, and public signing
+  certificate identity, uploads the verified payload, attests each checksum
+  subject, and makes production publication verify every downloaded attestation
+  before consuming that payload under the `production` environment.
 - `scripts/ci/validate_android_security.sh` and
   `scripts/ci/check_release_version.mjs` fail closed when required evidence or
   metadata is missing.
