@@ -7,14 +7,20 @@ permalink: /docs/state/sovereign
 # Sovereign State (v1.9.5)
 
 **Context:** Phase 5 Native Migration Complete. COO Alignment Complete (2026-06-30).
-**Status:** ALIGNED — Full Production Operational State
+**Status:** BASELINE HARDENING IN PROGRESS — see the [Technical Debt Register](../operations/TECHNICAL_DEBT_REGISTER.md) before treating release readiness as verified.
+
+## Release-baseline authority
+
+The [Technical Debt Register](../operations/TECHNICAL_DEBT_REGISTER.md) is the
+canonical inventory for open and completed release-hardening work. Historical
+audit documents are evidence records, not a substitute for current validation.
 
 ## 🛡️ Security Architecture
 - **CXN Guardian**: Local privacy filtering active for all AI/Network egress.
 - **The Conclave**: StrongBox-backed hardware isolation for BIP-39 mnemonics.
-- **Fail-Closed**: `ProductionRuntimeGuard.failClosed()` enforces release-build safety across all native managers.
+- **Fail-Closed**: `ProductionRuntimeGuard.failClosed()` enforces release-build safety across native managers; the TypeScript signer must also reject native enclave failures without software fallback.
 - **Secret Scanning**: Gitleaks + GitGuardian integrated in CI. `.gitleaks.toml` with documented allowlists.
-- **Dependency Security**: pnpm overrides force-resolve transitive vulnerabilities (29→6 vulns). `pnpm-workspace.yaml` managed.
+- **Dependency Security**: Security overrides are authoritative in `pnpm-workspace.yaml` and reproduced in `pnpm-lock.yaml`; pnpm `11.13.0` ignores the obsolete `package.json` `pnpm` field. The remaining high `bigint-buffer` advisory is controlled by the expiring exception in `scripts/ci/dependency-audit-exceptions.json` and the CI validator.
 - **Security Journal**: `.jules/` hardening journal documents vulnerability patterns and prevention guides.
 
 ## ⛓️ Protocol Support
@@ -29,7 +35,7 @@ permalink: /docs/state/sovereign
 - **Gateway**: OData v4 synchronization for ERP/Institutional workflows.
 - **Wasm**: Local-first verification layer for high-performance mobile execution.
 - **CI/CD**: GitHub Actions with pinned SHAs, dependabot (npm daily, actions/gradle weekly).
-- **Build**: pnpm v11.9.0, TypeScript 6.0.3, Vite 8.1.0, Vitest 4.1.9.
+- **Build policy**: pnpm `11.13.0` via the root `packageManager` declaration and Corepack; TypeScript must remain on the supported `typescript-eslint` line. See the register for current validation evidence.
 
 ## 📜 Repository State (2026-06-30)
 - **Branch**: `main` only. All 13 stale branches archived.
@@ -37,4 +43,4 @@ permalink: /docs/state/sovereign
 - **Milestones**: 0 open.
 - **PRs**: 0 open.
 - **Last commit**: `c2dc78b fix(security): add pnpm overrides...`
-- **Verification**: Build ✅ | TypeScript ✅ | ESLint (0 errors) ✅ | Tests (passing) ✅ | Audit (6 vulns) ✅
+- **Verification**: Do not rely on the historical all-green claim above; current lint, build, Android, E2E, artifact, and protocol evidence is tracked in the register.

@@ -116,8 +116,9 @@ export const requestEnclaveSignature = async (
             timestamp: Date.now()
         };
 
-    } catch (e: any) {
-        console.error("Native signing failed, falling back to TS worker", e);
+    } catch (e: unknown) {
+        console.error("[Signer] Native signing failed; refusing software fallback");
+        throw e;
     }
   }
 

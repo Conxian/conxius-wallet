@@ -1,0 +1,11 @@
+[
+  {
+    "advisory": "GHSA-3gc7-fjrx-p6mg",
+    "package": "bigint-buffer",
+    "severity": "high",
+    "owner": "Conxian security maintainers",
+    "expiresOn": "2026-08-19",
+    "rationale": "The advisory marks bigint-buffer versions through 1.1.5 as vulnerable and lists >=1.1.6 as patched, but npm currently publishes no 1.1.6 or later release. The current Wormhole/Solana dependency path requires bigint-buffer ^1.1.5; forcing the nonexistent patched version would break reproducible installation.",
+    "remediation": "Adopt the first upstream bigint-buffer release containing the fix, or replace the Wormhole/Solana dependency path with a validated alternative before the exception expires."
+  }
+]
