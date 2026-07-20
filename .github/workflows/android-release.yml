@@ -383,8 +383,8 @@ jobs:
           git tag -a "$TAG" "$GITHUB_SHA" -m "Release $TAG"
           git push origin "$TAG"
 
-      - name: Create GitHub release from verified payload
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           tag_name: ${{ needs.release-verify.outputs.tag }}
           name: Conxius Wallet ${{ needs.release-verify.outputs.tag }}
