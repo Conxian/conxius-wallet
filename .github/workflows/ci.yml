@@ -49,6 +49,9 @@ jobs:
     - name: Runtime contamination guard (CON-393)
       run: bash scripts/ci/check_runtime_contamination.sh
 
+    - name: Runtime contamination guard regression tests
+      run: bash scripts/ci/test_check_runtime_contamination.sh
+
     - name: Lint
       run: pnpm run lint
 
