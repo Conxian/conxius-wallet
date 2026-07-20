@@ -24,6 +24,7 @@ Welcome to the official technical documentation for the Conxius Wallet, the sove
 ## 🛡️ Operations & Security
 - [Operations Overview](operations/)
 - [Operating Model](operations/OPERATING_MODEL.md)
+- [BIP-110 Client-Side Alignment](operations/BIP110_COMPLIANCE.md)
 - [Production Artifact Contracts](operations/PRODUCTION_ARTIFACT_CONTRACTS.md)
 - [SAB Wallet Map](operations/SAB_WALLET_MAP.md)
 - [Android Release Prep](operations/ANDROID_RELEASE_PREP.md)

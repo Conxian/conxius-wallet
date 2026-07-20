@@ -1,6 +1,6 @@
 # Silent Payments (BIP-352)
 
-**Status (July 20, 2026): Draft / partial implementation; not release-validated.** PR #390 adds a
+**Status (July 20, 2026): Merged / partial implementation; not release-validated.** PR #390 added a
 bounded native scanning slice, but it is not a release-readiness claim. Android owns
 bounded Esplora ingestion, BIP-352 eligibility extraction, native scanning, public UTXO
 persistence, cursor/resume, and shallow-reorg fail-closed checks. It does **not** add block-filter

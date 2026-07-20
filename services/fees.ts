@@ -1,25 +1,47 @@
-import { Network } from '../types';
 import { fetchWithRetry } from './network';
+import {
+  defaultBitcoinFeeOracleTransport,
+  getCleanBlockFeeRecommendation,
+} from './bitcoin-fee-oracle';
+import type { CleanBlockFeeOptions, FeeRecommendation } from './bitcoin-fee-oracle';
 
-export type FeeRecommendation = {
-  fastestFee: number;
-  halfHourFee: number;
-  hourFee: number;
+export type { FeeRecommendation } from './bitcoin-fee-oracle';
+export type { BitcoinFeeOracleProvider, BitcoinFeeOracleTransport, CleanBlockFeeOptions } from './bitcoin-fee-oracle';
+
+const FALLBACK_BTC_FEES = { fastestFee: 15, halfHourFee: 8, hourFee: 5 };
+
+export type RecommendedFeesOptions = CleanBlockFeeOptions & {
+  /** Disable the clean confirmed-block model and use the legacy endpoint only. */
+  useCleanBlocks?: boolean;
 };
+
+function parseFeeRecommendation(value: unknown): import('./bitcoin-fee-oracle').FeeRecommendation | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const data = value as Record<string, unknown>;
+  const rates = [data.fastestFee, data.halfHourFee, data.hourFee];
+  if (!rates.every(rate => typeof rate === 'number' && Number.isFinite(rate) && rate >= 0)) return null;
+  return {
+    fastestFee: Math.max(1, Math.ceil(rates[0] as number)),
+    halfHourFee: Math.max(1, Math.ceil(rates[1] as number)),
+    hourFee: Math.max(1, Math.ceil(rates[2] as number)),
+  };
+}
 
 /**
  * Fetches BTC (L1) fee recommendations.
  */
-export async function getRecommendedFees(baseUrl: string): Promise<FeeRecommendation> {
+export async function getRecommendedFees(baseUrl: string, options: RecommendedFeesOptions = {}): Promise<FeeRecommendation> {
+  if (options.useCleanBlocks !== false) {
+    const cleanRecommendation = await getCleanBlockFeeRecommendation(baseUrl, options);
+    if (cleanRecommendation) return cleanRecommendation;
+  }
+
   try {
-    const url = `${baseUrl}/v1/fees/recommended`;
-    const res = await fetchWithRetry(url);
-    if (!res.ok) {
-      return { fastestFee: 15, halfHourFee: 8, hourFee: 5 };
-    }
-    return await res.json();
+    const transport = options.transport ?? defaultBitcoinFeeOracleTransport;
+    const response = await transport.getJson<unknown>(`${baseUrl.replace(/\/+$/, '')}/v1/fees/recommended`);
+    return parseFeeRecommendation(response) ?? FALLBACK_BTC_FEES;
   } catch {
-    return { fastestFee: 15, halfHourFee: 8, hourFee: 5 };
+    return FALLBACK_BTC_FEES;
   }
 }
 

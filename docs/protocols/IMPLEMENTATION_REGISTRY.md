@@ -11,7 +11,8 @@ permalink: /docs/implementation-registry
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
 | **Bitcoin L1** | ✅ PRODUCTION | Native BDK (BIP-84/86) integration. |
-| **BIP-352 Silent Payments** | 🟡 IN PROGRESS | Draft PR #390 implements bounded Rust/JNI scanning, Kotlin Esplora ingestion with cursor/persistence and shallow reorg fail-closed checks, plus a public-only Compose scan card. Pending release validation, mobile evidence, compact-filter discovery, spending/tweak recovery, native address encoding, authoritative spentness, and raw/merkle proof coverage. |
+| **BIP-110 client-side fee alignment** | 🟡 IN PROGRESS | `services/bitcoin-fee-oracle.ts` samples bounded confirmed blocks, excludes narrowly detected inscription envelopes, and falls back to the existing fee endpoint. This is client-side policy, not consensus compliance; see [BIP-110 alignment](../operations/BIP110_COMPLIANCE.md). |
+| **BIP-352 Silent Payments** | 🟡 IN PROGRESS | Merged PR #390 implements bounded Rust/JNI scanning, Kotlin Esplora ingestion with cursor/persistence and shallow reorg fail-closed checks, plus a public-only Compose scan card. Pending release validation, mobile evidence, compact-filter discovery, spending/tweak recovery, native address encoding, authoritative spentness, and raw/merkle proof coverage. |
 | **Lightning** | ✅ PRODUCTION | Native Breez Manager + TS Breez SDK. |
 | **Babylon Staking** | ✅ PRODUCTION | Native Taproot staking for Babylon protocol. |
 | **NIP-47 (NWC)** | ✅ PRODUCTION | Native NwcManager + TS event support. |
