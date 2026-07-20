@@ -22,6 +22,7 @@ fun DashboardScreen(viewModel: WalletViewModel) {
     val assets by viewModel.assets.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val error by viewModel.error.collectAsState()
+    val silentPaymentScanState by viewModel.silentPaymentScanState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -65,6 +66,16 @@ fun DashboardScreen(viewModel: WalletViewModel) {
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SilentPaymentScanCard(
+                scanState = silentPaymentScanState,
+                onStart = { network, startHeight, endHeight ->
+                    viewModel.scanSilentPayments(network, startHeight, endHeight)
+                },
+                onCancel = viewModel::cancelSilentPaymentScan,
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 

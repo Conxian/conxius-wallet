@@ -6,6 +6,9 @@ pluginManagement {
     }
 }
 
+// Keep Capacitor's generated module list available to the native app and plugin classpath.
+apply from: 'capacitor.settings.gradle'
+
 rootProject.name = 'ConxiusWallet'
 include ':app'
 include ':core-crypto'

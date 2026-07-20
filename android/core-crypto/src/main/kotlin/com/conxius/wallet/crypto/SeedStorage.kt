@@ -13,7 +13,10 @@ class StrongBoxSeedStorage(private val manager: StrongBoxManager) : SeedStorage 
     private var cachedEncryptedSeed: EncryptedData? = null
 
     override fun storeSeed(seed: ByteArray) {
-        val (ciphertext, iv) = manager.encrypt(seed)
+        // StrongBoxManager.encrypt consumes and clears its input; preserve the caller's live
+        // buffer ownership by passing an explicit temporary copy.
+        val plaintextCopy = seed.clone()
+        val (ciphertext, iv) = manager.encrypt(plaintextCopy)
         cachedEncryptedSeed = EncryptedData(ciphertext, iv)
     }
 

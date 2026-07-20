@@ -7,6 +7,12 @@ android {
     namespace = "com.conxius.wallet"
     compileSdk = 35
 
+    // The directory is generated only by the explicit native build task. An empty directory keeps
+    // normal Gradle configuration/builds independent of Rust, cargo-ndk, and the Android NDK.
+    sourceSets["main"].jniLibs.directories.add(
+        layout.buildDirectory.get().asFile.resolve("generated/silent-payments/jniLibs").absolutePath
+    )
+
     val keystorePath = System.getenv("KEYSTORE_PATH")
     val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
     val keyAlias = System.getenv("KEY_ALIAS")
@@ -63,7 +69,91 @@ android {
     }
 }
 
+val silentPaymentsNativeOutput = layout.buildDirectory.dir("generated/silent-payments/jniLibs")
+val silentPaymentsNativeArm64Library = silentPaymentsNativeOutput.map {
+    it.file("arm64-v8a/libconxius_silent_payments_jni.so").asFile
+}
+val silentPaymentsNativeX8664Library = silentPaymentsNativeOutput.map {
+    it.file("x86_64/libconxius_silent_payments_jni.so").asFile
+}
+val silentPaymentsNativeScript = rootProject.file("../scripts/build-silent-payments-android.sh")
+val silentPaymentsNativeInputs = fileTree(rootProject.file("../native")) {
+    include("**/*.rs")
+    include("**/Cargo.toml")
+    include("**/Cargo.lock")
+    exclude("**/target/**")
+}
+
+val buildSilentPaymentsNative = tasks.register<Exec>("buildSilentPaymentsNative") {
+    group = "native"
+    description = "Build arm64-v8a and x86_64 silent-payment JNI libraries with cargo-ndk."
+    inputs.files(silentPaymentsNativeInputs)
+    inputs.file(silentPaymentsNativeScript)
+    inputs.files(
+        rootProject.file("../rust-toolchain"),
+        rootProject.file("../rust-toolchain.toml"),
+        rootProject.file("../.cargo/config"),
+        rootProject.file("../.cargo/config.toml"),
+    ).optional()
+    inputs.property("androidNdkHome", providers.environmentVariable("ANDROID_NDK_HOME").orNull ?: "")
+    inputs.property("androidNdkRoot", providers.environmentVariable("ANDROID_NDK_ROOT").orNull ?: "")
+    inputs.property("androidHome", providers.environmentVariable("ANDROID_HOME").orNull ?: "")
+    inputs.property("androidSdkRoot", providers.environmentVariable("ANDROID_SDK_ROOT").orNull ?: "")
+    outputs.file(silentPaymentsNativeArm64Library)
+    outputs.file(silentPaymentsNativeX8664Library)
+    doFirst {
+        delete(silentPaymentsNativeOutput)
+        commandLine(
+            "bash",
+            silentPaymentsNativeScript.absolutePath,
+            silentPaymentsNativeOutput.get().asFile.absolutePath,
+        )
+    }
+}
+
+val verifySilentPaymentsNative = tasks.register("verifySilentPaymentsNative") {
+    group = "native"
+    description = "Verify every packaged ABI contains a non-empty silent-payment JNI library."
+    dependsOn(buildSilentPaymentsNative)
+    inputs.files(buildSilentPaymentsNative)
+    doLast {
+        val requiredLibraries = listOf(
+            silentPaymentsNativeOutput.get().asFile.resolve("arm64-v8a/libconxius_silent_payments_jni.so"),
+            silentPaymentsNativeOutput.get().asFile.resolve("x86_64/libconxius_silent_payments_jni.so"),
+        )
+        requiredLibraries.forEach { library ->
+            if (!library.isFile || library.length() == 0L) {
+                throw GradleException(
+                    "Silent-payment JNI packaging verification failed: missing or empty ${library.absolutePath}. " +
+                        "Install cargo-ndk, the Android NDK, and both Android Rust targets, then rerun the package task.",
+                )
+            }
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name in setOf(
+            "preDebugBuild",
+            "preReleaseBuild",
+            "packageDebug",
+            "packageRelease",
+            "bundleDebug",
+            "bundleRelease",
+        )
+    ) {
+        dependsOn(verifySilentPaymentsNative)
+    }
+}
+
+tasks.register<Delete>("cleanSilentPaymentsNative") {
+    delete(silentPaymentsNativeOutput)
+}
+
 dependencies {
+    implementation(project(":capacitor-android"))
+    implementation(project(":capacitor-browser"))
+    implementation(project(":capacitor-local-notifications"))
     implementation(project(":core-crypto"))
     implementation(project(":core-bitcoin"))
     implementation(project(":core-database"))

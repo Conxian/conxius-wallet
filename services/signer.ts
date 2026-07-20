@@ -50,7 +50,7 @@ export const requestEnclaveSignature = async (
     else if (request.layer === "Ark") path = "m/84'/0'/0'/1/0";
     else if (request.layer === "BitVM") path = "m/84'/0'/0'/4/0";
     else if (request.layer === "Maven") path = "m/84'/0'/0'/3/0";
-    else if (request.layer === "Silent") path = "m/352'/0'/0'/10/0";
+    else if (request.layer === "Silent") path = "m/352'/0'/0'/0'/0";
     else if (request.layer === "RGB") path = "m/86'/0'/0'/0/0";
     else if (request.layer === "StateChain") {
         const index = request.payload?.index || 0;
@@ -176,7 +176,7 @@ export const requestEnclaveSignature = async (
       else if (request.layer === "Runes") path = "m/86'/0'/0'/0/0";
       else if (request.layer === "Ordinals") path = "m/86'/0'/0'/0/0";
       else if (request.layer === "Lightning") path = "m/84'/0'/0'/0/0";
-      else if (request.layer === "Silent") path = "m/352'/0'/0'/10/0";
+      else if (request.layer === "Silent") path = "m/352'/0'/0'/0'/0";
       else if (request.layer === "StateChain") {
           const index = request.payload?.index || 0;
           path = `m/84'/0'/0'/2/${index}`;

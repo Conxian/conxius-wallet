@@ -7,9 +7,13 @@ import com.conxius.wallet.PlayIntegrityPlugin
 import com.conxius.wallet.bitcoin.*
 import com.conxius.wallet.crypto.StrongBoxManager
 import com.conxius.wallet.crypto.Web5Manager
-import com.conxius.wallet.repository.AssetEntity
+import com.conxius.wallet.database.AssetEntity
 import com.conxius.wallet.repository.WalletRepository
+import com.conxius.wallet.scan.SilentPaymentScanCoordinator
+import com.conxius.wallet.scan.SilentPaymentScanState
+import com.conxius.wallet.session.WalletSession
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +40,8 @@ class WalletViewModel(
     private val bitVmManager: BitVmManager,
     private val web5Manager: Web5Manager,
     private val musig2Manager: Musig2Manager,
-    private val silentPaymentManager: SilentPaymentManager,
+    private val silentPaymentCoordinator: SilentPaymentScanCoordinator,
+    private val walletSession: WalletSession,
     private val yieldManager: YieldManager,
     private val insuranceManager: InsuranceManager,
     private val interoperabilityManager: InteroperabilityManager,
@@ -61,6 +66,8 @@ class WalletViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
+    val silentPaymentScanState: StateFlow<SilentPaymentScanState> = silentPaymentCoordinator.state
+
     private val _integrityResultSecure = MutableStateFlow<Boolean?>(null)
     val integrityResultSecure: StateFlow<Boolean?> = _integrityResultSecure
 
@@ -74,15 +81,21 @@ class WalletViewModel(
     }
 
     fun unlock(pin: String) {
-        if (_integrityResultSecure.value == false) {
-            _error.value = "Security Error: Device compromised"
-            return
-        }
         viewModelScope.launch {
+            if (_integrityResultSecure.value == false) {
+                clearAuthenticationAndCancelScan()
+                _isLocked.value = true
+                _error.value = "Security Error: Device compromised"
+                return@launch
+            }
+            clearAuthenticationAndCancelScan()
+            _isLocked.value = true
             try {
                 performUnlock()
-            } catch (e: Exception) {
-                _error.value = "Unlock failed: ${e.message}"
+            } catch (_: Exception) {
+                clearAuthenticationAndCancelScan()
+                _isLocked.value = true
+                _error.value = "Unlock failed: INTERNAL"
             }
         }
     }
@@ -90,21 +103,33 @@ class WalletViewModel(
     private suspend fun performUnlock() {
         val encryptedSeed = repository.getEncryptedSeed() ?: throw Exception("No wallet found")
         val seedBytes = strongBoxManager.decrypt(encryptedSeed.encryptedSeed, encryptedSeed.iv)
-        val mnemonicStr = String(seedBytes)
-
-        withContext(Dispatchers.IO) {
-            bdkManager.initializeWallet(mnemonicStr)
+        try {
+            // BdkManager currently accepts String, so this is the one bounded unavoidable JVM
+            // immutable copy. Native silent-payment scans use RoomWalletSeedProvider directly.
+            val mnemonicStr = String(seedBytes, Charsets.UTF_8)
+            withContext(Dispatchers.IO) {
+                bdkManager.initializeWallet(mnemonicStr)
+            }
+        } finally {
+            // Wipe the decrypted mutable source buffer even when BDK initialization fails.
+            seedBytes.fill(0)
         }
 
-        // Wipe seed from memory
-        seedBytes.fill(0)
-
         _isLocked.value = false
+        walletSession.markAuthenticated()
         refreshBalance()
     }
 
     fun lock() {
-        _isLocked.value = true
+        viewModelScope.launch {
+            clearAuthenticationAndCancelScan()
+            _isLocked.value = true
+        }
+    }
+
+    private suspend fun clearAuthenticationAndCancelScan() {
+        silentPaymentCoordinator.cancel()
+        walletSession.clearAuthentication()
     }
 
     fun refreshBalance() {
@@ -128,8 +153,8 @@ class WalletViewModel(
                 )
 
                 repository.updateAssets(listOf(btcAsset))
-            } catch (e: Exception) {
-                _error.value = "Refresh failed: ${e.message}"
+            } catch (_: Exception) {
+                _error.value = "Refresh failed: INTERNAL"
             } finally {
                 _isSyncing.value = false
             }
@@ -138,15 +163,40 @@ class WalletViewModel(
 
     // --- Bridged Protocol Actions ---
 
-    fun scanSilentPayments(scanSk: String, spendPk: String, startBlock: Long, endBlock: Long) {
+    fun scanSilentPayments(
+        network: SilentPaymentNetwork,
+        startHeight: Long? = null,
+        endHeight: Long,
+    ) {
+        if (_isLocked.value || !walletSession.isUnlocked.value) {
+            _error.value = "Silent payment scan failed: WALLET_LOCKED"
+            return
+        }
         viewModelScope.launch {
             try {
-                val utxos = silentPaymentManager.scanForPayments(scanSk, spendPk, startBlock, endBlock)
-                _error.value = "Silent Payment Scan Complete: Found ${utxos.size} UTXOs"
-            } catch (e: Exception) {
-                _error.value = "Silent Payment scan failed: ${e.message}"
+                silentPaymentCoordinator.start(
+                    SilentPaymentScanOptions(
+                        network = network,
+                        startHeight = startHeight,
+                        endHeight = endHeight,
+                    ),
+                ).await()
+            } catch (e: CancellationException) {
+                // Cancellation is represented by the structured StateFlow, not a raw message.
+            } catch (e: NativeSilentPaymentException) {
+                _error.value = "Silent payment scan failed: ${e.code.name}"
+            } catch (_: Exception) {
+                _error.value = "Silent payment scan failed: ${NativeErrorCode.INTERNAL.name}"
             }
         }
+    }
+
+    fun cancelSilentPaymentScan() {
+        silentPaymentCoordinator.cancel()
+    }
+
+    fun unlockWithBiometrics() {
+        unlock("")
     }
 
     fun createStakingTx(stakerPk: String, amount: Long) {
