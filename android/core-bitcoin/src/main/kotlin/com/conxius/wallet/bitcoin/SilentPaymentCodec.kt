@@ -86,6 +86,7 @@ object SilentPaymentCodec {
         val startBlock = cursor.readU64()
         val endBlock = cursor.readU64()
         if (startBlock > endBlock) fail(NativeErrorCode.INVALID_PUBLIC_BATCH)
+        if (endBlock - startBlock >= MAX_SCAN_BLOCKS) fail(NativeErrorCode.RESOURCE_LIMIT)
         val transactionCount = cursor.readBoundedCount(MAX_BATCH_TRANSACTIONS)
         val labelCount = cursor.readBoundedCount(MAX_LABELS)
 
@@ -156,10 +157,12 @@ object SilentPaymentCodec {
                 ) {
                     fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
                 }
+                val valueSat = cursor.readU64()
+                if (valueSat > MAX_MONEY_SAT) fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
                 outputs += TaprootOutput(
                     outputKey = outputKey,
                     outpoint = outpoint,
-                    valueSat = cursor.readU64(),
+                    valueSat = valueSat,
                     isUnspent = cursor.readFlag(),
                 )
             }
@@ -224,6 +227,7 @@ object SilentPaymentCodec {
                 fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
             }
             val valueSat = cursor.readU64()
+            if (valueSat > MAX_MONEY_SAT) fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
             val isUnspent = cursor.readFlag()
             val k = cursor.readU32()
             if (k >= MAX_K.toLong()) {

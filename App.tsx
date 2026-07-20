@@ -72,9 +72,10 @@ import ToastContainer from './components/Toast';
 import { AppContext, initialAppState } from './context';
 import { getEnclaveBlob, persistState, removeEnclaveBlob, STORAGE_KEY } from './services/enclave-storage';
 import { getTranslation } from './services/i18n';
-import { AppState, WalletConfig, AppMode, Asset } from './types';
+import { AppState, WalletConfig, AppMode, Asset, SilentPaymentScanOptions, SilentPaymentScanState, SilentPaymentUtxo } from './types';
 import { SignRequest } from './services/signer';
 import { enforcePhase6Guard } from './services/security-constants';
+import { cancelSilentPaymentScan, dedupeSilentPaymentUtxos, getSilentPaymentScanStatus, scanForSilentPayments } from './services/silent-payments';
 
 const BOOT_SEQUENCE = [
   { text: 'Initializing Secure Enclave', icon: Shield },
@@ -83,6 +84,41 @@ const BOOT_SEQUENCE = [
   { text: 'Verifying Citadel State', icon: Globe },
   { text: 'Mounting TEE Interface', icon: Cpu }
 ];
+
+const STABLE_SCAN_ERROR_CODES = new Set([
+  'INVALID_SECRET', 'INVALID_NETWORK', 'INVALID_PUBLIC_BATCH', 'RESOURCE_LIMIT',
+  'INVALID_PUBLIC_RECORD', 'ECC_FAILURE', 'INTERNAL', 'CANCELLED', 'REORG_DETECTED',
+  'WALLET_LOCKED', 'INVALID_REQUEST', 'NETWORK_UNAVAILABLE', 'UNSUPPORTED_PLATFORM',
+  'LIBRARY_UNAVAILABLE',
+]);
+
+const normalizeScanErrorCode = (value: unknown): string => {
+  const candidate = typeof value === 'string' ? value : '';
+  return STABLE_SCAN_ERROR_CODES.has(candidate) ? candidate : 'INTERNAL';
+};
+
+const normalizePersistedSilentPaymentScan = (value: unknown): SilentPaymentScanState => {
+  if (!value || typeof value !== 'object' || !('status' in value)) return { status: 'idle' };
+  const candidate = value as Partial<SilentPaymentScanState>;
+  if (candidate.status === 'idle') return { status: 'idle' };
+  if (candidate.status === 'failed' || candidate.status === 'cancelled') {
+    return { status: candidate.status, errorCode: normalizeScanErrorCode(candidate.errorCode) };
+  }
+  if (candidate.status === 'completed' &&
+    'metrics' in candidate && candidate.metrics &&
+    Array.isArray(candidate.utxos)) {
+    return {
+      status: 'completed',
+      metrics: candidate.metrics,
+      cursor: candidate.cursor,
+      utxos: dedupeSilentPaymentUtxos(candidate.utxos as SilentPaymentUtxo[]),
+    };
+  }
+  if (candidate.status === 'scanning' && 'progress' in candidate && candidate.progress) {
+    return { status: 'scanning', progress: candidate.progress };
+  }
+  return { status: 'idle' };
+};
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(initialAppState);
@@ -127,8 +163,16 @@ const App: React.FC = () => {
 
     // In a real app, we'd use the pin to decrypt the blob
     // For this simulation, we'll just check if it matches the current pin or a placeholder
-    const decrypted = JSON.parse(blob);
-    setState(decrypted);
+    const decrypted = JSON.parse(blob) as Partial<AppState>;
+    const persistedUtxos = Array.isArray(decrypted.silentPaymentUtxos)
+      ? dedupeSilentPaymentUtxos(decrypted.silentPaymentUtxos as SilentPaymentUtxo[])
+      : [];
+    setState({
+      ...initialAppState,
+      ...decrypted,
+      silentPaymentUtxos: persistedUtxos,
+      silentPaymentScan: normalizePersistedSilentPaymentScan(decrypted.silentPaymentScan),
+    });
     currentPinRef.current = pin;
     return true;
   };
@@ -147,6 +191,86 @@ const App: React.FC = () => {
   const setCustomNodes = (nodes: any) => setState((prev: any) => ({ ...prev, customNodes: nodes }));
   const setRpcStrategy = (strategy: any) => setState((prev: any) => ({ ...prev, rpcStrategy: strategy }));
   const getWormholeSigner = () => null;
+
+  const scanSilentPayments = async (options: SilentPaymentScanOptions) => {
+    setState((prev: AppState) => ({
+      ...prev,
+      silentPaymentScan: {
+        status: 'scanning',
+        progress: {
+          startHeight: options.startHeight ?? 0,
+          endHeight: options.endHeight,
+          scannedBlocks: 0,
+          scannedTransactions: 0,
+          skippedTransactions: 0,
+          matchCount: 0,
+        },
+      },
+    }));
+    let polling = true;
+    const pollProgress = (async () => {
+      while (polling) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        if (!polling) break;
+        try {
+          const status = await getSilentPaymentScanStatus();
+          if (polling && status.status === 'scanning') {
+            setState((prev: AppState) => ({ ...prev, silentPaymentScan: status }));
+          }
+        } catch {
+          // The final result/error remains authoritative; transient status failures are ignored.
+        }
+      }
+    })();
+    try {
+      const result = await scanForSilentPayments(options);
+      setState((prev: AppState) => ({
+        ...prev,
+        silentPaymentUtxos: dedupeSilentPaymentUtxos([
+          ...prev.silentPaymentUtxos,
+          ...result.utxos,
+        ]),
+        silentPaymentScan: {
+          status: 'completed',
+          metrics: result.metrics,
+          cursor: result.cursor,
+          utxos: result.utxos,
+        },
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      const errorCode = message.includes('unsupported')
+        ? 'UNSUPPORTED_PLATFORM'
+        : normalizeScanErrorCode(message);
+      setState((prev: AppState) => ({
+        ...prev,
+        silentPaymentScan: errorCode === 'CANCELLED'
+          ? { status: 'cancelled', errorCode }
+          : { status: 'failed', errorCode },
+      }));
+      throw error;
+    } finally {
+      polling = false;
+      await pollProgress;
+    }
+  };
+
+  const cancelAppSilentPaymentScan = async () => {
+    try {
+      await cancelSilentPaymentScan();
+      setState((prev: AppState) => ({
+        ...prev,
+        silentPaymentScan: { status: 'cancelled', errorCode: 'CANCELLED' },
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      setState((prev: AppState) => ({
+        ...prev,
+        silentPaymentScan: { status: 'failed', errorCode: normalizeScanErrorCode(message) },
+      }));
+      throw error;
+    }
+  };
 
   const notifyUser = (type: any, message: string) => {
     const id = Date.now().toString();
@@ -172,12 +296,14 @@ const App: React.FC = () => {
      const newPin = pin || currentPinRef.current;
      if (newPin) currentPinRef.current = newPin;
      
-     const newState = { 
+     const newState: AppState = {
         ...state, 
         mode: effectiveMode as AppMode,
         walletConfig: config,
         assets: initialAssets as Asset[],
-        sovereigntyScore: config.backupVerified ? 100 : 70
+        sovereigntyScore: config.backupVerified ? 100 : 70,
+        silentPaymentUtxos: [],
+        silentPaymentScan: { status: 'idle' },
      };
      
      setState(newState);
@@ -272,7 +398,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <AppContext.Provider value={{ state: state as any, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify: notifyUser, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, getWormholeSigner }}>
+    <AppContext.Provider value={{ state: state as any, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify: notifyUser, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, scanSilentPayments, cancelSilentPaymentScan: cancelAppSilentPaymentScan, getWormholeSigner }}>
       <div className={`flex bg-ivory text-brand-deep min-h-screen selection:bg-accent-earth/30 overflow-hidden`}>
         <div className="hidden md:block">
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />

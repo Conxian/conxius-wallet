@@ -151,6 +151,9 @@ tasks.register<Delete>("cleanSilentPaymentsNative") {
 }
 
 dependencies {
+    implementation(project(":capacitor-android"))
+    implementation(project(":capacitor-browser"))
+    implementation(project(":capacitor-local-notifications"))
     implementation(project(":core-crypto"))
     implementation(project(":core-bitcoin"))
     implementation(project(":core-database"))

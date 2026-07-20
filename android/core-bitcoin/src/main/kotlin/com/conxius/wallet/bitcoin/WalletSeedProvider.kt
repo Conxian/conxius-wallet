@@ -19,7 +19,8 @@ class WalletSeedMaterial(
     val mnemonicBytes: ByteArray,
     val passphraseBytes: ByteArray?,
 ) {
-    internal fun clear() {
+    /** Clear borrowed buffers; callers must not use this object after calling clear. */
+    fun clear() {
         Arrays.fill(mnemonicBytes, 0.toByte())
         passphraseBytes?.let { Arrays.fill(it, 0.toByte()) }
     }

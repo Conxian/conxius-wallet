@@ -6,6 +6,8 @@ import com.conxius.wallet.repository.WalletRepository
 import com.conxius.wallet.bitcoin.*
 import com.conxius.wallet.crypto.StrongBoxManager
 import com.conxius.wallet.crypto.Web5Manager
+import com.conxius.wallet.scan.SilentPaymentScanCoordinator
+import com.conxius.wallet.session.WalletSession
 
 class ViewModelFactory(
     private val repository: WalletRepository,
@@ -26,7 +28,8 @@ class ViewModelFactory(
     private val bitVmManager: BitVmManager,
     private val web5Manager: Web5Manager,
     private val musig2Manager: Musig2Manager,
-    private val silentPaymentManager: SilentPaymentManager,
+    private val silentPaymentCoordinator: SilentPaymentScanCoordinator,
+    private val walletSession: WalletSession,
     private val yieldManager: YieldManager,
     private val insuranceManager: InsuranceManager,
     private val interoperabilityManager: InteroperabilityManager,
@@ -58,7 +61,8 @@ class ViewModelFactory(
                 bitVmManager,
                 web5Manager,
                 musig2Manager,
-                silentPaymentManager,
+                silentPaymentCoordinator,
+                walletSession,
                 yieldManager,
                 insuranceManager,
                 interoperabilityManager,

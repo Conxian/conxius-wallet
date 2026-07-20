@@ -17,6 +17,11 @@ enum class NativeErrorCode(val wireCode: Int) {
     ECC_FAILURE(6),
     INTERNAL(7),
     CANCELLED(8),
+    REORG_DETECTED(9),
+    WALLET_LOCKED(10),
+    INVALID_REQUEST(11),
+    NETWORK_UNAVAILABLE(12),
+    UNSUPPORTED_PLATFORM(13),
     LIBRARY_UNAVAILABLE(0);
 
     companion object {
