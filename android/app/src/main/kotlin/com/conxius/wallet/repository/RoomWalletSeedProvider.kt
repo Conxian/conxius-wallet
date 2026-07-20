@@ -15,6 +15,8 @@ import java.util.Arrays
 * Room stores only ciphertext/IV. A decrypted mnemonic is borrowed as mutable UTF-8 bytes for a
 * single callback and is wiped in this provider and again by the manager. The provider never
 * converts the bytes to String, caches them, derives keys, or includes them in diagnostics.
+* Production does not store or supply a BIP39 passphrase; the callback always receives a null
+* passphrase. Non-empty passphrases are reserved for native fixture/test seams.
 */
 class RoomWalletSeedProvider(
     private val repository: WalletRepository,

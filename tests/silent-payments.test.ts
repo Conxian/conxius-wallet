@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Buffer } from 'buffer';
 import { readFileSync } from 'node:fs';
 import { Capacitor } from '@capacitor/core';
+import { bech32m } from 'bech32';
 import {
+    decodeSilentPaymentAddress,
     dedupeSilentPaymentUtxos,
     deriveSilentPaymentKeys,
     encodeSilentPaymentAddress,
@@ -73,6 +75,27 @@ describe('Silent Payments service', () => {
         const keys = deriveSilentPaymentKeys(mockSeed);
         const addr = await encodeSilentPaymentAddress(keys.scanPub, keys.spendPub);
         expect(addr).toContain('sp1');
+    });
+
+    it('rejects compressed public keys with invalid prefixes', async () => {
+        const keys = deriveSilentPaymentKeys(mockSeed);
+        const invalidScan = Buffer.from(keys.scanPub);
+        invalidScan[0] = 0x04;
+
+        await expect(encodeSilentPaymentAddress(invalidScan, keys.spendPub)).rejects.toThrow(/prefix/i);
+
+        const payload = Buffer.concat([invalidScan, keys.spendPub]);
+        const address = bech32m.encode('sp', [0, ...bech32m.toWords(payload)], 1024);
+        expect(() => decodeSilentPaymentAddress(address)).toThrow(/prefix/i);
+    });
+
+    it('rejects compressed public keys that are not valid secp256k1 points', () => {
+        const keys = deriveSilentPaymentKeys(mockSeed);
+        const invalidScan = Buffer.concat([Buffer.from([0x02]), Buffer.alloc(32)]);
+        const payload = Buffer.concat([invalidScan, keys.spendPub]);
+        const address = bech32m.encode('sp', [0, ...bech32m.toWords(payload)], 1024);
+
+        expect(() => decodeSilentPaymentAddress(address)).toThrow(/point/i);
     });
 
     it('calls native scanning with public options only and dedupes outpoints', async () => {

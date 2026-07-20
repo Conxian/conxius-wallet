@@ -21,6 +21,16 @@ use zeroize::Zeroizing;
 /// BIP-352's maximum number of sequential output indices checked for one receiver group.
 pub const K_MAX: u32 = 2323;
 
+/// Conservative ECC work budget for one transaction. The estimate counts the actual bounded
+/// input, label, key-index, and labeled-output search paths before any point parsing or scalar
+/// multiplication begins.
+pub const MAX_ECC_WORK_UNITS_PER_TRANSACTION: u64 = 32_000_000;
+
+/// Conservative ECC work budget for one JNI batch. This is intentionally no larger than the
+/// per-transaction budget so a batch cannot aggregate several ordinary worst-case scans into an
+/// unbounded native call.
+pub const MAX_ECC_WORK_UNITS_PER_BATCH: u64 = 32_000_000;
+
 /// Maximum number of transaction input outpoints accepted by one scan call.
 pub const MAX_TRANSACTION_INPUTS: usize = 4096;
 
@@ -279,8 +289,66 @@ pub enum ScanError {
     InvalidSharedSecretTweak(u32),
     #[error("BIP-352 label {0} is not a valid non-zero scalar")]
     InvalidLabel(u32),
+    #[error("scan computation budget {actual} exceeds limit {limit}")]
+    ComputationBudgetExceeded { actual: u64, limit: u64 },
+    #[error("scan computation budget arithmetic overflow")]
+    ComputationBudgetOverflow,
     #[error("secp256k1 point operation failed")]
     PointOperation,
+}
+
+/// Estimate the bounded ECC/search work for one transaction without performing ECC operations.
+///
+/// The estimate mirrors the implementation below: one bounded `k` iteration can match at most
+/// one output, while each labeled output check can take the two negation paths and their two point
+/// combinations. The return value is deliberately a work unit rather than a wall-clock promise.
+pub fn estimate_scan_work_units(
+    input_count: usize,
+    output_count: usize,
+    label_count: usize,
+) -> Result<u64, ScanError> {
+    if input_count == 0 {
+        return Ok(0);
+    }
+
+    let input_work = checked_work_mul(input_count, 4)?;
+    let label_work = checked_work_mul(label_count, 4)?;
+    let k_iterations = output_count.min(K_MAX as usize).max(1);
+    let k_work = checked_work_mul(k_iterations, 4)?;
+    let output_checks = checked_work_product(k_iterations, output_count)?;
+    let labeled_output_work = if label_count == 0 {
+        0
+    } else {
+        output_checks
+            .checked_mul(4)
+            .ok_or(ScanError::ComputationBudgetOverflow)?
+    };
+
+    input_work
+        .checked_add(label_work)
+        .and_then(|work| work.checked_add(k_work))
+        .and_then(|work| work.checked_add(output_checks))
+        .and_then(|work| work.checked_add(labeled_output_work))
+        .and_then(|work| work.checked_add(8))
+        .ok_or(ScanError::ComputationBudgetOverflow)
+}
+
+fn checked_work_mul(value: usize, factor: u64) -> Result<u64, ScanError> {
+    u64::try_from(value)
+        .ok()
+        .and_then(|value| value.checked_mul(factor))
+        .ok_or(ScanError::ComputationBudgetOverflow)
+}
+
+fn checked_work_product(left: usize, right: usize) -> Result<u64, ScanError> {
+    u64::try_from(left)
+        .ok()
+        .and_then(|left| {
+            u64::try_from(right)
+                .ok()
+                .and_then(|right| left.checked_mul(right))
+        })
+        .ok_or(ScanError::ComputationBudgetOverflow)
 }
 
 /// Scan one already-parsed transaction for one receiver group.
@@ -323,6 +391,13 @@ pub fn scan_transaction_with_cancellation<C: CancellationToken>(
     validate_scan_records(all_input_outpoints, inputs, outputs, labels)?;
     if cancellation.is_cancelled() {
         return Err(ScanError::Cancelled);
+    }
+    let estimated_work = estimate_scan_work_units(inputs.len(), outputs.len(), labels.len())?;
+    if estimated_work > MAX_ECC_WORK_UNITS_PER_TRANSACTION {
+        return Err(ScanError::ComputationBudgetExceeded {
+            actual: estimated_work,
+            limit: MAX_ECC_WORK_UNITS_PER_TRANSACTION,
+        });
     }
 
     let secp = Secp256k1::new();
@@ -778,6 +853,46 @@ mod tests {
                 resource: ScanResource::Labels,
                 actual: MAX_LABELS + 1,
                 limit: MAX_LABELS,
+            })
+        );
+    }
+
+    #[test]
+    fn computation_budget_rejects_pathological_structures_before_point_parsing() {
+        let scan_secret = ScanSecret::from_bytes([1u8; 32]).expect("test scan secret");
+        let spend_public_key = test_spend_public_key();
+        let input_outpoint = OutPoint {
+            txid_le: [42u8; 32],
+            vout: 0,
+        };
+        let outputs: Vec<_> = (0..MAX_TAPROOT_OUTPUTS)
+            .map(|vout| TaprootOutput {
+                output_key: [0u8; 32],
+                outpoint: OutPoint {
+                    txid_le: [42u8; 32],
+                    vout: vout as u32,
+                },
+                value_sat: 0,
+                is_unspent: false,
+            })
+            .collect();
+        let labels: Vec<_> = (0..MAX_LABELS as u32).collect();
+        let estimated_work = estimate_scan_work_units(1, outputs.len(), labels.len())
+            .expect("budget estimate must use checked arithmetic");
+        assert!(estimated_work > MAX_ECC_WORK_UNITS_PER_TRANSACTION);
+
+        assert_eq!(
+            scan_transaction(
+                &scan_secret,
+                spend_public_key,
+                &[input_outpoint],
+                &[test_input(input_outpoint)],
+                &outputs,
+                &labels,
+            ),
+            Err(ScanError::ComputationBudgetExceeded {
+                actual: estimated_work,
+                limit: MAX_ECC_WORK_UNITS_PER_TRANSACTION,
             })
         );
     }

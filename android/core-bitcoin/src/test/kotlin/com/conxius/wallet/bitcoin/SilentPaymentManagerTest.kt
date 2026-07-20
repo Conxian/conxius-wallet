@@ -60,7 +60,7 @@ class SilentPaymentManagerTest {
 
     @Test
     fun managerSeparatesSecretsFromPublicBatchAndMapsStructuredResult() = runBlocking {
-        val provider = FixtureProvider("abandon abandon about".encodeToByteArray(), byteArrayOf(4, 5))
+        val provider = FixtureProvider("abandon abandon about".encodeToByteArray(), null)
         val native = RecordingNativeScanner(resultFor(batch))
         val manager = SilentPaymentManager(provider, native)
 
@@ -77,7 +77,37 @@ class SilentPaymentManagerTest {
         assertEquals(1, result.metrics.transactionCount)
         assertEquals(1, result.metrics.matchCount)
         assertTrue(native.mnemonicAfterCall.all { it == 0.toByte() })
-        assertTrue(native.passphraseAfterCall?.all { it == 0.toByte() } == true)
+        assertTrue(native.passphraseAfterCall == null)
+    }
+
+    @Test
+    fun productionRejectsNonEmptyPassphraseBeforeNativeInvocation() = runBlocking {
+        val provider = FixtureProvider(byteArrayOf(1, 2), byteArrayOf(4, 5))
+        val native = RecordingNativeScanner(resultFor(batch))
+
+        val error = runCatching {
+            SilentPaymentManager(provider, native).scanBatch(batch)
+        }.exceptionOrNull()
+
+        assertTrue(error is NativeSilentPaymentException)
+        assertEquals(NativeErrorCode.INVALID_REQUEST, (error as NativeSilentPaymentException).code)
+        assertEquals(0, native.calls)
+        assertTrue(provider.lastMnemonic.all { it == 0.toByte() })
+        assertTrue(provider.lastPassphrase?.all { it == 0.toByte() } == true)
+    }
+
+    @Test
+    fun productionRejectsNonEmptyLabelsBeforeNativeInvocation() = runBlocking {
+        val provider = FixtureProvider(byteArrayOf(1, 2), null)
+        val native = RecordingNativeScanner(resultFor(batch))
+
+        val error = runCatching {
+            SilentPaymentManager(provider, native).scanBatch(batch.copy(labels = listOf(0)))
+        }.exceptionOrNull()
+
+        assertTrue(error is NativeSilentPaymentException)
+        assertEquals(NativeErrorCode.INVALID_REQUEST, (error as NativeSilentPaymentException).code)
+        assertEquals(0, native.calls)
     }
 
     @Test
@@ -143,7 +173,7 @@ class SilentPaymentManagerTest {
 
     @Test
     fun secretBuffersAreClearedWhenNativeCallIsCancelled() = runBlocking {
-        val provider = FixtureProvider(byteArrayOf(2, 3), byteArrayOf(4))
+        val provider = FixtureProvider(byteArrayOf(2, 3), null)
         val native = object : NativeSilentPaymentScanner {
             override suspend fun scan(
                 mnemonicBytes: ByteArray,
@@ -158,7 +188,7 @@ class SilentPaymentManagerTest {
 
         assertTrue(error is CancellationException)
         assertTrue(provider.lastMnemonic.all { it == 0.toByte() })
-        assertTrue(provider.lastPassphrase?.all { it == 0.toByte() } == true)
+        assertTrue(provider.lastPassphrase == null)
     }
 
     @Test

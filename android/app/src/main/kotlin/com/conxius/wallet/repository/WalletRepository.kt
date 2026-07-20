@@ -6,9 +6,13 @@ import com.conxius.wallet.database.SilentPaymentUtxoEntity
 import com.conxius.wallet.database.TransactionEntity
 import com.conxius.wallet.database.UtxoEntity
 import com.conxius.wallet.database.WalletDao
+import com.conxius.wallet.session.WalletSession
 import kotlinx.coroutines.flow.Flow
 
-class WalletRepository(private val walletDao: WalletDao) {
+class WalletRepository(
+    private val walletDao: WalletDao,
+    private val walletSession: WalletSession,
+) {
     val allAssets: Flow<List<AssetEntity>> = walletDao.getAllAssets()
     val allTransactions: Flow<List<TransactionEntity>> = walletDao.getAllTransactions()
     val allUtxos: Flow<List<UtxoEntity>> = walletDao.getAllUtxos()
@@ -16,11 +20,13 @@ class WalletRepository(private val walletDao: WalletDao) {
     suspend fun getEncryptedSeed() = walletDao.getSeed()
 
     suspend fun saveSeed(encryptedSeed: ByteArray, iv: ByteArray) {
+        walletSession.invalidateForWalletMutation()
         val entity = com.conxius.wallet.database.EncryptedSeedEntity(0, encryptedSeed, iv)
         walletDao.replaceSeed(entity)
     }
 
     suspend fun clearWallet() {
+        walletSession.invalidateForWalletMutation()
         walletDao.clearWalletData()
         // Add more clearing logic as needed
     }
@@ -39,9 +45,10 @@ class WalletRepository(private val walletDao: WalletDao) {
         walletDao.getSilentPaymentCursor(network)
 
     suspend fun persistSilentPaymentBatch(
+        expectedGeneration: Long,
         utxos: List<SilentPaymentUtxoEntity>,
         cursor: SilentPaymentScanCursorEntity?,
-    ) {
+    ): Boolean = walletSession.withActiveGeneration(expectedGeneration) {
         walletDao.persistSilentPaymentBatch(utxos, cursor)
-    }
+    }?.let { true } ?: false
 }

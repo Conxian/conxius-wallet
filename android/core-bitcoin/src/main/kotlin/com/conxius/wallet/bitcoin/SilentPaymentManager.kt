@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.collect
 * The manager never derives keys, accepts key hex strings, fabricates UTXOs, or owns chain
 * ingestion. It encodes public [BlockSource] batches, borrows mnemonic material only around the
 * native call, clears that material in `finally`, and aggregates public matches/metrics.
+* Production batches currently have no configured labels and no BIP39 passphrase. Non-empty
+* values are rejected explicitly rather than silently discarded.
 */
 class SilentPaymentManager(
     private val walletSeedProvider: WalletSeedProvider = UnavailableWalletSeedProvider,
@@ -41,6 +43,7 @@ class SilentPaymentManager(
         network: SilentPaymentNetwork,
         range: ScanRange,
         blockSource: BlockSource,
+        beforeNativeInvocation: (() -> Unit)? = null,
     ): SilentPaymentScanResult {
         val matches = ArrayList<SilentPaymentMatch>()
         var transactionCount = 0L
@@ -53,6 +56,9 @@ class SilentPaymentManager(
             currentCoroutineContext().ensureActive()
             if (batch.network != network || batch.range != range) {
                 throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_BATCH)
+            }
+            if (batch.labels.isNotEmpty()) {
+                throw NativeSilentPaymentException(NativeErrorCode.INVALID_REQUEST)
             }
             if (batch.transactions.isEmpty()) {
                 return@collect
@@ -73,7 +79,11 @@ class SilentPaymentManager(
             // the native seam returns, including cancellation and native-error paths.
             val encodedResult = walletSeedProvider.withSeed { material ->
                 try {
+                    if (material.passphraseBytes?.isNotEmpty() == true) {
+                        throw NativeSilentPaymentException(NativeErrorCode.INVALID_REQUEST)
+                    }
                     currentCoroutineContext().ensureActive()
+                    beforeNativeInvocation?.invoke()
                     nativeScanner.scan(material.mnemonicBytes, material.passphraseBytes, encodedBatch)
                 } finally {
                     material.clear()
@@ -117,8 +127,16 @@ class SilentPaymentManager(
         )
     }
 
-    suspend fun scanBatch(batch: SilentPaymentBatch): SilentPaymentScanResult =
-        scanForPayments(batch.network, batch.range, InMemoryBlockSource(listOf(batch)))
+    suspend fun scanBatch(
+        batch: SilentPaymentBatch,
+        beforeNativeInvocation: (() -> Unit)? = null,
+    ): SilentPaymentScanResult =
+        scanForPayments(
+            batch.network,
+            batch.range,
+            InMemoryBlockSource(listOf(batch)),
+            beforeNativeInvocation,
+        )
 
     private fun validateBatchResult(
         batch: SilentPaymentBatch,

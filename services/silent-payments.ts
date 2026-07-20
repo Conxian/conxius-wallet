@@ -16,6 +16,18 @@ const PUBLIC_KEY_BYTES = 33;
 const MAX_SCAN_BLOCKS = 2_016;
 const SILENT_PAYMENT_NETWORKS: SilentPaymentNetwork[] = ['mainnet', 'testnet', 'signet', 'regtest'];
 
+function validateCompressedPublicKey(publicKey: Uint8Array, name: string): void {
+    if (publicKey.length !== PUBLIC_KEY_BYTES) {
+        throw new Error(`Invalid ${name} public key length`);
+    }
+    if (publicKey[0] !== 0x02 && publicKey[0] !== 0x03) {
+        throw new Error(`Invalid ${name} compressed public key prefix`);
+    }
+    if (!ecc.isPointCompressed(publicKey)) {
+        throw new Error(`Invalid ${name} compressed public key point`);
+    }
+}
+
 export interface SilentPaymentKeys {
     scanPub: Buffer;
     spendPub: Buffer;
@@ -55,15 +67,18 @@ export const deriveSilentPaymentKeys = (
     };
 };
 
-/** Encodes the public BIP-352 receiver address; no native secret boundary is involved. */
+/**
+* Encodes the public BIP-352 receiver address; no native secret boundary is involved. The
+* current shipped Compose launcher cannot call the Capacitor plugin, so this codec is not a claim
+* of full end-to-end TypeScript runtime support.
+*/
 export const encodeSilentPaymentAddress = async (
     scanPub: Buffer,
     spendPub: Buffer,
     network: 'mainnet' | 'testnet' | 'signet' | 'regtest' = 'mainnet',
 ): Promise<string> => {
-    if (scanPub.length !== PUBLIC_KEY_BYTES || spendPub.length !== PUBLIC_KEY_BYTES) {
-        throw new Error('Invalid silent-payment public key length');
-    }
+    validateCompressedPublicKey(scanPub, 'scan');
+    validateCompressedPublicKey(spendPub, 'spend');
     const hrp = network === 'mainnet' ? 'sp' : 'tsp';
     const fullCombined = Buffer.concat([scanPub, spendPub]);
     const words = bech32m.toWords(fullCombined);
@@ -81,11 +96,15 @@ export const decodeSilentPaymentAddress = (address: string) => {
     if (decoded.prefix !== 'sp' && decoded.prefix !== 'tsp') {
         throw new Error('Unsupported silent-payment address network');
     }
+    const scanPub = Buffer.from(data.slice(0, PUBLIC_KEY_BYTES));
+    const spendPub = Buffer.from(data.slice(PUBLIC_KEY_BYTES));
+    validateCompressedPublicKey(scanPub, 'scan');
+    validateCompressedPublicKey(spendPub, 'spend');
     return {
         hrp: decoded.prefix,
         version,
-        scanPub: Buffer.from(data.slice(0, PUBLIC_KEY_BYTES)),
-        spendPub: Buffer.from(data.slice(PUBLIC_KEY_BYTES)),
+        scanPub,
+        spendPub,
     };
 };
 

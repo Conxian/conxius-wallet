@@ -143,7 +143,10 @@ data class EsploraBlockSummary(
 /**
 * Production Esplora block source. It fetches blocks in ascending height order and emits bounded
 * SPB1-compatible batches. A large block is split into non-overlapping batches; the scan cursor
-* advances only after the final batch for that block has been durably persisted.
+* advances only after the final batch for that block has been durably persisted. Esplora JSON is
+* treated as allowlisted, bounded, trusted metadata: this source checks shape, bounds, continuity,
+* and cross-record consistency, but it does not cryptographically verify raw transaction bytes or
+* independently prove a transaction id from a serialized transaction.
 */
 class EsploraBlockSource(
     private val httpClient: EsploraHttpClient = UrlConnectionEsploraHttpClient(),
