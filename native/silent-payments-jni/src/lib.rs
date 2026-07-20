@@ -19,6 +19,8 @@ pub use derive::{derive_receiver_keys, DerivedReceiverKeys, Network};
 pub use error::NativeErrorCode;
 pub use scan::{scan_public_batch, scan_public_batch_with_cancellation};
 
+pub const MAX_ECC_WORK_UNITS_PER_BATCH: u64 = conxius_silent_payments::MAX_ECC_WORK_UNITS_PER_BATCH;
+
 mod jni_bridge {
     use std::{
         collections::HashMap,

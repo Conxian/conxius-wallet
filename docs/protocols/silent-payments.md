@@ -30,6 +30,13 @@ JavaScript can request only `{ network, startHeight?, endHeight }`. It cannot pr
 mnemonic, passphrase, seed, scan key, spend key, private key, or xpriv. Android rejects legacy
 secret-bearing fields and exposes stable error codes only.
 
+Production labels are not configured in this slice. Esplora batches therefore carry no labels, and
+the Kotlin production manager rejects non-empty label lists with `INVALID_REQUEST` instead of
+silently ignoring them. Room stores only the encrypted mnemonic bytes; BIP39 passphrases are not
+stored or supplied by the production seed provider, and a non-empty passphrase is rejected at the
+manager boundary. Native fixture/vector seams may still exercise protocol labels and passphrases;
+that is not production end-to-end support.
+
 ### Esplora source and endpoint policy
 
 `EsploraBlockSource` fetches the current tip, the canonical parent anchor for the first requested
@@ -56,6 +63,11 @@ required by BIP-352. Transactions with no eligible input or no v1/32-byte Taproo
 skipped before native scanning. Output value, txid/vout, and source spentness metadata are
 retained when Esplora provides them; otherwise spentness is persisted as `UNKNOWN`, never guessed
 as authoritative.
+
+The Esplora JSON is allowlisted and treated as trusted chain metadata after the bounded shape,
+range, order, and cross-record checks above. This slice does not fetch and cryptographically verify
+raw transaction serialization or independently prove that the JSON transaction id commits to the
+reported bytes. Spentness is likewise metadata, not a cryptographic proof of current UTXO state.
 
 When the requested range reaches the observed tip, the source re-fetches both tip height and hash
 before emitting the final block checkpoint. Any parent, txid/order, tip, or block continuity
@@ -93,6 +105,9 @@ after the final batch of a block commits. On resume, the coordinator requires th
 the stored cursor plus one, checks the stored hash/previous hash relationship, and rejects hash or
 ordering mismatches with `REORG_DETECTED`. It does not roll back already persisted rows or attempt
 deep reorg recovery in this slice; operators must rescan from a trusted height after a reorg.
+
+Reorg handling is therefore detection and fail-closed cursor protection, not automatic rollback or
+rewind. Existing rows are not deleted when a reorg is detected.
 
 ## Boundary and key handling
 
@@ -158,7 +173,10 @@ The decoder validates the whole byte limit before allocation, then validates eac
 before allocating a per-record collection. Current limits are 8 MiB per batch, 1,024
 transactions, 4,096 inputs/eligible inputs/outputs per transaction, 65,536 total outputs, and
 256 labels. Every `u64` is restricted to `0..=Long.MAX_VALUE` so Rust and Kotlin have the same
-representable range.
+representable range. Before key derivation, the native boundary also estimates the deterministic
+ECC/search work implied by input count, output count, `k` iterations, and label checks; a
+pathological but structurally valid request returns the existing `RESOURCE_LIMIT` error before
+expensive point operations begin.
 
 ### Result (`SPR1`, version 2)
 
@@ -243,7 +261,9 @@ platform.` on web builds. `SilentPaymentPlugin` also exposes cancellation and st
 the completed status shape matching the top-level result shape. Removed secret-bearing Capacitor
 methods are not restored: mnemonic/passphrase handling stays in the Android Room/StrongBox/provider
 boundary. Because the current launcher is not a Capacitor host, this contract is not an assertion
-that the plugin is currently callable from the shipped Compose activity.
+that the plugin is currently callable from the shipped Compose activity. The current Compose
+launcher cannot call the Capacitor plugin, so the public TypeScript codec and API types must not be
+represented as full end-to-end TypeScript runtime support.
 
 ## Verification
 

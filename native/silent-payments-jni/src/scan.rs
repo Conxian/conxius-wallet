@@ -1,8 +1,8 @@
 use std::time::Instant;
 
 use conxius_silent_payments::{
-    scan_transaction_with_cancellation, CancellationToken, ScanError, ScanOutcome, ScanSecret,
-    ScanSkipReason,
+    estimate_scan_work_units, scan_transaction_with_cancellation, CancellationToken, ScanError,
+    ScanOutcome, ScanSecret, ScanSkipReason, MAX_ECC_WORK_UNITS_PER_BATCH,
 };
 use zeroize::Zeroizing;
 
@@ -48,6 +48,26 @@ fn scan_decoded_batch<C: CancellationToken>(
     cancellation: &C,
 ) -> Result<PublicScanResult, NativeErrorCode> {
     let started = Instant::now();
+    if cancellation.is_cancelled() {
+        return Err(NativeErrorCode::Cancelled);
+    }
+    let estimated_batch_work = batch
+        .transactions
+        .iter()
+        .try_fold(0u64, |total, transaction| {
+            let transaction_work = estimate_scan_work_units(
+                transaction.eligible_inputs.len(),
+                transaction.outputs.len(),
+                batch.labels.len(),
+            )
+            .map_err(map_scan_error)?;
+            total
+                .checked_add(transaction_work)
+                .ok_or(NativeErrorCode::ResourceLimit)
+        })?;
+    if estimated_batch_work > MAX_ECC_WORK_UNITS_PER_BATCH {
+        return Err(NativeErrorCode::ResourceLimit);
+    }
     let derived = derive_receiver_keys(mnemonic, passphrase, batch.network, batch.account)?;
     let scan_secret =
         ScanSecret::from_bytes(*derived.scan_secret).map_err(|_| NativeErrorCode::InvalidSecret)?;
@@ -133,6 +153,9 @@ fn map_scan_error(error: ScanError) -> NativeErrorCode {
         | ScanError::InvalidSharedSecretTweak(_)
         | ScanError::InvalidLabel(_)
         | ScanError::PointOperation => NativeErrorCode::EccFailure,
+        ScanError::ComputationBudgetExceeded { .. } | ScanError::ComputationBudgetOverflow => {
+            NativeErrorCode::ResourceLimit
+        }
     }
 }
 

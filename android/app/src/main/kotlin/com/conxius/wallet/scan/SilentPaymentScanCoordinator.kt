@@ -96,8 +96,10 @@ class SilentPaymentScanCoordinator(
                 _state.value = SilentPaymentScanState.Failed(error.code)
                 throw error
             }
+            val scanGeneration = walletSession.generation
             try {
-                runScan(options)
+                walletSession.requireGeneration(scanGeneration)
+                runScan(options, scanGeneration)
             } catch (error: CancellationException) {
                 _state.value = SilentPaymentScanState.Cancelled
                 throw error
@@ -110,7 +112,11 @@ class SilentPaymentScanCoordinator(
             }
         }
 
-    private suspend fun runScan(options: SilentPaymentScanOptions): SilentPaymentPublicScanReport {
+    private suspend fun runScan(
+        options: SilentPaymentScanOptions,
+        expectedGeneration: Long,
+    ): SilentPaymentPublicScanReport {
+        walletSession.requireGeneration(expectedGeneration)
         val networkKey = options.network.name.lowercase()
         val storedCursorEntity = repository.getSilentPaymentCursor(networkKey)
         val storedCursor = storedCursorEntity?.let(SilentPaymentPersistenceMapper::fromCursorEntity)
@@ -136,6 +142,7 @@ class SilentPaymentScanCoordinator(
             null
         }
         if (startHeight > options.endHeight) {
+            walletSession.requireGeneration(expectedGeneration)
             val existing = repository.silentPaymentUtxosOnce(networkKey)
                 .map(SilentPaymentPersistenceMapper::toPublic)
             val report = SilentPaymentPublicScanReport(
@@ -185,6 +192,7 @@ class SilentPaymentScanCoordinator(
         )
 
         blockSource.batches(options.network, range).collect { batch ->
+            walletSession.requireGeneration(expectedGeneration)
             validateBatchMetadata(batch, options.network, range)
             val batchHeight = batch.blockHeight ?: batch.transactions.firstOrNull()?.blockHeight
                 ?: throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
@@ -257,18 +265,27 @@ class SilentPaymentScanCoordinator(
 
             currentHeight = batchHeight
             currentTipHeight = batch.currentTipHeight
-            val result = silentPaymentManager.scanBatch(batch)
+            val result = silentPaymentManager.scanBatch(
+                batch,
+                beforeNativeInvocation = { walletSession.requireGeneration(expectedGeneration) },
+            )
+            walletSession.requireGeneration(expectedGeneration)
             val entities = result.matches.map {
                 SilentPaymentPersistenceMapper.toEntity(options.network, batch, it)
             }
             pendingEntities += entities
             if (batch.isFinalBatchForBlock) {
-                repository.persistSilentPaymentBatch(
+                walletSession.requireGeneration(expectedGeneration)
+                val persisted = repository.persistSilentPaymentBatch(
+                    expectedGeneration = expectedGeneration,
                     utxos = pendingEntities.toList(),
                     cursor = SilentPaymentPersistenceMapper.toCursorEntity(
                         SilentPaymentCursor(options.network, batchHeight, batchHash),
                     ),
                 )
+                if (!persisted) {
+                    throw NativeSilentPaymentException(NativeErrorCode.WALLET_LOCKED)
+                }
                 pendingEntities.clear()
             }
 
@@ -307,6 +324,7 @@ class SilentPaymentScanCoordinator(
         if (scannedBlocks != expectedBlockCount) {
             throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
         }
+        walletSession.requireGeneration(expectedGeneration)
         val persisted = repository.silentPaymentUtxosOnce(networkKey)
             .map(SilentPaymentPersistenceMapper::toPublic)
         val report = SilentPaymentPublicScanReport(

@@ -13,8 +13,8 @@ import com.conxius.wallet.session.WalletSession
 class ConxiusApplication : Application() {
     val strongBoxManager by lazy { StrongBoxManager(this) }
     val database by lazy { AppDatabase.getDatabase(this, strongBoxManager.getDatabasePassphrase()) }
-    val walletRepository by lazy { WalletRepository(database.walletDao()) }
     val walletSession by lazy { WalletSession() }
+    val walletRepository by lazy { WalletRepository(database.walletDao(), walletSession) }
     private val walletSeedProvider by lazy {
         RoomWalletSeedProvider(walletRepository, strongBoxManager, walletSession)
     }

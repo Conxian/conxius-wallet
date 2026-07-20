@@ -1,6 +1,6 @@
 use conxius_silent_payments::{
     scan_transaction, EligibleInput, EligibleInputPublicKey, MatchKind, OutPoint, ScanOutcome,
-    ScanSecret, TaprootOutput,
+    ScanSecret, TaprootOutput, MAX_LABELS, MAX_TAPROOT_OUTPUTS,
 };
 use conxius_silent_payments_jni::{
     decode_public_batch, decode_scan_result, encode_public_batch, encode_scan_result,
@@ -309,6 +309,56 @@ fn public_batch_adapter_derives_keys_and_returns_public_matches() {
     assert_eq!(result.metrics.scanned_transaction_count, 1);
     assert_eq!(result.metrics.skipped_transaction_count, 0);
     assert_eq!(result.metrics.batch_bytes, encoded.len() as u32);
+}
+
+#[test]
+fn public_batch_adapter_rejects_pathological_ecc_work_before_secret_derivation() {
+    let transaction_id = [11u8; 32];
+    let input_outpoint = OutPoint {
+        txid_le: [12u8; 32],
+        vout: 0,
+    };
+    let input_secret = SecretKey::from_byte_array(&[2u8; 32]).expect("fixture input secret");
+    let input_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &input_secret).serialize();
+    let outputs: Vec<_> = (0..MAX_TAPROOT_OUTPUTS)
+        .map(|vout| TaprootOutput {
+            output_key: [0u8; 32],
+            outpoint: OutPoint {
+                txid_le: transaction_id,
+                vout: vout as u32,
+            },
+            value_sat: 0,
+            is_unspent: false,
+        })
+        .collect();
+    let batch = PublicBatch {
+        network: Network::Testnet,
+        account: 0,
+        start_block: 100,
+        end_block: 100,
+        labels: (0..MAX_LABELS as u32).collect(),
+        transactions: vec![PublicTransaction {
+            transaction_id,
+            block_height: 100,
+            transaction_index: 0,
+            all_input_outpoints: vec![input_outpoint],
+            eligible_inputs: vec![EligibleInput {
+                outpoint: input_outpoint,
+                public_key: EligibleInputPublicKey::Compressed(input_public_key),
+            }],
+            outputs,
+        }],
+    };
+    let encoded = encode_public_batch(&batch).expect("encode budget fixture");
+
+    assert_eq!(
+        scan_public_batch(
+            b"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+            b"",
+            &encoded,
+        ),
+        Err(conxius_silent_payments_jni::NativeErrorCode::ResourceLimit)
+    );
 }
 
 #[test]
