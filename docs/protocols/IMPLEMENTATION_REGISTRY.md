@@ -11,6 +11,7 @@ permalink: /docs/implementation-registry
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
 | **Bitcoin L1** | ✅ PRODUCTION | Native BDK (BIP-84/86) integration. |
+| **BIP-352 Silent Payments** | 🟡 IN PROGRESS | Draft PR #390 implements bounded Rust/JNI scanning, Kotlin Esplora ingestion with cursor/persistence and shallow reorg fail-closed checks, plus a public-only Compose scan card. Pending release validation, mobile evidence, compact-filter discovery, spending/tweak recovery, native address encoding, authoritative spentness, and raw/merkle proof coverage. |
 | **Lightning** | ✅ PRODUCTION | Native Breez Manager + TS Breez SDK. |
 | **Babylon Staking** | ✅ PRODUCTION | Native Taproot staking for Babylon protocol. |
 | **NIP-47 (NWC)** | ✅ PRODUCTION | Native NwcManager + TS event support. |
@@ -55,6 +56,7 @@ permalink: /docs/implementation-registry
 
 *Status Definitions:*
 - **PRODUCTION:** Fully implemented in the native Android layer or Clarity 4.0.
+- **IN PROGRESS:** A bounded implementation exists, but required scope or release evidence remains incomplete; it must not be represented as production-ready.
 - **BRIDGED:** Core manager in native Kotlin, high-level logic in TS/React.
 - **TS-ONLY:** Logic resides solely in the legacy companion TS service layer.
 

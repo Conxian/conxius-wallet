@@ -1,36 +1,43 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { QrCode, Copy, Info, Zap, ChevronRight, Lock, Ghost, Eye, EyeOff } from 'lucide-react';
 import { AppContext } from '../context';
-import { deriveSilentPaymentKeys, encodeSilentPaymentAddress } from '../services/silent-payments';
-import { Buffer } from 'buffer';
+import { Capacitor } from '@capacitor/core';
+import type { SilentPaymentNetwork } from '../types';
 
 const SilentPayments: React.FC = () => {
   const appContext = useContext(AppContext);
-  const { walletConfig, network } = appContext?.state || {};
+  const { network } = appContext?.state || {};
+  const silentPaymentScan = appContext?.state.silentPaymentScan;
+  const silentPaymentUtxos = appContext?.state.silentPaymentUtxos || [];
 
   const [showKeys, setShowKeys] = useState(false);
-  const [silentAddress, setSilentAddress] = useState<string>('');
-  const [scanPub, setScanPub] = useState<string>('');
-  const [spendPub, setSpendPub] = useState<string>('');
+  const [startHeight, setStartHeight] = useState('');
+  const [endHeight, setEndHeight] = useState('');
+  const [scanError, setScanError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    if (walletConfig?.mnemonicVault || walletConfig?.masterAddress) {
-        // In a real app, this would use a secure decrypted seed from the enclave
-        const mockSeed = Buffer.alloc(64).fill(0xac);
-        const keys = deriveSilentPaymentKeys(mockSeed);
+  const configuredNetwork = network as string | undefined;
+  const nativeNetwork: SilentPaymentNetwork | null = configuredNetwork && ['mainnet', 'testnet', 'signet', 'regtest'].includes(configuredNetwork)
+    ? configuredNetwork as SilentPaymentNetwork
+    : null;
 
-        encodeSilentPaymentAddress(keys.scanPub, keys.spendPub, network === 'testnet' ? 'testnet' : 'mainnet')
-            .then(addr => {
-                if (isMounted) {
-                    setSilentAddress(addr);
-                    setScanPub(keys.scanPub.toString('hex'));
-                    setSpendPub(keys.spendPub.toString('hex'));
-                }
-            });
+  const startScan = async () => {
+    if (!appContext || !nativeNetwork) {
+      setScanError('UNSUPPORTED_PLATFORM');
+      return;
     }
-    return () => { isMounted = false; };
-  }, [walletConfig, network]);
+    const end = Number(endHeight);
+    const start = startHeight === '' ? undefined : Number(startHeight);
+    if (!Number.isSafeInteger(end) || end < 0 || (start !== undefined && (!Number.isSafeInteger(start) || start < 0 || start > end))) {
+      setScanError('INVALID_REQUEST');
+      return;
+    }
+    setScanError(null);
+    try {
+      await appContext.scanSilentPayments({ network: nativeNetwork, startHeight: start, endHeight: end });
+    } catch (error) {
+      setScanError(error instanceof Error ? error.message : 'INTERNAL');
+    }
+  };
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-12 animate-in fade-in duration-500 pb-32">
@@ -51,7 +58,7 @@ const SilentPayments: React.FC = () => {
                     <Zap size={16} className="text-accent-earth" />
                     Sovereign Payment Code
                 </h3>
-                <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-3 py-1 rounded-full uppercase tracking-widest">Active</span>
+                <span className="text-[10px] font-bold text-accent-earth bg-accent-earth/10 px-3 py-1 rounded-full uppercase tracking-widest">Native-only</span>
             </div>
 
             <div className="bg-white border border-border p-8 rounded-[2.5rem] space-y-6">
@@ -69,14 +76,14 @@ const SilentPayments: React.FC = () => {
                         <div className="flex items-center justify-between px-2">
                             <span className="text-[10px] font-black text-brand-earth uppercase tracking-widest">Static Address</span>
                             <button
-                                onClick={() => { navigator.clipboard.writeText(silentAddress); appContext?.notify('info', 'Silent Address Copied'); }}
+                                onClick={() => appContext?.notify('info', 'Address derivation is not available yet')}
                                 className="text-accent-earth hover:text-orange-400 transition-colors"
                             >
                                 <Copy size={16} />
                             </button>
                         </div>
                         <div className="bg-off-white border border-border p-6 rounded-2xl break-all font-mono text-[11px] text-brand-earth leading-relaxed shadow-inner">
-                            {silentAddress || 'Generating Sovereign Payload...'}
+                            Address derivation is unavailable until the native BIP-352 address codec is implemented.
                         </div>
                     </div>
                 </div>
@@ -99,11 +106,11 @@ const SilentPayments: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-4">
                     <div className="bg-white border border-border p-6 rounded-2xl space-y-3">
                         <p className="text-[9px] font-black text-brand-earth uppercase tracking-widest">Scan Public Key</p>
-                        <p className="text-[10px] font-mono text-brand-earth break-all">{scanPub}</p>
+                        <p className="text-[10px] text-brand-earth break-all">Unavailable until native address derivation is implemented.</p>
                     </div>
                     <div className="bg-white border border-border p-6 rounded-2xl space-y-3">
                         <p className="text-[9px] font-black text-brand-earth uppercase tracking-widest">Spend Public Key</p>
-                        <p className="text-[10px] font-mono text-brand-earth break-all">{spendPub}</p>
+                        <p className="text-[10px] text-brand-earth break-all">Unavailable until native address derivation is implemented.</p>
                     </div>
                 </div>
             )}
@@ -126,11 +133,20 @@ const SilentPayments: React.FC = () => {
         <div className="bg-off-white/40 border border-border p-8 rounded-[2.5rem] flex flex-col justify-between">
             <div className="space-y-2">
                 <h4 className="text-sm font-black text-brand-deep italic uppercase tracking-tighter">Sovereign Automation</h4>
-                <p className="text-[10px] text-brand-earth leading-relaxed italic">Your enclave automatically scans every block for payments matching your keys.</p>
+                <p className="text-[10px] text-brand-earth leading-relaxed italic">Native Android scans use the unlocked StrongBox-backed wallet and persist only public UTXO metadata. Web scanning is unsupported.</p>
             </div>
-            <button className="mt-6 flex items-center gap-2 text-accent-earth text-[10px] font-black uppercase tracking-widest hover:gap-4 transition-all">
-                View Scanned Transactions <ChevronRight size={14} />
-            </button>
+            <div className="mt-6 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                    <input value={startHeight} onChange={event => setStartHeight(event.target.value)} placeholder="Resume" inputMode="numeric" className="rounded-xl border border-border px-3 py-2 text-xs" />
+                    <input value={endHeight} onChange={event => setEndHeight(event.target.value)} placeholder="End height" inputMode="numeric" className="rounded-xl border border-border px-3 py-2 text-xs" />
+                </div>
+                <button onClick={startScan} disabled={silentPaymentScan?.status === 'scanning'} className="flex items-center gap-2 text-accent-earth text-[10px] font-black uppercase tracking-widest hover:gap-4 transition-all disabled:opacity-50">
+                    {silentPaymentScan?.status === 'scanning' ? 'Scanning native source…' : 'Scan native range'} <ChevronRight size={14} />
+                </button>
+                <p className="text-[10px] text-brand-earth">Stored public UTXOs: {silentPaymentUtxos.length}</p>
+                {scanError && <p className="text-[10px] text-red-600">{scanError}</p>}
+                {!Capacitor.isNativePlatform() && <p className="text-[10px] text-brand-earth">UNSUPPORTED_PLATFORM: scanning requires the Android native plugin.</p>}
+            </div>
         </div>
       </div>
     </div>

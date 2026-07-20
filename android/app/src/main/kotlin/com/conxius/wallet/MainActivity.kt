@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.conxius.wallet.repository.WalletRepository
 import com.conxius.wallet.ui.screens.DashboardScreen
 import com.conxius.wallet.ui.screens.OnboardingScreen
 import com.conxius.wallet.ui.screens.SecurityScreen
@@ -21,9 +20,8 @@ class MainActivity : FragmentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
         val app = application as ConxiusApplication
-        val repository = WalletRepository(app.database.walletDao())
         val factory = ViewModelFactory(
-            repository,
+            app.walletRepository,
             app.bdkManager,
             app.strongBoxManager,
             app.babylonManager,
@@ -41,7 +39,8 @@ class MainActivity : FragmentActivity() {
             app.bitVmManager,
             app.web5Manager,
             app.musig2Manager,
-            app.silentPaymentManager,
+            app.silentPaymentCoordinator,
+            app.walletSession,
             app.yieldManager,
             app.insuranceManager,
             app.interoperabilityManager,

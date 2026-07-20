@@ -1,0 +1,30 @@
+{
+  "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+  "passphrase_bytes": [84, 82, 69, 90, 79, 82],
+  "vectors": [
+    {
+      "network": "mainnet",
+      "account": 0,
+      "scan_path": "m/352'/0'/0'/1'/0",
+      "spend_path": "m/352'/0'/0'/0'/0",
+      "scan_pub": "0293fbbcfbc490162b5eed583f0071ea7108512a1dbe0e917288f145c2b4ef74a0",
+      "spend_pub": "025a0314ea6974f81996d2d3c355801d3b5bcecaa7e9ad09e50d96445d17106a94"
+    },
+    {
+      "network": "testnet",
+      "account": 0,
+      "scan_path": "m/352'/1'/0'/1'/0",
+      "spend_path": "m/352'/1'/0'/0'/0",
+      "scan_pub": "037fe3b9b42accb4f4d0d8cdfb3bcf4af340763eee70aebb2b4ecee1a8f5a2ca3a",
+      "spend_pub": "0324e18caede10da3b48ba4bcd9638ad2a6bcdd600fd1be7db855e403547739ed6"
+    },
+    {
+      "network": "mainnet",
+      "account": 7,
+      "scan_path": "m/352'/0'/7'/1'/0",
+      "spend_path": "m/352'/0'/7'/0'/0",
+      "scan_pub": "026763c24e3f1a595e4580f07f1607126cfed3018fa8786c65e390eeed9cff90c9",
+      "spend_pub": "038e18efbb580ee44885972a21b531c7a1bf3a36a70fd41774ffe83d35eb2b8cd0"
+    }
+  ]
+}

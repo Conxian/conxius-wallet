@@ -69,6 +69,46 @@ export interface WalletConfig {
   ethAddress?: string;
 }
 
+export type SilentPaymentNetwork = 'mainnet' | 'testnet' | 'signet' | 'regtest';
+
+export interface SilentPaymentUtxo {
+  network: SilentPaymentNetwork;
+  outpoint: string;
+  txid: string;
+  vout: number;
+  valueSat: number;
+  outputKeyHex: string;
+  blockHeight: number;
+  transactionIndex: number;
+  source: 'esplora';
+  spentState: 'UNSPENT' | 'SPENT' | 'UNKNOWN';
+  spentnessKnown: boolean;
+  matchKind: 'UNLABELED' | 'LABEL';
+  labelIndex?: number;
+  matchedNegatedOutputKey: boolean;
+}
+
+export interface SilentPaymentScanOptions {
+  network: SilentPaymentNetwork;
+  startHeight?: number;
+  endHeight: number;
+}
+
+export interface SilentPaymentScanMetrics {
+  scannedBlocks: number;
+  scannedTransactions: number;
+  skippedTransactions: number;
+  matchCount: number;
+  currentHeight?: number;
+  currentTipHeight?: number;
+}
+
+export type SilentPaymentScanState =
+  | { status: 'idle' }
+  | { status: 'scanning'; progress: SilentPaymentScanMetrics & { startHeight: number; endHeight: number } }
+  | { status: 'completed'; metrics: SilentPaymentScanMetrics; cursor?: { network: SilentPaymentNetwork; lastScannedHeight: number; lastScannedBlockHash: string }; utxos: SilentPaymentUtxo[] }
+  | { status: 'failed' | 'cancelled'; errorCode: string };
+
 export interface Bounty {
   id: string;
   title: string;
@@ -179,6 +219,8 @@ export interface AppState {
     endpoint?: string;
   };
   utxos: UTXO[];
+  silentPaymentUtxos: SilentPaymentUtxo[];
+  silentPaymentScan: SilentPaymentScanState;
   isTorEnabled: boolean;
   theme: 'light' | 'dark';
   language: Language;
