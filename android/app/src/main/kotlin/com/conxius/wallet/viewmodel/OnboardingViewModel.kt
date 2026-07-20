@@ -8,8 +8,6 @@ import com.conxius.wallet.crypto.StrongBoxManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class OnboardingViewModel(
     private val repository: WalletRepository,
@@ -46,8 +44,8 @@ class OnboardingViewModel(
 
                 repository.saveSeed(encrypted, iv)
                 _isWalletCreated.value = true
-            } catch (e: Exception) {
-                _error.value = "Wallet creation failed: ${e.message}"
+            } catch (_: Exception) {
+                _error.value = "Wallet creation failed: INTERNAL"
             }
         }
     }
@@ -60,8 +58,8 @@ class OnboardingViewModel(
 
                 repository.saveSeed(encrypted, iv)
                 _isWalletCreated.value = true
-            } catch (e: Exception) {
-                _error.value = "Wallet import failed: ${e.message}"
+            } catch (_: Exception) {
+                _error.value = "Wallet import failed: INTERNAL"
             }
         }
     }

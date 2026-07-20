@@ -5,10 +5,19 @@ import com.conxius.wallet.database.AppDatabase
 import com.conxius.wallet.crypto.StrongBoxManager
 import com.conxius.wallet.crypto.Web5Manager
 import com.conxius.wallet.bitcoin.*
+import com.conxius.wallet.repository.RoomWalletSeedProvider
+import com.conxius.wallet.repository.WalletRepository
+import com.conxius.wallet.scan.SilentPaymentScanCoordinator
+import com.conxius.wallet.session.WalletSession
 
 class ConxiusApplication : Application() {
     val strongBoxManager by lazy { StrongBoxManager(this) }
     val database by lazy { AppDatabase.getDatabase(this, strongBoxManager.getDatabasePassphrase()) }
+    val walletSession by lazy { WalletSession() }
+    val walletRepository by lazy { WalletRepository(database.walletDao(), walletSession) }
+    private val walletSeedProvider by lazy {
+        RoomWalletSeedProvider(walletRepository, strongBoxManager, walletSession)
+    }
     val bdkManager by lazy { BdkManager() }
 
     // Bridged Native Protocol Managers
@@ -27,7 +36,16 @@ class ConxiusApplication : Application() {
     val bitVmManager by lazy { BitVmManager() }
     val web5Manager by lazy { Web5Manager() }
     val musig2Manager by lazy { Musig2Manager() }
-    val silentPaymentManager by lazy { SilentPaymentManager() }
+    val silentPaymentBlockSource by lazy { EsploraBlockSource() }
+    val silentPaymentManager by lazy { SilentPaymentManager(walletSeedProvider) }
+    val silentPaymentCoordinator by lazy {
+        SilentPaymentScanCoordinator(
+            repository = walletRepository,
+            walletSession = walletSession,
+            blockSource = silentPaymentBlockSource,
+            silentPaymentManager = silentPaymentManager,
+        )
+    }
     val yieldManager by lazy { YieldManager() }
     val insuranceManager by lazy { InsuranceManager() }
     val interoperabilityManager by lazy { InteroperabilityManager() }

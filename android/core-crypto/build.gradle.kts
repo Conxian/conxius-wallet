@@ -23,6 +23,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":capacitor-android"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.security.crypto)
     testImplementation(libs.junit)

@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "description": "Host-only deterministic BIP-352 scan benchmark fixture; synthetic keys and transaction records only.",
+  "receiver": {
+    "scan_secret_hex": "1111111111111111111111111111111111111111111111111111111111111111",
+    "spend_public_key_hex": "02466d7fcae563e5cb09a0d1870bb580344804617879a14949cf22285f1bae3f27"
+  },
+  "workloads": [
+    {
+      "name": "unlabeled-no-match",
+      "threshold_x": 2,
+      "transactions": [
+        {
+          "id": "tx-unlabeled-no-match",
+          "all_input_outpoints": [
+            {
+              "txid_le_hex": "0101010101010101010101010101010101010101010101010101010101010101",
+              "vout": 1
+            },
+            {
+              "txid_le_hex": "0202020202020202020202020202020202020202020202020202020202020202",
+              "vout": 0
+            }
+          ],
+          "eligible_inputs": [
+            {
+              "input_index": 0,
+              "public_key_kind": "compressed",
+              "public_key_hex": "023c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1"
+            },
+            {
+              "input_index": 1,
+              "public_key_kind": "compressed",
+              "public_key_hex": "032c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991"
+            }
+          ],
+          "outputs": [
+            {
+              "output_key_hex": "5ab4689e400a4a160cf01cd44730845a54768df8547dcdf073d964f109f18c30",
+              "outpoint": {
+                "txid_le_hex": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+                "vout": 0
+              },
+              "value_sat": 12000,
+              "is_unspent": true
+            },
+            {
+              "output_key_hex": "a1474ca48f28ec81e0c4bade52a4ccdf9ace80b438382464f14f7ba15ea3dc58",
+              "outpoint": {
+                "txid_le_hex": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+                "vout": 1
+              },
+              "value_sat": 34000,
+              "is_unspent": false
+            }
+          ],
+          "labels": [],
+          "expected_stop_reason": "NO_MATCH",
+          "expected_matches": []
+        }
+      ]
+    },
+    {
+      "name": "multi-match",
+      "threshold_x": 2,
+      "transactions": [
+        {
+          "id": "tx-multi-match",
+          "all_input_outpoints": [
+            {
+              "txid_le_hex": "1010101010101010101010101010101010101010101010101010101010101010",
+              "vout": 0
+            },
+            {
+              "txid_le_hex": "1111111111111111111111111111111111111111111111111111111111111111",
+              "vout": 1
+            },
+            {
+              "txid_le_hex": "1212121212121212121212121212121212121212121212121212121212121212",
+              "vout": 2
+            }
+          ],
+          "eligible_inputs": [
+            {
+              "input_index": 0,
+              "public_key_kind": "compressed",
+              "public_key_hex": "023c72addb4fdf09af94f0c94d7fe92a386a7e70cf8a1d85916386bb2535c7b1b1"
+            },
+            {
+              "input_index": 1,
+              "public_key_kind": "compressed",
+              "public_key_hex": "032c0b7cf95324a07d05398b240174dc0c2be444d96b159aa6c7f7b1e668680991"
+            },
+            {
+              "input_index": 2,
+              "public_key_kind": "compressed",
+              "public_key_hex": "029ac20335eb38768d2052be1dbbc3c8f6178407458e51e6b4ad22f1d91758895b"
+            }
+          ],
+          "outputs": [
+            {
+              "output_key_hex": "652d1b5efa70cb3b83a53cdf536172d205001f0dd54ca766a6a4ef766a48e6fb",
+              "outpoint": {
+                "txid_le_hex": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
+                "vout": 0
+              },
+              "value_sat": 500,
+              "is_unspent": true
+            },
+            {
+              "output_key_hex": "1d5f60af14b18c6175f9be66d373beeb1a1491126afe2b5380cbf17fa5d384cf",
+              "outpoint": {"txid_le_hex": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2", "vout": 1},
+              "value_sat": 1007,
+              "is_unspent": true
+            },
+            {
+              "output_key_hex": "b7d0d64620cef13a7f10015aed754675fe4863c29257d3c6294b137f3ce5a092",
+              "outpoint": {"txid_le_hex": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2", "vout": 2},
+              "value_sat": 1006,
+              "is_unspent": true
+            },
+            {
+              "output_key_hex": "782633cf9c33cd3b0f24b48709cd15f86b0f1839cf3d9498493a17e9bf679142",
+              "outpoint": {"txid_le_hex": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2", "vout": 3},
+              "value_sat": 1005,
+              "is_unspent": true
+            },
+            {
+              "output_key_hex": "4b6bdc2bc58f4c6c2ca40ca708d75b6c871c322456d420489f0ee77ddabbb448",
+              "outpoint": {"txid_le_hex": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2", "vout": 4},
+              "value_sat": 1004,
+              "is_unspent": true
+            },
+            {
+              "output_key_hex": "1688009a24c657d6581b7082ff346af7d305ec04993109f5bde628e15c95debd",
+              "outpoint": {"txid_le_hex": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2", "vout": 5},
+              "value_sat": 1003,
+              "is_unspent": true
+            },
+            {
+              "output_key_hex": "45ad8d1a50aba1d636eb8f54d88185a8eab6b31d78e30ee14eff06a59ec94bd6",
+              "outpoint": {"txid_le_hex": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2", "vout": 6},
+              "value_sat": 1002,
+              "is_unspent": true
+            },
+            {
+              "output_key_hex": "2b7b597b62ee5a9aabf15a8bdbe8596289c8beb324211224971fddf7863cb829",
+              "outpoint": {"txid_le_hex": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2", "vout": 7},
+              "value_sat": 1001,
+              "is_unspent": true
+            },
+            {
+              "output_key_hex": "2fba326d7521e139e77a22e9a22338db9646fe14981bfc6936c998eac58d5bb2",
+              "outpoint": {"txid_le_hex": "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2", "vout": 8},
+              "value_sat": 1000,
+              "is_unspent": true
+            }
+          ],
+          "labels": [],
+          "expected_stop_reason": "NO_MATCH",
+          "expected_matches": [
+            {"output_index": 8, "output_key_hex": "2fba326d7521e139e77a22e9a22338db9646fe14981bfc6936c998eac58d5bb2", "k": 0, "kind": "UNLABELED", "label_index": null, "matched_negated_output_key": false},
+            {"output_index": 7, "output_key_hex": "2b7b597b62ee5a9aabf15a8bdbe8596289c8beb324211224971fddf7863cb829", "k": 1, "kind": "UNLABELED", "label_index": null, "matched_negated_output_key": false},
+            {"output_index": 6, "output_key_hex": "45ad8d1a50aba1d636eb8f54d88185a8eab6b31d78e30ee14eff06a59ec94bd6", "k": 2, "kind": "UNLABELED", "label_index": null, "matched_negated_output_key": false},
+            {"output_index": 5, "output_key_hex": "1688009a24c657d6581b7082ff346af7d305ec04993109f5bde628e15c95debd", "k": 3, "kind": "UNLABELED", "label_index": null, "matched_negated_output_key": false},
+            {"output_index": 4, "output_key_hex": "4b6bdc2bc58f4c6c2ca40ca708d75b6c871c322456d420489f0ee77ddabbb448", "k": 4, "kind": "UNLABELED", "label_index": null, "matched_negated_output_key": false},
+            {"output_index": 3, "output_key_hex": "782633cf9c33cd3b0f24b48709cd15f86b0f1839cf3d9498493a17e9bf679142", "k": 5, "kind": "UNLABELED", "label_index": null, "matched_negated_output_key": false},
+            {"output_index": 2, "output_key_hex": "b7d0d64620cef13a7f10015aed754675fe4863c29257d3c6294b137f3ce5a092", "k": 6, "kind": "UNLABELED", "label_index": null, "matched_negated_output_key": false},
+            {"output_index": 1, "output_key_hex": "1d5f60af14b18c6175f9be66d373beeb1a1491126afe2b5380cbf17fa5d384cf", "k": 7, "kind": "UNLABELED", "label_index": null, "matched_negated_output_key": false}
+          ]
+        }
+      ]
+    }
+  ]
+}

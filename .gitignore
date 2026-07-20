@@ -31,10 +31,14 @@ blob-report
 
 # Android
 android/app/build
+android/app/build/generated/silent-payments/
 android/.gradle
 android/local.properties
 android/captures
 .gradle
+
+# Rust build artifacts
+native/**/target/
 
 # Security - API Keys and Secrets
 .env
