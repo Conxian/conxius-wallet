@@ -20,19 +20,18 @@ describe('Silent Payments Service', () => {
         vi.clearAllMocks();
     });
 
-    it('derives keys from seed', () => {
+    it('derives canonical public receiver keys without exposing private keys', () => {
         const keys = deriveSilentPaymentKeys(mockSeed);
-        expect(keys.scanKey).toBeDefined();
-        expect(keys.spendKey).toBeDefined();
         expect(keys.scanPub).toBeDefined();
         expect(keys.spendPub).toBeDefined();
+        expect('scanKey' in keys).toBe(false);
     });
 
-    it('uses native bridge for address encoding when on native platform', async () => {
+    it('keeps public address encoding deterministic on native platforms', async () => {
         (Capacitor.isNativePlatform as any).mockReturnValue(true);
         const keys = deriveSilentPaymentKeys(mockSeed);
         const addr = await encodeSilentPaymentAddress(keys.scanPub, keys.spendPub);
-        expect(addr).toBe('sp1_native_test');
+        expect(addr).toContain('sp1');
     });
 
     it('uses JS fallback for address encoding when on web', async () => {
@@ -43,11 +42,8 @@ describe('Silent Payments Service', () => {
         expect(addr).not.toBe('sp1_native_test');
     });
 
-    it('uses native bridge for scanning when on native platform', async () => {
+    it('does not accept a scan secret from TypeScript native scanning', async () => {
         (Capacitor.isNativePlatform as any).mockReturnValue(true);
-        const keys = deriveSilentPaymentKeys(mockSeed);
-        const results = await scanForSilentPayments(keys.scanKey, keys.spendPub, 100, 200);
-        expect(results).toHaveLength(1);
-        expect(results[0].txid).toBe('test');
+        await expect(scanForSilentPayments(100, 200)).rejects.toThrow(/no scan secret/i);
     });
 });

@@ -1,60 +1,122 @@
 # Silent Payments (BIP-352)
 
-Conxius Wallet is implementing BIP-352 support for static, non-linkable Bitcoin receive
-addresses. Phase 1 establishes the independently testable native receiver-scan core; full wallet
-integration is intentionally deferred to Phase 2.
+This change adds the secure native scanning slice for Conxius Wallet. It scans **supplied,
+already-parsed structured transactions**; it does not claim full chain ingestion, Esplora
+pagination, block-filter discovery, persistence, reorg handling, or address derivation.
 
-## Architecture
+## Boundary and key handling
 
-Silent Payments follow the **Bridged Sovereign Architecture**:
+- `native/silent-payments` is platform-neutral BIP-352 receiver-scan logic.
+- `native/silent-payments-jni` is a separate `cdylib` JNI wrapper and binary protocol codec.
+- `android/core-bitcoin` owns typed DTOs, `BlockSource`, the `WalletSeedProvider` callback, the
+  native loader, and the suspend scanning loop.
+- TypeScript does not pass a scan private key to a production native API. The Capacitor plugin has
+  no secret-bearing scan method in this phase.
+- The Kotlin provider supplies a short-lived UTF-8 BIP39 mnemonic and optional UTF-8 passphrase
+  only around the JNI call. The manager clears both arrays in `finally`; provider implementations
+  must also clear their own copies and never retain or log them.
 
-1. **TS Layer**: Handles BIP-32 key derivation (m/352') and high-level UX.
-2. **Rust Phase 1 core**: `native/silent-payments` scans already-parsed transaction records
-   deterministically, with no network, filesystem, JSON, JNI, or Android Keystore access.
-3. **Kotlin/Enclave**: `SilentPaymentManager.kt` remains fail-closed until Phase 2 JNI wiring
-   routes scan operations through the Android Keystore-backed secret boundary.
+Rust derives the keys internally using the fixed canonical paths:
 
-## Key Derivation
+- Scan: `m/352'/coin_type'/account'/1'/0`
+- Spend: `m/352'/coin_type'/account'/0'/0`
 
-- **Scan Key**: `m/352'/0'/0'/10/0`
-- **Spend Key**: `m/352'/0'/0'/10/1`
+The only supported account is `0`. Network-to-coin mapping is explicit: mainnet uses coin type
+`0`; testnet, signet, and regtest use coin type `1`. Unknown network values are rejected.
 
-## Phase 1 receiver scan core
+## Versioned binary ABI
 
-`scan_transaction` accepts all transaction input outpoints, eligible input public keys, taproot
-output keys plus mapping metadata, and labels. It validates bounded, canonical records before
-allocating parsed records or entering secp256k1 loops:
+The JNI method is the static method `NativeSilentPayments.nativeScan`:
 
-| Resource | Limit |
-| --- | ---: |
-| Transaction input outpoints | `MAX_TRANSACTION_INPUTS = 4096` |
-| Eligible input public keys | `MAX_ELIGIBLE_INPUTS = 4096` |
-| Taproot outputs | `MAX_TAPROOT_OUTPUTS = 4096` |
-| Receiver labels | `MAX_LABELS = 256` |
-| Sequential output indices per receiver group | `K_MAX = 2323` |
-
-Every eligible input outpoint must occur exactly once in the complete input list. Duplicate
-complete-list outpoints and duplicate eligible outpoints are rejected, and the canonical
-serialized `OutPoint` values are retained for BIP-352 ordering and hashing. Exceeding a limit
-returns the structured `ScanError::ResourceLimitExceeded` error. After validation, the scanner
-selects the lexicographically smallest serialized transaction outpoint, sums eligible input
-keys, computes the BIP-352 tagged hashes, checks unlabeled and labeled output tweaks, supports
-output-key negation, and enforces `K_MAX = 2323`.
-
-The official Bitcoin BIPs send/receive vectors are vendored under
-`native/silent-payments/tests/data/` and exercised by the Rust integration test. Run:
-
-```bash
-cargo test --manifest-path native/silent-payments/Cargo.toml --all-targets
+```text
+nativeScan(mnemonicBytes, passphraseBytes, publicBatchBytes) -> resultBytes
 ```
 
-This documentation does not claim complete production BIP-352 compliance until the transaction
-parser, chain feed, JNI/Kotlin boundary, and end-to-end UTXO integration are implemented.
+Secret arrays and the public batch are separate JNI arguments. An empty passphrase array means no
+passphrase. The method returns a result envelope, never a key or mnemonic.
 
-## Security guards
+### Public batch (`SPB1`, version 1)
 
-All native scanning operations are protected by `ProductionRuntimeGuard.failClosed()` while the
-Kotlin/Android integration remains fail-closed.
+All integer fields are little-endian. The batch begins with:
 
----
-*Phase 1 native core verified against the pinned official BIP-352 vectors.*
+```text
+magic[4] = "SPB1"
+version:u8 = 1
+network:u8 (0 mainnet, 1 testnet, 2 signet, 3 regtest)
+account:u32 (must be 0)
+start_block:u64
+end_block:u64
+transaction_count:u32
+label_count:u32
+labels[label_count]:u32
+```
+
+Each transaction contains its block height/index, counts, every input outpoint, eligible input
+references plus compressed/x-only public keys, and taproot outputs with public mapping metadata.
+Outpoints use `txid_little_endian[32] || vout:u32`. No secret material is part of this format.
+
+The decoder validates the whole byte limit before allocation, then validates each bounded count
+before allocating a per-record collection. Current limits are 8 MiB per batch, 1,024
+transactions, 4,096 inputs/eligible inputs/outputs per transaction, 65,536 total outputs, and
+256 labels.
+
+### Result (`SPR1`, version 1)
+
+Success envelopes contain the stable public metrics
+`transaction_count`, `scanned_transaction_count`, `skipped_transaction_count`, `match_count`,
+`elapsed_micros`, and `batch_bytes`, followed by public matches. Each match contains block/tx
+identity, output index/key, outpoint, amount, unspent flag, `k`, label/unlabeled kind, and the
+negated-output flag.
+
+Failure envelopes contain only one stable code:
+
+```text
+1 INVALID_SECRET
+2 INVALID_NETWORK
+3 INVALID_PUBLIC_BATCH
+4 RESOURCE_LIMIT
+5 INVALID_PUBLIC_RECORD
+6 ECC_FAILURE
+7 INTERNAL
+```
+
+Malformed or truncated envelopes fail closed. Rust catches panics at the JNI boundary so no panic
+crosses FFI.
+
+## Build and packaging
+
+The app source set reads generated JNI libraries from:
+`android/app/build/generated/silent-payments/jniLibs/`.
+
+Normal Gradle configuration does not require the native toolchain. Invoke the explicit task when
+native packaging is wanted:
+
+```bash
+cd android
+./gradlew :app:buildSilentPaymentsNative
+```
+
+The task calls `scripts/build-silent-payments-android.sh`, which requires:
+
+- Rust/cargo and `cargo-ndk` (`cargo install cargo-ndk`)
+- an Android NDK exposed through `ANDROID_NDK_HOME`/`ANDROID_NDK_ROOT` or an Android SDK through
+  `ANDROID_HOME`/`ANDROID_SDK_ROOT`
+- Rust targets `aarch64-linux-android` and `x86_64-linux-android`
+
+Generated `.so` files and build directories are ignored and must not be committed.
+
+## Verification
+
+Host Rust verification does not require a JVM, Android SDK, NDK, or Android Rust target:
+
+```bash
+cargo fmt --manifest-path native/silent-payments/Cargo.toml -- --check
+cargo fmt --manifest-path native/silent-payments-jni/Cargo.toml -- --check
+cargo test --manifest-path native/silent-payments/Cargo.toml --all-targets
+cargo test --manifest-path native/silent-payments-jni/Cargo.toml --all-targets
+cargo clippy --manifest-path native/silent-payments/Cargo.toml --all-targets -- -D warnings
+cargo clippy --manifest-path native/silent-payments-jni/Cargo.toml --all-targets -- -D warnings
+```
+
+The Kotlin unit tests use a fake native scanner seam and an in-memory `BlockSource`; they do not
+require a `.so`. Android compilation still requires a valid Android SDK.
