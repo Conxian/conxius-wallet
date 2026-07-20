@@ -25,12 +25,16 @@ targeting `main`:
 - `Android Lint`
 - `Android Unit Tests`
 - `Secret Scanning (Gitleaks)`
-- `CodeQL (JavaScript and TypeScript)`
+- `CodeQL`
 - `Dependency Review`
 
 The required-check list must be reviewed whenever a workflow job is renamed.
 Do not substitute an artifact upload, a test report, or an optional GitGuardian
 job for one of these checks.
+
+`CodeQL` is the stable aggregate check produced by GitHub-managed default setup.
+The language-specific `Analyze (...)` checks are platform-managed and are not
+listed separately here.
 
 ## GitHub settings outside the repository
 
@@ -51,10 +55,14 @@ A repository administrator must configure and verify:
    provide `PLAY_SERVICE_ACCOUNT_JSON` to the `production` environment. Keep
    signing material and service-account JSON out of the repository and logs;
    only the public certificate fingerprint is extracted into release metadata.
-   Provision the required `GITLEAKS_LICENSE` secret for the mandatory pinned
-   Gitleaks action. The required scan has no conditional secret-presence bypass
-   and fails clearly when that license is unavailable.
-4. **Review ownership:** retain the COO, lead-engineering, and security review
+   The mandatory Gitleaks scan is repository-owned and tokenless; it has no
+   commercial-license secret prerequisite. GitGuardian remains an optional
+   secondary scan.
+4. **CodeQL mode:** use exactly one CodeQL mode per repository. This repository
+   uses GitHub-managed default setup, so do not enable a repository-owned
+   advanced CodeQL workflow or configuration alongside it. Keep the aggregate
+   `CodeQL` check enabled.
+5. **Review ownership:** retain the COO, lead-engineering, and security review
    path required by [OPERATING_MODEL.md](OPERATING_MODEL.md) for high-impact
    release changes. Do not infer reviewer identities from this document.
 
@@ -73,14 +81,14 @@ workflow. This implementation does not create or modify a tag or release.
 ## Repository-owned proof path
 
 - `.github/workflows/ci.yml` exposes independent named checks.
-- `.github/workflows/secret-scan.yml` runs Gitleaks without a secret-presence
-  conditional; GitGuardian is secondary and optional.
-- `.github/workflows/codeql.yml` runs CodeQL for the supported JavaScript and
-  TypeScript surface. Kotlin/Java Android sources are intentionally excluded
-  from this CodeQL database because their required Gradle/native toolchain is
-  already covered by the required Android lint, unit-test, security-policy, and
-  release-build gates; adding an unbuildable CodeQL matrix would weaken rather
-  than strengthen the proof path.
+- `.github/workflows/secret-scan.yml` installs the official Gitleaks Linux x64
+  CLI under the runner temporary directory, verifies its pinned checksum, and
+  scans full repository history with redacted output and the narrow repository
+  configuration; GitGuardian is secondary and optional.
+- GitHub-managed CodeQL default setup provides the stable aggregate `CodeQL`
+  check and its platform-managed language `Analyze (...)` checks. Exactly one
+  CodeQL mode is permitted; no repository-owned advanced workflow/configuration
+  is tracked here.
 - `.github/workflows/android-release.yml` builds once, extracts and verifies
   APK/AAB package identity, version, versionCode, and public signing
   certificate identity, uploads the verified payload, attests each checksum

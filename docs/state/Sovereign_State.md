@@ -33,7 +33,9 @@ verification, and deeper reorg recovery remain outside this draft slice.
 - **CXN Guardian**: Local privacy filtering active for all AI/Network egress.
 - **The Conclave**: StrongBox-backed hardware isolation for BIP-39 mnemonics.
 - **Fail-Closed**: `ProductionRuntimeGuard.failClosed()` enforces release-build safety across native managers; the TypeScript signer must also reject native enclave failures without software fallback.
-- **Secret Scanning**: Gitleaks + GitGuardian integrated in CI. `.gitleaks.toml` with documented allowlists.
+- **Secret Scanning**: A checksum-verified, tokenless Gitleaks CLI plus optional
+  GitGuardian are integrated in CI. `.gitleaks.toml` is narrow and
+  `.gitleaksignore` is intentionally empty.
 - **Dependency Security**: Security overrides are authoritative in `pnpm-workspace.yaml` and reproduced in `pnpm-lock.yaml`; pnpm `11.13.0` ignores the obsolete `package.json` `pnpm` field. The remaining high `bigint-buffer` advisory is controlled by the expiring exception in `scripts/ci/dependency-audit-exceptions.json` and the CI validator.
 - **Security Journal**: `.jules/` hardening journal documents vulnerability patterns and prevention guides.
 

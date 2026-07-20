@@ -136,7 +136,8 @@ Then update `DeviceIntegrityPlugin.java` to call Play Integrity API alongside lo
 
 - [ ] `bash scripts/ci/validate_android_security.sh` passes, including `FLAG_SECURE`, backup/data-extraction, cleartext, and release-debuggability checks
 - [ ] Root detection plugin registered ✅ (DeviceIntegrityPlugin)
-- [ ] Mandatory repository Gitleaks scan passes with `.gitleaks.toml`
+- [ ] Mandatory repository-owned, tokenless Gitleaks CLI scan passes with `.gitleaks.toml`
+- [ ] Gitleaks scan has no commercial-license secret prerequisite
 - [ ] No debug logging of sensitive data
 - [ ] All experimental features properly gated
 - [ ] Biometric authentication working on physical device
@@ -203,8 +204,6 @@ Required secrets/preconditions:
 - `KEY_PASSWORD`
 - `ANDROID_SIGNING_CERT_SHA256` — Repository variable containing the expected
   public upload-signing certificate SHA-256 fingerprint, with colons optional
-- `GITLEAKS_LICENSE` — Required secret for the mandatory organization Gitleaks
-  scan
 - `PLAY_SERVICE_ACCOUNT_JSON` — Google Play service account JSON in the
   `production` environment
 

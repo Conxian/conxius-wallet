@@ -1,9 +1,0 @@
-name: Conxius Wallet CodeQL Configuration
-
-paths-ignore:
-  - android
-  - dist
-  - node_modules
-  - playwright-report
-  - test-results
-  - native
