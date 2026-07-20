@@ -105,6 +105,13 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build web application
         run: pnpm run build
+      - name: Upload web assets for Android jobs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: web-dist
+          path: dist
+          if-no-files-found: error
+          retention-days: 1
 
   e2e:
     name: E2E
@@ -178,6 +185,7 @@ jobs:
     name: Android Lint
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    needs: web-build
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -191,6 +199,11 @@ jobs:
           VERSION_CODE=$(node scripts/ci/derive_android_version_code.mjs "$EXPECTED_VERSION")
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+      - name: Download web assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: web-dist
+          path: dist
       - name: Setup Java
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
         with:
@@ -233,9 +246,15 @@ jobs:
     name: Android Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    needs: web-build
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Download web assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: web-dist
+          path: dist
       - name: Setup Java
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
         with:
