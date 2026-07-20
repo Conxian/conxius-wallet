@@ -282,7 +282,7 @@ class EsploraBlockSourceTest {
     }
 
     @Test
-    fun sourcePaginatesInOrderAndEmitsAReorgCheckpointOnlyAfterFinalBatch() = runBlocking {
+    fun sourceUsesPagedOrderWhenTxidsAreReversedAndEmitsAReorgCheckpointOnlyAfterFinalBatch() = runBlocking {
         val blockHash = "ab".repeat(32)
         val previousHash = "cd".repeat(32)
         val txs = (0 until 26).map { index ->
@@ -303,7 +303,9 @@ class EsploraBlockSourceTest {
                 "/block/$blockHash" to """
                     {"id":"$blockHash","height":100,"previousblockhash":"$previousHash","tx_count":26}
                 """.trimIndent(),
-                "/block/$blockHash/txids" to "[${txs.joinToString(",") { "\"${transactionIdFromJson(it)}\"" }}]",
+                // Esplora documents the /txs/{start_index} page offset, not the positional
+                // ordering of /txids. The source must therefore accept this reversed set.
+                "/block/$blockHash/txids" to "[${txs.asReversed().joinToString(",") { "\"${transactionIdFromJson(it)}\"" }}]",
                 "/block/$blockHash/txs/0" to txs.take(25).joinToString(prefix = "[", postfix = "]"),
                 "/block/$blockHash/txs/25" to "[${txs[25]}]",
             ),
@@ -348,6 +350,76 @@ class EsploraBlockSourceTest {
         assertTrue(error is NativeSilentPaymentException)
         assertEquals(NativeErrorCode.INVALID_PUBLIC_RECORD, (error as NativeSilentPaymentException).code)
         assertFalse(client.paths.any { it.contains("/txs/") })
+    }
+
+    @Test
+    fun sourceRejectsAnExtraPagedTransactionIdOutsideTheUnorderedMembershipSet() = runBlocking {
+        val blockHash = "c3".repeat(32)
+        val parentHash = "c4".repeat(32)
+        val canonicalId = "c5".repeat(32)
+        val extraId = "c6".repeat(32)
+        val extraTransaction = transactionJson(
+            txid = extraId,
+            inputs = listOf(inputJson("c7".repeat(32), 0, "", taprootKeyPathWitness(), p2trScript("38".repeat(32)))),
+            outputs = listOf(outputJson("39".repeat(32), 1, null)),
+        )
+        val client = FakeEsploraHttpClient(
+            mapOf(
+                "/blocks/tip/height" to "200",
+                "/blocks/tip/hash" to "ff".repeat(32),
+                "/block-height/100" to blockHash,
+                "/block-height/99" to parentHash,
+                "/block/$blockHash" to "{\"id\":\"$blockHash\",\"height\":100,\"previousblockhash\":\"$parentHash\",\"tx_count\":1}",
+                "/block/$blockHash/txids" to "[\"$canonicalId\"]",
+                "/block/$blockHash/txs/0" to "[$extraTransaction]",
+            ),
+        )
+
+        val error = runCatching {
+            EsploraBlockSource(client).batches(
+                SilentPaymentNetwork.MAINNET,
+                ScanRange(100, 100),
+            ).collect { }
+        }.exceptionOrNull()
+
+        assertTrue(error is NativeSilentPaymentException)
+        assertEquals(NativeErrorCode.INVALID_PUBLIC_RECORD, (error as NativeSilentPaymentException).code)
+    }
+
+    @Test
+    fun sourceRejectsARequiredCanonicalIdMissingFromThePagedResponse() = runBlocking {
+        val blockHash = "c8".repeat(32)
+        val parentHash = "c9".repeat(32)
+        val firstId = "ca".repeat(32)
+        val missingId = "cb".repeat(32)
+        val firstTransaction = transactionJson(
+            txid = firstId,
+            inputs = listOf(inputJson("cc".repeat(32), 0, "", taprootKeyPathWitness(), p2trScript("3d".repeat(32)))),
+            outputs = listOf(outputJson("3e".repeat(32), 1, null)),
+        )
+        val client = FakeEsploraHttpClient(
+            mapOf(
+                "/blocks/tip/height" to "200",
+                "/blocks/tip/hash" to "ff".repeat(32),
+                "/block-height/100" to blockHash,
+                "/block-height/99" to parentHash,
+                "/block/$blockHash" to "{\"id\":\"$blockHash\",\"height\":100,\"previousblockhash\":\"$parentHash\",\"tx_count\":2}",
+                "/block/$blockHash/txids" to "[\"$firstId\",\"$missingId\"]",
+                // The documented page is short, so the required second transaction is missing.
+                "/block/$blockHash/txs/0" to "[$firstTransaction]",
+            ),
+        )
+
+        val error = runCatching {
+            EsploraBlockSource(client).batches(
+                SilentPaymentNetwork.MAINNET,
+                ScanRange(100, 100),
+            ).collect { }
+        }.exceptionOrNull()
+
+        assertTrue(error is NativeSilentPaymentException)
+        assertEquals(NativeErrorCode.INVALID_PUBLIC_RECORD, (error as NativeSilentPaymentException).code)
+        assertEquals(1, client.paths.count { it.contains("/txs/") })
     }
 
     @Test

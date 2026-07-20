@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.conxius.wallet.repository.WalletRepository
 import com.conxius.wallet.ui.screens.DashboardScreen
 import com.conxius.wallet.ui.screens.OnboardingScreen
 import com.conxius.wallet.ui.screens.SecurityScreen

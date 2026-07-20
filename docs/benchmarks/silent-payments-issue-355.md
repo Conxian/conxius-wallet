@@ -1,5 +1,8 @@
 # Silent-payment host microbenchmark (issue #355)
 
+> **Host-only evidence:** This benchmark is not Android, JNI, Kotlin, wallet, device, or mobile
+> performance evidence. Do not use these results as a mobile or release acceptance claim.
+
 This benchmark compares the production `native/silent-payments` Rust
 `scan_transaction` core with a benchmark-local TypeScript-only reference that
 implements the same BIP-352 scan math using Node `crypto` SHA-256 and
@@ -86,7 +89,6 @@ checksum equality, and scan/match counts between the two processes.
 
 The checksum is a timing-loop sink as well as a cross-runner invariant, so the
 scan result cannot be optimized away without changing the reported checksum.
-each scan to mirror the Rust API boundary.
 JSON parsing and high-level record construction happen outside timed loops. The
 timed Rust scan includes full structural validation of the input/output records,
 including duplicate and record-shape checks. The TypeScript reference mirrors

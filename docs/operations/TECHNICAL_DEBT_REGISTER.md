@@ -68,6 +68,7 @@ its exit criteria and validation are recorded in the implementation change.
 - **Owner:** Unassigned
 - **Exit criteria:** Every production-capable protocol operation has a verified native implementation or an explicit fail-closed guard; tests distinguish simulation from production and cannot report synthetic success as production readiness.
 - **Validation:** Protocol-by-protocol evidence review, native unit/instrumentation tests, and negative tests for unsupported production operations.
+- **PR #390 evidence:** The draft adds a bounded BIP-352 Rust/JNI scanner, Kotlin Esplora source, persistence/cursor coordination, shallow reorg fail-closed checks, and focused source/codec/manager tests. It does not close this broader debt: Android release validation, device evidence, compact filters, spending/tweak recovery, address encoding, and other protocol gaps remain open.
 - **Target milestone:** M16 release baseline gate, then M17 protocol completion
 - **Metrics baseline:** `docs/reports/GAP_MATRIX_2026.md` lists seven protocol gaps; `docs/reports/v1.9.5_CODE_GAP_MAPPING.md` maps native and service-layer stubs.
 - **Evidence:** [`GAP_MATRIX_2026.md`](../reports/GAP_MATRIX_2026.md); [`v1.9.5_CODE_GAP_MAPPING.md`](../reports/v1.9.5_CODE_GAP_MAPPING.md); [`GAPS_AND_RECOMMENDATIONS_ROUND_2.md`](../archive/GAPS_AND_RECOMMENDATIONS_ROUND_2.md)
@@ -95,7 +96,7 @@ its exit criteria and validation are recorded in the implementation change.
 - **Impact:** AGP `9.3.0` rejects the redundant `org.jetbrains.kotlin.android` plugin; Jetifier is deprecated and adds needless build work.
 - **Owner:** Unassigned
 - **Exit criteria:** Root and module Kotlin plugin declarations are removed, Jetifier is disabled, and Android configuration plus requested unit tests pass without speculative version changes.
-- **Validation:** `./gradlew --no-daemon :app:tasks --all` passed after removing the redundant Kotlin plugin, migrating `kotlinOptions` to `compilerOptions`, and applying the required Compose compiler plugin. `./gradlew --no-daemon :app:testDebugUnitTest :core-bitcoin:test` is blocked by the missing Android SDK.
+- **Validation:** `./gradlew --no-daemon :app:tasks --all` passed after removing the redundant Kotlin plugin, migrating `kotlinOptions` to `compilerOptions`, and applying the required Compose compiler plugin. PR #390's Compose scan card is source-integrated, but `./gradlew --no-daemon :app:testDebugUnitTest :core-bitcoin:test` and Android compilation remain blocked by the missing Android SDK.
 - **Target milestone:** M16 release baseline
 - **Metrics baseline:** Configuration failed before task discovery; AGP emitted an `android.enableJetifier=true` deprecation warning.
 - **Evidence:** AGP configuration error captured during #357 investigation; `android/gradle/libs.versions.toml`; [`ANDROID_SDK_REVIEW.md`](../reports/ANDROID_SDK_REVIEW.md)
@@ -123,7 +124,7 @@ its exit criteria and validation are recorded in the implementation change.
 - **Impact:** CI runs Vitest and a web build but does not run Playwright E2E or the requested Android unit-test gates. Release confidence is therefore narrower than the documented checklist.
 - **Owner:** Unassigned
 - **Exit criteria:** CI has intentional, resource-bounded Playwright coverage and Android unit-test coverage; failure artifacts are produced by the jobs that upload them; release checks are separated from publishing.
-- **Validation:** Successful CI runs with named E2E and Android test jobs, plus local reproductions.
+- **Validation:** Successful CI runs with named E2E and Android test jobs, plus local reproductions. PR #390 adds focused Esplora/Kotlin unit coverage but no Compose test because the current environment lacks the Android SDK; this does not satisfy the Android/E2E gate.
 - **Target milestone:** M16 release baseline / M17 coverage expansion
 - **Metrics baseline:** Current CI has one JavaScript test command and one build command; no E2E or Android test job.
 - **Evidence:** `.github/workflows/ci.yml`; [`ANDROID_RELEASE_PREP.md`](ANDROID_RELEASE_PREP.md); [`MOBILE_TESTING_GUIDE.md`](MOBILE_TESTING_GUIDE.md)
@@ -151,7 +152,7 @@ its exit criteria and validation are recorded in the implementation change.
 - **Impact:** Current state documents claim completed production readiness while the code and CI baseline still contain open release, protocol, and toolchain debt.
 - **Owner:** Unassigned
 - **Exit criteria:** Current operational/state docs link this register, use current toolchain facts, and do not mark open register items as verified; historical reports are clearly labeled as historical evidence.
-- **Validation:** Documentation review against this register and current command output.
+- **Validation:** Documentation review against this register and current command output. On 2026-07-20, `Sovereign_State.md` records the verified GitHub snapshot of 4 open issues and 2 open PRs and labels PR #390's native BIP-352 work as draft/partial; release evidence remains open.
 - **Target milestone:** M16 release baseline
 - **Metrics baseline:** `Sovereign_State.md` reports pnpm `11.9.0`, TypeScript `6.0.3`, and all checks passing; the repository baseline measured different values and a lint crash.
 - **Evidence:** [`Sovereign_State.md`](../state/Sovereign_State.md); [`v1.9.5_PRODUCTION_AUDIT.md`](../reports/v1.9.5_PRODUCTION_AUDIT.md); [`PROJECT_CONTEXT.md`](../archive/PROJECT_CONTEXT.md)
