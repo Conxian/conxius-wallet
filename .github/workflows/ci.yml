@@ -49,6 +49,9 @@ jobs:
     - name: Runtime contamination guard (CON-393)
       run: bash scripts/ci/check_runtime_contamination.sh
 
+    - name: Lint
+      run: pnpm run lint
+
     - name: Run tests
       run: pnpm exec vitest run
       env:
@@ -57,18 +60,5 @@ jobs:
     - name: Security Audit
       run: pnpm audit --audit-level=critical
 
-    - name: Upload test artifacts
-      if: always()
-      uses: actions/upload-artifact@v7.0.1
-      with:
-        name: test-artifacts
-        path: |
-          test-results
-          playwright-report
-          blob-report
-          coverage
-        if-no-files-found: ignore
-        retention-days: 14
-    
     - name: Build
       run: pnpm run build

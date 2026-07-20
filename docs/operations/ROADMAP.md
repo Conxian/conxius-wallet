@@ -6,6 +6,12 @@ permalink: /docs/roadmap
 
 # Conxius Strategic Roadmap (v1.9.5)
 
+## Release-baseline hardening
+
+The canonical release-baseline debt inventory and burn-down policy is the
+[Technical Debt Register](TECHNICAL_DEBT_REGISTER.md). P0/P1 security, release,
+and compatibility items must be reviewed before promotion to `main`.
+
 ## 🏗️ Operational Levels
 
 ### Level 0: Product Validation (ROOT) - [COMPLETED]

@@ -6,8 +6,11 @@ permalink: /docs/android-release-prep
 
 # Android Release Preparation Guide
 
-**Last Updated:** 2026-05-28
+**Last Updated:** 2026-07-20
 **Status:** Pre-release checklist — all items must be completed before Play Store submission.
+
+For the current release-baseline debt inventory and evidence requirements, see
+the [Technical Debt Register](TECHNICAL_DEBT_REGISTER.md).
 
 ---
 
