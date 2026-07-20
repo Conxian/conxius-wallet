@@ -179,6 +179,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Validate release version and derive Android version code
+        id: version
+        run: |
+          set -euo pipefail
+          EXPECTED_VERSION="$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version")"
+          node scripts/ci/check_release_version.mjs \
+            --expected-version "$EXPECTED_VERSION"
+          VERSION_CODE=$(node scripts/ci/derive_android_version_code.mjs "$EXPECTED_VERSION")
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
       - name: Setup Java
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
         with:
