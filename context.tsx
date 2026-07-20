@@ -1,6 +1,6 @@
 
 import { createContext } from 'react';
-import { AppState, WalletConfig, Asset, Bounty, Network, AppMode, LnBackendConfig } from './types';
+import { AppState, WalletConfig, Asset, Bounty, Network, AppMode, LnBackendConfig, SilentPaymentScanOptions } from './types';
 import { Language } from './services/i18n';
 import { ToastType } from './components/Toast';
 import { SignRequest, SignResult } from './services/signer';
@@ -26,6 +26,8 @@ export const AppContext = createContext<{
   setAiConfig: (config: AppState["aiConfig"]) => void;
   setCustomNodes: (nodes: AppState["customNodes"]) => void;
   setRpcStrategy: (strategy: AppState["rpcStrategy"]) => void;
+  scanSilentPayments: (options: SilentPaymentScanOptions) => Promise<void>;
+  cancelSilentPaymentScan: () => Promise<void>;
   getWormholeSigner: (chain: any) => any; // Typed as any to avoid circular deps in context, or import types
 } | null>(null);
 
@@ -51,6 +53,8 @@ export const initialAppState: AppState = {
     totalEarned: 0
   },
   utxos: [],
+  silentPaymentUtxos: [],
+  silentPaymentScan: { status: 'idle' },
   isTorEnabled: false,
   theme: "light",
   language: "en"

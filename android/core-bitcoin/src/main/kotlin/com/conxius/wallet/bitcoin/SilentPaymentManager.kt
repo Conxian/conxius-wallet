@@ -2,6 +2,7 @@ package com.conxius.wallet.bitcoin
 
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.collect
 
 /**
 * Coordinates bounded structured-transaction scans.
@@ -53,6 +54,12 @@ class SilentPaymentManager(
             if (batch.network != network || batch.range != range) {
                 throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_BATCH)
             }
+            if (batch.transactions.isEmpty()) {
+                return@collect
+            }
+            if (batch.transactions.any { it.eligibleInputs.isEmpty() }) {
+                throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_BATCH)
+            }
             if (batch.transactions.size.toLong() > MAX_SCAN_TRANSACTIONS_PER_CALL - transactionCount) {
                 throw NativeSilentPaymentException(NativeErrorCode.RESOURCE_LIMIT)
             }
@@ -78,6 +85,8 @@ class SilentPaymentManager(
                 SilentPaymentCodec.decodeResult(encodedResult)
             } catch (error: SilentPaymentCodec.SilentPaymentCodecException) {
                 throw NativeSilentPaymentException(error.code, error)
+            } catch (_: IllegalArgumentException) {
+                throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_BATCH)
             }
             validateBatchResult(batch, encodedBatch.size, result)
             if (result.metrics.matchCount != result.matches.size.toLong()) {

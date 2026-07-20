@@ -23,6 +23,9 @@ data class ScanRange(val startBlock: Long, val endBlock: Long) {
     init {
         require(startBlock >= 0) { "scan range start must be non-negative" }
         require(endBlock >= startBlock) { "scan range end must not precede start" }
+        require(safeRangeSpan(startBlock, endBlock) < MAX_SCAN_BLOCKS) {
+            "scan range exceeds the maximum block bound"
+        }
     }
 }
 
@@ -60,10 +63,12 @@ data class TaprootOutput(
     val outpoint: OutPoint,
     val valueSat: Long,
     val isUnspent: Boolean,
+    /** True only when the source supplied authoritative spentness metadata. */
+    val spentnessKnown: Boolean = false,
 ) {
     init {
         require(outputKey.size == 32) { "taproot output key must be 32 bytes" }
-        require(valueSat >= 0) { "output value must be non-negative" }
+        require(valueSat in 0..MAX_MONEY_SAT) { "output value is outside Bitcoin's money range" }
     }
 }
 
@@ -88,6 +93,18 @@ data class SilentPaymentBatch(
     val range: ScanRange,
     val labels: List<Long> = emptyList(),
     val transactions: List<SilentPaymentTransaction>,
+    /** Public chain metadata used by persistence/reorg checks; not part of the SPB1 wire format. */
+    val blockHeight: Long? = null,
+    val blockHash: String? = null,
+    val previousBlockHash: String? = null,
+    val currentTipHeight: Long? = null,
+    val currentTipHash: String? = null,
+    /** Bounded parser diagnostics for transactions that could not be safely scanned. */
+    val skippedTransactionCount: Long = 0,
+    val skipReasons: List<String> = emptyList(),
+    /** Native batches may split a large block; the cursor advances only on the final batch. */
+    val batchTransactionOffset: Long = 0,
+    val isFinalBatchForBlock: Boolean = true,
 ) {
     init {
         require(account == 0L) { "only account zero is supported in protocol version 2" }
@@ -95,6 +112,9 @@ data class SilentPaymentBatch(
         require(transactions.all { it.blockHeight in range.startBlock..range.endBlock }) {
             "transaction block height must be within the supplied scan range"
         }
+        require(skippedTransactionCount >= 0) { "skipped transaction count must be non-negative" }
+        require(skipReasons.size <= MAX_SKIP_DIAGNOSTICS) { "too many skip diagnostics" }
+        require(batchTransactionOffset >= 0) { "batch transaction offset must be non-negative" }
     }
 }
 
@@ -132,7 +152,7 @@ data class SilentPaymentMatch(
         require(k in 0 until SilentPaymentCodec.MAX_K.toLong()) {
             "match k must be below K_MAX"
         }
-        require(valueSat >= 0) { "match value must be non-negative" }
+        require(valueSat in 0..MAX_MONEY_SAT) { "match value is outside Bitcoin's money range" }
     }
 }
 
@@ -159,10 +179,84 @@ data class SilentPaymentScanResult(
     val metrics: SilentPaymentMetrics,
 )
 
-/**
-* Supplies already-parsed public transactions. This phase does not define chain ingestion,
-* Esplora pagination, persistence, or reorg handling.
-*/
+/** Stable public options accepted by application/UI scan entry points. */
+data class SilentPaymentScanOptions(
+    val network: SilentPaymentNetwork,
+    val startHeight: Long? = null,
+    val endHeight: Long,
+) {
+    init {
+        require(endHeight >= 0) { "scan end height must be non-negative" }
+        require(startHeight == null || startHeight >= 0) { "scan start height must be non-negative" }
+        require(startHeight == null || startHeight <= endHeight) {
+            "scan start height must not exceed scan end height"
+        }
+        require(startHeight == null || safeRangeSpan(startHeight, endHeight) < MAX_SCAN_BLOCKS) {
+            "scan range exceeds the maximum block bound"
+        }
+    }
+}
+
+data class SilentPaymentCursor(
+    val network: SilentPaymentNetwork,
+    val lastScannedHeight: Long,
+    val lastScannedBlockHash: String,
+) {
+    init {
+        require(lastScannedHeight >= 0) { "cursor height must be non-negative" }
+        require(lastScannedBlockHash == lastScannedBlockHash.lowercase()) {
+            "cursor block hash must be lowercase"
+        }
+        require(lastScannedBlockHash.matches(HEX_64)) { "cursor block hash must be 32-byte hex" }
+    }
+}
+
+/** Public UTXO projection safe for persistence and JavaScript serialization. */
+data class SilentPaymentPublicUtxo(
+    val network: SilentPaymentNetwork,
+    val outpoint: String,
+    val txid: String,
+    val vout: Long,
+    val valueSat: Long,
+    val outputKeyHex: String,
+    val blockHeight: Long,
+    val transactionIndex: Long,
+    val source: String,
+    val spentState: String,
+    val spentnessKnown: Boolean,
+    val matchKind: String,
+    val labelIndex: Long?,
+    val matchedNegatedOutputKey: Boolean,
+)
+
+data class SilentPaymentPublicMetrics(
+    val scannedBlocks: Long,
+    val scannedTransactions: Long,
+    val skippedTransactions: Long,
+    val matchCount: Long,
+    val currentHeight: Long?,
+    val currentTipHeight: Long?,
+)
+
+data class SilentPaymentPublicScanReport(
+    val utxos: List<SilentPaymentPublicUtxo>,
+    val metrics: SilentPaymentPublicMetrics,
+    val cursor: SilentPaymentCursor?,
+)
+
+const val MAX_SCAN_BLOCKS: Long = 2_016
+const val MAX_MONEY_SAT: Long = 2_100_000_000_000_000L
+const val MAX_SKIP_DIAGNOSTICS: Int = 32
+private val HEX_64 = Regex("[0-9a-f]{64}")
+
+private fun safeRangeSpan(start: Long, end: Long): Long =
+    try {
+        Math.subtractExact(end, start)
+    } catch (_: ArithmeticException) {
+        Long.MAX_VALUE
+    }
+
+/** Supplies bounded, public transaction batches to the native scanner. */
 interface BlockSource {
     fun batches(network: SilentPaymentNetwork, range: ScanRange): Flow<SilentPaymentBatch>
 }

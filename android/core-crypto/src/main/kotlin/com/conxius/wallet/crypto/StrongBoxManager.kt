@@ -74,7 +74,7 @@ class StrongBoxManager(private val context: Context) {
                 keyInfo.isInsideSecureHardware
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error checking KeyInfo: ${e.message}")
+            Log.e(TAG, "Error checking KeyInfo")
             false
         }
     }
@@ -102,7 +102,7 @@ class StrongBoxManager(private val context: Context) {
             keyGenerator.generateKey()
             Log.i(TAG, "Key '$alias' generated. Requested StrongBox: $useStrongBox")
         } catch (e: Exception) {
-            Log.w(TAG, "StrongBox generation failed for '$alias', falling back to TEE: ${e.message}")
+            Log.w(TAG, "StrongBox generation failed; falling back to TEE")
             // Graceful fallback to TEE-backed Keystore
             val fallbackBuilder = KeyGenParameterSpec.Builder(
                 alias,
@@ -131,7 +131,7 @@ class StrongBoxManager(private val context: Context) {
             val encryptedData = cipher.doFinal(data)
             Pair(encryptedData, cipher.iv)
         } catch (e: Exception) {
-            Log.e(TAG, "Encryption failed: ${e.message}")
+            Log.e(TAG, "Encryption failed")
             throw e
         } finally {
             Arrays.fill(data, 0.toByte())
@@ -145,10 +145,17 @@ class StrongBoxManager(private val context: Context) {
             cipher.init(Cipher.DECRYPT_MODE, getKey(alias), spec)
             cipher.doFinal(encryptedData)
         } catch (e: Exception) {
-            Log.e(TAG, "Decryption failed: ${e.message}")
+            Log.e(TAG, "Decryption failed")
             throw e
         }
     }
+
+    /**
+     * Explicit byte-oriented decrypt entry point for native secret boundaries. The returned array
+     * is caller-owned and must be cleared after its bounded use; no String conversion occurs here.
+     */
+    fun decryptBytes(encryptedData: ByteArray, iv: ByteArray, alias: String = keyStoreAlias): ByteArray =
+        decrypt(encryptedData, iv, alias)
 
     fun getDatabasePassphrase(): ByteArray {
         val passphraseFile = File(context.filesDir, "db_passphrase.bin")
@@ -157,7 +164,12 @@ class StrongBoxManager(private val context: Context) {
         if (passphraseFile.exists() && ivFile.exists()) {
             val encryptedPassphrase = passphraseFile.readBytes()
             val iv = ivFile.readBytes()
-            return decrypt(encryptedPassphrase, iv, dbKeyAlias)
+            return try {
+                decrypt(encryptedPassphrase, iv, dbKeyAlias)
+            } finally {
+                Arrays.fill(encryptedPassphrase, 0.toByte())
+                Arrays.fill(iv, 0.toByte())
+            }
         } else {
             val newPassphrase = ByteArray(32)
             SecureRandom().nextBytes(newPassphrase)

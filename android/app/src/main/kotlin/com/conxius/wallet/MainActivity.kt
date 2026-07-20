@@ -21,9 +21,8 @@ class MainActivity : FragmentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 
         val app = application as ConxiusApplication
-        val repository = WalletRepository(app.database.walletDao())
         val factory = ViewModelFactory(
-            repository,
+            app.walletRepository,
             app.bdkManager,
             app.strongBoxManager,
             app.babylonManager,
@@ -41,7 +40,8 @@ class MainActivity : FragmentActivity() {
             app.bitVmManager,
             app.web5Manager,
             app.musig2Manager,
-            app.silentPaymentManager,
+            app.silentPaymentCoordinator,
+            app.walletSession,
             app.yieldManager,
             app.insuranceManager,
             app.interoperabilityManager,

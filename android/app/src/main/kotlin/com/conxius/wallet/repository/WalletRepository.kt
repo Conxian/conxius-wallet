@@ -1,6 +1,8 @@
 package com.conxius.wallet.repository
 
 import com.conxius.wallet.database.AssetEntity
+import com.conxius.wallet.database.SilentPaymentScanCursorEntity
+import com.conxius.wallet.database.SilentPaymentUtxoEntity
 import com.conxius.wallet.database.TransactionEntity
 import com.conxius.wallet.database.UtxoEntity
 import com.conxius.wallet.database.WalletDao
@@ -15,15 +17,31 @@ class WalletRepository(private val walletDao: WalletDao) {
 
     suspend fun saveSeed(encryptedSeed: ByteArray, iv: ByteArray) {
         val entity = com.conxius.wallet.database.EncryptedSeedEntity(0, encryptedSeed, iv)
-        walletDao.insertSeed(entity)
+        walletDao.replaceSeed(entity)
     }
 
     suspend fun clearWallet() {
-        walletDao.clearSeed()
+        walletDao.clearWalletData()
         // Add more clearing logic as needed
     }
 
     suspend fun updateAssets(assets: List<AssetEntity>) {
         walletDao.insertAssets(assets)
+    }
+
+    fun silentPaymentUtxos(network: String): Flow<List<SilentPaymentUtxoEntity>> =
+        walletDao.getSilentPaymentUtxos(network)
+
+    suspend fun silentPaymentUtxosOnce(network: String): List<SilentPaymentUtxoEntity> =
+        walletDao.getSilentPaymentUtxosOnce(network)
+
+    suspend fun getSilentPaymentCursor(network: String): SilentPaymentScanCursorEntity? =
+        walletDao.getSilentPaymentCursor(network)
+
+    suspend fun persistSilentPaymentBatch(
+        utxos: List<SilentPaymentUtxoEntity>,
+        cursor: SilentPaymentScanCursorEntity?,
+    ) {
+        walletDao.persistSilentPaymentBatch(utxos, cursor)
     }
 }

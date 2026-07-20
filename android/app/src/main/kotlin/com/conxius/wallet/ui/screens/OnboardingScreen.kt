@@ -37,7 +37,7 @@ fun OnboardingScreen(viewModel: OnboardingViewModel, onOnboardingComplete: () ->
 
         if (mnemonic == null) {
             Button(
-                onClick = { viewModel.createNewWallet() },
+                onClick = { viewModel.createWallet() },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Create New Wallet")

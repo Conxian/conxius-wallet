@@ -1,8 +1,98 @@
 # Silent Payments (BIP-352)
 
-This change adds the secure native scanning slice for Conxius Wallet. It scans **supplied,
-already-parsed structured transactions**; it does not claim full chain ingestion, Esplora
-pagination, block-filter discovery, persistence, reorg handling, or address derivation.
+This change adds the production-facing native scanning slice for Conxius Wallet. Android owns
+bounded Esplora ingestion, BIP-352 eligibility extraction, native scanning, public UTXO
+persistence, cursor/resume, and shallow-reorg fail-closed checks. It does **not** add block-filter
+discovery, spending/tweak recovery, or native silent-payment address encoding.
+
+The shipped Android launcher remains a native Compose `FragmentActivity`, not a Capacitor
+`BridgeActivity`. The `SilentPaymentPlugin` is compiled as an explicit, secret-free bridge
+component for a future Capacitor host; it is not reachable from the current launcher and is not
+claimed as registered by the generated Capacitor plugin asset.
+
+## Production data flow
+
+```text
+Native Compose UI or a future Capacitor host (public options only)
+        |
+        v
+application-scoped SilentPaymentScanCoordinator
+        |-- unlock/session gate
+        |-- EsploraBlockSource (fixed HTTPS endpoint allowlist)
+        |-- SilentPaymentManager (SPB1 + native JNI)
+        |-- RoomWalletSeedProvider (Room ciphertext -> StrongBox bytes -> callback)
+        |-- Room atomic match/cursor persistence
+        v
+public UTXOs + metrics + cursor + structured state
+```
+
+JavaScript can request only `{ network, startHeight?, endHeight }`. It cannot provide an endpoint,
+mnemonic, passphrase, seed, scan key, spend key, private key, or xpriv. Android rejects legacy
+secret-bearing fields and exposes stable error codes only.
+
+### Esplora source and endpoint policy
+
+`EsploraBlockSource` fetches the current tip, the canonical parent anchor for the first requested
+block, then each block hash, block summary, canonical `/block/{hash}/txids` list, and transaction
+pages in ascending height/order. The inclusive range is limited to 2,016 blocks; each response is
+bounded before JSON parsing/allocation. Pagination uses the deterministic Esplora
+`/block/{hash}/txs/{start_index}` convention with a maximum page size of 25, exact page lengths,
+canonical txid/order cross-checks, and a maximum of 100,000 transactions per block. Only HTTPS endpoints on the fixed `blockstream.info` or
+`mempool.space` host allowlist are accepted (mainnet, testnet, and signet); regtest has no public
+endpoint and fails with `INVALID_NETWORK`.
+
+The parser emits canonical transaction identities and non-overlapping ordered batches. It keeps
+all input outpoints in txid little-endian form, but includes an input public key in the BIP-352
+eligible set only for compressed P2PKH, P2WPKH, P2SH-P2WPKH, and x-only P2TR prevouts, with the
+script commitment/hash checked before inclusion. Valid v0 P2WSH and other non-eligible inputs are
+retained in the full outpoint list but do not reject the transaction; SegWit versions above the
+BIP-352-supported range, malformed v0/v1 programs, malformed eligible witnesses/scripts, duplicate
+input outpoints, and malformed transaction records are skipped or fail closed at the source
+boundary. Diagnostics are bounded to a count and at most 32 non-sensitive reason codes. P2TR
+script-path inputs are eligible via their output key after annex normalization except when the
+control block commits to the BIP-341 NUMS internal key; that exception is skipped. P2PKH
+scriptSigs are scanned for a compressed public-key push even when the script is non-standard, as
+required by BIP-352. Transactions with no eligible input or no v1/32-byte Taproot output are
+skipped before native scanning. Output value, txid/vout, and source spentness metadata are
+retained when Esplora provides them; otherwise spentness is persisted as `UNKNOWN`, never guessed
+as authoritative.
+
+When the requested range reaches the observed tip, the source re-fetches both tip height and hash
+before emitting the final block checkpoint. Any parent, txid/order, tip, or block continuity
+mismatch fails closed and prevents cursor advancement.
+
+The source records the range, current tip height/hash, block hash, previous block hash, block
+height, and batch offset in Kotlin metadata adjacent to the SPB1 payload. This metadata is not
+secret and is not inserted into the Rust wire format.
+
+### Unlock and security boundary
+
+`WalletSession` is an application-scoped authenticated/unlocked gate. `RoomWalletSeedProvider`
+reads encrypted seed bytes through `WalletRepository`, decrypts with `StrongBoxManager`, and
+borrows mutable bytes only for the manager callback. The provider and manager both clear mutable
+buffers in `finally`; the provider never creates a mnemonic `String`, caches seed material, or
+logs it. The existing BDK unlock path still has one documented bounded `String` conversion because
+its current API accepts a mnemonic string; silent-payment scanning does not use that path.
+
+No scan key, spend key, passphrase, mnemonic, shared secret, private tweak, xpriv, or public batch
+blob containing secrets is persisted or serialized to JavaScript.
+
+### Persistence, resume, and reorg behavior
+
+Room schema version 3 adds:
+
+- `silent_payment_utxos`, keyed by `(network, canonical display outpoint)` and containing only
+  public match metadata, provenance, block/transaction identity, value, output key, and explicit
+  `UNSPENT`/`SPENT`/`UNKNOWN` state.
+- `silent_payment_scan_cursor`, keyed by network and containing the last durably scanned height and
+  block hash.
+
+The 2-to-3 migration is additive and non-destructive. Match upserts and final-block cursor updates
+run in one Room transaction. A non-final batch may be safely replayed; the cursor advances only
+after the final batch of a block commits. On resume, the coordinator requires the next height to be
+the stored cursor plus one, checks the stored hash/previous hash relationship, and rejects hash or
+ordering mismatches with `REORG_DETECTED`. It does not roll back already persisted rows or attempt
+deep reorg recovery in this slice; operators must rescan from a trusted height after a reorg.
 
 ## Boundary and key handling
 
@@ -12,9 +102,10 @@ pagination, block-filter discovery, persistence, reorg handling, or address deri
   native loader, and the suspend scanning loop.
 - TypeScript does not pass a scan private key to a production native API. The Capacitor plugin has
   no secret-bearing scan method in this phase.
-- The Kotlin provider supplies a short-lived UTF-8 BIP39 mnemonic and optional UTF-8 passphrase
-  only around the JNI call. The manager clears both arrays in `finally`; provider implementations
-  must also clear their own copies and never retain or log them.
+- The Kotlin provider supplies short-lived mnemonic bytes only around the JNI call. The manager and
+  provider clear borrowed arrays in `finally`; provider implementations must also clear their own
+  copies and never retain or log them. The production Room provider does not convert mnemonic bytes
+  to an immutable `String`.
 
 Rust derives the keys internally using the fixed canonical paths:
 
@@ -88,6 +179,11 @@ Failure envelopes contain only one stable code:
 6 ECC_FAILURE
 7 INTERNAL
 8 CANCELLED
+9 REORG_DETECTED
+10 WALLET_LOCKED
+11 INVALID_REQUEST
+12 NETWORK_UNAVAILABLE
+13 UNSUPPORTED_PLATFORM
 ```
 
 Malformed or truncated envelopes fail closed. Rust catches panics at the JNI boundary so no panic
@@ -140,10 +236,14 @@ The task calls `scripts/build-silent-payments-android.sh`, which requires:
 
 Generated `.so` files and build directories are ignored and must not be committed.
 
-The TypeScript `scanForSilentPayments` compatibility symbol now throws an explicit unsupported
-error rather than returning `[]`. Callers must migrate to Kotlin
-`SilentPaymentManager.scanForPayments(BlockSource)`. Removed secret-bearing Capacitor methods are
-not restored: mnemonic/passphrase handling stays in the Android provider/Keystore boundary.
+The TypeScript `scanForSilentPayments` contract accepts public options and returns public UTXOs,
+metrics, and cursor data. It deduplicates only validated canonical display outpoints, maps native
+failures to a fixed stable-code set, and throws `Silent-payment scanning is unsupported on the web
+platform.` on web builds. `SilentPaymentPlugin` also exposes cancellation and status methods, with
+the completed status shape matching the top-level result shape. Removed secret-bearing Capacitor
+methods are not restored: mnemonic/passphrase handling stays in the Android Room/StrongBox/provider
+boundary. Because the current launcher is not a Capacitor host, this contract is not an assertion
+that the plugin is currently callable from the shipped Compose activity.
 
 ## Verification
 
@@ -158,5 +258,21 @@ cargo clippy --manifest-path native/silent-payments/Cargo.toml --all-targets -- 
 cargo clippy --manifest-path native/silent-payments-jni/Cargo.toml --all-targets -- -D warnings
 ```
 
-The Kotlin unit tests use a fake native scanner seam and an in-memory `BlockSource`; they do not
-require a `.so`. Android compilation still requires a valid Android SDK.
+The Kotlin unit tests use fake HTTP/native seams and an in-memory `BlockSource`; they do not require
+a `.so`. Room migration/DAO execution and Android compilation still require a valid Android SDK,
+Gradle Android plugin environment, and (for packaged native libraries) the NDK/cargo-ndk toolchain.
+
+## Honest scope and remaining limitations
+
+- Native silent-payment spending, private tweak recovery, and address encoding are not implemented
+  by this slice. The UI renders an unavailable address/key state instead of fabricating output.
+- Esplora is a full transaction scan, not a compact-filter scan; bandwidth and scan time are
+  bounded per request but may still be substantial over a large range.
+- Esplora transaction output records do not always include authoritative spentness. Such matches are
+  retained with `spentnessKnown=false` and `spentState=UNKNOWN`; a later UTXO-specific source is
+  required for reliable spent-output discovery.
+- Reorg handling is intentionally shallow and fail-closed. The coordinator detects cursor/hash
+  mismatches and does not silently advance, but it does not delete or rewind rows automatically.
+- Android SDK/NDK availability is a build-environment requirement. Host Rust and TypeScript checks
+  can run without it; Android/Room compilation must be reported as blocked when those tools are
+  absent rather than represented as passing.
