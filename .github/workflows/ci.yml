@@ -211,6 +211,8 @@ jobs:
           targets: aarch64-linux-android,x86_64-linux-android
       - name: Install cargo-ndk
         run: cargo install cargo-ndk --version 4.1.2 --locked
+      - name: Sync Capacitor Android project
+        run: pnpm exec cap sync android
       - name: Run Android release lint
         working-directory: android
         run: ./gradlew :app:lintRelease --no-daemon
@@ -254,6 +256,8 @@ jobs:
           targets: aarch64-linux-android,x86_64-linux-android
       - name: Install cargo-ndk
         run: cargo install cargo-ndk --version 4.1.2 --locked
+      - name: Sync Capacitor Android project
+        run: pnpm exec cap sync android
       - name: Run Android unit tests
         working-directory: android
         run: ./gradlew :app:testDebugUnitTest --no-daemon

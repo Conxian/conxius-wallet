@@ -183,11 +183,13 @@ runs only through `workflow_dispatch`. It has three explicit stages:
    security policy, Android lint, and Android unit tests, then builds the signed
    APK and AAB once.
 2. **Release Artifact Attestation** downloads the uploaded payload and creates
-   provenance tied to `SHA256SUMS`.
+   provenance for every subject listed in `SHA256SUMS`.
 3. **Production Release Publish** requires the separately configured
-   `production` environment, verifies the downloaded payload without rebuilding,
-   and publishes the exact AAB to the fixed Google Play `production` track and
-   GitHub release. There is no skip/bypass input.
+   `production` environment, verifies every subject attestation and re-extracts
+   APK/AAB package identity, version, versionCode, and public signing
+   certificate identity without rebuilding, then publishes the exact AAB to the
+   fixed Google Play `production` track and GitHub release. There is no
+   skip/bypass input.
 
 Repository files cannot create the required branch protection checks, reviewers,
 environment, or secrets. See [CI_CD_BASELINE.md](CI_CD_BASELINE.md) for the
@@ -199,8 +201,20 @@ Required secrets/preconditions:
 - `KEYSTORE_PASSWORD`
 - `KEY_ALIAS`
 - `KEY_PASSWORD`
+- `ANDROID_SIGNING_CERT_SHA256` — Repository variable containing the expected
+  public upload-signing certificate SHA-256 fingerprint, with colons optional
+- `GITLEAKS_LICENSE` — Required secret for the mandatory organization Gitleaks
+  scan
 - `PLAY_SERVICE_ACCOUNT_JSON` — Google Play service account JSON in the
   `production` environment
+
+The workflow derives `VERSION_CODE` from the strict `major.minor.patch`
+release version using `scripts/ci/derive_android_version_code.mjs`; release
+Gradle tasks fail closed when it is missing, non-integer, or non-positive.
+Release verification downloads `bundletool-all-1.18.3.jar` from the official
+Google bundletool release and checks its pinned SHA-256 before reading AAB
+manifest identity. The production job uses GitHub's attestation verifier for
+each downloaded subject before any Play or GitHub release mutation.
 
 Keystore encoding helper for `KEYSTORE_BASE64`:
 
@@ -226,6 +240,7 @@ export KEYSTORE_PATH=/absolute/path/to/conxius-upload.keystore
 export KEYSTORE_PASSWORD=<STORE_PASSWORD>
 export KEY_ALIAS=<KEY_ALIAS>
 export KEY_PASSWORD=<KEY_PASSWORD>
+export VERSION_CODE="$(node scripts/ci/derive_android_version_code.mjs 1.9.5)"
 
 # 1. Build frontend
 pnpm run build

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { basename, dirname, isAbsolute, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 function fail(message) {
@@ -46,6 +46,45 @@ function componentFor(name, dependency) {
         }
       : {}),
   };
+}
+
+function isWithin(candidate, root) {
+  const path = relative(root, candidate);
+  return path === '' || (!path.startsWith('..') && !isAbsolute(path));
+}
+
+export function safeOutputPath(rootDir, outputPath) {
+  const requested = resolve(rootDir, outputPath);
+  if (basename(requested) !== 'conxius-wallet.sbom.json' || basename(dirname(requested)) !== 'release-payload') {
+    fail('SBOM output must be release-payload/conxius-wallet.sbom.json under an approved root.');
+  }
+
+  const approvedRoots = [rootDir, process.env.RUNNER_TEMP, process.env.TMPDIR, '/tmp']
+    .filter(Boolean)
+    .filter((root) => existsSync(root))
+    .map((root) => realpathSync(root));
+  let existingAncestor = dirname(requested);
+  while (!existsSync(existingAncestor)) {
+    const parent = dirname(existingAncestor);
+    if (parent === existingAncestor) fail(`Unable to resolve SBOM output parent: ${requested}`);
+    existingAncestor = parent;
+  }
+  const canonicalAncestor = realpathSync(existingAncestor);
+  const canonicalRequested = resolve(canonicalAncestor, relative(existingAncestor, requested));
+  if (!approvedRoots.some((root) => isWithin(canonicalRequested, root))) {
+    fail(`SBOM output is outside the approved repository/temporary roots: ${requested}`);
+  }
+  if (existsSync(requested)) {
+    const stat = lstatSync(requested);
+    if (!stat.isFile() || stat.isSymbolicLink()) fail(`SBOM output must be a regular non-symlink file: ${requested}`);
+    fail(`Refusing to overwrite an existing SBOM: ${requested}`);
+  }
+  mkdirSync(dirname(requested), { recursive: true });
+  const canonicalParent = realpathSync(dirname(requested));
+  if (!approvedRoots.some((root) => isWithin(canonicalParent, root))) {
+    fail(`SBOM output parent escaped the approved roots: ${requested}`);
+  }
+  return requested;
 }
 
 function collectDependencies(root) {
@@ -150,9 +189,8 @@ export function generateSbom({ rootDir = process.cwd(), outputPath = 'release-pa
     ),
   };
 
-  const output = resolve(rootDir, outputPath);
-  mkdirSync(dirname(output), { recursive: true });
-  writeFileSync(output, `${JSON.stringify(bom, null, 2)}\n`);
+  const output = safeOutputPath(rootDir, outputPath);
+  writeFileSync(output, `${JSON.stringify(bom, null, 2)}\n`, { flag: 'wx' });
   console.log(`CycloneDX SBOM generated: ${output} (${components.length} production components)`);
   return output;
 }
