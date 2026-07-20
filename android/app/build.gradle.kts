@@ -92,6 +92,9 @@ val silentPaymentsNativeArm64Library = silentPaymentsNativeOutput.map {
 val silentPaymentsNativeX8664Library = silentPaymentsNativeOutput.map {
     it.file("x86_64/libconxius_silent_payments_jni.so").asFile
 }
+val silentPaymentsNativeRepositoryDir = rootProject.file("..")
+val silentPaymentsNativeCrateDir = silentPaymentsNativeRepositoryDir.resolve("native/silent-payments-jni")
+val silentPaymentsNativeManifest = silentPaymentsNativeCrateDir.resolve("Cargo.toml")
 val silentPaymentsNativeScript = rootProject.file("../scripts/build-silent-payments-android.sh")
 val silentPaymentsNativeInputs = fileTree(rootProject.file("../native")) {
     include("**/*.rs")
@@ -104,6 +107,7 @@ val buildSilentPaymentsNative = tasks.register<Exec>("buildSilentPaymentsNative"
     group = "native"
     description = "Build arm64-v8a and x86_64 silent-payment JNI libraries with cargo-ndk."
     inputs.files(silentPaymentsNativeInputs)
+    inputs.file(silentPaymentsNativeManifest)
     inputs.file(silentPaymentsNativeScript)
     inputs.files(
         rootProject.file("../rust-toolchain"),
@@ -111,6 +115,7 @@ val buildSilentPaymentsNative = tasks.register<Exec>("buildSilentPaymentsNative"
         rootProject.file("../.cargo/config"),
         rootProject.file("../.cargo/config.toml"),
     ).optional()
+    workingDir(silentPaymentsNativeRepositoryDir)
     inputs.property("androidNdkHome", providers.environmentVariable("ANDROID_NDK_HOME").orNull ?: "")
     inputs.property("androidNdkRoot", providers.environmentVariable("ANDROID_NDK_ROOT").orNull ?: "")
     inputs.property("androidHome", providers.environmentVariable("ANDROID_HOME").orNull ?: "")
