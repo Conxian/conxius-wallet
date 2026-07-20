@@ -12,6 +12,15 @@ The canonical release-baseline debt inventory and burn-down policy is the
 [Technical Debt Register](TECHNICAL_DEBT_REGISTER.md). P0/P1 security, release,
 and compatibility items must be reviewed before promotion to `main`.
 
+### Bitcoin fee-estimation alignment
+
+The wallet now has a bounded, client-side BIP-110 alignment path for fee
+recommendations: confirmed-block samples are filtered for narrowly detected
+inscription envelopes, deterministic clean-sample percentiles are used when
+enough data is available, and the existing endpoint/fixed-rate fallbacks remain
+in place. This is not consensus enforcement and remains subject to COO review
+before promotion to `main`.
+
 ## 🏗️ Operational Levels
 
 ### Level 0: Product Validation (ROOT) - [COMPLETED]

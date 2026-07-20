@@ -25,6 +25,8 @@ import {
 import { AppContext } from '../context';
 import { fetchUtxos, broadcastTransaction } from '../services/protocol';
 import { buildPsbt } from '../services/psbt';
+import { getRecommendedFees } from '../services/fees';
+import { endpointsFor } from '../services/network';
 import { BrowserMultiFormatReader } from '@zxing/library';
 import { decodeBolt11, isLnurl, decodeLnurl, fetchLnurlParams, payLightningInvoice, payLnurl } from '../services/lightning';
 import * as bitcoin from 'bitcoinjs-lib';
@@ -106,13 +108,14 @@ const PaymentPortal: React.FC = () => {
              const fromAddress = context.state.walletConfig?.masterAddress || '';
              const utxos = await fetchUtxos(fromAddress, network);
              const amountSats = Math.floor(parseFloat(amount) * 100000000);
+             const feeRate = (await getRecommendedFees(endpointsFor(network, context.state).BTC_API)).fastestFee;
 
              const psbtHex = await buildPsbt({
                  utxos,
                  toAddress: recipient,
                  amountSats,
                  changeAddress: fromAddress,
-                 feeRate: 2,
+                 feeRate,
                  network
              });
 

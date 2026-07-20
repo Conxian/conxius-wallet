@@ -161,6 +161,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Check production runtime sources
         run: bash scripts/ci/check_runtime_contamination.sh
+      - name: Runtime contamination guard regression tests
+        run: bash scripts/ci/test_check_runtime_contamination.sh
 
   android-security-policy:
     name: Android Security Policy
