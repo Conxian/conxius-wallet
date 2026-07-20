@@ -15,7 +15,10 @@
     "bench:silent-payments": "node scripts/bench-silent-payments.mjs",
     "prepare": "husky",
     "lint": "eslint .",
-    "verify": "bash scripts/ci/verify_local.sh"
+    "verify": "bash scripts/ci/verify_local.sh",
+    "check:release-version": "node scripts/ci/check_release_version.mjs",
+    "check:workflow-pins": "python3 scripts/ci/check_workflow_pins.py",
+    "check:android-security": "bash scripts/ci/validate_android_security.sh"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",

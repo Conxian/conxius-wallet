@@ -18,12 +18,15 @@ android {
     val keyAlias = System.getenv("KEY_ALIAS")
     val keyPassword = System.getenv("KEY_PASSWORD")
     val versionCodeEnv = System.getenv("VERSION_CODE")
+    val configuredVersionCode = versionCodeEnv?.toIntOrNull()?.takeIf { it > 0 }
 
     defaultConfig {
         applicationId = "com.conxius.wallet"
         minSdk = 26
         targetSdk = 35
-        versionCode = versionCodeEnv?.toIntOrNull() ?: 1
+        // Debug/developer builds retain a harmless local default. Release tasks
+        // are guarded below and fail closed when VERSION_CODE is absent/invalid.
+        versionCode = configuredVersionCode ?: 1
         versionName = "1.9.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -44,11 +47,24 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
+            isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+    gradle.taskGraph.whenReady {
+        val releaseTaskRequested = allTasks.any { task ->
+            task.path.substringAfterLast(':').contains("release", ignoreCase = true)
+        }
+        if (releaseTaskRequested && configuredVersionCode == null) {
+            throw GradleException(
+                "VERSION_CODE must be a positive integer for Android release builds; " +
+                    "derive it with scripts/ci/derive_android_version_code.mjs and export it before Gradle.",
+            )
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
