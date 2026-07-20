@@ -137,6 +137,67 @@ export function endpointsFor(network: Network, appState?: AppState) {
   }
 }
 
+export async function withAbortDeadline<T>(
+  operation: (signal: AbortSignal) => Promise<T>,
+  parentSignal: AbortSignal | undefined,
+  timeoutMs: number,
+): Promise<T> {
+  const controller = new AbortController();
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  let rejectDeadline: ((reason?: unknown) => void) | undefined;
+
+  const deadline = new Promise<never>((_, reject) => {
+    rejectDeadline = reject;
+    timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error('operation deadline exceeded'));
+    }, timeoutMs);
+  });
+
+  const abortFromParent = () => {
+    controller.abort();
+    rejectDeadline?.(new Error('operation aborted'));
+  };
+
+  if (parentSignal?.aborted) {
+    abortFromParent();
+  } else {
+    parentSignal?.addEventListener('abort', abortFromParent, { once: true });
+  }
+
+  try {
+    return await Promise.race([
+      Promise.resolve().then(() => operation(controller.signal)),
+      deadline,
+    ]);
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+    parentSignal?.removeEventListener('abort', abortFromParent);
+  }
+}
+
+function throwIfAborted(signal: AbortSignal | null | undefined): void {
+  if (signal?.aborted) throw new Error('operation aborted');
+}
+
+function waitForRetry(delayMs: number, signal: AbortSignal | null | undefined): Promise<void> {
+  return new Promise((resolve, reject) => {
+    throwIfAborted(signal);
+
+    const timeoutId = setTimeout(() => {
+      signal?.removeEventListener('abort', abort);
+      resolve();
+    }, delayMs);
+    const abort = () => {
+      clearTimeout(timeoutId);
+      signal?.removeEventListener('abort', abort);
+      reject(new Error('operation aborted'));
+    };
+
+    signal?.addEventListener('abort', abort, { once: true });
+  });
+}
+
 export async function fetchWithRetry(
     url: string,
     options: RequestInit = {},
@@ -144,37 +205,58 @@ export async function fetchWithRetry(
     backoff = 500,
     isTorEnabled: boolean = false
 ): Promise<Response> {
-  try {
-    let finalUrl = url;
-    const finalOptions = { ...options };
+  let finalUrl = url;
+  const finalOptions = { ...options };
 
-    if (isTorEnabled) {
-        const gateway = getGatewayUrl('mainnet');
-        const proxyUrl = envValue('VITE_TOR_PROXY_URL') || `${gateway}/tor`;
-        finalUrl = `${proxyUrl}/route?url=${encodeURIComponent(url)}`;
-        finalOptions.headers = {
-            ...finalOptions.headers,
-            'X-Sovereign-Tor': 'true',
-            'X-Tor-Circuit-ID': generateRandomString(12)
-        };
-    }
+  if (isTorEnabled) {
+      const gateway = getGatewayUrl('mainnet');
+      const proxyUrl = envValue('VITE_TOR_PROXY_URL') || `${gateway}/tor`;
+      finalUrl = `${proxyUrl}/route?url=${encodeURIComponent(url)}`;
+      finalOptions.headers = {
+          ...finalOptions.headers,
+          'X-Sovereign-Tor': 'true',
+          'X-Tor-Circuit-ID': generateRandomString(12)
+      };
+  }
 
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 12000);
-    const response = await fetch(finalUrl, { ...finalOptions, signal: controller.signal });
-    clearTimeout(id);
-    
-    if (!response.ok) {
+  let retriesRemaining = retries;
+  let retryBackoff = backoff;
+  while (true) {
+    throwIfAborted(finalOptions.signal);
+
+    const attempt = async (): Promise<Response> => {
+      const controller = new AbortController();
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      const abortFromCaller = () => controller.abort();
+
+      if (finalOptions.signal?.aborted) {
+        controller.abort();
+      } else {
+        finalOptions.signal?.addEventListener('abort', abortFromCaller, { once: true });
+      }
+
+      try {
+        timeoutId = setTimeout(() => controller.abort(), 12000);
+        return await fetch(finalUrl, { ...finalOptions, signal: controller.signal });
+      } finally {
+        if (timeoutId !== undefined) clearTimeout(timeoutId);
+        finalOptions.signal?.removeEventListener('abort', abortFromCaller);
+      }
+    };
+
+    try {
+      const response = await attempt();
+      if (!response.ok) {
         if (response.status === 429 || response.status >= 500) throw new Error(`HTTP ${response.status}`);
         return response;
+      }
+      return response;
+    } catch (err) {
+      if (finalOptions.signal?.aborted || retriesRemaining <= 0) throw err;
+      await waitForRetry(retryBackoff, finalOptions.signal);
+      retriesRemaining -= 1;
+      retryBackoff *= 2;
     }
-    return response;
-  } catch (err) {
-    if (retries > 0) {
-      await new Promise(r => setTimeout(r, backoff));
-      return fetchWithRetry(url, options, retries - 1, backoff * 2, isTorEnabled);
-    }
-    throw err;
   }
 }
 
