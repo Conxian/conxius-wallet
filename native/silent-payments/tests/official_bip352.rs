@@ -1,15 +1,19 @@
-use std::collections::BTreeSet;
+use std::collections::HashSet;
 
 use conxius_silent_payments::{
     scan_transaction, EligibleInput, EligibleInputPublicKey, MatchKind, OutPoint, ScanError,
     ScanOutcome, ScanSecret, ScanSkipReason, ScanStopReason, TaprootOutput, K_MAX,
 };
 use ripemd::Ripemd160;
-use secp256k1::{PublicKey, Secp256k1, SecretKey};
+use secp256k1::{Parity, PublicKey, Scalar, Secp256k1, SecretKey};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 const OFFICIAL_VECTORS: &str = include_str!("data/send_and_receive_test_vectors.json");
+
+const INPUTS_TAG: &[u8] = b"BIP0352/Inputs";
+const SHARED_SECRET_TAG: &[u8] = b"BIP0352/SharedSecret";
+const LABEL_TAG: &[u8] = b"BIP0352/Label";
 
 const NUMS_H: [u8; 32] = [
     0x50, 0x92, 0x9b, 0x74, 0xc1, 0xa0, 0x49, 0x54, 0xb7, 0x8b, 0x4b, 0x60, 0x35, 0xe9, 0x7a, 0x5e,
@@ -218,30 +222,6 @@ fn build_outputs(given: &Value, case_index: usize) -> Vec<TaprootOutput> {
         .collect()
 }
 
-fn expected_output_keys(expected: &Value) -> Vec<[u8; 32]> {
-    expected
-        .get("outputs")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter_map(|output| {
-            output
-                .get("pub_key")
-                .and_then(Value::as_str)
-                .or_else(|| output.as_str())
-        })
-        .map(fixed::<32>)
-        .collect()
-}
-
-fn expected_match_count(expected: &Value, expected_keys: &[[u8; 32]]) -> usize {
-    expected
-        .get("n_outputs")
-        .and_then(Value::as_u64)
-        .map(|count| count as usize)
-        .unwrap_or(expected_keys.len())
-}
-
 fn scan_secret(given: &Value) -> ScanSecret {
     ScanSecret::from_bytes(fixed::<32>(string_field(
         &given["key_material"],
@@ -259,6 +239,11 @@ fn spend_public_key(given: &Value) -> [u8; 33] {
     PublicKey::from_secret_key(&Secp256k1::new(), &spend_secret).serialize()
 }
 
+fn spend_public_key_point(given: &Value) -> PublicKey {
+    let spend_public_key = spend_public_key(given);
+    PublicKey::from_byte_array_compressed(&spend_public_key).expect("official spend public key")
+}
+
 fn labels(given: &Value) -> Vec<u32> {
     given["labels"]
         .as_array()
@@ -268,8 +253,271 @@ fn labels(given: &Value) -> Vec<u32> {
         .collect()
 }
 
-fn sorted_keys(keys: impl IntoIterator<Item = [u8; 32]>) -> BTreeSet<[u8; 32]> {
-    keys.into_iter().collect()
+fn independent_tagged_hash(tag: &[u8], message: &[u8]) -> [u8; 32] {
+    let tag_hash = Sha256::digest(tag);
+    let mut hasher = Sha256::new();
+    hasher.update(tag_hash);
+    hasher.update(tag_hash);
+    hasher.update(message);
+    hasher.finalize().into()
+}
+
+fn independent_scalar(bytes: [u8; 32]) -> Scalar {
+    let scalar = Scalar::from_be_bytes(bytes).expect("official vector scalar must be in range");
+    assert_ne!(
+        scalar,
+        Scalar::ZERO,
+        "official vector scalar must be non-zero"
+    );
+    scalar
+}
+
+fn public_key_from_input(input: &EligibleInput) -> PublicKey {
+    match input.public_key {
+        EligibleInputPublicKey::Compressed(bytes) => {
+            PublicKey::from_byte_array_compressed(&bytes).expect("official input key")
+        }
+        EligibleInputPublicKey::XOnly(bytes) => {
+            let x_only = secp256k1::XOnlyPublicKey::from_byte_array(&bytes)
+                .expect("official taproot input key");
+            PublicKey::from_x_only_public_key(x_only, Parity::Even)
+        }
+    }
+}
+
+fn independent_input_public_key_sum(inputs: &[EligibleInput]) -> Option<PublicKey> {
+    let keys: Vec<PublicKey> = inputs.iter().map(public_key_from_input).collect();
+    let key_refs: Vec<&PublicKey> = keys.iter().collect();
+    PublicKey::combine_keys(&key_refs).ok()
+}
+
+fn independent_label_scalar(scan_secret: &[u8; 32], index: u32) -> Scalar {
+    let mut message = [0u8; 36];
+    message[..32].copy_from_slice(scan_secret);
+    message[32..].copy_from_slice(&index.to_be_bytes());
+    independent_scalar(independent_tagged_hash(LABEL_TAG, &message))
+}
+
+fn independent_shared_secret_tweak(shared_secret: &[u8; 33], k: u32) -> Scalar {
+    let mut message = [0u8; 37];
+    message[..33].copy_from_slice(shared_secret);
+    message[33..].copy_from_slice(&k.to_be_bytes());
+    independent_scalar(independent_tagged_hash(SHARED_SECRET_TAG, &message))
+}
+
+fn add_scalars(left: Scalar, right: Scalar) -> Scalar {
+    let left_bytes = left.to_be_bytes();
+    let mut result = SecretKey::from_byte_array(&left_bytes)
+        .expect("official scalar must be usable as a secret key")
+        .add_tweak(&right)
+        .expect("official scalar addition must remain non-zero");
+    let result_bytes = result.secret_bytes();
+    result.non_secure_erase();
+    independent_scalar(result_bytes)
+}
+
+fn assert_expected_intermediates(
+    given: &Value,
+    expected: &Value,
+    inputs: &[EligibleInput],
+    all_input_outpoints: &[OutPoint],
+) {
+    // These canonical vector fields are intentionally not exposed by ScanReport. Recompute them
+    // here with independent test-only primitives so the production scanner is not tested by
+    // merely echoing its own intermediate values.
+    let Some(expected_sum_hex) = expected.get("input_pub_key_sum").and_then(Value::as_str) else {
+        assert!(
+            expected.get("tweak").and_then(Value::as_str).is_none()
+                && expected
+                    .get("shared_secret")
+                    .and_then(Value::as_str)
+                    .is_none(),
+            "official intermediate fields must be present together"
+        );
+        return;
+    };
+
+    let input_public_key_sum =
+        independent_input_public_key_sum(inputs).expect("official input sum must be finite");
+    assert_eq!(
+        input_public_key_sum.serialize(),
+        fixed::<33>(expected_sum_hex),
+        "canonical input public-key sum"
+    );
+
+    let lowest_outpoint = all_input_outpoints
+        .iter()
+        .copied()
+        .min()
+        .expect("official eligible transaction must have inputs");
+    let mut input_hash_message = Vec::with_capacity(69);
+    input_hash_message.extend_from_slice(&lowest_outpoint.serialize());
+    input_hash_message.extend_from_slice(&input_public_key_sum.serialize());
+    let input_hash = independent_scalar(independent_tagged_hash(INPUTS_TAG, &input_hash_message));
+    let secp = Secp256k1::new();
+    let tweak_point = input_public_key_sum
+        .mul_tweak(&secp, &input_hash)
+        .expect("official input tweak point");
+
+    let scan_secret = fixed::<32>(string_field(&given["key_material"], "scan_priv_key"));
+    let scan_secret_key = SecretKey::from_byte_array(&scan_secret).expect("official scan secret");
+    let shared_secret = tweak_point
+        .mul_tweak(&secp, &Scalar::from(scan_secret_key))
+        .expect("official shared secret point");
+
+    assert_eq!(
+        tweak_point.serialize(),
+        fixed::<33>(string_field(expected, "tweak")),
+        "canonical input tweak point"
+    );
+    assert_eq!(
+        shared_secret.serialize(),
+        fixed::<33>(string_field(expected, "shared_secret")),
+        "canonical shared-secret point"
+    );
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ExpectedMatch {
+    output_key: [u8; 32],
+    k: u32,
+    kind: MatchKind,
+    matched_negated_output_key: bool,
+}
+
+fn expected_match(given: &Value, expected: &Value, output: &Value) -> ExpectedMatch {
+    let expected_private_tweak = fixed::<32>(string_field(output, "priv_key_tweak"));
+    let expected_output_key = fixed::<32>(string_field(output, "pub_key"));
+    let shared_secret = fixed::<33>(string_field(expected, "shared_secret"));
+    let scan_secret = fixed::<32>(string_field(&given["key_material"], "scan_priv_key"));
+    let receiver_labels = labels(given);
+    let spend_public_key = spend_public_key_point(given);
+    let secp = Secp256k1::new();
+    let mut candidates = Vec::new();
+
+    for k in 0..K_MAX {
+        let shared_tweak = independent_shared_secret_tweak(&shared_secret, k);
+        if shared_tweak.to_be_bytes() == expected_private_tweak {
+            candidates.push((k, MatchKind::Unlabeled, shared_tweak));
+        }
+        for label in &receiver_labels {
+            let label_tweak = independent_label_scalar(&scan_secret, *label);
+            let candidate_tweak = add_scalars(shared_tweak, label_tweak);
+            if candidate_tweak.to_be_bytes() == expected_private_tweak {
+                candidates.push((k, MatchKind::Label { index: *label }, candidate_tweak));
+            }
+        }
+    }
+
+    assert_eq!(
+        candidates.len(),
+        1,
+        "each official output private tweak must identify exactly one k/label"
+    );
+    let (k, kind, candidate_tweak) = candidates.pop().expect("one official candidate");
+    let derived_point = spend_public_key
+        .add_exp_tweak(&secp, &candidate_tweak)
+        .expect("official output tweak point");
+    assert_eq!(
+        derived_point.x_only_public_key().0.serialize(),
+        expected_output_key,
+        "canonical output public key for k/label"
+    );
+    let matched_negated_output_key = matches!(kind, MatchKind::Label { .. })
+        && derived_point.x_only_public_key().1 == Parity::Odd;
+
+    ExpectedMatch {
+        output_key: expected_output_key,
+        k,
+        kind,
+        matched_negated_output_key,
+    }
+}
+
+fn expected_matches(given: &Value, expected: &Value) -> Vec<ExpectedMatch> {
+    expected["outputs"]
+        .as_array()
+        .expect("official expected outputs must be an array")
+        .iter()
+        .map(|output| expected_match(given, expected, output))
+        .collect()
+}
+
+fn canonical_k_max_matches(given: &Value, expected: &Value) -> Vec<ExpectedMatch> {
+    let shared_secret = fixed::<33>(string_field(expected, "shared_secret"));
+    let scan_secret = fixed::<32>(string_field(&given["key_material"], "scan_priv_key"));
+    let receiver_labels = labels(given);
+    let spend_public_key = spend_public_key_point(given);
+    let secp = Secp256k1::new();
+    let output_keys: Vec<[u8; 32]> = given["outputs"]
+        .as_array()
+        .expect("official K_max outputs array")
+        .iter()
+        .map(|output| fixed::<32>(output.as_str().expect("official output key")))
+        .collect();
+
+    (0..K_MAX)
+        .map(|k| {
+            let shared_tweak = independent_shared_secret_tweak(&shared_secret, k);
+            let mut candidates = vec![(MatchKind::Unlabeled, shared_tweak)];
+            for label in &receiver_labels {
+                candidates.push((
+                    MatchKind::Label { index: *label },
+                    add_scalars(shared_tweak, independent_label_scalar(&scan_secret, *label)),
+                ));
+            }
+
+            let expected_output_key = output_keys[k as usize];
+            let matching_candidates: Vec<(MatchKind, Scalar)> = candidates
+                .into_iter()
+                .filter(|(_, tweak)| {
+                    spend_public_key
+                        .add_exp_tweak(&secp, tweak)
+                        .expect("official K_max output tweak point")
+                        .x_only_public_key()
+                        .0
+                        .serialize()
+                        == expected_output_key
+                })
+                .collect();
+            assert_eq!(
+                matching_candidates.len(),
+                1,
+                "each K_max output identity must have one canonical k/label"
+            );
+            let (kind, candidate_tweak) = matching_candidates
+                .into_iter()
+                .next()
+                .expect("one canonical K_max output candidate");
+            let derived_point = spend_public_key
+                .add_exp_tweak(&secp, &candidate_tweak)
+                .expect("official K_max output point");
+            ExpectedMatch {
+                output_key: expected_output_key,
+                k,
+                kind,
+                matched_negated_output_key: matches!(kind, MatchKind::Label { .. })
+                    && derived_point.x_only_public_key().1 == Parity::Odd,
+            }
+        })
+        .collect()
+}
+
+fn expected_output_indices(outputs: &[TaprootOutput], expected_keys: &[[u8; 32]]) -> Vec<usize> {
+    let mut used = vec![false; outputs.len()];
+    expected_keys
+        .iter()
+        .map(|expected_key| {
+            let output_index = outputs
+                .iter()
+                .enumerate()
+                .find(|(index, output)| !used[*index] && output.output_key == *expected_key)
+                .map(|(index, _)| index)
+                .expect("official expected output must exist in transaction outputs");
+            used[output_index] = true;
+            output_index
+        })
+        .collect()
 }
 
 #[test]
@@ -290,15 +538,31 @@ fn official_bip352_receiving_vectors_match() {
             let expected = &receiver["expected"];
             let inputs = build_inputs(given);
             let outputs = build_outputs(given, case_index);
-            let expected_keys = expected_output_keys(expected);
-            let expected_count = expected_match_count(expected, &expected_keys);
+            let all_input_outpoints = all_input_outpoints(given);
+            let receiver_labels = labels(given);
+            assert_expected_intermediates(given, expected, &inputs, &all_input_outpoints);
+            let canonical_expected = if case_index == 27 {
+                canonical_k_max_matches(given, expected)
+            } else {
+                expected_matches(given, expected)
+            };
+            let expected_count = expected
+                .get("n_outputs")
+                .and_then(Value::as_u64)
+                .map(|count| count as usize)
+                .unwrap_or(canonical_expected.len());
+            assert_eq!(
+                canonical_expected.len(),
+                expected_count,
+                "official case {case_index} ({comment}) canonical expected count"
+            );
             let outcome = scan_transaction(
                 &scan_secret(given),
                 spend_public_key(given),
-                &all_input_outpoints(given),
+                &all_input_outpoints,
                 &inputs,
                 &outputs,
-                &labels(given),
+                &receiver_labels,
             )
             .unwrap_or_else(|error| panic!("official case {case_index} failed: {error}"));
 
@@ -320,57 +584,103 @@ fn official_bip352_receiving_vectors_match() {
                         expected_count,
                         "official case {case_index} ({comment}) match count"
                     );
-                    if !expected_keys.is_empty() {
+                    assert!(report
+                        .matches
+                        .windows(2)
+                        .all(|window| window[0].k < window[1].k));
+
+                    let expected_keys: Vec<[u8; 32]> = canonical_expected
+                        .iter()
+                        .map(|matched| matched.output_key)
+                        .collect();
+                    let expected_indices = expected_output_indices(&outputs, &expected_keys);
+                    let mut actual_matches = report.matches.clone();
+                    actual_matches.sort_by_key(|matched| matched.output_index);
+                    assert_eq!(
+                        actual_matches
+                            .iter()
+                            .map(|matched| matched.output_index)
+                            .collect::<Vec<_>>(),
+                        expected_indices,
+                        "official case {case_index} ({comment}) output order and duplicate identities"
+                    );
+                    assert_eq!(
+                        actual_matches
+                            .iter()
+                            .map(|matched| matched.output_key)
+                            .collect::<Vec<_>>(),
+                        expected_keys,
+                        "official case {case_index} ({comment}) output keys in transaction order"
+                    );
+
+                    let mut seen_output_indexes = HashSet::new();
+                    for (matched, expected_match) in
+                        actual_matches.iter().zip(canonical_expected.iter())
+                    {
+                        assert!(seen_output_indexes.insert(matched.output_index));
+                        let output = &outputs[matched.output_index];
+                        assert_eq!(matched.outpoint, output.outpoint);
+                        assert_eq!(matched.value_sat, output.value_sat);
+                        assert_eq!(matched.is_unspent, output.is_unspent);
+                        assert_eq!(matched.output_key, expected_match.output_key);
+                        assert_eq!(matched.k, expected_match.k);
+                        assert_eq!(matched.kind, expected_match.kind);
                         assert_eq!(
-                            sorted_keys(report.matches.iter().map(|matched| matched.output_key)),
-                            sorted_keys(expected_keys),
-                            "official case {case_index} ({comment}) output keys"
+                            matched.matched_negated_output_key,
+                            expected_match.matched_negated_output_key
                         );
-                    }
-                    if expected_count > 0 {
-                        for matched in &report.matches {
-                            let output = &outputs[matched.output_index];
-                            assert_eq!(matched.outpoint, output.outpoint);
-                            assert_eq!(matched.value_sat, output.value_sat);
-                            assert_eq!(matched.is_unspent, output.is_unspent);
-                            assert!(matched.k < K_MAX);
-                            assert!(matches!(
-                                matched.kind,
-                                MatchKind::Unlabeled | MatchKind::Label { .. }
-                            ));
-                        }
                     }
                     if case_index == 27 {
                         assert_eq!(report.matches.len(), K_MAX as usize);
                         assert_eq!(report.stop_reason, ScanStopReason::ReachedKMax);
                         assert_eq!(report.matches.last().unwrap().k, K_MAX - 1);
+                        assert_eq!(
+                            report
+                                .matches
+                                .iter()
+                                .map(|matched| matched.output_index)
+                                .collect::<Vec<_>>(),
+                            (0..K_MAX as usize).collect::<Vec<_>>()
+                        );
                     } else {
                         assert_eq!(report.stop_reason, ScanStopReason::NoMatch);
                     }
                 }
             }
-
-            if case_index == 13 {
-                let ScanOutcome::Scanned(report) = scan_transaction(
-                    &scan_secret(given),
-                    spend_public_key(given),
-                    &all_input_outpoints(given),
-                    &inputs,
-                    &outputs,
-                    &labels(given),
-                )
-                .expect("official odd-parity label case") else {
-                    panic!("official odd-parity label case was skipped");
-                };
-                assert!(report
-                    .matches
-                    .iter()
-                    .any(|matched| matched.matched_negated_output_key));
-            }
         }
     }
 
     assert_eq!(tested_receivers, 29);
+}
+
+#[test]
+fn ordered_output_adapter_preserves_duplicate_identities() {
+    let output_key = [0x42u8; 32];
+    let outputs = vec![
+        TaprootOutput {
+            output_key,
+            outpoint: OutPoint {
+                txid_le: [1u8; 32],
+                vout: 0,
+            },
+            value_sat: 1,
+            is_unspent: true,
+        },
+        TaprootOutput {
+            output_key,
+            outpoint: OutPoint {
+                txid_le: [2u8; 32],
+                vout: 1,
+            },
+            value_sat: 2,
+            is_unspent: true,
+        },
+    ];
+
+    assert_eq!(
+        expected_output_indices(&outputs, &[output_key, output_key]),
+        vec![0, 1]
+    );
 }
 
 #[test]

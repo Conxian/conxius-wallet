@@ -1,11 +1,14 @@
 //! Deterministic BIP-352 receiver scanning primitives.
 //!
-//! This crate deliberately accepts already-validated transaction scan records. It does not
-//! fetch transactions, parse private keys from JSON, perform JNI calls, or perform I/O. The
-//! scan secret is passed separately from public transaction records so a future JNI batch API
-//! can keep secret handling explicit.
+//! This crate accepts structured transaction scan records and validates their bounded public
+//! invariants. It does not fetch transactions, parse private keys from JSON, perform JNI calls,
+//! or perform I/O. The scan secret is passed separately from public transaction records so a
+//! future JNI batch API can keep secret handling explicit.
 
-use std::fmt;
+use std::{
+    collections::{HashMap, HashSet},
+    fmt,
+};
 
 use secp256k1::{
     constants::PUBLIC_KEY_SIZE, Parity, PublicKey, Scalar, Secp256k1, SecretKey, XOnlyPublicKey,
@@ -16,6 +19,18 @@ use zeroize::Zeroizing;
 
 /// BIP-352's maximum number of sequential output indices checked for one receiver group.
 pub const K_MAX: u32 = 2323;
+
+/// Maximum number of transaction input outpoints accepted by one scan call.
+pub const MAX_TRANSACTION_INPUTS: usize = 4096;
+
+/// Maximum number of eligible input public keys accepted by one scan call.
+pub const MAX_ELIGIBLE_INPUTS: usize = 4096;
+
+/// Maximum number of taproot outputs inspected by one scan call.
+pub const MAX_TAPROOT_OUTPUTS: usize = 4096;
+
+/// Maximum number of receiver labels expanded into label public keys by one scan call.
+pub const MAX_LABELS: usize = 256;
 
 const INPUTS_TAG: &[u8] = b"BIP0352/Inputs";
 const SHARED_SECRET_TAG: &[u8] = b"BIP0352/SharedSecret";
@@ -101,23 +116,27 @@ pub struct TaprootOutput {
 }
 
 /// Receiver scan secret. The bytes are validated as a non-zero secp256k1 scalar and zeroized on
-/// drop. It intentionally has no accessor or secret-bearing `Debug` implementation.
+/// drop. It intentionally has no accessor or secret-bearing `Debug` implementation. Temporary
+/// secp256k1 scalar/key copies are erased on the normal path where the dependency exposes its
+/// safe best-effort erasure API; this does not claim immunity from compiler-generated copies.
 pub struct ScanSecret(Zeroizing<[u8; 32]>);
 
 impl ScanSecret {
     /// Creates a scan secret from raw big-endian bytes.
     pub fn from_bytes(bytes: [u8; 32]) -> Result<Self, ScanError> {
-        SecretKey::from_byte_array(&bytes).map_err(|_| ScanError::InvalidScanSecret)?;
+        let mut secret_key =
+            SecretKey::from_byte_array(&bytes).map_err(|_| ScanError::InvalidScanSecret)?;
+        secret_key.non_secure_erase();
         Ok(Self(Zeroizing::new(bytes)))
     }
 
     fn scalar(&self) -> Scalar {
         // The constructor already checked this value as a non-zero secret key.
-        Scalar::from_be_bytes(*self.0).expect("validated scan secret must be a scalar")
+        Scalar::from_be_bytes(*self.as_bytes()).expect("validated scan secret must be a scalar")
     }
 
-    fn bytes(&self) -> [u8; 32] {
-        *self.0
+    fn as_bytes(&self) -> &[u8; 32] {
+        &self.0
     }
 }
 
@@ -139,6 +158,27 @@ pub enum ScanSkipReason {
 pub enum ScanStopReason {
     NoMatch,
     ReachedKMax,
+}
+
+/// Caller-controlled collection whose size is bounded before allocation or ECC work.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ScanResource {
+    TransactionInputs,
+    EligibleInputs,
+    TaprootOutputs,
+    Labels,
+}
+
+impl fmt::Display for ScanResource {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let name = match self {
+            Self::TransactionInputs => "transaction input",
+            Self::EligibleInputs => "eligible input",
+            Self::TaprootOutputs => "taproot output",
+            Self::Labels => "label",
+        };
+        formatter.write_str(name)
+    }
 }
 
 /// Whether a match was unlabeled or matched one of the receiver's labels.
@@ -185,6 +225,12 @@ pub enum ScanOutcome {
 /// records, points, or shared secrets are included in error output.
 #[derive(Clone, Copy, Debug, Eq, Error, PartialEq)]
 pub enum ScanError {
+    #[error("{resource} count {actual} exceeds limit {limit}")]
+    ResourceLimitExceeded {
+        resource: ScanResource,
+        actual: usize,
+        limit: usize,
+    },
     #[error("scan secret is not a valid non-zero secp256k1 scalar")]
     InvalidScanSecret,
     #[error("spend public key is malformed")]
@@ -193,6 +239,12 @@ pub enum ScanError {
     InvalidInputPublicKey(usize),
     #[error("taproot output key at index {0} is malformed")]
     InvalidOutputKey(usize),
+    #[error("duplicate transaction input outpoint at index {0}")]
+    DuplicateTransactionOutpoint(usize),
+    #[error("eligible input at index {0} references a missing transaction outpoint")]
+    MissingEligibleInputOutpoint(usize),
+    #[error("duplicate eligible input outpoint at index {0}")]
+    DuplicateEligibleInputOutpoint(usize),
     #[error("transaction outpoints are required when eligible inputs are present")]
     MissingTransactionOutpoints,
     #[error("BIP-352 input hash is not a valid non-zero scalar")]
@@ -221,6 +273,8 @@ pub fn scan_transaction(
     outputs: &[TaprootOutput],
     labels: &[u32],
 ) -> Result<ScanOutcome, ScanError> {
+    validate_scan_records(all_input_outpoints, inputs, outputs, labels)?;
+
     let secp = Secp256k1::new();
     let spend_public_key = PublicKey::from_byte_array_compressed(&spend_public_key)
         .map_err(|_| ScanError::InvalidSpendPublicKey)?;
@@ -260,7 +314,6 @@ pub fn scan_transaction(
         let x_only = XOnlyPublicKey::from_byte_array(&output.output_key)
             .map_err(|_| ScanError::InvalidOutputKey(index))?;
         parsed_outputs.push((
-            index,
             *output,
             PublicKey::from_x_only_public_key(x_only, Parity::Even),
         ));
@@ -274,43 +327,48 @@ pub fn scan_transaction(
     let mut input_hash_message = Vec::with_capacity(69);
     input_hash_message.extend_from_slice(&lowest_outpoint.serialize());
     input_hash_message.extend_from_slice(&input_public_key_sum.serialize());
-    let input_hash = valid_nonzero_scalar(tagged_hash(INPUTS_TAG, &input_hash_message))
+    let mut input_hash = valid_nonzero_scalar(&tagged_hash(INPUTS_TAG, &input_hash_message))
         .ok_or(ScanError::InvalidInputHash)?;
 
-    let ecdh_point = input_public_key_sum
-        .mul_tweak(&secp, &input_hash)
-        .map_err(|_| ScanError::PointOperation)?
-        .mul_tweak(&secp, &scan_secret.scalar())
-        .map_err(|_| ScanError::PointOperation)?;
-    let ecdh_serialized = ecdh_point.serialize();
+    // `Scalar` and `SecretKey` expose safe best-effort erasure methods. They do not promise
+    // that the compiler never copied a value, so this is cleanup rather than a hard guarantee.
+    let ecdh_serialized = {
+        let mut scan_scalar = scan_secret.scalar();
+        let first_ecdh = input_public_key_sum.mul_tweak(&secp, &input_hash);
+        input_hash.non_secure_erase();
+        let first_ecdh = first_ecdh.map_err(|_| ScanError::PointOperation)?;
+        let ecdh_point = first_ecdh.mul_tweak(&secp, &scan_scalar);
+        scan_scalar.non_secure_erase();
+        let ecdh_point = ecdh_point.map_err(|_| ScanError::PointOperation)?;
+        Zeroizing::new(ecdh_point.serialize())
+    };
 
     let label_candidates = build_label_candidates(scan_secret, labels, &secp)?;
-    let mut remaining_output_indexes: Vec<usize> =
-        parsed_outputs.iter().map(|(index, _, _)| *index).collect();
-    let mut matches = Vec::new();
+    let mut matched_outputs = vec![false; parsed_outputs.len()];
+    let mut matched_output_count = 0usize;
+    let mut matches = Vec::with_capacity(parsed_outputs.len().min(K_MAX as usize));
     let mut stop_reason = ScanStopReason::NoMatch;
 
     for k in 0..K_MAX {
-        let mut tweak_message = [0u8; 37];
-        tweak_message[..33].copy_from_slice(&ecdh_serialized);
+        let mut tweak_message = Zeroizing::new([0u8; 37]);
+        tweak_message[..33].copy_from_slice(ecdh_serialized.as_ref());
         tweak_message[33..].copy_from_slice(&k.to_be_bytes());
-        let tweak = valid_nonzero_scalar(tagged_hash(SHARED_SECRET_TAG, &tweak_message))
-            .ok_or(ScanError::InvalidSharedSecretTweak(k))?;
-        let derived_key = spend_public_key
-            .add_exp_tweak(&secp, &tweak)
-            .map_err(|_| ScanError::PointOperation)?;
+        let mut tweak =
+            valid_nonzero_scalar(&tagged_hash(SHARED_SECRET_TAG, tweak_message.as_ref()))
+                .ok_or(ScanError::InvalidSharedSecretTweak(k))?;
+        let derived_key = spend_public_key.add_exp_tweak(&secp, &tweak);
+        tweak.non_secure_erase();
+        let derived_key = derived_key.map_err(|_| ScanError::PointOperation)?;
         let derived_x_only = derived_key.x_only_public_key().0.serialize();
 
         let mut found_match = None;
-        for (remaining_position, output_index) in
-            remaining_output_indexes.iter().copied().enumerate()
-        {
-            let (_, output, output_point) = parsed_outputs
-                .get(output_index)
-                .ok_or(ScanError::PointOperation)?;
+        for (output_index, (output, output_point)) in parsed_outputs.iter().enumerate() {
+            if matched_outputs[output_index] {
+                continue;
+            }
 
             if derived_x_only == output.output_key {
-                found_match = Some((remaining_position, MatchKind::Unlabeled, false));
+                found_match = Some((output_index, MatchKind::Unlabeled, false));
                 break;
             }
 
@@ -321,7 +379,7 @@ pub fn scan_transaction(
             let derived_negative = derived_key.negate(&secp);
             if let Some(kind) = find_label_match(*output_point, derived_negative, &label_candidates)
             {
-                found_match = Some((remaining_position, kind, false));
+                found_match = Some((output_index, kind, false));
                 break;
             }
 
@@ -329,18 +387,19 @@ pub fn scan_transaction(
             if let Some(kind) =
                 find_label_match(negated_output, derived_negative, &label_candidates)
             {
-                found_match = Some((remaining_position, kind, true));
+                found_match = Some((output_index, kind, true));
                 break;
             }
         }
 
-        let Some((remaining_position, kind, matched_negated_output_key)) = found_match else {
+        let Some((output_index, kind, matched_negated_output_key)) = found_match else {
             stop_reason = ScanStopReason::NoMatch;
             break;
         };
 
-        let output_index = remaining_output_indexes.remove(remaining_position);
-        let (_, output, _) = parsed_outputs
+        matched_outputs[output_index] = true;
+        matched_output_count += 1;
+        let (output, _) = parsed_outputs
             .get(output_index)
             .ok_or(ScanError::PointOperation)?;
         matches.push(ScanMatch {
@@ -354,13 +413,13 @@ pub fn scan_transaction(
             matched_negated_output_key,
         });
 
-        if remaining_output_indexes.is_empty() {
+        if matched_output_count == parsed_outputs.len() {
             stop_reason = ScanStopReason::NoMatch;
             break;
         }
     }
 
-    if !remaining_output_indexes.is_empty() && matches.len() == K_MAX as usize {
+    if matched_output_count < parsed_outputs.len() && matches.len() == K_MAX as usize {
         stop_reason = ScanStopReason::ReachedKMax;
     }
 
@@ -370,28 +429,88 @@ pub fn scan_transaction(
     }))
 }
 
-#[derive(Clone, Copy)]
-struct LabelCandidate {
-    index: u32,
-    point: PublicKey,
+fn validate_scan_records(
+    all_input_outpoints: &[OutPoint],
+    inputs: &[EligibleInput],
+    outputs: &[TaprootOutput],
+    labels: &[u32],
+) -> Result<(), ScanError> {
+    validate_limit(
+        ScanResource::TransactionInputs,
+        all_input_outpoints.len(),
+        MAX_TRANSACTION_INPUTS,
+    )?;
+    validate_limit(
+        ScanResource::EligibleInputs,
+        inputs.len(),
+        MAX_ELIGIBLE_INPUTS,
+    )?;
+    validate_limit(
+        ScanResource::TaprootOutputs,
+        outputs.len(),
+        MAX_TAPROOT_OUTPUTS,
+    )?;
+    validate_limit(ScanResource::Labels, labels.len(), MAX_LABELS)?;
+
+    if !inputs.is_empty() && all_input_outpoints.is_empty() {
+        return Err(ScanError::MissingTransactionOutpoints);
+    }
+
+    let mut all_outpoints = HashSet::with_capacity(all_input_outpoints.len());
+    for (index, outpoint) in all_input_outpoints.iter().enumerate() {
+        if !all_outpoints.insert(*outpoint) {
+            return Err(ScanError::DuplicateTransactionOutpoint(index));
+        }
+    }
+
+    let mut eligible_outpoints = HashSet::with_capacity(inputs.len());
+    for (index, input) in inputs.iter().enumerate() {
+        if !eligible_outpoints.insert(input.outpoint) {
+            return Err(ScanError::DuplicateEligibleInputOutpoint(index));
+        }
+        if !all_outpoints.contains(&input.outpoint) {
+            return Err(ScanError::MissingEligibleInputOutpoint(index));
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_limit(resource: ScanResource, actual: usize, limit: usize) -> Result<(), ScanError> {
+    if actual > limit {
+        return Err(ScanError::ResourceLimitExceeded {
+            resource,
+            actual,
+            limit,
+        });
+    }
+    Ok(())
 }
 
 fn build_label_candidates(
     scan_secret: &ScanSecret,
     labels: &[u32],
     secp: &Secp256k1<secp256k1::All>,
-) -> Result<Vec<LabelCandidate>, ScanError> {
-    let mut candidates = Vec::with_capacity(labels.len());
+) -> Result<HashMap<[u8; PUBLIC_KEY_SIZE], u32>, ScanError> {
+    let mut candidates = HashMap::with_capacity(labels.len());
     for &index in labels {
-        let mut message = [0u8; 36];
-        message[..32].copy_from_slice(&scan_secret.bytes());
+        let mut message = Zeroizing::new([0u8; 36]);
+        message[..32].copy_from_slice(scan_secret.as_bytes());
         message[32..].copy_from_slice(&index.to_be_bytes());
-        let scalar = valid_nonzero_scalar(tagged_hash(LABEL_TAG, &message))
+        let mut scalar = valid_nonzero_scalar(&tagged_hash(LABEL_TAG, message.as_ref()))
             .ok_or(ScanError::InvalidLabel(index))?;
-        let secret_key = SecretKey::from_byte_array(&scalar.to_be_bytes())
-            .map_err(|_| ScanError::InvalidLabel(index))?;
+        let scalar_bytes = Zeroizing::new(scalar.to_be_bytes());
+        let mut secret_key = match SecretKey::from_byte_array(&scalar_bytes) {
+            Ok(secret_key) => secret_key,
+            Err(_) => {
+                scalar.non_secure_erase();
+                return Err(ScanError::InvalidLabel(index));
+            }
+        };
         let point = PublicKey::from_secret_key(secp, &secret_key);
-        candidates.push(LabelCandidate { index, point });
+        secret_key.non_secure_erase();
+        scalar.non_secure_erase();
+        candidates.entry(point.serialize()).or_insert(index);
     }
     Ok(candidates)
 }
@@ -399,34 +518,51 @@ fn build_label_candidates(
 fn find_label_match(
     output_point: PublicKey,
     derived_negative: PublicKey,
-    candidates: &[LabelCandidate],
+    candidates: &HashMap<[u8; PUBLIC_KEY_SIZE], u32>,
 ) -> Option<MatchKind> {
     let label_point = output_point.combine(&derived_negative).ok()?;
     candidates
-        .iter()
-        .find(|candidate| candidate.point.serialize() == label_point.serialize())
-        .map(|candidate| MatchKind::Label {
-            index: candidate.index,
-        })
+        .get(&label_point.serialize())
+        .copied()
+        .map(|index| MatchKind::Label { index })
 }
 
-fn valid_nonzero_scalar(bytes: [u8; 32]) -> Option<Scalar> {
-    let scalar = Scalar::from_be_bytes(bytes).ok()?;
+fn valid_nonzero_scalar(bytes: &[u8; 32]) -> Option<Scalar> {
+    let scalar = Scalar::from_be_bytes(*bytes).ok()?;
     (scalar != Scalar::ZERO).then_some(scalar)
 }
 
-fn tagged_hash(tag: &[u8], message: &[u8]) -> [u8; 32] {
+fn tagged_hash(tag: &[u8], message: &[u8]) -> Zeroizing<[u8; 32]> {
     let tag_hash = Sha256::digest(tag);
     let mut hasher = Sha256::new();
     hasher.update(tag_hash);
     hasher.update(tag_hash);
     hasher.update(message);
-    hasher.finalize().into()
+    Zeroizing::new(hasher.finalize().into())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn test_spend_public_key() -> [u8; PUBLIC_KEY_SIZE] {
+        let spend_secret = SecretKey::from_byte_array(&[2u8; 32]).expect("test spend secret");
+        PublicKey::from_secret_key(&Secp256k1::new(), &spend_secret).serialize()
+    }
+
+    fn test_outpoint(vout: u32) -> OutPoint {
+        OutPoint {
+            txid_le: [vout as u8; 32],
+            vout,
+        }
+    }
+
+    fn test_input(outpoint: OutPoint) -> EligibleInput {
+        EligibleInput {
+            outpoint,
+            public_key: EligibleInputPublicKey::Compressed(test_spend_public_key()),
+        }
+    }
 
     #[test]
     fn tagged_hash_uses_bip340_double_tag_prefix() {
@@ -436,7 +572,7 @@ mod tests {
             0x0c, 0x9a, 0x51, 0xcc, 0xf0, 0xd4, 0x14, 0xa2, 0x39, 0x3c, 0x01, 0xa6, 0x1f, 0x68,
             0xb3, 0x0a, 0x49, 0x64,
         ];
-        assert_eq!(actual, expected);
+        assert_eq!(actual.as_ref(), &expected);
     }
 
     #[test]
@@ -463,12 +599,154 @@ mod tests {
 
     #[test]
     fn zero_and_out_of_range_scalars_are_rejected() {
-        assert!(valid_nonzero_scalar([0u8; 32]).is_none());
-        assert!(valid_nonzero_scalar([
+        assert!(valid_nonzero_scalar(&[0u8; 32]).is_none());
+        assert!(valid_nonzero_scalar(&[
             0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
             0xff, 0xfe, 0xba, 0xae, 0xdc, 0xe6, 0xaf, 0x48, 0xa0, 0x3b, 0xbf, 0xd2, 0x5e, 0x8c,
             0xd0, 0x36, 0x41, 0x41,
         ])
         .is_none());
+    }
+
+    #[test]
+    fn resource_limits_are_enforced_before_ecc_parsing() {
+        let scan_secret = ScanSecret::from_bytes([1u8; 32]).expect("test scan secret");
+        let spend_public_key = test_spend_public_key();
+        let invalid_input = EligibleInput {
+            outpoint: test_outpoint(0),
+            public_key: EligibleInputPublicKey::Compressed([0u8; PUBLIC_KEY_SIZE]),
+        };
+
+        let too_many_transaction_inputs = vec![test_outpoint(0); MAX_TRANSACTION_INPUTS + 1];
+        assert_eq!(
+            scan_transaction(
+                &scan_secret,
+                spend_public_key,
+                &too_many_transaction_inputs,
+                &[],
+                &[],
+                &[],
+            ),
+            Err(ScanError::ResourceLimitExceeded {
+                resource: ScanResource::TransactionInputs,
+                actual: MAX_TRANSACTION_INPUTS + 1,
+                limit: MAX_TRANSACTION_INPUTS,
+            })
+        );
+
+        let too_many_eligible_inputs = vec![invalid_input; MAX_ELIGIBLE_INPUTS + 1];
+        assert_eq!(
+            scan_transaction(
+                &scan_secret,
+                spend_public_key,
+                &[],
+                &too_many_eligible_inputs,
+                &[],
+                &[],
+            ),
+            Err(ScanError::ResourceLimitExceeded {
+                resource: ScanResource::EligibleInputs,
+                actual: MAX_ELIGIBLE_INPUTS + 1,
+                limit: MAX_ELIGIBLE_INPUTS,
+            })
+        );
+
+        let too_many_outputs = vec![
+            TaprootOutput {
+                output_key: [0u8; 32],
+                outpoint: test_outpoint(0),
+                value_sat: 0,
+                is_unspent: false,
+            };
+            MAX_TAPROOT_OUTPUTS + 1
+        ];
+        assert_eq!(
+            scan_transaction(
+                &scan_secret,
+                spend_public_key,
+                &[],
+                &[],
+                &too_many_outputs,
+                &[],
+            ),
+            Err(ScanError::ResourceLimitExceeded {
+                resource: ScanResource::TaprootOutputs,
+                actual: MAX_TAPROOT_OUTPUTS + 1,
+                limit: MAX_TAPROOT_OUTPUTS,
+            })
+        );
+
+        let too_many_labels = vec![0u32; MAX_LABELS + 1];
+        assert_eq!(
+            scan_transaction(
+                &scan_secret,
+                spend_public_key,
+                &[],
+                &[],
+                &[],
+                &too_many_labels,
+            ),
+            Err(ScanError::ResourceLimitExceeded {
+                resource: ScanResource::Labels,
+                actual: MAX_LABELS + 1,
+                limit: MAX_LABELS,
+            })
+        );
+    }
+
+    #[test]
+    fn transaction_record_outpoint_invariants_are_enforced() {
+        let scan_secret = ScanSecret::from_bytes([1u8; 32]).expect("test scan secret");
+        let spend_public_key = test_spend_public_key();
+        let input = test_input(test_outpoint(1));
+
+        assert_eq!(
+            scan_transaction(
+                &scan_secret,
+                spend_public_key,
+                &[test_outpoint(0)],
+                &[input],
+                &[],
+                &[],
+            ),
+            Err(ScanError::MissingEligibleInputOutpoint(0))
+        );
+
+        assert_eq!(
+            scan_transaction(
+                &scan_secret,
+                spend_public_key,
+                &[test_outpoint(0), test_outpoint(0)],
+                &[],
+                &[],
+                &[],
+            ),
+            Err(ScanError::DuplicateTransactionOutpoint(1))
+        );
+
+        let duplicate_eligible = test_input(test_outpoint(0));
+        assert_eq!(
+            scan_transaction(
+                &scan_secret,
+                spend_public_key,
+                &[test_outpoint(0)],
+                &[duplicate_eligible, duplicate_eligible],
+                &[],
+                &[],
+            ),
+            Err(ScanError::DuplicateEligibleInputOutpoint(1))
+        );
+
+        assert_eq!(
+            scan_transaction(
+                &scan_secret,
+                spend_public_key,
+                &[],
+                &[test_input(test_outpoint(0))],
+                &[],
+                &[],
+            ),
+            Err(ScanError::MissingTransactionOutpoints)
+        );
     }
 }

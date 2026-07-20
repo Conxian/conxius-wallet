@@ -22,10 +22,24 @@ Silent Payments follow the **Bridged Sovereign Architecture**:
 ## Phase 1 receiver scan core
 
 `scan_transaction` accepts all transaction input outpoints, eligible input public keys, taproot
-output keys plus mapping metadata, and labels. It selects the lexicographically smallest
-serialized transaction outpoint, sums eligible input keys, computes the BIP-352 tagged hashes,
-checks unlabeled and labeled output tweaks, supports output-key negation, and enforces `K_MAX =
-2323`.
+output keys plus mapping metadata, and labels. It validates bounded, canonical records before
+allocating parsed records or entering secp256k1 loops:
+
+| Resource | Limit |
+| --- | ---: |
+| Transaction input outpoints | `MAX_TRANSACTION_INPUTS = 4096` |
+| Eligible input public keys | `MAX_ELIGIBLE_INPUTS = 4096` |
+| Taproot outputs | `MAX_TAPROOT_OUTPUTS = 4096` |
+| Receiver labels | `MAX_LABELS = 256` |
+| Sequential output indices per receiver group | `K_MAX = 2323` |
+
+Every eligible input outpoint must occur exactly once in the complete input list. Duplicate
+complete-list outpoints and duplicate eligible outpoints are rejected, and the canonical
+serialized `OutPoint` values are retained for BIP-352 ordering and hashing. Exceeding a limit
+returns the structured `ScanError::ResourceLimitExceeded` error. After validation, the scanner
+selects the lexicographically smallest serialized transaction outpoint, sums eligible input
+keys, computes the BIP-352 tagged hashes, checks unlabeled and labeled output tweaks, supports
+output-key negation, and enforces `K_MAX = 2323`.
 
 The official Bitcoin BIPs send/receive vectors are vendored under
 `native/silent-payments/tests/data/` and exercised by the Rust integration test. Run:

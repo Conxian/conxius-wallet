@@ -9,6 +9,26 @@ keeps public transaction records separate from the private scan secret and retur
 match metadata. Private scan keys, shared secrets, intermediate points, and private output tweaks
 are not returned or included in debug/error output.
 
+## Scan limits and input invariants
+
+Each `scan_transaction` call applies these hard limits before allocating parsed records or
+entering secp256k1 loops:
+
+| Resource | Limit |
+| --- | ---: |
+| Transaction input outpoints | `MAX_TRANSACTION_INPUTS = 4096` |
+| Eligible input public keys | `MAX_ELIGIBLE_INPUTS = 4096` |
+| Taproot outputs | `MAX_TAPROOT_OUTPUTS = 4096` |
+| Receiver labels | `MAX_LABELS = 256` |
+| Sequential output indices per receiver group | `K_MAX = 2323` |
+
+Exceeding any caller-controlled collection limit returns `ScanError::ResourceLimitExceeded` with
+the resource, actual count, and configured limit. The transaction record must also be canonical:
+every eligible input outpoint must occur exactly once in `all_input_outpoints`, the full input list
+must contain no duplicate outpoints, and the eligible input list must contain no duplicate
+outpoints. These checks preserve the serialized `OutPoint` representation used for BIP-352
+ordering and hashing; malformed records are rejected before public-key parsing or ECC work.
+
 ## Local verification
 
 ```bash
