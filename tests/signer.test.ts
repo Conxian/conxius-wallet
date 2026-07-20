@@ -7,6 +7,9 @@ import {
   SignRequest 
 } from '../services/signer';
 import * as bip39 from 'bip39';
+import { Capacitor } from '@capacitor/core';
+import { signNative } from '../services/enclave-storage';
+import { workerManager } from '../services/worker-manager';
 
 // Mock Capacitor
 vi.mock('@capacitor/core', () => ({ registerPlugin: vi.fn(),
@@ -19,6 +22,7 @@ vi.mock('@capacitor/core', () => ({ registerPlugin: vi.fn(),
 // Mock enclave-storage
 vi.mock('../services/enclave-storage', () => ({
   signNative: vi.fn(),
+  signBatchNative: vi.fn(),
   getWalletInfoNative: vi.fn()
 }));
 
@@ -38,6 +42,7 @@ describe('signer service', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
   });
 
   describe('deriveSovereignRoots', () => {
@@ -181,6 +186,22 @@ describe('signer service', () => {
   });
 
   describe('requestEnclaveSignature', () => {
+    it('rejects native signing failures without falling back to the TypeScript worker', async () => {
+      vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+      vi.mocked(signNative).mockRejectedValueOnce(new Error('Native signer unavailable'));
+      const derivePathSpy = vi.spyOn(workerManager, 'derivePath');
+
+      const request: SignRequest = {
+        type: 'message',
+        layer: 'Mainnet',
+        payload: { hash: '00'.repeat(32) },
+        description: 'Fail-closed native signing test'
+      };
+
+      await expect(requestEnclaveSignature(request, 'vault-id')).rejects.toThrow('Native signer unavailable');
+      expect(derivePathSpy).not.toHaveBeenCalled();
+    });
+
     it('should throw error when master seed is missing', async () => {
       const request: SignRequest = {
         type: 'psbt',
