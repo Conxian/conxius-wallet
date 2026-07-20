@@ -15,11 +15,20 @@ internal class WalletCreationService(
 ) {
     suspend fun create(): String {
         val generatedMnemonic = generateMnemonic()
-        val seedBytes = generatedMnemonic.toByteArray(Charsets.UTF_8)
+        persistMnemonic(generatedMnemonic)
+        return generatedMnemonic
+    }
+
+    /**
+     * Encrypts and persists a caller-provided mnemonic through the same route as new wallet
+     * creation. The displayed mnemonic remains a String because onboarding must show it to the
+     * user; the temporary UTF-8 buffer is cleared after encryption and persistence.
+     */
+    suspend fun persistMnemonic(mnemonic: String) {
+        val seedBytes = mnemonic.toByteArray(Charsets.UTF_8)
         try {
             val (encrypted, iv) = encrypt(seedBytes)
             persist(encrypted, iv)
-            return generatedMnemonic
         } finally {
             Arrays.fill(seedBytes, 0.toByte())
         }
