@@ -1,4 +1,4 @@
-import { fetchWithRetry } from './network';
+import { fetchWithRetry, withAbortDeadline } from './network';
 
 export type FeeRecommendation = {
   fastestFee: number;
@@ -14,18 +14,22 @@ export type BitcoinFeeSample = {
   transactionId?: string;
 };
 
+export type BitcoinFeeOracleRequestOptions = Pick<RequestInit, 'signal'>;
+
 export interface BitcoinFeeOracleTransport {
-  getJson<T>(url: string): Promise<T>;
+  getJson<T>(url: string, options?: BitcoinFeeOracleRequestOptions): Promise<T>;
 }
 
 export interface BitcoinFeeOracleProvider {
-  getRecentBlocks(baseUrl: string, limit: number): Promise<unknown>;
-  getBlockTransactions(baseUrl: string, blockHash: string, startIndex: number): Promise<unknown>;
+  getRecentBlocks(baseUrl: string, limit: number, signal?: AbortSignal): Promise<unknown>;
+  getBlockTransactions(baseUrl: string, blockHash: string, startIndex: number, signal?: AbortSignal): Promise<unknown>;
 }
 
 export interface CleanBlockFeeOptions {
   provider?: BitcoinFeeOracleProvider;
   transport?: BitcoinFeeOracleTransport;
+  signal?: AbortSignal;
+  cleanOracleTimeoutMs?: number;
   maxBlocks?: number;
   maxTransactionsPerBlock?: number;
   maxTotalTransactions?: number;
@@ -46,6 +50,10 @@ export const BITCOIN_FEE_ORACLE_LIMITS = {
   maxWitnessItemBytes: 4096,
   maxScriptBytes: 4096,
   maxVsize: 10_000_000,
+  cleanOracleTimeoutMs: 5_000,
+  maxCleanOracleTimeoutMs: 15_000,
+  legacyFallbackTimeoutMs: 5_000,
+  maxLegacyFallbackTimeoutMs: 15_000,
   maxFeeRateSatPerVbyte: 1_000_000,
   minCleanSamples: 12,
 } as const;
@@ -57,8 +65,8 @@ const CLEAN_FEE_TARGETS = {
 } as const;
 
 const defaultTransport: BitcoinFeeOracleTransport = {
-  async getJson<T>(url: string): Promise<T> {
-    const response = await fetchWithRetry(url);
+  async getJson<T>(url: string, options: BitcoinFeeOracleRequestOptions = {}): Promise<T> {
+    const response = await fetchWithRetry(url, options);
     if (!response.ok) {
       throw new Error('fee oracle request failed');
     }
@@ -79,9 +87,15 @@ function boundedInteger(value: number | undefined, fallback: number, minimum: nu
 
 function normalizeOptions(options: CleanBlockFeeOptions): Required<Pick<
   CleanBlockFeeOptions,
-  'maxBlocks' | 'maxTransactionsPerBlock' | 'maxTotalTransactions' | 'maxPagesPerBlock' | 'minCleanSamples'
+  'cleanOracleTimeoutMs' | 'maxBlocks' | 'maxTransactionsPerBlock' | 'maxTotalTransactions' | 'maxPagesPerBlock' | 'minCleanSamples'
 >> {
   return {
+    cleanOracleTimeoutMs: boundedInteger(
+      options.cleanOracleTimeoutMs,
+      BITCOIN_FEE_ORACLE_LIMITS.cleanOracleTimeoutMs,
+      1,
+      BITCOIN_FEE_ORACLE_LIMITS.maxCleanOracleTimeoutMs,
+    ),
     maxBlocks: boundedInteger(options.maxBlocks, BITCOIN_FEE_ORACLE_LIMITS.maxBlocks, 1, BITCOIN_FEE_ORACLE_LIMITS.maxBlocks),
     maxTransactionsPerBlock: boundedInteger(
       options.maxTransactionsPerBlock,
@@ -108,9 +122,12 @@ export function createBitcoinFeeOracleProvider(
   transport: BitcoinFeeOracleTransport = defaultBitcoinFeeOracleTransport,
 ): BitcoinFeeOracleProvider {
   return {
-    getRecentBlocks: (baseUrl, limit) => transport.getJson(endpoint(baseUrl, `/blocks?limit=${limit}`)),
-    getBlockTransactions: (baseUrl, blockHash, startIndex) => (
-      transport.getJson(endpoint(baseUrl, `/block/${blockHash}/txs/${startIndex}`))
+    getRecentBlocks: (baseUrl, limit, signal) => transport.getJson(
+      endpoint(baseUrl, `/blocks?limit=${limit}`),
+      { signal },
+    ),
+    getBlockTransactions: (baseUrl, blockHash, startIndex, signal) => (
+      transport.getJson(endpoint(baseUrl, `/block/${blockHash}/txs/${startIndex}`), { signal })
     ),
   };
 }
@@ -272,14 +289,21 @@ function parseVsize(value: unknown): number | null {
   return value as number;
 }
 
+function parseWeight(value: unknown): number | null {
+  const maxWeight = BITCOIN_FEE_ORACLE_LIMITS.maxVsize * 4;
+  if (!Number.isSafeInteger(value) || (value as number) <= 0 || (value as number) > maxWeight) {
+    return null;
+  }
+  return value as number;
+}
+
 function feeRateForTransaction(value: unknown): number | null {
   if (!isRecord(value)) return null;
   const fee = parseFeeRate(value.fee);
   if (fee === null) return null;
 
   const vsize = parseVsize(value.vsize)
-    ?? (parseVsize(value.weight) !== null ? Math.ceil((value.weight as number) / 4) : null)
-    ?? parseVsize(value.size);
+    ?? (parseWeight(value.weight) !== null ? Math.ceil((value.weight as number) / 4) : null);
   if (vsize === null) return null;
 
   const feeRate = fee / vsize;
@@ -314,17 +338,20 @@ function samplePageStarts(txCount: number, maxTransactionsPerBlock: number, maxP
     return starts;
   }
 
-  const candidates = [
-    0,
-    Math.max(0, Math.floor((txCount - pageSize) / 2)),
-    Math.max(0, txCount - pageSize),
-  ];
-  for (const candidate of candidates) {
-    if (candidate < txCount && !starts.includes(candidate) && starts.length < maxPages) {
-      starts.push(candidate);
+  const pageCount = Math.ceil(txCount / pageSize);
+  const middlePage = Math.floor((pageCount - 1) / 2);
+  const candidatePages = [0, middlePage, pageCount - 1];
+  for (const page of candidatePages) {
+    const startIndex = page * pageSize;
+    if (startIndex < txCount && !starts.includes(startIndex) && starts.length < maxPages) {
+      starts.push(startIndex);
     }
   }
   return starts.sort((left, right) => left - right);
+}
+
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) throw new Error('operation aborted');
 }
 
 async function collectCleanBlockFeeSamples(
@@ -333,12 +360,15 @@ async function collectCleanBlockFeeSamples(
 ): Promise<BitcoinFeeSample[]> {
   const limits = normalizeOptions(options);
   const provider = options.provider ?? createBitcoinFeeOracleProvider(options.transport ?? defaultBitcoinFeeOracleTransport);
-  const rawBlocks = await provider.getRecentBlocks(baseUrl, limits.maxBlocks);
+  throwIfAborted(options.signal);
+  const rawBlocks = await provider.getRecentBlocks(baseUrl, limits.maxBlocks, options.signal);
+  throwIfAborted(options.signal);
   if (!Array.isArray(rawBlocks)) return [];
 
   const samples: BitcoinFeeSample[] = [];
   let scannedRecords = 0;
   for (const rawBlock of rawBlocks.slice(0, limits.maxBlocks)) {
+    throwIfAborted(options.signal);
     if (scannedRecords >= limits.maxTotalTransactions) break;
     const block = blockRecord(rawBlock);
     if (!block) continue;
@@ -346,8 +376,10 @@ async function collectCleanBlockFeeSamples(
     const seenTransactions = new Set<string>();
     let scannedBlockRecords = 0;
     for (const startIndex of samplePageStarts(block.txCount, limits.maxTransactionsPerBlock, limits.maxPagesPerBlock)) {
+      throwIfAborted(options.signal);
       if (scannedRecords >= limits.maxTotalTransactions || scannedBlockRecords >= limits.maxTransactionsPerBlock) break;
-      const rawPage = await provider.getBlockTransactions(baseUrl, block.id, startIndex);
+      const rawPage = await provider.getBlockTransactions(baseUrl, block.id, startIndex, options.signal);
+      throwIfAborted(options.signal);
       if (!Array.isArray(rawPage)) continue;
 
       const page = rawPage.slice(0, Math.min(
@@ -356,6 +388,7 @@ async function collectCleanBlockFeeSamples(
         limits.maxTransactionsPerBlock - scannedBlockRecords,
       ));
       for (const transaction of page) {
+        throwIfAborted(options.signal);
         if (scannedRecords >= limits.maxTotalTransactions) break;
         scannedRecords += 1;
         scannedBlockRecords += 1;
@@ -410,7 +443,11 @@ export async function getCleanBlockFeeRecommendation(
 ): Promise<FeeRecommendation | null> {
   try {
     const limits = normalizeOptions(options);
-    const samples = await collectCleanBlockFeeSamples(baseUrl, options);
+    const samples = await withAbortDeadline(
+      signal => collectCleanBlockFeeSamples(baseUrl, { ...options, signal }),
+      options.signal,
+      limits.cleanOracleTimeoutMs,
+    );
     return estimateCleanBlockFees(samples, limits.minCleanSamples);
   } catch {
     return null;

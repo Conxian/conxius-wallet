@@ -1,7 +1,8 @@
-import { fetchWithRetry } from './network';
+import { fetchWithRetry, withAbortDeadline } from './network';
 import {
   defaultBitcoinFeeOracleTransport,
   getCleanBlockFeeRecommendation,
+  BITCOIN_FEE_ORACLE_LIMITS,
 } from './bitcoin-fee-oracle';
 import type { CleanBlockFeeOptions, FeeRecommendation } from './bitcoin-fee-oracle';
 
@@ -13,7 +14,18 @@ const FALLBACK_BTC_FEES = { fastestFee: 15, halfHourFee: 8, hourFee: 5 };
 export type RecommendedFeesOptions = CleanBlockFeeOptions & {
   /** Disable the clean confirmed-block model and use the legacy endpoint only. */
   useCleanBlocks?: boolean;
+  /** Bound the legacy endpoint attempt after clean sampling is unavailable. */
+  legacyFallbackTimeoutMs?: number;
 };
+
+function legacyFallbackTimeoutMs(options: RecommendedFeesOptions): number {
+  const value = options.legacyFallbackTimeoutMs;
+  if (!Number.isSafeInteger(value)) return BITCOIN_FEE_ORACLE_LIMITS.legacyFallbackTimeoutMs;
+  return Math.min(
+    BITCOIN_FEE_ORACLE_LIMITS.maxLegacyFallbackTimeoutMs,
+    Math.max(1, value as number),
+  );
+}
 
 function parseFeeRecommendation(value: unknown): import('./bitcoin-fee-oracle').FeeRecommendation | null {
   if (typeof value !== 'object' || value === null) return null;
@@ -31,14 +43,24 @@ function parseFeeRecommendation(value: unknown): import('./bitcoin-fee-oracle').
  * Fetches BTC (L1) fee recommendations.
  */
 export async function getRecommendedFees(baseUrl: string, options: RecommendedFeesOptions = {}): Promise<FeeRecommendation> {
+  if (options.signal?.aborted) return FALLBACK_BTC_FEES;
+
   if (options.useCleanBlocks !== false) {
     const cleanRecommendation = await getCleanBlockFeeRecommendation(baseUrl, options);
     if (cleanRecommendation) return cleanRecommendation;
+    if (options.signal?.aborted) return FALLBACK_BTC_FEES;
   }
 
   try {
     const transport = options.transport ?? defaultBitcoinFeeOracleTransport;
-    const response = await transport.getJson<unknown>(`${baseUrl.replace(/\/+$/, '')}/v1/fees/recommended`);
+    const response = await withAbortDeadline(
+      signal => transport.getJson<unknown>(
+        `${baseUrl.replace(/\/+$/, '')}/v1/fees/recommended`,
+        { signal },
+      ),
+      options.signal,
+      legacyFallbackTimeoutMs(options),
+    );
     return parseFeeRecommendation(response) ?? FALLBACK_BTC_FEES;
   } catch {
     return FALLBACK_BTC_FEES;
