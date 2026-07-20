@@ -34,4 +34,10 @@ describe('CI workflow contracts', () => {
       lintJob.indexOf('./gradlew :app:lintRelease'),
     );
   });
+
+  it.each(['android-lint', 'android-unit-tests'])('validates the native Cargo contract before %s runs Gradle', (jobId) => {
+    const job = jobSection(jobId);
+    expect(job).toContain('node scripts/ci/validate_silent_payments_native_build.mjs');
+    expect(job.indexOf('Validate silent-payment native build contract')).toBeLessThan(job.indexOf('./gradlew'));
+  });
 });
