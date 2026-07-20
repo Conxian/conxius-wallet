@@ -14,10 +14,22 @@ class SilentPaymentManager(
     private val walletSeedProvider: WalletSeedProvider = UnavailableWalletSeedProvider,
     private val nativeScanner: NativeSilentPaymentScanner = NativeSilentPayments,
 ) {
+    companion object {
+        /** Aggregate bound for one public manager call across all provider batches. */
+        const val MAX_SCAN_TRANSACTIONS_PER_CALL = 8_192L
+    }
+
     /**
      * Address derivation is intentionally fail-closed until the native address codec is added.
      * Public keys are byte arrays here; this API does not accept or return key hex strings.
+     *
+     * Use the future native address codec once it is available; this placeholder is retained only
+     * for source compatibility and must not be used by production callers.
      */
+    @Deprecated(
+        message = "Address derivation is not implemented; migrate to the native address codec when available",
+        level = DeprecationLevel.WARNING,
+    )
     @Suppress("UNUSED_PARAMETER")
     fun deriveSilentAddress(scanPublicKey: ByteArray, spendPublicKey: ByteArray): String {
         throw NativeSilentPaymentException(NativeErrorCode.INTERNAL)
@@ -40,6 +52,9 @@ class SilentPaymentManager(
             currentCoroutineContext().ensureActive()
             if (batch.network != network || batch.range != range) {
                 throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_BATCH)
+            }
+            if (batch.transactions.size.toLong() > MAX_SCAN_TRANSACTIONS_PER_CALL - transactionCount) {
+                throw NativeSilentPaymentException(NativeErrorCode.RESOURCE_LIMIT)
             }
             val encodedBatch = try {
                 SilentPaymentCodec.encodeBatch(batch)
@@ -65,6 +80,9 @@ class SilentPaymentManager(
                 throw NativeSilentPaymentException(error.code, error)
             }
             validateBatchResult(batch, encodedBatch.size, result)
+            if (result.metrics.matchCount != result.matches.size.toLong()) {
+                throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_BATCH)
+            }
             if (result.matches.size > SilentPaymentCodec.MAX_MATCHES - matches.size) {
                 throw NativeSilentPaymentException(NativeErrorCode.RESOURCE_LIMIT)
             }
@@ -101,16 +119,36 @@ class SilentPaymentManager(
         val metrics = result.metrics
         if (metrics.transactionCount != batch.transactions.size.toLong()
             || metrics.batchBytes != encodedBatchSize.toLong()
-            || metrics.scannedTransactionCount + metrics.skippedTransactionCount != metrics.transactionCount
+            || metrics.scannedTransactionCount.safeAdd(metrics.skippedTransactionCount)
+                != metrics.transactionCount
+            || metrics.matchCount != result.matches.size.toLong()
         ) {
             throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_BATCH)
         }
 
+        val seenReferences = HashSet<String>(result.matches.size)
         result.matches.forEach { match ->
             val transaction = batch.transactions.firstOrNull {
-                it.blockHeight == match.blockHeight && it.transactionIndex == match.transactionIndex
+                it.transactionIdLittleEndian.contentEquals(match.transactionIdLittleEndian)
+                    && it.blockHeight == match.blockHeight
+                    && it.transactionIndex == match.transactionIndex
             } ?: throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
-            if (match.outputIndex > Int.MAX_VALUE) {
+            if (match.outputIndex !in 0 until transaction.outputs.size.toLong()) {
+                throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
+            }
+            if (!match.outpoint.txidLittleEndian.contentEquals(match.transactionIdLittleEndian)) {
+                throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
+            }
+            if (!seenReferences.add(
+                    resultReferenceKey(
+                        match.transactionIdLittleEndian,
+                        match.blockHeight,
+                        match.transactionIndex,
+                        match.outputIndex,
+                        match.outpoint,
+                    )
+                )
+            ) {
                 throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
             }
             val output = transaction.outputs.getOrNull(match.outputIndex.toInt())
@@ -132,6 +170,24 @@ class SilentPaymentManager(
 
     private fun sameOutPoint(left: OutPoint, right: OutPoint): Boolean =
         left.vout == right.vout && left.txidLittleEndian.contentEquals(right.txidLittleEndian)
+
+    private fun resultReferenceKey(
+        transactionId: ByteArray,
+        blockHeight: Long,
+        transactionIndex: Long,
+        outputIndex: Long,
+        outpoint: OutPoint,
+    ): String =
+        "${transactionIdentityKey(transactionId, blockHeight, transactionIndex)}:$outputIndex:${outPointKey(outpoint)}"
+
+    private fun transactionIdentityKey(transactionId: ByteArray, blockHeight: Long, transactionIndex: Long): String =
+        "${transactionId.toHexKey()}:$blockHeight:$transactionIndex"
+
+    private fun outPointKey(outpoint: OutPoint): String =
+        "${outpoint.txidLittleEndian.toHexKey()}:${outpoint.vout}"
+
+    private fun ByteArray.toHexKey(): String =
+        joinToString(separator = "") { byte -> "%02x".format(byte.toInt() and 0xff) }
 
     private fun Long.safeAdd(value: Long): Long =
         try {

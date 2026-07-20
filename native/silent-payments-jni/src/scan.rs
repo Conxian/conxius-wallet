@@ -1,7 +1,8 @@
 use std::time::Instant;
 
 use conxius_silent_payments::{
-    scan_transaction, ScanError, ScanOutcome, ScanSecret, ScanSkipReason,
+    scan_transaction_with_cancellation, CancellationToken, ScanError, ScanOutcome, ScanSecret,
+    ScanSkipReason,
 };
 use zeroize::Zeroizing;
 
@@ -18,15 +19,33 @@ pub fn scan_public_batch(
     passphrase: &[u8],
     encoded_batch: &[u8],
 ) -> Result<PublicScanResult, NativeErrorCode> {
-    let batch = decode_public_batch(encoded_batch)?;
-    scan_decoded_batch(mnemonic, passphrase, encoded_batch.len(), &batch)
+    scan_public_batch_with_cancellation(mnemonic, passphrase, encoded_batch, &())
 }
 
-fn scan_decoded_batch(
+/// Scan one bounded public batch with cooperative cancellation checked between transactions and
+/// inside the core's bounded BIP-352 output-index loop.
+pub fn scan_public_batch_with_cancellation<C: CancellationToken>(
+    mnemonic: &[u8],
+    passphrase: &[u8],
+    encoded_batch: &[u8],
+    cancellation: &C,
+) -> Result<PublicScanResult, NativeErrorCode> {
+    let batch = decode_public_batch(encoded_batch)?;
+    scan_decoded_batch(
+        mnemonic,
+        passphrase,
+        encoded_batch.len(),
+        &batch,
+        cancellation,
+    )
+}
+
+fn scan_decoded_batch<C: CancellationToken>(
     mnemonic: &[u8],
     passphrase: &[u8],
     batch_bytes: usize,
     batch: &PublicBatch,
+    cancellation: &C,
 ) -> Result<PublicScanResult, NativeErrorCode> {
     let started = Instant::now();
     let derived = derive_receiver_keys(mnemonic, passphrase, batch.network, batch.account)?;
@@ -38,13 +57,17 @@ fn scan_decoded_batch(
     let mut skipped_transaction_count = 0u32;
 
     for transaction in &batch.transactions {
-        let outcome = scan_transaction(
+        if cancellation.is_cancelled() {
+            return Err(NativeErrorCode::Cancelled);
+        }
+        let outcome = scan_transaction_with_cancellation(
             &scan_secret,
             derived.spend_public_key,
             &transaction.all_input_outpoints,
             &transaction.eligible_inputs,
             &transaction.outputs,
             &batch.labels,
+            cancellation,
         )
         .map_err(map_scan_error)?;
 
@@ -58,6 +81,7 @@ fn scan_decoded_batch(
                         return Err(NativeErrorCode::ResourceLimit);
                     }
                     matches.push(PublicMatch {
+                        transaction_id: transaction.transaction_id,
                         block_height: transaction.block_height,
                         transaction_index: transaction.transaction_index,
                         scan_match,
@@ -101,7 +125,10 @@ fn map_scan_error(error: ScanError) -> NativeErrorCode {
         | ScanError::DuplicateTransactionOutpoint(_)
         | ScanError::MissingEligibleInputOutpoint(_)
         | ScanError::DuplicateEligibleInputOutpoint(_)
+        | ScanError::DuplicateOutputOutpoint(_)
+        | ScanError::DuplicateOutputVout(_)
         | ScanError::MissingTransactionOutpoints => NativeErrorCode::InvalidPublicRecord,
+        ScanError::Cancelled => NativeErrorCode::Cancelled,
         ScanError::InvalidInputHash
         | ScanError::InvalidSharedSecretTweak(_)
         | ScanError::InvalidLabel(_)

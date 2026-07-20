@@ -3,11 +3,16 @@ package com.conxius.wallet.bitcoin
 import java.io.ByteArrayOutputStream
 import java.util.HashSet
 
-/** Versioned, hand-rolled public batch/result codec shared with the Rust JNI crate. */
+/**
+* Versioned public batch/result codec shared byte-for-byte with the Rust JNI crate.
+*
+* The validation table is documented in `docs/protocols/silent-payments.md`; keep every limit,
+* signed-u64 rule, identity rule, and duplicate rejection mirrored on both sides of this codec.
+*/
 object SilentPaymentCodec {
     private val BATCH_MAGIC = byteArrayOf('S'.code.toByte(), 'P'.code.toByte(), 'B'.code.toByte(), '1'.code.toByte())
     private val RESULT_MAGIC = byteArrayOf('S'.code.toByte(), 'P'.code.toByte(), 'R'.code.toByte(), '1'.code.toByte())
-    private const val VERSION = 1
+    private const val VERSION = 2
 
     const val MAX_BATCH_BYTES = 8 * 1024 * 1024
     const val MAX_RESULT_BYTES = 16 * 1024 * 1024
@@ -18,6 +23,7 @@ object SilentPaymentCodec {
     const val MAX_ELIGIBLE_INPUTS = 4_096
     const val MAX_TAPROOT_OUTPUTS = 4_096
     const val MAX_LABELS = 256
+    const val MAX_K = 2_323
 
     fun encodeBatch(batch: SilentPaymentBatch): ByteArray {
         validateBatch(batch)
@@ -33,6 +39,7 @@ object SilentPaymentCodec {
         batch.labels.forEach(writer::u32)
 
         batch.transactions.forEach { transaction ->
+            writer.bytes(transaction.transactionIdLittleEndian)
             writer.u64(transaction.blockHeight)
             writer.u32(transaction.transactionIndex)
             writer.u32(transaction.allInputOutpoints.size.toLong())
@@ -91,18 +98,30 @@ object SilentPaymentCodec {
         }
 
         val transactions = ArrayList<SilentPaymentTransaction>(transactionCount)
+        val seenTransactionIdentities = HashSet<String>(transactionCount)
         var totalOutputs = 0
         repeat(transactionCount) {
+            val transactionId = cursor.readBytes(32)
             val blockHeight = cursor.readU64()
             if (blockHeight !in startBlock..endBlock) fail(NativeErrorCode.INVALID_PUBLIC_BATCH)
             val transactionIndex = cursor.readU32()
+            if (!seenTransactionIdentities.add(transactionIdentityKey(transactionId, blockHeight, transactionIndex))) {
+                fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
+            }
             val inputCount = cursor.readBoundedCount(MAX_TRANSACTION_INPUTS)
             val eligibleCount = cursor.readBoundedCount(MAX_ELIGIBLE_INPUTS)
             val outputCount = cursor.readBoundedCount(MAX_TAPROOT_OUTPUTS)
             totalOutputs = totalOutputs.safeAdd(outputCount, MAX_BATCH_OUTPUTS)
 
             val allInputOutpoints = ArrayList<OutPoint>(inputCount)
-            repeat(inputCount) { allInputOutpoints += readOutPoint(cursor) }
+            val seenInputOutpoints = HashSet<String>(inputCount)
+            repeat(inputCount) {
+                val outpoint = readOutPoint(cursor)
+                if (!seenInputOutpoints.add(outPointKey(outpoint))) {
+                    fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
+                }
+                allInputOutpoints += outpoint
+            }
 
             val eligibleInputs = ArrayList<EligibleInput>(eligibleCount)
             val seenInputIndexes = HashSet<Int>(eligibleCount)
@@ -126,15 +145,26 @@ object SilentPaymentCodec {
             }
 
             val outputs = ArrayList<TaprootOutput>(outputCount)
+            val seenOutputOutpoints = HashSet<String>(outputCount)
+            val seenOutputVouts = HashSet<Long>(outputCount)
             repeat(outputCount) {
+                val outputKey = cursor.readBytes(32)
+                val outpoint = readOutPoint(cursor)
+                if (!outpoint.txidLittleEndian.contentEquals(transactionId)
+                    || !seenOutputOutpoints.add(outPointKey(outpoint))
+                    || !seenOutputVouts.add(outpoint.vout)
+                ) {
+                    fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
+                }
                 outputs += TaprootOutput(
-                    outputKey = cursor.readBytes(32),
-                    outpoint = readOutPoint(cursor),
+                    outputKey = outputKey,
+                    outpoint = outpoint,
                     valueSat = cursor.readU64(),
                     isUnspent = cursor.readFlag(),
                 )
             }
             transactions += SilentPaymentTransaction(
+                transactionIdLittleEndian = transactionId,
                 blockHeight = blockHeight,
                 transactionIndex = transactionIndex,
                 allInputOutpoints = allInputOutpoints,
@@ -164,7 +194,7 @@ object SilentPaymentCodec {
             throw NativeSilentPaymentException(code)
         }
 
-        val transactionCount = cursor.readU32()
+        val transactionCount = cursor.readBoundedCount(MAX_BATCH_TRANSACTIONS).toLong()
         val scannedTransactionCount = cursor.readU32()
         val skippedTransactionCount = cursor.readU32()
         val matchCount = cursor.readBoundedCount(MAX_MATCHES)
@@ -179,22 +209,40 @@ object SilentPaymentCodec {
         if (encodedMatchCount != matchCount) fail(NativeErrorCode.INVALID_PUBLIC_BATCH)
 
         val matches = ArrayList<SilentPaymentMatch>(encodedMatchCount)
+        val seenResultReferences = HashSet<String>(encodedMatchCount)
         repeat(encodedMatchCount) {
+            val transactionId = cursor.readBytes(32)
             val blockHeight = cursor.readU64()
             val transactionIndex = cursor.readU32()
             val outputIndex = cursor.readU32()
+            if (outputIndex >= MAX_TAPROOT_OUTPUTS.toLong()) {
+                fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
+            }
             val outputKey = cursor.readBytes(32)
             val outpoint = readOutPoint(cursor)
+            if (!outpoint.txidLittleEndian.contentEquals(transactionId)) {
+                fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
+            }
             val valueSat = cursor.readU64()
             val isUnspent = cursor.readFlag()
             val k = cursor.readU32()
+            if (k >= MAX_K.toLong()) {
+                fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
+            }
             val kind = when (cursor.readU8()) {
                 0 -> SilentPaymentMatchKind.Unlabeled
                 1 -> SilentPaymentMatchKind.Label(cursor.readU32())
                 else -> fail(NativeErrorCode.INVALID_PUBLIC_BATCH)
             }
             val negated = cursor.readFlag()
+            if (!seenResultReferences.add(
+                    resultReferenceKey(transactionId, blockHeight, transactionIndex, outputIndex, outpoint)
+                )
+            ) {
+                fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
+            }
             matches += SilentPaymentMatch(
+                transactionIdLittleEndian = transactionId,
                 blockHeight = blockHeight,
                 transactionIndex = transactionIndex,
                 outputIndex = outputIndex,
@@ -209,7 +257,7 @@ object SilentPaymentCodec {
         }
         if (!cursor.isAtEnd()) fail(NativeErrorCode.INVALID_PUBLIC_BATCH)
         if (matches.size.toLong() != matchCount.toLong()
-            || scannedTransactionCount + skippedTransactionCount > transactionCount
+            || scannedTransactionCount + skippedTransactionCount != transactionCount
         ) {
             fail(NativeErrorCode.INVALID_PUBLIC_BATCH)
         }
@@ -228,10 +276,8 @@ object SilentPaymentCodec {
 
     /** Test seam for deterministic fake-native responses; the production JNI path only decodes. */
     fun encodeResult(result: SilentPaymentScanResult): ByteArray {
-        if (result.matches.size > MAX_MATCHES || result.metrics.matchCount != result.matches.size.toLong()) {
-            fail(NativeErrorCode.RESOURCE_LIMIT)
-        }
-        val writer = Writer(64 + result.matches.size * 100, MAX_RESULT_BYTES)
+        validateResult(result)
+        val writer = Writer(64 + result.matches.size * 140, MAX_RESULT_BYTES)
         writer.bytes(RESULT_MAGIC)
         writer.u8(VERSION)
         writer.u8(0)
@@ -243,6 +289,7 @@ object SilentPaymentCodec {
         writer.u32(result.metrics.batchBytes)
         writer.u32(result.matches.size.toLong())
         result.matches.forEach { match ->
+            writer.bytes(match.transactionIdLittleEndian)
             writer.u64(match.blockHeight)
             writer.u32(match.transactionIndex)
             writer.u32(match.outputIndex)
@@ -271,6 +318,7 @@ object SilentPaymentCodec {
         if (batch.labels.toSet().size != batch.labels.size) fail(NativeErrorCode.INVALID_PUBLIC_BATCH)
 
         var totalOutputs = 0
+        val seenTransactionIdentities = HashSet<String>(batch.transactions.size)
         batch.transactions.forEach { transaction ->
             if (transaction.blockHeight !in batch.range.startBlock..batch.range.endBlock) {
                 fail(NativeErrorCode.INVALID_PUBLIC_BATCH)
@@ -281,13 +329,22 @@ object SilentPaymentCodec {
             ) {
                 fail(NativeErrorCode.RESOURCE_LIMIT)
             }
+            if (transaction.transactionIdLittleEndian.size != 32
+                || !seenTransactionIdentities.add(
+                    transactionIdentityKey(
+                        transaction.transactionIdLittleEndian,
+                        transaction.blockHeight,
+                        transaction.transactionIndex,
+                    )
+                )
+            ) {
+                fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
+            }
             totalOutputs = totalOutputs.safeAdd(transaction.outputs.size, MAX_BATCH_OUTPUTS)
 
-            transaction.allInputOutpoints.indices.forEach { first ->
-                if (transaction.allInputOutpoints.drop(first + 1).any {
-                        sameOutPoint(transaction.allInputOutpoints[first], it)
-                    }
-                ) {
+            val seenInputOutpoints = HashSet<String>(transaction.allInputOutpoints.size)
+            transaction.allInputOutpoints.forEach { outpoint ->
+                if (!seenInputOutpoints.add(outPointKey(outpoint))) {
                     fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
                 }
             }
@@ -299,6 +356,52 @@ object SilentPaymentCodec {
                     fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
                 }
                 eligibleOutpoints += eligible.outpoint
+            }
+
+            val seenOutputOutpoints = HashSet<String>(transaction.outputs.size)
+            val seenOutputVouts = HashSet<Long>(transaction.outputs.size)
+            transaction.outputs.forEach { output ->
+                if (output.outputKey.size != 32
+                    || !output.outpoint.txidLittleEndian.contentEquals(transaction.transactionIdLittleEndian)
+                    || !seenOutputOutpoints.add(outPointKey(output.outpoint))
+                    || !seenOutputVouts.add(output.outpoint.vout)
+                ) {
+                    fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
+                }
+            }
+        }
+    }
+
+    private fun validateResult(result: SilentPaymentScanResult) {
+        val metrics = result.metrics
+        if (metrics.transactionCount !in 0..MAX_BATCH_TRANSACTIONS.toLong()
+            || metrics.scannedTransactionCount < 0
+            || metrics.skippedTransactionCount < 0
+            || metrics.scannedTransactionCount + metrics.skippedTransactionCount != metrics.transactionCount
+            || metrics.batchBytes !in 0..MAX_BATCH_BYTES.toLong()
+            || result.matches.size > MAX_MATCHES
+            || metrics.matchCount != result.matches.size.toLong()
+        ) {
+            fail(NativeErrorCode.INVALID_PUBLIC_BATCH)
+        }
+
+        val seenReferences = HashSet<String>(result.matches.size)
+        result.matches.forEach { match ->
+            if (match.transactionIdLittleEndian.size != 32
+                || !match.outpoint.txidLittleEndian.contentEquals(match.transactionIdLittleEndian)
+                || match.outputIndex !in 0 until MAX_TAPROOT_OUTPUTS.toLong()
+                || match.k !in 0 until MAX_K.toLong()
+                || !seenReferences.add(
+                    resultReferenceKey(
+                        match.transactionIdLittleEndian,
+                        match.blockHeight,
+                        match.transactionIndex,
+                        match.outputIndex,
+                        match.outpoint,
+                    )
+                )
+            ) {
+                fail(NativeErrorCode.INVALID_PUBLIC_RECORD)
             }
         }
     }
@@ -313,6 +416,24 @@ object SilentPaymentCodec {
 
     private fun sameOutPoint(left: OutPoint, right: OutPoint): Boolean =
         left.vout == right.vout && left.txidLittleEndian.contentEquals(right.txidLittleEndian)
+
+    private fun transactionIdentityKey(transactionId: ByteArray, blockHeight: Long, transactionIndex: Long): String =
+        "${transactionId.toHexKey()}:$blockHeight:$transactionIndex"
+
+    private fun resultReferenceKey(
+        transactionId: ByteArray,
+        blockHeight: Long,
+        transactionIndex: Long,
+        outputIndex: Long,
+        outpoint: OutPoint,
+    ): String =
+        "${transactionIdentityKey(transactionId, blockHeight, transactionIndex)}:$outputIndex:${outPointKey(outpoint)}"
+
+    private fun outPointKey(outpoint: OutPoint): String =
+        "${outpoint.txidLittleEndian.toHexKey()}:${outpoint.vout}"
+
+    private fun ByteArray.toHexKey(): String =
+        joinToString(separator = "") { byte -> "%02x".format(byte.toInt() and 0xff) }
 
     private fun Int.safeAdd(value: Int, limit: Int): Int {
         val result = toLong() + value.toLong()

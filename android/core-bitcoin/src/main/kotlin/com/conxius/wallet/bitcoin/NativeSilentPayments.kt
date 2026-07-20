@@ -2,6 +2,9 @@ package com.conxius.wallet.bitcoin
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 /** Stable wire errors returned by the Rust JNI boundary. */
@@ -13,6 +16,7 @@ enum class NativeErrorCode(val wireCode: Int) {
     INVALID_PUBLIC_RECORD(5),
     ECC_FAILURE(6),
     INTERNAL(7),
+    CANCELLED(8),
     LIBRARY_UNAVAILABLE(0);
 
     companion object {
@@ -55,14 +59,32 @@ object NativeSilentPayments : NativeSilentPaymentScanner {
         publicBatch: ByteArray,
     ): ByteArray = withContext(Dispatchers.IO) {
         ensureLibraryLoaded()
+        currentCoroutineContext().ensureActive()
+        val cancellationHandle = nativeCreateCancellationHandle()
+        if (cancellationHandle == 0L) {
+            throw NativeSilentPaymentException(NativeErrorCode.INTERNAL)
+        }
+        val cancellationRegistration = currentCoroutineContext()[Job]?.invokeOnCompletion { cause ->
+            if (cause is CancellationException) {
+                runCatching { nativeCancel(cancellationHandle) }
+            }
+        }
         try {
-            nativeScan(mnemonicBytes, passphraseBytes ?: ByteArray(0), publicBatch)
+            nativeScan(
+                mnemonicBytes,
+                passphraseBytes ?: ByteArray(0),
+                publicBatch,
+                cancellationHandle,
+            )
         } catch (error: CancellationException) {
             throw error
         } catch (error: NativeSilentPaymentException) {
             throw error
         } catch (error: Throwable) {
             throw NativeSilentPaymentException(NativeErrorCode.INTERNAL, error)
+        } finally {
+            cancellationRegistration?.dispose()
+            runCatching { nativeDestroyCancellationHandle(cancellationHandle) }
         }
     }
 
@@ -92,5 +114,15 @@ object NativeSilentPayments : NativeSilentPaymentScanner {
         mnemonicBytes: ByteArray,
         passphraseBytes: ByteArray,
         publicBatch: ByteArray,
+        cancellationHandle: Long,
     ): ByteArray
+
+    @JvmStatic
+    private external fun nativeCreateCancellationHandle(): Long
+
+    @JvmStatic
+    private external fun nativeCancel(cancellationHandle: Long)
+
+    @JvmStatic
+    private external fun nativeDestroyCancellationHandle(cancellationHandle: Long)
 }

@@ -9,12 +9,14 @@ import org.junit.Test
 
 class SilentPaymentManagerTest {
     private val range = ScanRange(100, 100)
+    private val transactionId = ByteArray(32) { 6 }
     private val outpoint = OutPoint(ByteArray(32) { 7 }, 0)
     private val batch = SilentPaymentBatch(
         network = SilentPaymentNetwork.TESTNET,
         range = range,
         transactions = listOf(
             SilentPaymentTransaction(
+                transactionIdLittleEndian = transactionId,
                 blockHeight = 100,
                 transactionIndex = 2,
                 allInputOutpoints = listOf(outpoint),
@@ -27,7 +29,7 @@ class SilentPaymentManagerTest {
                 outputs = listOf(
                     TaprootOutput(
                         outputKey = ByteArray(32) { 9 },
-                        outpoint = OutPoint(ByteArray(32) { 10 }, 1),
+                        outpoint = OutPoint(transactionId, 0),
                         valueSat = 42,
                         isUnspent = true,
                     ),
@@ -86,7 +88,7 @@ class SilentPaymentManagerTest {
                 mnemonicBytes: ByteArray,
                 passphraseBytes: ByteArray?,
                 publicBatch: ByteArray,
-            ): ByteArray = byteArrayOf('S'.code.toByte(), 'P'.code.toByte(), 'R'.code.toByte(), '1'.code.toByte(), 1, 4)
+            ): ByteArray = byteArrayOf('S'.code.toByte(), 'P'.code.toByte(), 'R'.code.toByte(), '1'.code.toByte(), 2, 4)
         }
 
         val error = runCatching {
@@ -95,6 +97,48 @@ class SilentPaymentManagerTest {
 
         assertTrue(error is NativeSilentPaymentException)
         assertEquals(NativeErrorCode.RESOURCE_LIMIT, (error as NativeSilentPaymentException).code)
+    }
+
+    @Test
+    fun cancelledNativeEnvelopeMapsToStableKotlinCode() = runBlocking {
+        val provider = FixtureProvider(byteArrayOf(1), null)
+        val native = object : NativeSilentPaymentScanner {
+            override suspend fun scan(
+                mnemonicBytes: ByteArray,
+                passphraseBytes: ByteArray?,
+                publicBatch: ByteArray,
+            ): ByteArray = byteArrayOf('S'.code.toByte(), 'P'.code.toByte(), 'R'.code.toByte(), '1'.code.toByte(), 2, 8)
+        }
+
+        val error = runCatching {
+            SilentPaymentManager(provider, native).scanBatch(batch)
+        }.exceptionOrNull()
+
+        assertTrue(error is NativeSilentPaymentException)
+        assertEquals(NativeErrorCode.CANCELLED, (error as NativeSilentPaymentException).code)
+    }
+
+    @Test
+    fun managerUsesTransactionIdInsteadOfAmbiguousBlockAndIndexLookup() = runBlocking {
+        val provider = FixtureProvider(byteArrayOf(1), null)
+        val wrongTransactionId = ByteArray(32) { 99 }
+        val valid = resultFor(batch)
+        val mismatched = valid.copy(
+            matches = listOf(
+                valid.matches.single().copy(
+                    transactionIdLittleEndian = wrongTransactionId,
+                    outpoint = OutPoint(wrongTransactionId, 0),
+                ),
+            ),
+        )
+        val native = RecordingNativeScanner(mismatched)
+
+        val error = runCatching {
+            SilentPaymentManager(provider, native).scanBatch(batch)
+        }.exceptionOrNull()
+
+        assertTrue(error is NativeSilentPaymentException)
+        assertEquals(NativeErrorCode.INVALID_PUBLIC_RECORD, (error as NativeSilentPaymentException).code)
     }
 
     @Test
@@ -128,6 +172,7 @@ class SilentPaymentManagerTest {
         SilentPaymentScanResult(
             matches = listOf(
                 SilentPaymentMatch(
+                    transactionIdLittleEndian = batch.transactions[0].transactionIdLittleEndian.copyOf(),
                     blockHeight = batch.transactions[0].blockHeight,
                     transactionIndex = batch.transactions[0].transactionIndex,
                     outputIndex = 0,

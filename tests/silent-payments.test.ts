@@ -42,8 +42,8 @@ describe('Silent Payments Service', () => {
         expect(addr).not.toBe('sp1_native_test');
     });
 
-    it('does not accept a scan secret from TypeScript native scanning', async () => {
-        (Capacitor.isNativePlatform as any).mockReturnValue(true);
-        await expect(scanForSilentPayments(100, 200)).rejects.toThrow(/no scan secret/i);
+    it('rejects unsupported TypeScript/web scanning instead of returning an empty result', async () => {
+        (Capacitor.isNativePlatform as any).mockReturnValue(false);
+        await expect(scanForSilentPayments(100, 200)).rejects.toThrow(/unsupported.*typescript\/web api/i);
     });
 });
