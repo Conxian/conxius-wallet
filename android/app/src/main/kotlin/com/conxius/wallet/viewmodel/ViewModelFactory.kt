@@ -38,7 +38,7 @@ class ViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(OnboardingViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return OnboardingViewModel(repository, bdkManager, strongBoxManager) as T
+            return OnboardingViewModel(repository, strongBoxManager) as T
         }
         if (modelClass.isAssignableFrom(WalletViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
