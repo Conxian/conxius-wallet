@@ -36,6 +36,9 @@ android/local.properties
 android/captures
 .gradle
 
+# Rust build artifacts
+native/**/target/
+
 # Security - API Keys and Secrets
 .env
 .env.*
