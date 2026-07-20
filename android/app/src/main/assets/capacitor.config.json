@@ -23,5 +23,5 @@
 			"resizeOnFullScreen": true
 		}
 	},
-	"npmClient": "pnpm"
+	"npmClient": "npm"
 }

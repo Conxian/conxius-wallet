@@ -24,6 +24,9 @@ bash scripts/ci/check_runtime_contamination.sh
 echo "--- 🧪 Running Unit Tests ---"
 "${PNPM[@]}" test --run
 
+echo "--- 🧹 Running Lint ---"
+"${PNPM[@]}" run lint
+
 echo "--- 🏗️ Type-Checking & Build ---"
 "${PNPM[@]}" run build
 

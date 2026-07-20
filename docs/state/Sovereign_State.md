@@ -20,7 +20,7 @@ audit documents are evidence records, not a substitute for current validation.
 - **The Conclave**: StrongBox-backed hardware isolation for BIP-39 mnemonics.
 - **Fail-Closed**: `ProductionRuntimeGuard.failClosed()` enforces release-build safety across native managers; the TypeScript signer must also reject native enclave failures without software fallback.
 - **Secret Scanning**: Gitleaks + GitGuardian integrated in CI. `.gitleaks.toml` with documented allowlists.
-- **Dependency Security**: pnpm overrides force-resolve transitive vulnerabilities (29→6 vulns). `pnpm-workspace.yaml` managed.
+- **Dependency Security**: Security overrides are authoritative in `pnpm-workspace.yaml` and reproduced in `pnpm-lock.yaml`; pnpm `11.13.0` ignores the obsolete `package.json` `pnpm` field. The remaining high `bigint-buffer` advisory is controlled by the expiring exception in `scripts/ci/dependency-audit-exceptions.json` and the CI validator.
 - **Security Journal**: `.jules/` hardening journal documents vulnerability patterns and prevention guides.
 
 ## ⛓️ Protocol Support
