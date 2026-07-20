@@ -12,6 +12,7 @@
     "test": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "bench:silent-payments": "node scripts/bench-silent-payments.mjs",
     "prepare": "husky",
     "lint": "eslint .",
     "verify": "bash scripts/ci/verify_local.sh"
