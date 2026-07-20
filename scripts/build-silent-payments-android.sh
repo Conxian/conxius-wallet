@@ -36,6 +36,7 @@ rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 
 printf 'Building silent-payments JNI for arm64-v8a and x86_64 into %s\n' "$OUTPUT_DIR"
+pushd "$(dirname "$MANIFEST")" >/dev/null
 cargo ndk \
   -t arm64-v8a \
   -t x86_64 \
@@ -43,6 +44,7 @@ cargo ndk \
   build \
   --manifest-path "$MANIFEST" \
   --release
+popd >/dev/null
 
 for abi in arm64-v8a x86_64; do
   LIBRARY="$OUTPUT_DIR/$abi/libconxius_silent_payments_jni.so"
