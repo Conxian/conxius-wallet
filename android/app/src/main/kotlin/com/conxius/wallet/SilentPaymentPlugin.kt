@@ -7,7 +7,6 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 
-@Plugin(name = "SilentPayment")
 @CapacitorPlugin(name = "SilentPayment")
 class SilentPaymentPlugin : Plugin() {
     private val manager = SilentPaymentManager()
