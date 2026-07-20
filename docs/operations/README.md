@@ -1,6 +1,7 @@
 # Operations Documentation
 
 - [Operating Model](OPERATING_MODEL.md)
+- [Technical Debt Register](TECHNICAL_DEBT_REGISTER.md)
 - [Production Artifact Contracts](PRODUCTION_ARTIFACT_CONTRACTS.md)
 - [Roadmap](ROADMAP.md)
 - [SAB Wallet Map](SAB_WALLET_MAP.md)
