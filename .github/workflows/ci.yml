@@ -232,7 +232,7 @@ jobs:
           set +o pipefail
           yes | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platform-tools" "platforms;android-37" "build-tools;35.0.0" "ndk;27.2.12479018"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018"
       - name: Setup Rust and Android targets
         uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
@@ -285,7 +285,7 @@ jobs:
           set +o pipefail
           yes | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platform-tools" "platforms;android-37" "build-tools;35.0.0" "ndk;27.2.12479018"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;35.0.0" "ndk;27.2.12479018"
       - name: Setup Rust and Android targets
         uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
