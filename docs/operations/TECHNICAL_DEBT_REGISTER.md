@@ -28,19 +28,19 @@ its exit criteria and validation are recorded in the implementation change.
 
 | Validation | Result | Timing / metric |
 | --- | --- | --- |
-| Frozen dependency install | Passed with `CI=true corepack pnpm install --frozen-lockfile` | About 20s; pnpm `11.13.0`; TypeScript `5.9.3` installed. |
-| ESLint | Passed | About 21s; 0 errors, 667 warnings. The unsupported-TypeScript crash is gone. |
-| TypeScript | Passed with `corepack pnpm exec tsc --noEmit` | About 21s. |
-| Signer regression | Passed with `corepack pnpm exec vitest run tests/signer.test.ts` | 27/27 tests, about 3s. |
-| Full Vitest | Passed | 61 files; 246 passed, 1 skipped; about 42s. |
+| Frozen dependency install | Passed with `CI=true corepack pnpm install --frozen-lockfile` | About 2s; pnpm `11.13.0`; lockfile remained unchanged. Security overrides are sourced from `pnpm-workspace.yaml` because pnpm 11 ignores the obsolete `package.json` `pnpm` field. |
+| ESLint | Passed | About 28s; 0 errors, 667 warnings. The unsupported-TypeScript crash is gone. |
+| TypeScript | Passed with `corepack pnpm exec tsc --noEmit` | About 30s. |
+| Signer regression | Passed with `corepack pnpm exec vitest run tests/signer.test.ts tests/enclave-storage.test.ts tests/signer-native-boundary.test.ts` | 3 files; 57/57 tests, about 5s. Coverage includes real enclave availability/plugin rejection and native batch failure paths with no worker fallback. |
+| Full Vitest | Passed | 62 files; 250 passed, 1 skipped; about 35s. |
 | Runtime contamination guard | Passed | About 0s. |
-| Android configuration | Passed with `./gradlew --no-daemon :app:tasks --all` | About 34s; AGP 9 Kotlin/Compose configuration accepted. |
+| Android configuration | Passed with `./gradlew --no-daemon :app:tasks --all` | About 35s; AGP 9 Kotlin/Compose configuration accepted. |
 | Android unit tests | Blocked | About 12s; no Android SDK or `ANDROID_HOME`/`ANDROID_SDK_ROOT` in the devbox. |
 | Closest release task | Blocked | `./gradlew --no-daemon :app:assembleRelease`; about 18s; same missing SDK blocker before signing. |
 | Web production build | Blocked by environment | TypeScript completed, then Vite was killed with exit `137` during chunk rendering after 4,736 modules transformed. |
-| Repository verify | Blocked by web production build | Tests and type-check completed; Vite again exited `137` during chunk rendering. |
-| Capacitor sync | Blocked by missing build output | `corepack pnpm exec cap sync android` requires `dist/index.html`; tracked config was synchronized manually and reviewed, but no fake build output was created. |
-| Dependency audit | Open | `corepack pnpm audit --audit-level=critical` reported 6 vulnerabilities: 3 low, 2 moderate, and 1 high. |
+| Repository verify | Blocked by web production build | Tests and lint completed; Vite again exited `137` during chunk rendering. |
+| Capacitor sync | Blocked by missing build output | `corepack pnpm exec cap sync android` exited 1 because `./dist/index.html` is absent; the authoritative root config uses `npmClient: pnpm`, while the tracked generated asset was reverted to its prior state because no successful sync was produced. |
+| Dependency audit | Passed with time-bounded exception | `corepack pnpm exec node scripts/ci/audit_with_exceptions.mjs` ran `pnpm audit --audit-level=high --json`: 6 findings total (3 low, 2 moderate, 1 high), with only `GHSA-3gc7-fjrx-p6mg` for `bigint-buffer@1.1.5` allowed through 2026-08-19; any other high/critical advisory fails CI. |
 
 ## Inventory
 
@@ -49,11 +49,11 @@ its exit criteria and validation are recorded in the implementation change.
 - **Category:** Native signing / security boundary
 - **Priority:** P0
 - **Status:** Completed
-- **Affected paths:** `services/signer.ts`, `services/enclave-storage.ts`, `tests/signer.test.ts`
+- **Affected paths:** `services/signer.ts`, `services/enclave-storage.ts`, `tests/signer.test.ts`, `tests/signer-native-boundary.test.ts`
 - **Impact:** A native enclave failure previously fell through to the TypeScript worker, allowing a production/native signing request to continue outside the required enclave boundary.
 - **Owner:** Unassigned
 - **Exit criteria:** Native-platform signing errors reject the request, do not invoke `workerManager`, and retain an explicitly supported software path only for web/test environments.
-- **Validation:** `corepack pnpm exec vitest run tests/signer.test.ts` passed 27/27; full Vitest passed 61 files with 246 passed and 1 skipped. The regression asserts `workerManager.derivePath` is not called after a native failure.
+- **Validation:** `corepack pnpm exec vitest run tests/signer.test.ts tests/enclave-storage.test.ts tests/signer-native-boundary.test.ts` passed 57/57. The real `enclave-storage` boundary is exercised for unavailable/rejected native availability, plugin signing rejection, and batch-signing rejection; each asserts no `workerManager.derivePath` call and the batch case also asserts no PSBT finalization. Full Vitest passed 62 files with 250 passed and 1 skipped.
 - **Target milestone:** M16 release baseline
 - **Metrics baseline:** Native failure fallback was present; no regression test asserted worker non-invocation.
 - **Evidence:** `services/signer.ts`; `docs/reports/v1.9.5_CODE_GAP_MAPPING.md`; [issue #357](https://github.com/Conxian/conxius-wallet/issues/357)
@@ -174,12 +174,12 @@ its exit criteria and validation are recorded in the implementation change.
 
 - **Category:** Developer experience / configuration hygiene
 - **Priority:** P2
-- **Status:** In Progress — active commands/config updated; Capacitor sync remains blocked by the absent production `dist/` output.
+- **Status:** In Progress — active commands/config updated; Capacitor sync remains blocked by the absent production `dist/` output and the tracked generated asset was intentionally not hand-edited.
 - **Affected paths:** `playwright.config.ts`, `capacitor.config.json`, `android/app/src/main/assets/capacitor.config.json`, `docs/archive/`, `docs/operations/`, `.github/dependabot.yml`
 - **Impact:** Active tooling and documentation can instruct contributors to use npm/npx or report obsolete version policy, increasing drift and non-reproducible local results.
 - **Owner:** Unassigned
 - **Exit criteria:** Active commands use pnpm; generated Capacitor configuration is synchronized; historical references are either labeled as historical or updated when they describe current policy.
-- **Validation:** Active command scan, `pnpm exec cap sync android`, and documentation review.
+- **Validation:** Active command scan and documentation review passed; `pnpm exec cap sync android` remains open because the required production `dist/index.html` is absent. The authoritative root config correction is retained, and the generated Android asset was reverted rather than claimed as synchronized.
 - **Target milestone:** M16 release baseline for active paths; M17 for historical cleanup
 - **Metrics baseline:** Playwright used `npm run dev`; Capacitor config declared `npmClient: npm`; archived docs contained `npm`/`npx` instructions.
 - **Evidence:** [`CONTRIBUTING.md`](../../CONTRIBUTING.md); [`ANDROID_RELEASE_PREP.md`](ANDROID_RELEASE_PREP.md); `playwright.config.ts`
@@ -188,15 +188,15 @@ its exit criteria and validation are recorded in the implementation change.
 
 - **Category:** Dependency security / supply chain
 - **Priority:** P1
-- **Status:** Open
-- **Affected paths:** `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, CI security-audit step
+- **Status:** In Progress — one reviewed, time-bounded high-severity exception remains.
+- **Affected paths:** `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `scripts/ci/audit_with_exceptions.mjs`, `scripts/ci/dependency-audit-exceptions.json`, CI security-audit step
 - **Impact:** The repository still reports one high and five lower-severity dependency vulnerabilities; release policy needs a documented remediation or accepted exception before promotion.
-- **Owner:** Unassigned
+- **Owner:** Conxian security maintainers
 - **Exit criteria:** `pnpm audit` reports no high/critical findings, or every remaining finding has a reviewed, time-bounded exception with an upstream/remediation plan.
-- **Validation:** `corepack pnpm audit --audit-level=critical`, review advisories and affected dependency paths, then rerun the audit after remediation.
+- **Validation:** `corepack pnpm exec node scripts/ci/audit_with_exceptions.mjs` runs `pnpm audit --audit-level=high --json`, validates exception ownership/expiry, and fails on any high/critical advisory other than the exact active exception. The current exception is `GHSA-3gc7-fjrx-p6mg` for `bigint-buffer@1.1.5`, expires 2026-08-19, and has no published `bigint-buffer` `1.1.6+` release available to install. The reproducible security overrides remain in `pnpm-workspace.yaml` and the lockfile; `CI=true corepack pnpm install --frozen-lockfile` passed without lockfile changes.
 - **Target milestone:** M16 release baseline
-- **Metrics baseline:** 6 findings: 3 low, 2 moderate, 1 high; the configured critical-threshold command completed but the high finding remains open.
-- **Evidence:** `corepack pnpm audit --audit-level=critical`; [`Sovereign_State.md`](../state/Sovereign_State.md)
+- **Metrics baseline:** 6 findings: 3 low, 2 moderate, 1 high; current gate passes only because the single high finding has the reviewed exception above. No critical findings are present.
+- **Evidence:** `scripts/ci/audit_with_exceptions.mjs`; `scripts/ci/dependency-audit-exceptions.json`; `pnpm-workspace.yaml`; [`Sovereign_State.md`](../state/Sovereign_State.md)
 
 ## Burn-down policy
 
