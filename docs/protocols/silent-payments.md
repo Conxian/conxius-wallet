@@ -5,6 +5,10 @@ bounded Esplora ingestion, BIP-352 eligibility extraction, native scanning, publ
 persistence, cursor/resume, and shallow-reorg fail-closed checks. It does **not** add block-filter
 discovery, spending/tweak recovery, or native silent-payment address encoding.
 
+For the host-only Rust-versus-TypeScript scan comparison required by issue #355, see the
+[silent-payment host microbenchmark](../benchmarks/silent-payments-issue-355.md). Its results are
+limited to the platform-neutral Rust core and do not claim Android/JNI/mobile performance.
+
 The shipped Android launcher remains a native Compose `FragmentActivity`, not a Capacitor
 `BridgeActivity`. The `SilentPaymentPlugin` is compiled as an explicit, secret-free bridge
 component for a future Capacitor host; it is not reachable from the current launcher and is not
