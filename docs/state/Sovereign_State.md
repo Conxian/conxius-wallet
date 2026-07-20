@@ -15,6 +15,20 @@ The [Technical Debt Register](../operations/TECHNICAL_DEBT_REGISTER.md) is the
 canonical inventory for open and completed release-hardening work. Historical
 audit documents are evidence records, not a substitute for current validation.
 
+## Current repository snapshot (2026-07-20)
+
+GitHub reports **4 open issues** (`#381`, `#357`, `#356`, and `#355`) and **2 open pull requests**
+(`#391` and draft `#390`), for a combined open count of **6**. PR #390 is still a draft. Its
+native BIP-352 slice now includes bounded Esplora transaction ingestion, native Rust/JNI scanning,
+Room cursor/match persistence, shallow reorg fail-closed checks, and the public-only Compose path
+`DashboardScreen` → `WalletViewModel` → `SilentPaymentScanCoordinator`.
+
+This snapshot is not release validation. Android SDK-dependent compilation and unit tests, native
+ABI packaging, Room migration execution, and device/emulator flows remain unverified in the current
+environment. The issue-355 benchmark is host-only; compact-filter discovery, spending/tweak
+recovery, native address encoding, authoritative spentness, labels/passphrases, raw/merkle proof
+verification, and deeper reorg recovery remain outside this draft slice.
+
 ## 🛡️ Security Architecture
 - **CXN Guardian**: Local privacy filtering active for all AI/Network egress.
 - **The Conclave**: StrongBox-backed hardware isolation for BIP-39 mnemonics.
@@ -37,7 +51,7 @@ audit documents are evidence records, not a substitute for current validation.
 - **CI/CD**: GitHub Actions with pinned SHAs, dependabot (npm daily, actions/gradle weekly).
 - **Build policy**: pnpm `11.13.0` via the root `packageManager` declaration and Corepack; TypeScript must remain on the supported `typescript-eslint` line. See the register for current validation evidence.
 
-## 📜 Repository State (2026-06-30)
+## 📜 Historical Repository State (2026-06-30)
 - **Branch**: `main` only. All 13 stale branches archived.
 - **Issues**: 0 open.
 - **Milestones**: 0 open.

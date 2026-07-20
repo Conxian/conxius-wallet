@@ -1,37 +1,13 @@
-import React, { useState, useEffect, useRef, Suspense, useContext } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import {
   FlaskConical,
   Lock,
-  Settings as SettingsIcon,
   Activity,
   Shield,
-  CreditCard,
-  LayoutDashboard,
   Globe,
-  Layers,
   Zap,
-  Smartphone,
   Cpu,
-  Fingerprint,
-  Wallet,
-  Menu,
-  ChevronRight,
-  LogOut,
-  Moon,
-  Sun,
   Loader2,
-  AlertCircle,
-  Database,
-  Code2,
-  Terminal,
-  Key,
-  Archive,
-  BarChart3,
-  Bot,
-  Package,
-  History,
-  Info,
-  Server
 } from 'lucide-react';
 
 import Dashboard from './components/Dashboard';
@@ -74,7 +50,6 @@ import { getEnclaveBlob, persistState, removeEnclaveBlob, STORAGE_KEY } from './
 import { getTranslation } from './services/i18n';
 import { AppState, WalletConfig, AppMode, Asset, SilentPaymentScanOptions, SilentPaymentScanState, SilentPaymentUtxo } from './types';
 import { SignRequest } from './services/signer';
-import { enforcePhase6Guard } from './services/security-constants';
 import { cancelSilentPaymentScan, dedupeSilentPaymentUtxos, getSilentPaymentScanStatus, scanForSilentPayments } from './services/silent-payments';
 
 const BOOT_SEQUENCE = [
@@ -211,10 +186,9 @@ const App: React.FC = () => {
     const pollProgress = (async () => {
       while (polling) {
         await new Promise(resolve => setTimeout(resolve, 500));
-        if (!polling) break;
         try {
           const status = await getSilentPaymentScanStatus();
-          if (polling && status.status === 'scanning') {
+          if (status.status === 'scanning') {
             setState((prev: AppState) => ({ ...prev, silentPaymentScan: status }));
           }
         } catch {

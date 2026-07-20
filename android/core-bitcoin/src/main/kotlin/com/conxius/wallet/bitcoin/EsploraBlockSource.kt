@@ -228,6 +228,7 @@ class EsploraBlockSource(
             ) {
                 throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
             }
+            val canonicalTransactionIdSet = canonicalTransactionIds.toHashSet()
 
             val parsedTransactions = ArrayList<SilentPaymentTransaction>(
                 minOf(summary.transactionCount, MAX_TRANSACTIONS_PER_BATCH.toLong()).toInt(),
@@ -265,7 +266,9 @@ class EsploraBlockSource(
                     val transactionIndex = pageOffset + pageIndex.toLong()
                     val announcedTransactionId = transactionIdOrNull(transactionJson)
                         ?: throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
-                    if (announcedTransactionId != canonicalTransactionIds[transactionIndex.toInt()]) {
+                    if (!canonicalTransactionIdSet.contains(announcedTransactionId)
+                        || !seenTransactionIds.add(announcedTransactionId)
+                    ) {
                         throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
                     }
                     try {
@@ -275,10 +278,7 @@ class EsploraBlockSource(
                             transactionIndex = transactionIndex,
                         )
                         val transactionId = parsed.transactionIdLittleEndian.reversedArray().toHexKey()
-                        if (transactionId != canonicalTransactionIds[transactionIndex.toInt()]) {
-                            throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
-                        }
-                        if (!seenTransactionIds.add(transactionId)) {
+                        if (transactionId != announcedTransactionId) {
                             throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
                         }
                         parsedTransactions += parsed
@@ -313,6 +313,9 @@ class EsploraBlockSource(
                     }
                 }
                 pageOffset += page.size.toLong()
+            }
+            if (seenTransactionIds != canonicalTransactionIdSet) {
+                throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
             }
 
             if (height == tipHeight) {

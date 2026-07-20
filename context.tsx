@@ -1,6 +1,6 @@
 
 import { createContext } from 'react';
-import { AppState, WalletConfig, Asset, Bounty, Network, AppMode, LnBackendConfig, SilentPaymentScanOptions } from './types';
+import { AppState, WalletConfig, Asset, Network, AppMode, LnBackendConfig, SilentPaymentScanOptions } from './types';
 import { Language } from './services/i18n';
 import { ToastType } from './components/Toast';
 import { SignRequest, SignResult } from './services/signer';

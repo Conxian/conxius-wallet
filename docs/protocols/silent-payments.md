@@ -1,6 +1,7 @@
 # Silent Payments (BIP-352)
 
-This change adds the production-facing native scanning slice for Conxius Wallet. Android owns
+**Status (July 20, 2026): Draft / partial implementation; not release-validated.** PR #390 adds a
+bounded native scanning slice, but it is not a release-readiness claim. Android owns
 bounded Esplora ingestion, BIP-352 eligibility extraction, native scanning, public UTXO
 persistence, cursor/resume, and shallow-reorg fail-closed checks. It does **not** add block-filter
 discovery, spending/tweak recovery, or native silent-payment address encoding.
@@ -10,14 +11,15 @@ For the host-only Rust-versus-TypeScript scan comparison required by issue #355,
 limited to the platform-neutral Rust core and do not claim Android/JNI/mobile performance.
 
 The shipped Android launcher remains a native Compose `FragmentActivity`, not a Capacitor
-`BridgeActivity`. The `SilentPaymentPlugin` is compiled as an explicit, secret-free bridge
-component for a future Capacitor host; it is not reachable from the current launcher and is not
-claimed as registered by the generated Capacitor plugin asset.
+`BridgeActivity`. The current authoritative path is `DashboardScreen` → `WalletViewModel` →
+`SilentPaymentScanCoordinator`. The `SilentPaymentPlugin` remains a documented, secret-free
+secondary compatibility adapter for a future Capacitor host; it is not reachable from the current
+launcher and is not claimed as registered by the generated Capacitor plugin asset.
 
-## Production data flow
+## Current native data flow
 
 ```text
-Native Compose UI or a future Capacitor host (public options only)
+Native Compose UI (current shipped path) or a future Capacitor host (public options only)
         |
         v
 application-scoped SilentPaymentScanCoordinator
@@ -44,11 +46,14 @@ that is not production end-to-end support.
 ### Esplora source and endpoint policy
 
 `EsploraBlockSource` fetches the current tip, the canonical parent anchor for the first requested
-block, then each block hash, block summary, canonical `/block/{hash}/txids` list, and transaction
-pages in ascending height/order. The inclusive range is limited to 2,016 blocks; each response is
-bounded before JSON parsing/allocation. Pagination uses the deterministic Esplora
-`/block/{hash}/txs/{start_index}` convention with a maximum page size of 25, exact page lengths,
-canonical txid/order cross-checks, and a maximum of 100,000 transactions per block. Only HTTPS endpoints on the fixed `blockstream.info` or
+block, then each block hash, block summary, the `/block/{hash}/txids` membership response, and
+transaction pages. The inclusive range is limited to 2,016 blocks; each response is bounded before
+JSON parsing/allocation. The `/txids` response is treated only as a bounded unordered
+count/membership/uniqueness consistency set: its array position is not used as a transaction index.
+Transaction indices come from the documented `/block/{hash}/txs/{start_index}` page offset plus the
+local page index, with missing, extra, duplicate, or malformed IDs failing closed. Pagination uses
+that deterministic convention with a maximum page size of 25, exact page lengths, paged txid
+cross-checks, and a maximum of 100,000 transactions per block. Only HTTPS endpoints on the fixed `blockstream.info` or
 `mempool.space` host allowlist are accepted (mainnet, testnet, and signet); regtest has no public
 endpoint and fails with `INVALID_NETWORK`.
 
