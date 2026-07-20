@@ -29,6 +29,40 @@ function inscriptionTransaction() {
   };
 }
 
+function silentPaymentStyleTransaction() {
+  return {
+    version: 2,
+    locktime: 850000,
+    txid: 'c'.repeat(64),
+    fee: 1200,
+    vsize: 142,
+    vin: [{
+      txid: 'd'.repeat(64),
+      vout: 1,
+      sequence: 0xfffffffd,
+      prevout: {
+        value: 25_000,
+        scriptpubkey: '0014' + '11'.repeat(20),
+        scriptpubkey_type: 'v0_p2wpkh',
+      },
+      witness: ['aa'.repeat(64)],
+    }],
+    vout: [
+      {
+        value: 12_000,
+        scriptpubkey: '5120' + '22'.repeat(32),
+        scriptpubkey_type: 'v1_p2tr',
+      },
+      {
+        value: 11_800,
+        scriptpubkey: '0014' + '33'.repeat(20),
+        scriptpubkey_type: 'v0_p2wpkh',
+      },
+    ],
+    status: { confirmed: true, block_height: 850000 },
+  };
+}
+
 function providerFor(transactions: unknown[]): BitcoinFeeOracleProvider {
   return {
     getRecentBlocks: vi.fn(async () => [{ id: blockHash, height: 850000, tx_count: transactions.length }]),
@@ -50,13 +84,7 @@ describe('Bitcoin clean-block fee oracle', () => {
 
   it('excludes narrow inscription envelopes without treating all Taproot transactions as data', () => {
     expect(classifyBitcoinFeeTransaction(inscriptionTransaction())).toBe('inscription');
-
-    const silentPaymentStyleTransaction = {
-      ...cleanTransaction(12, 'c'.repeat(64)),
-      vin: [{ witness: ['30440220' + '33'.repeat(32), '02' + '44'.repeat(32)] }],
-      vout: [{ scriptpubkey: '5120' + '55'.repeat(32) }],
-    };
-    expect(classifyBitcoinFeeTransaction(silentPaymentStyleTransaction)).toBe('clean');
+    expect(classifyBitcoinFeeTransaction(silentPaymentStyleTransaction())).toBe('clean');
   });
 
   it('skips malformed and oversized records while retaining bounded clean samples', async () => {
@@ -112,6 +140,178 @@ describe('Bitcoin clean-block fee oracle', () => {
     });
     expect(failedFetch).toEqual(endpointRecommendation);
     expect(transportCalls).toContain('https://mempool.example/api/v1/fees/recommended');
+  });
+
+  it('composes exact Esplora endpoints and uses bounded page offsets', async () => {
+    const calls: Array<{ url: string; signal?: AbortSignal }> = [];
+    const transport: BitcoinFeeOracleTransport = {
+      async getJson<T>(url: string, options: { signal?: AbortSignal } = {}): Promise<T> {
+        calls.push({ url, signal: options.signal });
+        if (url === 'https://mempool.example/api/blocks?limit=1') {
+          return [{ id: blockHash, height: 850000, tx_count: 64 }] as T;
+        }
+
+        const startIndex = Number(url.substring(url.lastIndexOf('/') + 1));
+        const pageLength = startIndex === 50 ? 14 : 25;
+        return Array.from({ length: pageLength }, (_, index) => (
+          cleanTransaction(startIndex + index + 1, `${(startIndex + index + 1).toString(16)}`.padStart(64, '0'))
+        )) as T;
+      },
+    };
+
+    await expect(getCleanBlockFeeRecommendation('https://mempool.example/api/', {
+      transport,
+      maxBlocks: 1,
+      maxTransactionsPerBlock: 64,
+      maxPagesPerBlock: 3,
+      maxTotalTransactions: 64,
+      minCleanSamples: 12,
+    })).resolves.not.toBeNull();
+
+    expect(calls.map(call => call.url)).toEqual([
+      'https://mempool.example/api/blocks?limit=1',
+      `https://mempool.example/api/block/${blockHash}/txs/0`,
+      `https://mempool.example/api/block/${blockHash}/txs/25`,
+      `https://mempool.example/api/block/${blockHash}/txs/50`,
+    ]);
+    expect(calls.every(call => call.signal)).toBe(true);
+  });
+
+  it('enforces block, per-block page, and global record bounds', async () => {
+    const firstBlock = '1'.repeat(64);
+    const secondBlock = '2'.repeat(64);
+    const thirdBlock = '3'.repeat(64);
+    const pageCalls: Array<{ blockHash: string; startIndex: number }> = [];
+    const provider: BitcoinFeeOracleProvider = {
+      getRecentBlocks: vi.fn(async (_baseUrl, limit) => [
+        { id: firstBlock, height: 850002, tx_count: 100 },
+        { id: secondBlock, height: 850001, tx_count: 100 },
+        { id: thirdBlock, height: 850000, tx_count: 100 },
+      ].slice(0, limit)),
+      getBlockTransactions: vi.fn(async (_baseUrl, currentBlock, startIndex) => {
+        pageCalls.push({ blockHash: currentBlock, startIndex });
+        return Array.from({ length: 25 }, (_, index) => (
+          cleanTransaction(
+            index + 1,
+            `${currentBlock.slice(0, 2)}${(startIndex + index).toString(16).padStart(4, '0')}`.padEnd(64, '0'),
+          )
+        ));
+      }),
+    };
+
+    await expect(getCleanBlockFeeRecommendation('https://mempool.example/api', {
+      provider,
+      maxBlocks: 2,
+      maxTransactionsPerBlock: 30,
+      maxPagesPerBlock: 2,
+      maxTotalTransactions: 35,
+      minCleanSamples: 35,
+    })).resolves.not.toBeNull();
+
+    expect(pageCalls).toEqual([
+      { blockHash: firstBlock, startIndex: 0 },
+      { blockHash: firstBlock, startIndex: 25 },
+      { blockHash: secondBlock, startIndex: 0 },
+    ]);
+    expect(pageCalls.some(call => call.blockHash === thirdBlock)).toBe(false);
+  });
+
+  it('does not count duplicate transaction IDs as distinct clean samples', async () => {
+    const duplicate = cleanTransaction(2, 'f'.repeat(64));
+    const provider = providerFor([
+      duplicate,
+      duplicate,
+      cleanTransaction(10, '0'.repeat(63) + '1'),
+    ]);
+
+    await expect(getCleanBlockFeeRecommendation('https://mempool.example/api', {
+      provider,
+      maxBlocks: 1,
+      maxTransactionsPerBlock: 3,
+      minCleanSamples: 3,
+    })).resolves.toBeNull();
+  });
+
+  it('requires vsize or derives virtual size from weight, never raw size alone', async () => {
+    const sizeOnly = { ...cleanTransaction(100, 'a'.repeat(64)), vsize: undefined, size: 100 };
+    const weighted = { ...cleanTransaction(4, 'b'.repeat(64)), vsize: undefined, weight: 401 };
+    const result = await getCleanBlockFeeRecommendation('https://mempool.example/api', {
+      provider: providerFor([sizeOnly, weighted]),
+      maxBlocks: 1,
+      minCleanSamples: 1,
+    });
+
+    expect(result).toEqual({ fastestFee: 4, halfHourFee: 4, hourFee: 4 });
+  });
+
+  it('bounds aggregate clean sampling and falls back to legacy fees', async () => {
+    vi.useFakeTimers();
+    try {
+      const endpointRecommendation = { fastestFee: 21, halfHourFee: 13, hourFee: 8 };
+      const transportCalls: Array<{ url: string; signal?: AbortSignal }> = [];
+      const transport: BitcoinFeeOracleTransport = {
+        async getJson<T>(url: string, options: { signal?: AbortSignal } = {}): Promise<T> {
+          transportCalls.push({ url, signal: options.signal });
+          return endpointRecommendation as T;
+        },
+      };
+      const provider: BitcoinFeeOracleProvider = {
+        getRecentBlocks: vi.fn(() => new Promise<unknown[]>(() => {})),
+        getBlockTransactions: vi.fn(),
+      };
+
+      const resultPromise = getRecommendedFees('https://mempool.example/api', {
+        provider,
+        transport,
+        cleanOracleTimeoutMs: 25,
+        legacyFallbackTimeoutMs: 25,
+        minCleanSamples: 1,
+      });
+
+      await vi.advanceTimersByTimeAsync(24);
+      expect(transportCalls).toHaveLength(0);
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(resultPromise).resolves.toEqual(endpointRecommendation);
+
+      expect(transportCalls).toEqual([
+        {
+          url: 'https://mempool.example/api/v1/fees/recommended',
+          signal: expect.any(AbortSignal),
+        },
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('returns the fixed fallback when the injected legacy transport ignores its deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      const transportCalls: Array<{ url: string; signal?: AbortSignal }> = [];
+      const transport: BitcoinFeeOracleTransport = {
+        async getJson<T>(url: string, options: { signal?: AbortSignal } = {}): Promise<T> {
+          transportCalls.push({ url, signal: options.signal });
+          return new Promise<T>(() => {});
+        },
+      };
+      const provider = providerFor([]);
+      const resultPromise = getRecommendedFees('https://mempool.example/api', {
+        provider,
+        transport,
+        cleanOracleTimeoutMs: 25,
+        legacyFallbackTimeoutMs: 25,
+        minCleanSamples: 1,
+      });
+
+      await vi.advanceTimersByTimeAsync(24);
+      expect(transportCalls).toHaveLength(1);
+      expect(resultPromise).toBeInstanceOf(Promise);
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(resultPromise).resolves.toEqual({ fastestFee: 15, halfHourFee: 8, hourFee: 5 });
+      expect(transportCalls[0].signal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('returns the fixed fallback when both clean data and the legacy endpoint fail', async () => {
