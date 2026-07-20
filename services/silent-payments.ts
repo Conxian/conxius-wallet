@@ -2,7 +2,6 @@ import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import { bech32m } from 'bech32';
 import { Buffer } from 'buffer';
-import { Capacitor } from '@capacitor/core';
 
 const bip32 = BIP32Factory(ecc);
 export interface SilentPaymentKeys {
@@ -55,16 +54,17 @@ export const decodeSilentPaymentAddress = (address: string) => {
 };
 
 /**
-* Native scanning is exposed through Kotlin BlockSource batches, not this TypeScript API.
- */
+* @deprecated The old secret-bearing Capacitor scanning methods were removed. Native scanning is
+* exposed through `SilentPaymentManager.scanForPayments` with a Kotlin `BlockSource`; mnemonic
+* and passphrase material must remain in Kotlin/Android Keystore scope.
+*/
 export const scanForSilentPayments = async (
-    startBlock: number,
-    endBlock: number
+    _startBlock: number,
+    _endBlock: number,
 ): Promise<any[]> => {
-    if (Capacitor.isNativePlatform()) {
-        throw new Error("Native silent-payment scanning requires a Kotlin BlockSource; no scan secret is accepted from TypeScript");
-    }
-
-    // Structured native scanning is intentionally not simulated on web.
-    return [];
+    throw new Error(
+        'Silent-payment scanning is unsupported in the TypeScript/web API. ' +
+        'Use Android SilentPaymentManager.scanForPayments with a BlockSource; ' +
+        'mnemonic/passphrase material stays in Kotlin/Keystore scope.',
+    );
 };

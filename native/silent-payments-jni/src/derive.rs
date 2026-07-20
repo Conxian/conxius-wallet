@@ -1,9 +1,8 @@
 use std::str;
 
 use bip39::Mnemonic;
-use hmac::{Hmac, Mac};
-use secp256k1::{PublicKey, Scalar, Secp256k1, SecretKey};
-use sha2::Sha512;
+use bitcoin::bip32::{ChildNumber, Xpriv};
+use secp256k1::{PublicKey, Secp256k1, SecretKey};
 use zeroize::Zeroizing;
 
 use crate::{
@@ -11,8 +10,7 @@ use crate::{
     error::NativeErrorCode,
 };
 
-type HmacSha512 = Hmac<Sha512>;
-const HARDENED: u32 = 1 << 31;
+const HARDENED_INDEX_LIMIT: u32 = 1 << 31;
 
 /// Network values are deliberately explicit at the binary boundary. Test-like networks use the
 /// BIP-44 test coin type, but are not silently accepted as an unknown network value.
@@ -78,7 +76,7 @@ pub fn derive_receiver_keys(
     if passphrase_bytes.len() > MAX_PASSPHRASE_BYTES {
         return Err(NativeErrorCode::InvalidSecret);
     }
-    if account >= HARDENED {
+    if account >= HARDENED_INDEX_LIMIT {
         return Err(NativeErrorCode::InvalidSecret);
     }
 
@@ -105,94 +103,138 @@ pub fn derive_receiver_keys(
 }
 
 fn derive_path(seed: &[u8; 64], path: [u32; 5]) -> Result<Zeroizing<[u8; 32]>, NativeErrorCode> {
-    let master = hmac_sha512(b"Bitcoin seed", seed)?;
-    let mut secret = Zeroizing::new([0u8; 32]);
-    secret.copy_from_slice(&master[..32]);
-    let mut chain_code = Zeroizing::new([0u8; 32]);
-    chain_code.copy_from_slice(&master[32..]);
-    SecretKey::from_byte_array(&secret).map_err(|_| NativeErrorCode::InvalidSecret)?;
-
-    for (position, index) in path.into_iter().enumerate() {
-        let child_index = if position < 4 {
-            index
-                .checked_add(HARDENED)
-                .ok_or(NativeErrorCode::InvalidSecret)?
-        } else {
-            index
-        };
-        let mut child_data = Zeroizing::new([0u8; 37]);
-        child_data[0] = 0;
-        child_data[1..33].copy_from_slice(&*secret);
-        child_data[33..].copy_from_slice(&child_index.to_be_bytes());
-        let child = hmac_sha512(&*chain_code, &*child_data)?;
-
-        let mut left = Zeroizing::new([0u8; 32]);
-        left.copy_from_slice(&child[..32]);
-        let tweak = Scalar::from_be_bytes(*left).map_err(|_| NativeErrorCode::InvalidSecret)?;
-        let parent =
-            SecretKey::from_byte_array(&secret).map_err(|_| NativeErrorCode::InvalidSecret)?;
-        let child_secret = parent
-            .add_tweak(&tweak)
-            .map_err(|_| NativeErrorCode::InvalidSecret)?;
-        secret.copy_from_slice(&child_secret.secret_bytes());
-        chain_code.copy_from_slice(&child[32..]);
-
-        let mut parent_copy = parent;
-        parent_copy.non_secure_erase();
-        let mut child_copy = child_secret;
-        child_copy.non_secure_erase();
-        let mut tweak_copy = tweak;
-        tweak_copy.non_secure_erase();
-    }
-
-    Ok(secret)
-}
-
-fn hmac_sha512(key: &[u8], message: &[u8]) -> Result<Zeroizing<[u8; 64]>, NativeErrorCode> {
-    let mut mac = HmacSha512::new_from_slice(key).map_err(|_| NativeErrorCode::Internal)?;
-    mac.update(message);
-    let output = mac.finalize().into_bytes();
-    let mut result = Zeroizing::new([0u8; 64]);
-    result.copy_from_slice(&output);
-    Ok(result)
+    // `bitcoin::bip32` performs BIP-32 CKDpriv, including the required parent compressed public
+    // key in the HMAC input for the final non-hardened child `0`. Do not replace this with a
+    // private-key-only derivation: that produces the wrong receiver keys for every canonical path.
+    let master = Xpriv::new_master(bitcoin::Network::Bitcoin, seed)
+        .map_err(|_| NativeErrorCode::InvalidSecret)?;
+    let child_numbers = [
+        ChildNumber::from_hardened_idx(path[0]).map_err(|_| NativeErrorCode::InvalidSecret)?,
+        ChildNumber::from_hardened_idx(path[1]).map_err(|_| NativeErrorCode::InvalidSecret)?,
+        ChildNumber::from_hardened_idx(path[2]).map_err(|_| NativeErrorCode::InvalidSecret)?,
+        ChildNumber::from_hardened_idx(path[3]).map_err(|_| NativeErrorCode::InvalidSecret)?,
+        ChildNumber::from_normal_idx(path[4]).map_err(|_| NativeErrorCode::InvalidSecret)?,
+    ];
+    let secp = bitcoin::secp256k1::Secp256k1::new();
+    let derived = master
+        .derive_priv(&secp, &child_numbers)
+        .map_err(|_| NativeErrorCode::InvalidSecret)?;
+    let secret_bytes = derived.private_key.secret_bytes();
+    SecretKey::from_byte_array(&secret_bytes).map_err(|_| NativeErrorCode::InvalidSecret)?;
+    Ok(Zeroizing::new(secret_bytes))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::Value;
+
+    const CROSS_LANGUAGE_FIXTURE: &str =
+        include_str!("../tests/fixtures/bip32-cross-language.json");
+
+    fn hex(bytes: &[u8]) -> String {
+        bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+    }
+
+    fn fixture_bytes(value: &Value) -> Vec<u8> {
+        value
+            .as_array()
+            .expect("fixture passphrase bytes")
+            .iter()
+            .map(|byte| {
+                u8::try_from(byte.as_u64().expect("fixture passphrase byte"))
+                    .expect("fixture passphrase byte range")
+            })
+            .collect()
+    }
 
     const PUBLIC_FIXTURE_PASSPHRASE: &[u8] = &[0x54, 0x52, 0x45, 0x5a, 0x4f, 0x52];
 
     #[test]
-    fn derives_canonical_receiver_paths_against_independent_bip32_fixture() {
+    fn derives_canonical_receiver_paths_against_public_only_fixture() {
         let mnemonic = b"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
         let keys = derive_receiver_keys(mnemonic, PUBLIC_FIXTURE_PASSPHRASE, Network::Mainnet, 0)
             .expect("known BIP39/BIP32 fixture");
+        let secp = Secp256k1::new();
+        let scan_secret = SecretKey::from_byte_array(&keys.scan_secret).expect("scan secret");
         assert_eq!(
-            keys.scan_secret.as_ref(),
-            &[
-                0x6b, 0xa4, 0xf4, 0x6e, 0x16, 0xc4, 0x5b, 0xdb, 0x61, 0xdf, 0x96, 0x2c, 0x46, 0x6a,
-                0xa9, 0x51, 0x23, 0xcf, 0xa6, 0x65, 0xfc, 0xb9, 0xbe, 0x72, 0x44, 0xc0, 0x12, 0x06,
-                0x86, 0xfb, 0x14, 0x82,
+            PublicKey::from_secret_key(&secp, &scan_secret).serialize(),
+            [
+                0x02, 0x93, 0xfb, 0xbc, 0xfb, 0xc4, 0x90, 0x16, 0x2b, 0x5e, 0xed, 0x58, 0x3f, 0x00,
+                0x71, 0xea, 0x71, 0x08, 0x51, 0x2a, 0x1d, 0xbe, 0x0e, 0x91, 0x72, 0x88, 0xf1, 0x45,
+                0xc2, 0xb4, 0xef, 0x74, 0xa0,
             ]
         );
         assert_eq!(
-            derive_receiver_keys(mnemonic, PUBLIC_FIXTURE_PASSPHRASE, Network::Mainnet, 0)
-                .expect("same fixture")
-                .spend_public_key,
-            {
-                let secret = [
-                    0x12, 0x7d, 0x4b, 0xe8, 0xb3, 0xf7, 0x9e, 0x02, 0x3c, 0xa6, 0xe6, 0xf6, 0x7e,
-                    0x33, 0x88, 0x5d, 0x77, 0xa6, 0x3e, 0x7a, 0x55, 0x22, 0x23, 0x23, 0x4f, 0x8e,
-                    0x57, 0x18, 0x0c, 0xe2, 0x42, 0x84,
-                ];
-                PublicKey::from_secret_key(
-                    &Secp256k1::new(),
-                    &SecretKey::from_byte_array(&secret).expect("fixture spend secret"),
-                )
-                .serialize()
-            }
+            keys.spend_public_key,
+            [
+                0x02, 0x5a, 0x03, 0x14, 0xea, 0x69, 0x74, 0xf8, 0x19, 0x96, 0xd2, 0xd3, 0xc3, 0x55,
+                0x80, 0x1d, 0x3b, 0x5b, 0xce, 0xca, 0xa7, 0xe9, 0xad, 0x09, 0xe5, 0x0d, 0x96, 0x44,
+                0x5d, 0x17, 0x10, 0x6a, 0x94,
+            ]
         );
+    }
+
+    #[test]
+    fn matches_standard_bip32_public_vector_without_returning_private_material() {
+        let seed = [
+            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
+            0x0e, 0x0f,
+        ];
+        let master = Xpriv::new_master(bitcoin::Network::Bitcoin, &seed).expect("BIP32 master");
+        let path = [
+            ChildNumber::from_hardened_idx(0).expect("hardened index"),
+            ChildNumber::from_normal_idx(1).expect("normal index"),
+            ChildNumber::from_hardened_idx(2).expect("hardened index"),
+            ChildNumber::from_normal_idx(2).expect("normal index"),
+        ];
+        let secp = bitcoin::secp256k1::Secp256k1::new();
+        let derived = master.derive_priv(&secp, &path).expect("BIP32 vector path");
+        assert_eq!(
+            derived.private_key.public_key(&secp).serialize(),
+            [
+                0x02, 0xe8, 0x44, 0x50, 0x82, 0xa7, 0x2f, 0x29, 0xb7, 0x5c, 0xa4, 0x87, 0x48, 0xa9,
+                0x14, 0xdf, 0x60, 0x62, 0x2a, 0x60, 0x9c, 0xac, 0xfc, 0xe8, 0xed, 0x0e, 0x35, 0x80,
+                0x45, 0x60, 0x74, 0x1d, 0x29,
+            ]
+        );
+    }
+
+    #[test]
+    fn native_public_keys_match_shared_typescript_bip32_fixture() {
+        let fixture: Value = serde_json::from_str(CROSS_LANGUAGE_FIXTURE).expect("fixture JSON");
+        let mnemonic = fixture["mnemonic"]
+            .as_str()
+            .expect("fixture mnemonic")
+            .as_bytes();
+        let passphrase = fixture_bytes(&fixture["passphrase_bytes"]);
+
+        for vector in fixture["vectors"].as_array().expect("fixture vectors") {
+            let network = match vector["network"].as_str().expect("fixture network") {
+                "mainnet" => Network::Mainnet,
+                "testnet" => Network::Testnet,
+                other => panic!("unsupported fixture network: {other}"),
+            };
+            let account = vector["account"].as_u64().expect("fixture account") as u32;
+            let keys = derive_receiver_keys(mnemonic, &passphrase, network, account)
+                .expect("native fixture derivation");
+            let scan_secret =
+                SecretKey::from_byte_array(&keys.scan_secret).expect("fixture scan secret");
+            let scan_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &scan_secret);
+
+            assert_eq!(
+                hex(&scan_public_key.serialize()),
+                vector["scan_pub"]
+                    .as_str()
+                    .expect("fixture scan public key")
+            );
+            assert_eq!(
+                hex(&keys.spend_public_key),
+                vector["spend_pub"]
+                    .as_str()
+                    .expect("fixture spend public key")
+            );
+        }
     }
 
     #[test]

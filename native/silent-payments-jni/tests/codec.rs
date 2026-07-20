@@ -9,10 +9,14 @@ use conxius_silent_payments_jni::{
 };
 use secp256k1::{PublicKey, Secp256k1, SecretKey};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 
 const OFFICIAL_VECTORS: &str =
     include_str!("../../silent-payments/tests/data/send_and_receive_test_vectors.json");
 const PUBLIC_FIXTURE_PASSPHRASE: &[u8] = &[0x54, 0x52, 0x45, 0x5a, 0x4f, 0x52];
+const CODEC_FIXTURE: &str = include_str!(
+    "../../../android/core-bitcoin/src/test/resources/silent-payments-codec-fixtures.json"
+);
 
 fn hex_nibble(byte: u8) -> u8 {
     match byte {
@@ -31,6 +35,86 @@ fn hex_bytes(value: &str) -> Vec<u8> {
         .collect()
 }
 
+fn hex_encode(value: &[u8]) -> String {
+    value.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn sample_result(batch: &PublicBatch) -> PublicScanResult {
+    let transaction = &batch.transactions[0];
+    PublicScanResult {
+        metrics: BatchMetrics {
+            transaction_count: 1,
+            scanned_transaction_count: 1,
+            skipped_transaction_count: 0,
+            match_count: 1,
+            elapsed_micros: 12,
+            batch_bytes: encode_public_batch(batch)
+                .expect("encode sample batch")
+                .len() as u32,
+        },
+        matches: vec![PublicMatch {
+            transaction_id: transaction.transaction_id,
+            block_height: transaction.block_height,
+            transaction_index: transaction.transaction_index,
+            scan_match: conxius_silent_payments::ScanMatch {
+                output_index: 0,
+                output_key: transaction.outputs[0].output_key,
+                outpoint: transaction.outputs[0].outpoint,
+                value_sat: transaction.outputs[0].value_sat,
+                is_unspent: transaction.outputs[0].is_unspent,
+                k: 4,
+                kind: MatchKind::Label { index: 7 },
+                matched_negated_output_key: false,
+            },
+        }],
+    }
+}
+
+fn tagged_hash(tag: &[u8], message: &[u8]) -> [u8; 32] {
+    let tag_hash = Sha256::digest(tag);
+    let mut hasher = Sha256::new();
+    hasher.update(tag_hash);
+    hasher.update(tag_hash);
+    hasher.update(message);
+    hasher.finalize().into()
+}
+
+fn derived_output_key(
+    scan_secret: &[u8; 32],
+    spend_public_key: [u8; 33],
+    input_outpoint: OutPoint,
+    input_public_key: [u8; 33],
+    k: u32,
+) -> [u8; 32] {
+    let secp = Secp256k1::new();
+    let input_public_key = PublicKey::from_byte_array_compressed(&input_public_key).unwrap();
+    let input_hash = tagged_hash(
+        b"BIP0352/Inputs",
+        &[
+            input_outpoint.serialize().as_slice(),
+            input_public_key.serialize().as_slice(),
+        ]
+        .concat(),
+    );
+    let input_hash = secp256k1::Scalar::from_be_bytes(input_hash).unwrap();
+    let first_ecdh = input_public_key.mul_tweak(&secp, &input_hash).unwrap();
+    let scan_scalar = secp256k1::Scalar::from_be_bytes(*scan_secret).unwrap();
+    let ecdh_point = first_ecdh.mul_tweak(&secp, &scan_scalar).unwrap();
+    let mut tweak_message = Vec::with_capacity(37);
+    tweak_message.extend_from_slice(&ecdh_point.serialize());
+    tweak_message.extend_from_slice(&k.to_be_bytes());
+    let tweak =
+        secp256k1::Scalar::from_be_bytes(tagged_hash(b"BIP0352/SharedSecret", &tweak_message))
+            .unwrap();
+    PublicKey::from_byte_array_compressed(&spend_public_key)
+        .unwrap()
+        .add_exp_tweak(&secp, &tweak)
+        .unwrap()
+        .x_only_public_key()
+        .0
+        .serialize()
+}
+
 fn fixed<const N: usize>(value: &str) -> [u8; N] {
     hex_bytes(value).try_into().expect("fixed fixture length")
 }
@@ -42,6 +126,7 @@ fn outpoint(txid_be: &str, vout: u32) -> OutPoint {
 }
 
 fn sample_batch() -> PublicBatch {
+    let transaction_id = [6u8; 32];
     let outpoint = OutPoint {
         txid_le: [7u8; 32],
         vout: 1,
@@ -55,6 +140,7 @@ fn sample_batch() -> PublicBatch {
         end_block: 101,
         labels: vec![0, 7],
         transactions: vec![PublicTransaction {
+            transaction_id,
             block_height: 100,
             transaction_index: 3,
             all_input_outpoints: vec![outpoint],
@@ -64,7 +150,10 @@ fn sample_batch() -> PublicBatch {
             }],
             outputs: vec![TaprootOutput {
                 output_key: [8u8; 32],
-                outpoint,
+                outpoint: OutPoint {
+                    txid_le: transaction_id,
+                    vout: 0,
+                },
                 value_sat: 42,
                 is_unspent: true,
             }],
@@ -83,7 +172,103 @@ fn public_batch_round_trip_preserves_structured_records() {
 }
 
 #[test]
-fn native_scan_derives_keys_and_returns_only_public_metrics() {
+fn checked_in_codec_fixture_is_byte_for_byte_stable() {
+    let fixture: Value = serde_json::from_str(CODEC_FIXTURE).expect("codec fixture JSON");
+    let batch = sample_batch();
+    let encoded_batch = encode_public_batch(&batch).expect("encode fixture batch");
+    let result = sample_result(&batch);
+    let encoded_result = encode_scan_result(&result);
+    assert_eq!(hex_encode(&encoded_batch), fixture["batch_hex"]);
+    assert_eq!(hex_encode(&encoded_result), fixture["result_hex"]);
+    assert_eq!(decode_public_batch(&encoded_batch).unwrap(), batch);
+    assert_eq!(
+        decode_scan_result(&encoded_result).unwrap(),
+        DecodedResult::Success(result)
+    );
+}
+
+#[test]
+fn validation_rejects_duplicate_public_records_and_malformed_results() {
+    let mut duplicate_transaction = sample_batch();
+    duplicate_transaction
+        .transactions
+        .push(duplicate_transaction.transactions[0].clone());
+    assert_eq!(
+        encode_public_batch(&duplicate_transaction),
+        Err(conxius_silent_payments_jni::NativeErrorCode::InvalidPublicRecord)
+    );
+
+    let mut duplicate_input = sample_batch();
+    duplicate_input.transactions[0]
+        .all_input_outpoints
+        .push(OutPoint {
+            txid_le: [7u8; 32],
+            vout: 1,
+        });
+    assert_eq!(
+        encode_public_batch(&duplicate_input),
+        Err(conxius_silent_payments_jni::NativeErrorCode::InvalidPublicRecord)
+    );
+
+    let mut mismatched_output_txid = sample_batch();
+    mismatched_output_txid.transactions[0].outputs[0]
+        .outpoint
+        .txid_le = [9u8; 32];
+    assert_eq!(
+        encode_public_batch(&mismatched_output_txid),
+        Err(conxius_silent_payments_jni::NativeErrorCode::InvalidPublicRecord)
+    );
+
+    let batch = sample_batch();
+    let result = sample_result(&batch);
+    let encoded_result = encode_scan_result(&result);
+    let mut duplicate_result = encoded_result.clone();
+    duplicate_result[18..22].copy_from_slice(&2u32.to_le_bytes());
+    duplicate_result[34..38].copy_from_slice(&2u32.to_le_bytes());
+    duplicate_result.extend_from_slice(&encoded_result[38..]);
+    assert_eq!(
+        decode_scan_result(&duplicate_result),
+        Err(conxius_silent_payments_jni::NativeErrorCode::InvalidPublicRecord)
+    );
+
+    let mut invalid_k = encoded_result.clone();
+    invalid_k[163..167].copy_from_slice(&conxius_silent_payments_jni::MAX_K.to_le_bytes());
+    assert_eq!(
+        decode_scan_result(&invalid_k),
+        Err(conxius_silent_payments_jni::NativeErrorCode::InvalidPublicRecord)
+    );
+
+    let mut signed_long_overflow = encode_public_batch(&batch).unwrap();
+    signed_long_overflow[17] |= 0x80;
+    assert_eq!(
+        decode_public_batch(&signed_long_overflow),
+        Err(conxius_silent_payments_jni::NativeErrorCode::InvalidPublicBatch)
+    );
+}
+
+#[test]
+fn public_batch_adapter_derives_keys_and_returns_public_matches() {
+    let transaction_id = [6u8; 32];
+    let input_outpoint = OutPoint {
+        txid_le: [7u8; 32],
+        vout: 1,
+    };
+    let input_secret = SecretKey::from_byte_array(&[2u8; 32]).expect("fixture input secret");
+    let input_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &input_secret).serialize();
+    let derived = conxius_silent_payments_jni::derive_receiver_keys(
+        b"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        PUBLIC_FIXTURE_PASSPHRASE,
+        Network::Testnet,
+        0,
+    )
+    .expect("derive fixture receiver keys");
+    let output_key = derived_output_key(
+        &derived.scan_secret,
+        derived.spend_public_key,
+        input_outpoint,
+        input_public_key,
+        0,
+    );
     let batch = PublicBatch {
         network: Network::Testnet,
         account: 0,
@@ -91,24 +276,38 @@ fn native_scan_derives_keys_and_returns_only_public_metrics() {
         end_block: 100,
         labels: vec![],
         transactions: vec![PublicTransaction {
+            transaction_id,
             block_height: 100,
             transaction_index: 0,
-            all_input_outpoints: vec![],
-            eligible_inputs: vec![],
-            outputs: vec![],
+            all_input_outpoints: vec![input_outpoint],
+            eligible_inputs: vec![EligibleInput {
+                outpoint: input_outpoint,
+                public_key: EligibleInputPublicKey::Compressed(input_public_key),
+            }],
+            outputs: vec![TaprootOutput {
+                output_key,
+                outpoint: OutPoint {
+                    txid_le: transaction_id,
+                    vout: 0,
+                },
+                value_sat: 42,
+                is_unspent: true,
+            }],
         }],
     };
-    let encoded = encode_public_batch(&batch).expect("encode bounded empty transaction");
+    let encoded = encode_public_batch(&batch).expect("encode derived-key batch");
     let result = scan_public_batch(
         b"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
         PUBLIC_FIXTURE_PASSPHRASE,
         &encoded,
     )
     .expect("derive and scan fixture");
-    assert!(result.matches.is_empty());
+    assert_eq!(result.matches.len(), 1);
+    assert_eq!(result.matches[0].transaction_id, transaction_id);
+    assert_eq!(result.matches[0].scan_match.k, 0);
     assert_eq!(result.metrics.transaction_count, 1);
-    assert_eq!(result.metrics.scanned_transaction_count, 0);
-    assert_eq!(result.metrics.skipped_transaction_count, 1);
+    assert_eq!(result.metrics.scanned_transaction_count, 1);
+    assert_eq!(result.metrics.skipped_transaction_count, 0);
     assert_eq!(result.metrics.batch_bytes, encoded.len() as u32);
 }
 
@@ -130,7 +329,7 @@ fn malformed_and_truncated_batches_fail_closed() {
     );
 
     let mut too_many_transactions = b"SPB1".to_vec();
-    too_many_transactions.extend_from_slice(&[1, Network::Mainnet.code()]);
+    too_many_transactions.extend_from_slice(&[2, Network::Mainnet.code()]);
     too_many_transactions.extend_from_slice(&0u32.to_le_bytes());
     too_many_transactions.extend_from_slice(&0u64.to_le_bytes());
     too_many_transactions.extend_from_slice(&0u64.to_le_bytes());
@@ -146,7 +345,7 @@ fn malformed_and_truncated_batches_fail_closed() {
 
 #[test]
 fn result_error_and_truncation_mapping_is_stable() {
-    let error = vec![b'S', b'P', b'R', b'1', 1, 1];
+    let error = vec![b'S', b'P', b'R', b'1', 2, 1];
     assert_eq!(
         decode_scan_result(&error).expect("decode stable error"),
         DecodedResult::Error(conxius_silent_payments_jni::NativeErrorCode::InvalidSecret)
@@ -163,6 +362,7 @@ fn result_error_and_truncation_mapping_is_stable() {
             batch_bytes: 44,
         },
         matches: vec![PublicMatch {
+            transaction_id: [10u8; 32],
             block_height: 100,
             transaction_index: 0,
             scan_match: conxius_silent_payments::ScanMatch {
@@ -191,7 +391,10 @@ fn result_error_and_truncation_mapping_is_stable() {
 }
 
 #[test]
-fn official_vector_public_batch_and_result_round_trip() {
+fn official_bip352_core_vector_adapter_is_separate_from_jni_e2e() {
+    // The official fixture contains independent BIP-352 key material rather than a mnemonic.
+    // This deliberately exercises the platform-neutral core adapter, not the JNI export. The
+    // mnemonic-derived public-batch path is covered by public_batch_adapter_* above.
     let vectors: Value = serde_json::from_str(OFFICIAL_VECTORS).expect("official vectors JSON");
     let given = &vectors[0]["receiving"][0]["given"];
     let sending_expected = &vectors[0]["sending"][0]["expected"];
@@ -232,6 +435,7 @@ fn official_vector_public_batch_and_result_round_trip() {
         end_block: 900_000,
         labels: vec![],
         transactions: vec![PublicTransaction {
+            transaction_id: [0x55; 32],
             block_height: 900_000,
             transaction_index: 0,
             all_input_outpoints,
@@ -282,6 +486,7 @@ fn official_vector_public_batch_and_result_round_trip() {
             batch_bytes: encoded_batch.len() as u32,
         },
         matches: vec![PublicMatch {
+            transaction_id: decoded_batch.transactions[0].transaction_id,
             block_height: decoded_batch.transactions[0].block_height,
             transaction_index: decoded_batch.transactions[0].transaction_index,
             scan_match: report.matches[0],

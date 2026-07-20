@@ -8,6 +8,7 @@
 use std::{
     collections::{HashMap, HashSet},
     fmt,
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 use secp256k1::{
@@ -31,6 +32,25 @@ pub const MAX_TAPROOT_OUTPUTS: usize = 4096;
 
 /// Maximum number of receiver labels expanded into label public keys by one scan call.
 pub const MAX_LABELS: usize = 256;
+
+/// Cooperative cancellation seam used by the JNI call. The core checks it between transactions
+/// in the batch adapter and before/inside the bounded BIP-352 `k` loop. It is deliberately
+/// cooperative: cancellation cannot interrupt a single secp256k1 primitive in progress.
+pub trait CancellationToken {
+    fn is_cancelled(&self) -> bool;
+}
+
+impl CancellationToken for () {
+    fn is_cancelled(&self) -> bool {
+        false
+    }
+}
+
+impl CancellationToken for AtomicBool {
+    fn is_cancelled(&self) -> bool {
+        self.load(Ordering::Relaxed)
+    }
+}
 
 const INPUTS_TAG: &[u8] = b"BIP0352/Inputs";
 const SHARED_SECRET_TAG: &[u8] = b"BIP0352/SharedSecret";
@@ -245,8 +265,14 @@ pub enum ScanError {
     MissingEligibleInputOutpoint(usize),
     #[error("duplicate eligible input outpoint at index {0}")]
     DuplicateEligibleInputOutpoint(usize),
+    #[error("duplicate output outpoint at index {0}")]
+    DuplicateOutputOutpoint(usize),
+    #[error("duplicate output vout at index {0}")]
+    DuplicateOutputVout(usize),
     #[error("transaction outpoints are required when eligible inputs are present")]
     MissingTransactionOutpoints,
+    #[error("scan was cancelled")]
+    Cancelled,
     #[error("BIP-352 input hash is not a valid non-zero scalar")]
     InvalidInputHash,
     #[error("BIP-352 shared-secret tweak at k={0} is not a valid non-zero scalar")]
@@ -273,7 +299,31 @@ pub fn scan_transaction(
     outputs: &[TaprootOutput],
     labels: &[u32],
 ) -> Result<ScanOutcome, ScanError> {
+    scan_transaction_with_cancellation(
+        scan_secret,
+        spend_public_key,
+        all_input_outpoints,
+        inputs,
+        outputs,
+        labels,
+        &(),
+    )
+}
+
+/// Scan one transaction with a cooperative cancellation token.
+pub fn scan_transaction_with_cancellation<C: CancellationToken>(
+    scan_secret: &ScanSecret,
+    spend_public_key: [u8; PUBLIC_KEY_SIZE],
+    all_input_outpoints: &[OutPoint],
+    inputs: &[EligibleInput],
+    outputs: &[TaprootOutput],
+    labels: &[u32],
+    cancellation: &C,
+) -> Result<ScanOutcome, ScanError> {
     validate_scan_records(all_input_outpoints, inputs, outputs, labels)?;
+    if cancellation.is_cancelled() {
+        return Err(ScanError::Cancelled);
+    }
 
     let secp = Secp256k1::new();
     let spend_public_key = PublicKey::from_byte_array_compressed(&spend_public_key)
@@ -288,6 +338,9 @@ pub fn scan_transaction(
 
     let mut parsed_inputs = Vec::with_capacity(inputs.len());
     for (index, input) in inputs.iter().enumerate() {
+        if cancellation.is_cancelled() {
+            return Err(ScanError::Cancelled);
+        }
         let public_key = match input.public_key {
             EligibleInputPublicKey::Compressed(bytes) => {
                 PublicKey::from_byte_array_compressed(&bytes)
@@ -311,6 +364,9 @@ pub fn scan_transaction(
 
     let mut parsed_outputs = Vec::with_capacity(outputs.len());
     for (index, output) in outputs.iter().enumerate() {
+        if cancellation.is_cancelled() {
+            return Err(ScanError::Cancelled);
+        }
         let x_only = XOnlyPublicKey::from_byte_array(&output.output_key)
             .map_err(|_| ScanError::InvalidOutputKey(index))?;
         parsed_outputs.push((
@@ -343,6 +399,9 @@ pub fn scan_transaction(
         Zeroizing::new(ecdh_point.serialize())
     };
 
+    if cancellation.is_cancelled() {
+        return Err(ScanError::Cancelled);
+    }
     let label_candidates = build_label_candidates(scan_secret, labels, &secp)?;
     let mut matched_outputs = vec![false; parsed_outputs.len()];
     let mut matched_output_count = 0usize;
@@ -350,6 +409,9 @@ pub fn scan_transaction(
     let mut stop_reason = ScanStopReason::NoMatch;
 
     for k in 0..K_MAX {
+        if cancellation.is_cancelled() {
+            return Err(ScanError::Cancelled);
+        }
         let mut tweak_message = Zeroizing::new([0u8; 37]);
         tweak_message[..33].copy_from_slice(ecdh_serialized.as_ref());
         tweak_message[33..].copy_from_slice(&k.to_be_bytes());
@@ -363,6 +425,9 @@ pub fn scan_transaction(
 
         let mut found_match = None;
         for (output_index, (output, output_point)) in parsed_outputs.iter().enumerate() {
+            if cancellation.is_cancelled() {
+                return Err(ScanError::Cancelled);
+            }
             if matched_outputs[output_index] {
                 continue;
             }
@@ -473,6 +538,17 @@ fn validate_scan_records(
         }
     }
 
+    let mut output_outpoints = HashSet::with_capacity(outputs.len());
+    let mut output_vouts = HashSet::with_capacity(outputs.len());
+    for (index, output) in outputs.iter().enumerate() {
+        if !output_outpoints.insert(output.outpoint) {
+            return Err(ScanError::DuplicateOutputOutpoint(index));
+        }
+        if !output_vouts.insert(output.outpoint.vout) {
+            return Err(ScanError::DuplicateOutputVout(index));
+        }
+    }
+
     Ok(())
 }
 
@@ -544,6 +620,7 @@ fn tagged_hash(tag: &[u8], message: &[u8]) -> Zeroizing<[u8; 32]> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::atomic::AtomicUsize;
 
     fn test_spend_public_key() -> [u8; PUBLIC_KEY_SIZE] {
         let spend_secret = SecretKey::from_byte_array(&[2u8; 32]).expect("test spend secret");
@@ -561,6 +638,17 @@ mod tests {
         EligibleInput {
             outpoint,
             public_key: EligibleInputPublicKey::Compressed(test_spend_public_key()),
+        }
+    }
+
+    struct CancelAt {
+        checks: AtomicUsize,
+        cancel_at: usize,
+    }
+
+    impl CancellationToken for CancelAt {
+        fn is_cancelled(&self) -> bool {
+            self.checks.fetch_add(1, Ordering::Relaxed) >= self.cancel_at
         }
     }
 
@@ -748,5 +836,89 @@ mod tests {
             ),
             Err(ScanError::MissingTransactionOutpoints)
         );
+
+        let output_key = PublicKey::from_secret_key(
+            &Secp256k1::new(),
+            &SecretKey::from_byte_array(&[3u8; 32]).expect("test output secret"),
+        )
+        .x_only_public_key()
+        .0
+        .serialize();
+        let duplicate_output = TaprootOutput {
+            output_key,
+            outpoint: test_outpoint(2),
+            value_sat: 1,
+            is_unspent: true,
+        };
+        assert_eq!(
+            scan_transaction(
+                &scan_secret,
+                spend_public_key,
+                &[],
+                &[],
+                &[duplicate_output, duplicate_output],
+                &[],
+            ),
+            Err(ScanError::DuplicateOutputOutpoint(1))
+        );
+
+        let duplicate_vout = [
+            duplicate_output,
+            TaprootOutput {
+                outpoint: OutPoint {
+                    txid_le: [9u8; 32],
+                    vout: 2,
+                },
+                ..duplicate_output
+            },
+        ];
+        assert_eq!(
+            scan_transaction(
+                &scan_secret,
+                spend_public_key,
+                &[],
+                &[],
+                &duplicate_vout,
+                &[],
+            ),
+            Err(ScanError::DuplicateOutputVout(1))
+        );
+    }
+
+    #[test]
+    fn cancellation_is_checked_inside_the_bounded_k_loop() {
+        let scan_secret = ScanSecret::from_bytes([1u8; 32]).expect("test scan secret");
+        let spend_public_key = test_spend_public_key();
+        let input_outpoint = test_outpoint(0);
+        let output_key = PublicKey::from_secret_key(
+            &Secp256k1::new(),
+            &SecretKey::from_byte_array(&[3u8; 32]).expect("test output secret"),
+        )
+        .x_only_public_key()
+        .0
+        .serialize();
+        let cancellation = CancelAt {
+            checks: AtomicUsize::new(0),
+            cancel_at: 5,
+        };
+
+        assert_eq!(
+            scan_transaction_with_cancellation(
+                &scan_secret,
+                spend_public_key,
+                &[input_outpoint],
+                &[test_input(input_outpoint)],
+                &[TaprootOutput {
+                    output_key,
+                    outpoint: test_outpoint(1),
+                    value_sat: 1,
+                    is_unspent: true,
+                }],
+                &[],
+                &cancellation,
+            ),
+            Err(ScanError::Cancelled)
+        );
+        assert!(cancellation.checks.load(Ordering::Relaxed) >= 5);
     }
 }

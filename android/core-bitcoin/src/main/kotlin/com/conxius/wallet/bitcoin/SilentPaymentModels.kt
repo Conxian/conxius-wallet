@@ -68,6 +68,7 @@ data class TaprootOutput(
 }
 
 data class SilentPaymentTransaction(
+    val transactionIdLittleEndian: ByteArray,
     val blockHeight: Long,
     val transactionIndex: Long,
     val allInputOutpoints: List<OutPoint>,
@@ -75,6 +76,7 @@ data class SilentPaymentTransaction(
     val outputs: List<TaprootOutput>,
 ) {
     init {
+        require(transactionIdLittleEndian.size == 32) { "transaction id must be 32 bytes" }
         require(blockHeight >= 0) { "transaction block height must be non-negative" }
         require(transactionIndex in 0..UINT32_MAX) { "transaction index must fit uint32" }
     }
@@ -88,7 +90,7 @@ data class SilentPaymentBatch(
     val transactions: List<SilentPaymentTransaction>,
 ) {
     init {
-        require(account == 0L) { "only account zero is supported in protocol version 1" }
+        require(account == 0L) { "only account zero is supported in protocol version 2" }
         require(labels.all { it in 0..UINT32_MAX }) { "label must fit uint32" }
         require(transactions.all { it.blockHeight in range.startBlock..range.endBlock }) {
             "transaction block height must be within the supplied scan range"
@@ -107,6 +109,7 @@ sealed interface SilentPaymentMatchKind {
 }
 
 data class SilentPaymentMatch(
+    val transactionIdLittleEndian: ByteArray,
     val blockHeight: Long,
     val transactionIndex: Long,
     val outputIndex: Long,
@@ -119,11 +122,16 @@ data class SilentPaymentMatch(
     val matchedNegatedOutputKey: Boolean,
 ) {
     init {
+        require(transactionIdLittleEndian.size == 32) { "match transaction id must be 32 bytes" }
         require(outputKey.size == 32) { "match output key must be 32 bytes" }
         require(blockHeight >= 0) { "match block height must be non-negative" }
         require(transactionIndex in 0..UINT32_MAX) { "match transaction index must fit uint32" }
-        require(outputIndex in 0..UINT32_MAX) { "match output index must fit uint32" }
-        require(k in 0..UINT32_MAX) { "match k must fit uint32" }
+        require(outputIndex in 0 until SilentPaymentCodec.MAX_TAPROOT_OUTPUTS.toLong()) {
+            "match output index must be below the taproot output limit"
+        }
+        require(k in 0 until SilentPaymentCodec.MAX_K.toLong()) {
+            "match k must be below K_MAX"
+        }
         require(valueSat >= 0) { "match value must be non-negative" }
     }
 }

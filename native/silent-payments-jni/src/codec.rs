@@ -12,7 +12,7 @@ use crate::{error::NativeErrorCode, Network};
 
 pub const BATCH_MAGIC: [u8; 4] = *b"SPB1";
 pub const RESULT_MAGIC: [u8; 4] = *b"SPR1";
-pub const CODEC_VERSION: u8 = 1;
+pub const CODEC_VERSION: u8 = 2;
 
 pub const MAX_BATCH_BYTES: usize = 8 * 1024 * 1024;
 pub const MAX_RESULT_BYTES: usize = 16 * 1024 * 1024;
@@ -21,6 +21,8 @@ pub const MAX_BATCH_OUTPUTS: usize = 65_536;
 pub const MAX_MATCHES: usize = 65_536;
 pub const MAX_MNEMONIC_BYTES: usize = 512;
 pub const MAX_PASSPHRASE_BYTES: usize = 512;
+pub const MAX_K: u32 = conxius_silent_payments::K_MAX;
+pub const MAX_SIGNED_LONG_U64: u64 = i64::MAX as u64;
 
 /// A public, structured transaction batch. No private key material is represented here.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -35,6 +37,9 @@ pub struct PublicBatch {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PublicTransaction {
+    /// Transaction identity in serialized txid byte order. The full identity is
+    /// `(transaction_id, block_height, transaction_index)` to remain unambiguous across reorgs.
+    pub transaction_id: [u8; 32],
     pub block_height: u64,
     pub transaction_index: u32,
     pub all_input_outpoints: Vec<OutPoint>,
@@ -54,6 +59,7 @@ pub struct BatchMetrics {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PublicMatch {
+    pub transaction_id: [u8; 32],
     pub block_height: u64,
     pub transaction_index: u32,
     pub scan_match: ScanMatch,
@@ -140,8 +146,10 @@ pub fn decode_public_batch(bytes: &[u8]) -> Result<PublicBatch, NativeErrorCode>
     }
 
     let mut transactions = Vec::with_capacity(transaction_count);
+    let mut seen_transaction_identities = HashSet::with_capacity(transaction_count);
     let mut total_outputs = 0usize;
     for _ in 0..transaction_count {
+        let transaction_id = read_fixed::<32>(&mut reader)?;
         let block_height = reader
             .read_u64()
             .map_err(|_| NativeErrorCode::InvalidPublicBatch)?;
@@ -151,6 +159,9 @@ pub fn decode_public_batch(bytes: &[u8]) -> Result<PublicBatch, NativeErrorCode>
         let transaction_index = reader
             .read_u32()
             .map_err(|_| NativeErrorCode::InvalidPublicBatch)?;
+        if !seen_transaction_identities.insert((transaction_id, block_height, transaction_index)) {
+            return Err(NativeErrorCode::InvalidPublicRecord);
+        }
         let input_count = bounded_count(
             reader
                 .read_u32()
@@ -178,8 +189,13 @@ pub fn decode_public_batch(bytes: &[u8]) -> Result<PublicBatch, NativeErrorCode>
 
         // Counts are bounded before any per-record vector allocation.
         let mut all_input_outpoints = Vec::with_capacity(input_count);
+        let mut seen_input_outpoints = HashSet::with_capacity(input_count);
         for _ in 0..input_count {
-            all_input_outpoints.push(read_outpoint(&mut reader)?);
+            let outpoint = read_outpoint(&mut reader)?;
+            if !seen_input_outpoints.insert(outpoint) {
+                return Err(NativeErrorCode::InvalidPublicRecord);
+            }
+            all_input_outpoints.push(outpoint);
         }
 
         let mut eligible_inputs = Vec::with_capacity(eligible_count);
@@ -213,9 +229,17 @@ pub fn decode_public_batch(bytes: &[u8]) -> Result<PublicBatch, NativeErrorCode>
         }
 
         let mut outputs = Vec::with_capacity(output_count);
+        let mut seen_output_outpoints = HashSet::with_capacity(output_count);
+        let mut seen_output_vouts = HashSet::with_capacity(output_count);
         for _ in 0..output_count {
             let output_key = read_fixed::<32>(&mut reader)?;
             let outpoint = read_outpoint(&mut reader)?;
+            if outpoint.txid_le != transaction_id
+                || !seen_output_outpoints.insert(outpoint)
+                || !seen_output_vouts.insert(outpoint.vout)
+            {
+                return Err(NativeErrorCode::InvalidPublicRecord);
+            }
             let value_sat = reader
                 .read_u64()
                 .map_err(|_| NativeErrorCode::InvalidPublicBatch)?;
@@ -236,6 +260,7 @@ pub fn decode_public_batch(bytes: &[u8]) -> Result<PublicBatch, NativeErrorCode>
         }
 
         transactions.push(PublicTransaction {
+            transaction_id,
             block_height,
             transaction_index,
             all_input_outpoints,
@@ -276,6 +301,7 @@ pub fn encode_public_batch(batch: &PublicBatch) -> Result<Vec<u8>, NativeErrorCo
     }
 
     for transaction in &batch.transactions {
+        writer.bytes(&transaction.transaction_id);
         writer.u64(transaction.block_height);
         writer.u32(transaction.transaction_index);
         writer.u32(transaction.all_input_outpoints.len() as u32);
@@ -345,9 +371,13 @@ pub fn decode_scan_result(bytes: &[u8]) -> Result<DecodedResult, NativeErrorCode
         return Ok(DecodedResult::Error(code));
     }
 
-    let transaction_count = reader
-        .read_u32()
-        .map_err(|_| NativeErrorCode::InvalidPublicBatch)?;
+    let transaction_count = u32::try_from(bounded_count(
+        reader
+            .read_u32()
+            .map_err(|_| NativeErrorCode::InvalidPublicBatch)?,
+        MAX_BATCH_TRANSACTIONS,
+    )?)
+    .map_err(|_| NativeErrorCode::ResourceLimit)?;
     let scanned_transaction_count = reader
         .read_u32()
         .map_err(|_| NativeErrorCode::InvalidPublicBatch)?;
@@ -366,6 +396,9 @@ pub fn decode_scan_result(bytes: &[u8]) -> Result<DecodedResult, NativeErrorCode
     let batch_bytes = reader
         .read_u32()
         .map_err(|_| NativeErrorCode::InvalidPublicBatch)?;
+    if batch_bytes as usize > MAX_BATCH_BYTES {
+        return Err(NativeErrorCode::ResourceLimit);
+    }
     let encoded_match_count = bounded_count(
         reader
             .read_u32()
@@ -377,7 +410,9 @@ pub fn decode_scan_result(bytes: &[u8]) -> Result<DecodedResult, NativeErrorCode
     }
 
     let mut matches = Vec::with_capacity(encoded_match_count);
+    let mut seen_result_references = HashSet::with_capacity(encoded_match_count);
     for _ in 0..encoded_match_count {
+        let transaction_id = read_fixed::<32>(&mut reader)?;
         let block_height = reader
             .read_u64()
             .map_err(|_| NativeErrorCode::InvalidPublicBatch)?;
@@ -387,6 +422,9 @@ pub fn decode_scan_result(bytes: &[u8]) -> Result<DecodedResult, NativeErrorCode
         let output_index = reader
             .read_u32()
             .map_err(|_| NativeErrorCode::InvalidPublicBatch)? as usize;
+        if output_index >= MAX_TAPROOT_OUTPUTS {
+            return Err(NativeErrorCode::InvalidPublicRecord);
+        }
         let output_key = read_fixed::<32>(&mut reader)?;
         let outpoint = read_outpoint(&mut reader)?;
         let value_sat = reader
@@ -403,6 +441,9 @@ pub fn decode_scan_result(bytes: &[u8]) -> Result<DecodedResult, NativeErrorCode
         let k = reader
             .read_u32()
             .map_err(|_| NativeErrorCode::InvalidPublicBatch)?;
+        if k >= MAX_K {
+            return Err(NativeErrorCode::InvalidPublicRecord);
+        }
         let kind = match reader
             .read_u8()
             .map_err(|_| NativeErrorCode::InvalidPublicBatch)?
@@ -423,7 +464,17 @@ pub fn decode_scan_result(bytes: &[u8]) -> Result<DecodedResult, NativeErrorCode
             1 => true,
             _ => return Err(NativeErrorCode::InvalidPublicBatch),
         };
+        if !seen_result_references.insert((
+            transaction_id,
+            block_height,
+            transaction_index,
+            output_index as u32,
+            outpoint,
+        )) {
+            return Err(NativeErrorCode::InvalidPublicRecord);
+        }
         matches.push(PublicMatch {
+            transaction_id,
             block_height,
             transaction_index,
             scan_match: ScanMatch {
@@ -442,7 +493,7 @@ pub fn decode_scan_result(bytes: &[u8]) -> Result<DecodedResult, NativeErrorCode
         return Err(NativeErrorCode::InvalidPublicBatch);
     }
     if u64::from(scanned_transaction_count) + u64::from(skipped_transaction_count)
-        > u64::from(transaction_count)
+        != u64::from(transaction_count)
     {
         return Err(NativeErrorCode::InvalidPublicBatch);
     }
@@ -460,17 +511,8 @@ pub fn decode_scan_result(bytes: &[u8]) -> Result<DecodedResult, NativeErrorCode
 }
 
 pub fn encode_scan_result(result: &PublicScanResult) -> Vec<u8> {
-    if result.matches.len() > MAX_MATCHES
-        || result.metrics.match_count as usize != result.matches.len()
-    {
-        return crate::error::encode_error_result(NativeErrorCode::ResourceLimit);
-    }
-    if result
-        .matches
-        .iter()
-        .any(|matched| matched.scan_match.output_index > u32::MAX as usize)
-    {
-        return crate::error::encode_error_result(NativeErrorCode::InvalidPublicRecord);
+    if let Err(code) = validate_result(result) {
+        return crate::error::encode_error_result(code);
     }
     let encoded_size = match encoded_result_size(result) {
         Ok(size) if size <= MAX_RESULT_BYTES => size,
@@ -492,6 +534,7 @@ pub fn encode_scan_result(result: &PublicScanResult) -> Vec<u8> {
     writer.u32(result.metrics.batch_bytes);
     writer.u32(result.matches.len() as u32);
     for matched in &result.matches {
+        writer.bytes(&matched.transaction_id);
         writer.u64(matched.block_height);
         writer.u32(matched.transaction_index);
         writer.u32(matched.scan_match.output_index as u32);
@@ -524,7 +567,7 @@ fn encoded_batch_size(batch: &PublicBatch) -> Result<usize, NativeErrorCode> {
             .ok_or(NativeErrorCode::ResourceLimit)?,
     )?;
     for transaction in &batch.transactions {
-        size = checked_size_add(size, 24)?;
+        size = checked_size_add(size, 56)?;
         size = checked_size_add(
             size,
             transaction
@@ -562,7 +605,7 @@ fn encoded_result_size(result: &PublicScanResult) -> Result<usize, NativeErrorCo
             MatchKind::Unlabeled => 0,
             MatchKind::Label { .. } => 4,
         };
-        size = checked_size_add(size, 99 + label_bytes)?;
+        size = checked_size_add(size, 131 + label_bytes)?;
     }
     Ok(size)
 }
@@ -589,7 +632,11 @@ fn validate_batch(batch: &PublicBatch) -> Result<(), NativeErrorCode> {
         }
     }
 
+    validate_signed_long(batch.start_block)?;
+    validate_signed_long(batch.end_block)?;
+
     let mut total_outputs = 0usize;
+    let mut transaction_identities = HashSet::with_capacity(batch.transactions.len());
     for transaction in &batch.transactions {
         if transaction.block_height < batch.start_block
             || transaction.block_height > batch.end_block
@@ -602,6 +649,14 @@ fn validate_batch(batch: &PublicBatch) -> Result<(), NativeErrorCode> {
         {
             return Err(NativeErrorCode::ResourceLimit);
         }
+        if !transaction_identities.insert((
+            transaction.transaction_id,
+            transaction.block_height,
+            transaction.transaction_index,
+        )) {
+            return Err(NativeErrorCode::InvalidPublicRecord);
+        }
+        validate_signed_long(transaction.block_height)?;
         total_outputs = total_outputs
             .checked_add(transaction.outputs.len())
             .ok_or(NativeErrorCode::ResourceLimit)?;
@@ -627,6 +682,62 @@ fn validate_batch(batch: &PublicBatch) -> Result<(), NativeErrorCode> {
                 }
             }
         }
+
+        let mut output_outpoints = HashSet::with_capacity(transaction.outputs.len());
+        let mut output_vouts = HashSet::with_capacity(transaction.outputs.len());
+        for output in &transaction.outputs {
+            if output.outpoint.txid_le != transaction.transaction_id
+                || !output_outpoints.insert(output.outpoint)
+                || !output_vouts.insert(output.outpoint.vout)
+            {
+                return Err(NativeErrorCode::InvalidPublicRecord);
+            }
+            validate_signed_long(output.value_sat)?;
+        }
+    }
+    Ok(())
+}
+
+fn validate_result(result: &PublicScanResult) -> Result<(), NativeErrorCode> {
+    let metrics = &result.metrics;
+    if metrics.transaction_count as usize > MAX_BATCH_TRANSACTIONS
+        || metrics.scanned_transaction_count > metrics.transaction_count
+        || metrics.skipped_transaction_count > metrics.transaction_count
+        || u64::from(metrics.scanned_transaction_count)
+            + u64::from(metrics.skipped_transaction_count)
+            != u64::from(metrics.transaction_count)
+        || metrics.match_count as usize != result.matches.len()
+        || result.matches.len() > MAX_MATCHES
+        || metrics.batch_bytes as usize > MAX_BATCH_BYTES
+    {
+        return Err(NativeErrorCode::InvalidPublicBatch);
+    }
+    validate_signed_long(metrics.elapsed_micros)?;
+
+    let mut references = HashSet::with_capacity(result.matches.len());
+    for matched in &result.matches {
+        if matched.scan_match.output_index >= MAX_TAPROOT_OUTPUTS
+            || matched.scan_match.k >= MAX_K
+            || matched.scan_match.outpoint.txid_le != matched.transaction_id
+            || !references.insert((
+                matched.transaction_id,
+                matched.block_height,
+                matched.transaction_index,
+                matched.scan_match.output_index as u32,
+                matched.scan_match.outpoint,
+            ))
+        {
+            return Err(NativeErrorCode::InvalidPublicRecord);
+        }
+        validate_signed_long(matched.block_height)?;
+        validate_signed_long(matched.scan_match.value_sat)?;
+    }
+    Ok(())
+}
+
+fn validate_signed_long(value: u64) -> Result<(), NativeErrorCode> {
+    if value > MAX_SIGNED_LONG_U64 {
+        return Err(NativeErrorCode::InvalidPublicRecord);
     }
     Ok(())
 }
@@ -697,9 +808,11 @@ impl<'a> Reader<'a> {
     }
 
     fn read_u64(&mut self) -> Result<u64, ()> {
-        Ok(u64::from_le_bytes(
-            self.read_exact(8)?.try_into().map_err(|_| ())?,
-        ))
+        let value = u64::from_le_bytes(self.read_exact(8)?.try_into().map_err(|_| ())?);
+        if value > MAX_SIGNED_LONG_U64 {
+            return Err(());
+        }
+        Ok(value)
     }
 }
 

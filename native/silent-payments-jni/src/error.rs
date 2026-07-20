@@ -11,6 +11,7 @@ pub enum NativeErrorCode {
     InvalidPublicRecord = 5,
     EccFailure = 6,
     Internal = 7,
+    Cancelled = 8,
 }
 
 impl NativeErrorCode {
@@ -23,6 +24,7 @@ impl NativeErrorCode {
             5 => Self::InvalidPublicRecord,
             6 => Self::EccFailure,
             7 => Self::Internal,
+            8 => Self::Cancelled,
             _ => return None,
         })
     }
@@ -36,6 +38,7 @@ impl NativeErrorCode {
             Self::InvalidPublicRecord => "INVALID_PUBLIC_RECORD",
             Self::EccFailure => "ECC_FAILURE",
             Self::Internal => "INTERNAL",
+            Self::Cancelled => "CANCELLED",
         }
     }
 }
