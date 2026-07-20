@@ -5,10 +5,32 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "javascript"
     groups:
-      dependencies:
-        patterns:
-          - "*"
+      production-routine:
+        # Keep routine production updates separate from development tooling.
+        applies-to: "version-updates"
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+        # Migration-sensitive dependencies stay as individually reviewable PRs.
+        exclude-patterns:
+          - "typescript"
+          - "@testing-library/jest-dom"
+      development-routine:
+        # Major updates intentionally do not match either routine group.
+        applies-to: "version-updates"
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+        # Keep migration-sensitive tooling outside routine update PRs.
+        exclude-patterns:
+          - "typescript"
+          - "@testing-library/jest-dom"
     ignore:
       - dependency-name: "@noble/hashes"
         versions: ["< 2.0.1"] # Critical for current implementation specs
@@ -16,7 +38,25 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github_actions"
   - package-ecosystem: "gradle"
     directory: "/android"
     schedule:
       interval: "weekly"
+    labels:
+      - "dependencies"
+  - package-ecosystem: "cargo"
+    # Keep wallet-core updates separate from the JNI ABI boundary.
+    directory: "/native/silent-payments"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+  - package-ecosystem: "cargo"
+    directory: "/native/silent-payments-jni"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
