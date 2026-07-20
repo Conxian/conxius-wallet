@@ -12,6 +12,7 @@ import com.conxius.wallet.viewmodel.OnboardingViewModel
 fun OnboardingScreen(viewModel: OnboardingViewModel, onOnboardingComplete: () -> Unit) {
     val mnemonic by viewModel.mnemonic.collectAsState()
     val isWalletCreated by viewModel.isWalletCreated.collectAsState()
+    val isCreatingWallet by viewModel.isCreatingWallet.collectAsState()
     val error by viewModel.error.collectAsState()
 
     LaunchedEffect(isWalletCreated) {
@@ -38,9 +39,14 @@ fun OnboardingScreen(viewModel: OnboardingViewModel, onOnboardingComplete: () ->
         if (mnemonic == null) {
             Button(
                 onClick = { viewModel.createWallet() },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isCreatingWallet,
             ) {
-                Text("Create New Wallet")
+                if (isCreatingWallet) {
+                    CircularProgressIndicator()
+                } else {
+                    Text("Create New Wallet")
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -48,6 +54,7 @@ fun OnboardingScreen(viewModel: OnboardingViewModel, onOnboardingComplete: () ->
             Button(
                 onClick = { /* Implement Import UI in next iteration */ },
                 modifier = Modifier.fillMaxWidth(),
+                enabled = !isCreatingWallet,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Text("Import Recovery Phrase")
