@@ -18,6 +18,8 @@ object SilentPaymentPersistenceMapper {
         batch: SilentPaymentBatch,
         match: SilentPaymentMatch,
     ): SilentPaymentUtxoEntity {
+        // Native outputIndex addresses the compact Taproot-only vector; the selected output carries
+        // the original transaction vout in its outpoint.
         val output = batch.transactions
             .firstOrNull {
                 it.transactionIdLittleEndian.contentEquals(match.transactionIdLittleEndian)
@@ -33,20 +35,20 @@ object SilentPaymentPersistenceMapper {
             || output.valueSat != match.valueSat
             || output.isUnspent != match.isUnspent
             || match.valueSat !in 0..MAX_MONEY_SAT
-            || match.outpoint.vout != match.outputIndex
             || !match.outpoint.txidLittleEndian.contentEquals(match.transactionIdLittleEndian)
+            || !output.outpoint.txidLittleEndian.contentEquals(match.transactionIdLittleEndian)
         ) {
             invalidPublicRecord()
         }
         val spentnessKnown = output.spentnessKnown
         val spentState = when {
             !spentnessKnown -> "UNKNOWN"
-            match.isUnspent -> "UNSPENT"
+            output.isUnspent -> "UNSPENT"
             else -> "SPENT"
         }
-        val txidLittleEndianHex = match.transactionIdLittleEndian.toHex()
-        val txid = match.transactionIdLittleEndian.reversedArray().toHex()
-        val outpoint = "$txid:${match.outpoint.vout}"
+        val txidLittleEndianHex = output.outpoint.txidLittleEndian.toHex()
+        val txid = output.outpoint.txidLittleEndian.reversedArray().toHex()
+        val outpoint = "$txid:${output.outpoint.vout}"
         val (matchKind, labelIndex) = when (val kind = match.kind) {
             SilentPaymentMatchKind.Unlabeled -> "UNLABELED" to null
             is SilentPaymentMatchKind.Label -> {
@@ -58,9 +60,9 @@ object SilentPaymentPersistenceMapper {
             network = network.name.lowercase(),
             outpoint = outpoint,
             txidLittleEndianHex = txidLittleEndianHex,
-            vout = match.outpoint.vout,
-            valueSat = match.valueSat,
-            outputKeyHex = match.outputKey.toHex(),
+            vout = output.outpoint.vout,
+            valueSat = output.valueSat,
+            outputKeyHex = output.outputKey.toHex(),
             blockHeight = match.blockHeight,
             transactionIndex = match.transactionIndex,
             source = "esplora",

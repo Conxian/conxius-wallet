@@ -46,6 +46,33 @@ class EsploraBlockSourceTest {
     }
 
     @Test
+    fun parserCompactsTaprootOutputsButPreservesOriginalTransactionVouts() {
+        val txid = "17".repeat(32)
+        val inputTxid = "18".repeat(32)
+        val firstTaprootKey = "19".repeat(32)
+        val secondTaprootKey = "1a".repeat(32)
+        val tx = transactionJson(
+            txid = txid,
+            inputs = listOf(
+                inputJson(inputTxid, 0, "", taprootKeyPathWitness(), p2trScript("1b".repeat(32))),
+            ),
+            outputs = listOf(
+                "{\"value\":1,\"scriptpubkey\":\"0014${"1c".repeat(20)}\"}",
+                outputJson(firstTaprootKey, 21_000, "true"),
+                outputJson(secondTaprootKey, 22_000, "false"),
+            ),
+        )
+
+        val parsed = EsploraTransactionParser.parse(tx, blockHeight = 100, transactionIndex = 7)
+
+        assertEquals(2, parsed.outputs.size)
+        assertEquals(1, parsed.outputs[0].outpoint.vout)
+        assertEquals(2, parsed.outputs[1].outpoint.vout)
+        assertTrue(parsed.outputs[0].isUnspent)
+        assertFalse(parsed.outputs[1].isUnspent)
+    }
+
+    @Test
     fun parserSkipsTransactionsWithNoEligibleInputs() {
         val tx = transactionJson(
             txid = "aa".repeat(32),
