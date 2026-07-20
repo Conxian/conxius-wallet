@@ -15,16 +15,21 @@ Bitcoin-specific clean-block oracle in `services/bitcoin-fee-oracle.ts`:
 1. Read up to **6 confirmed block summaries** from the configured Bitcoin API.
 2. Sample at most **3 transaction pages per block**, with at most **64
    transactions per block** and **256 transaction records overall**.
-3. Require a usable fee and virtual-size measurement (`vsize`, or bounded
-   `weight`/`size`) plus valid bounded non-coinbase `vin`/`vout` structure.
+3. Require a usable fee and virtual-size measurement: an explicit bounded
+   `vsize`, or a bounded `weight` converted with `ceil(weight / 4)`, plus valid
+   bounded non-coinbase `vin`/`vout` structure. Raw serialized `size` is not a
+   virtual-size measurement and is rejected when no `vsize` or `weight` is
+   present.
 4. Exclude transactions containing a narrowly recognized inscription envelope
    in input `witness` or `scriptsig` data.
 
-The provider and JSON transport are injectable. Production uses the existing
-`fetchWithRetry` network helper; tests use deterministic in-memory providers and
-never require network access. The general on-chain payment path in
-`components/PaymentPortal.tsx` uses the resulting `fastestFee`; protocol-specific
-builders with their own fee policies are intentionally outside this issue.
+The provider and JSON transport are injectable and receive an `AbortSignal`.
+Production uses the existing `fetchWithRetry` network helper, which preserves
+caller cancellation and stops retries when the signal is aborted. Tests use
+deterministic in-memory providers and never require network access. The general
+on-chain payment path in `components/PaymentPortal.tsx` uses the resulting
+`fastestFee`; protocol-specific builders with their own fee policies are
+intentionally outside this issue.
 
 ## Inscription detection semantics
 
@@ -47,7 +52,15 @@ inscriptions.
 
 ## Accuracy model and fallback behavior
 
-At least **12 clean samples** are required by default. The estimate is
+At least **12 clean samples** are required by default. Clean sampling has a
+default **5-second aggregate deadline** across block and transaction-page
+requests, rather than a separate multi-second retry budget for every request.
+If clean sampling times out, is canceled, or cannot produce enough samples,
+`getRecommendedFees()` attempts `/v1/fees/recommended` under a separate default
+**5-second fallback deadline**. Therefore the normal fee lookup returns a clean
+recommendation, a legacy recommendation, or the fixed fallback within at most
+about **10 seconds** (and sooner when the caller supplies an earlier abort
+signal). The estimate is
 deterministic and uses nearest-rank percentiles, rounded up to whole sat/vB:
 
 | Recommendation | Clean-sample percentile |
@@ -58,10 +71,11 @@ deterministic and uses nearest-rank percentiles, rounded up to whole sat/vB:
 
 These labels are fee-market targets, not delivery guarantees. If the minimum
 sample count is not met, a block or transaction request fails, or the data is
-malformed, the API falls back to `/v1/fees/recommended`. If that endpoint also
-fails or returns an invalid shape, the existing fixed fallback remains
-`15 / 8 / 5` sat/vB. Callers that need the legacy endpoint-only behavior can pass
-`{ useCleanBlocks: false }`.
+malformed, the API falls back to `/v1/fees/recommended` within the bound above.
+If that endpoint also fails, times out, or returns an invalid shape, the
+existing fixed fallback remains `15 / 8 / 5` sat/vB. Callers that need the
+legacy endpoint-only behavior can pass `{ useCleanBlocks: false }`; the same
+legacy deadline and caller-supplied cancellation still apply.
 
 ## Privacy and security properties
 
@@ -70,6 +84,8 @@ fails or returns an invalid shape, the existing fixed fallback remains
 - No wallet keys, mnemonics, addresses, or signing material enter the oracle.
 - Sample counts, script sizes, page counts, and parsing work are bounded before
   classification.
+- Fee rates use only `vsize` or `ceil(weight / 4)`; serialized `size` alone is
+  rejected to avoid overstating or understating sat/vB.
 - Network and parser failures fail closed to the existing fee fallback without
   exposing raw response details.
 - The oracle does not change transaction construction, signing, or broadcast
