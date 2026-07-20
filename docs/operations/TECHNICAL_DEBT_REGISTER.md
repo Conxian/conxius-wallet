@@ -199,6 +199,20 @@ its exit criteria and validation are recorded in the implementation change.
 - **Metrics baseline:** 6 findings: 3 low, 2 moderate, 1 high; current gate passes only because the single high finding has the reviewed exception above. No critical findings are present.
 - **Evidence:** `scripts/ci/audit_with_exceptions.mjs`; `scripts/ci/dependency-audit-exceptions.json`; `pnpm-workspace.yaml`; [`Sovereign_State.md`](../state/Sovereign_State.md)
 
+### TD-P0-012 — Deterministic Android onboarding wallet creation
+
+- **Category:** Android onboarding / wallet-secret generation
+- **Priority:** P0
+- **Status:** In Progress — secure generation and fail-closed persistence slice implemented; Android SDK, device, and release validation remain open.
+- **Affected paths:** `android/app/src/main/kotlin/com/conxius/wallet/viewmodel/OnboardingViewModel.kt`, `android/app/src/main/kotlin/com/conxius/wallet/viewmodel/WalletCreationService.kt`, `android/core-bitcoin/src/main/kotlin/com/conxius/wallet/bitcoin/SecureMnemonicGenerator.kt`
+- **Impact:** The onboarding release path previously created every wallet from the same fixed BIP-39 test phrase, making independent wallet creation unsafe and invalidating recovery sovereignty.
+- **Owner:** Unassigned
+- **Exit criteria:** Onboarding uses cryptographically secure BIP-39 entropy through the existing BDK primitive; encryption completes before persistence; generation, encryption, and persistence failures leave onboarding incomplete without a partial seed record; focused regression tests cover validity, distinct entropy, ordering, and failure paths.
+- **Validation:** The production path no longer contains the fixed phrase; focused generator and wallet-creation tests are added. `./gradlew --no-daemon :core-bitcoin:testDebugUnitTest --tests 'com.conxius.wallet.bitcoin.SecureMnemonicGeneratorTest'` and `./gradlew --no-daemon :app:testDebugUnitTest --tests 'com.conxius.wallet.viewmodel.WalletCreationServiceTest'` remain blocked in this devbox because no Android SDK or `ANDROID_HOME`/`ANDROID_SDK_ROOT` is available. Android task discovery passes with `./gradlew --no-daemon :app:tasks --all`.
+- **Target milestone:** M16 release baseline security gate
+- **Metrics baseline:** One deterministic 12-word test mnemonic was assigned directly in `OnboardingViewModel.createWallet()`; no release-path entropy or regression coverage existed.
+- **Evidence:** `android/core-bitcoin/src/main/kotlin/com/conxius/wallet/bitcoin/SecureMnemonicGenerator.kt`; `android/app/src/main/kotlin/com/conxius/wallet/viewmodel/WalletCreationService.kt`; [issue #357](https://github.com/Conxian/conxius-wallet/issues/357)
+
 ## Burn-down policy
 
 1. **Priority order:** P0 security and release gates before P1 reliability/coverage, then P2 hygiene.
