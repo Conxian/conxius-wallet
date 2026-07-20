@@ -1,31 +1,34 @@
 import { test, expect } from '@playwright/test';
+import { resetBrowserState, waitForWalletShell } from './helpers';
 
 /**
  * Conxius Wallet E2E Tests — Core App Flow
  *
  * These tests verify the critical user-facing flows:
- * 1. App boot sequence renders and completes
- * 2. Onboarding flow is accessible for new users
- * 3. Navigation between tabs works correctly
- * 4. Experimental features show proper gating UI
+* 1. App boot sequence renders and completes
+* 2. The current sovereign wallet shell is reachable
+* 3. Navigation controls are available for the active viewport
+* 4. Sensitive material is absent from the rendered page and console
  */
 
-test.describe('App Boot & Onboarding', () => {
-  test('should display boot sequence and reach onboarding', async ({ page }) => {
+test.describe('App Boot & Current Shell', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetBrowserState(page);
+  });
+
+  test('should display boot sequence and reach the current wallet shell', async ({ page }) => {
     await page.goto('/');
 
     // Boot sequence should show the Conxius branding
-    await expect(page.locator('text=Conxian-Labs')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: 'Conxian-Labs', exact: true })).toBeVisible({ timeout: 10_000 });
 
-    // Boot completes and we should see either LockScreen or Onboarding
-    // For a fresh state (no enclave), Onboarding should appear
-    await expect(
-      page.locator('text=Sovereign').or(page.locator('text=Create')).or(page.locator('text=Import'))
-    ).toBeVisible({ timeout: 15_000 });
+    // The current web build boots directly into the sovereign dashboard.
+    await waitForWalletShell(page);
   });
 
   test('should not expose secrets in page source', async ({ page }) => {
     await page.goto('/');
+    await waitForWalletShell(page);
     const content = await page.content();
 
     // Ensure no seed phrases, private keys, or API keys leak into HTML
@@ -37,8 +40,13 @@ test.describe('App Boot & Onboarding', () => {
 });
 
 test.describe('Security Headers', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetBrowserState(page);
+  });
+
   test('page should not have inline scripts with secrets', async ({ page }) => {
     await page.goto('/');
+    await waitForWalletShell(page);
 
     // Check that window.Buffer polyfill doesn't expose secrets
     const bufferExposed = await page.evaluate(() => {
@@ -60,35 +68,45 @@ test.describe('Security Headers', () => {
 });
 
 test.describe('Navigation', () => {
-  test('bottom nav should be visible on mobile viewport', async ({ page }) => {
-    // This test uses the mobile-chrome project viewport
+  test.beforeEach(async ({ page }) => {
+    await resetBrowserState(page);
+  });
+
+  test('viewport navigation should expose the current wallet destinations', async ({ page }) => {
     await page.goto('/');
+    await waitForWalletShell(page);
 
-    // Wait for boot to complete
-    await page.waitForTimeout(5000);
-
-    // If we're on lock/onboarding screen, that's fine — nav won't show
-    // This is a structural test that verifies the app loads without crash
-    const pageTitle = await page.title();
-    expect(pageTitle).toBeTruthy();
+    if ((page.viewportSize()?.width ?? 1280) < 768) {
+      await expect(page.getByRole('button', { name: 'Bridge', exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Menu', exact: true })).toBeVisible();
+    } else {
+      await expect(page.getByRole('button', { name: 'NTT Bridge', exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Payments', exact: true })).toBeVisible();
+    }
   });
 });
 
 test.describe('Error Boundary', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetBrowserState(page);
+  });
+
   test('app should not show unhandled error page', async ({ page }) => {
     await page.goto('/');
-
-    // Wait for app to fully load
-    await page.waitForTimeout(5000);
+    await waitForWalletShell(page);
 
     // Verify no unhandled React errors visible
-    const errorText = page.locator('text=An unexpected error occurred');
+    const errorText = page.getByText('An unexpected error occurred', { exact: true });
     const errorCount = await errorText.count();
     expect(errorCount).toBe(0);
   });
 });
 
 test.describe('Experimental Gating', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetBrowserState(page);
+  });
+
   test('console should not contain seed or key material', async ({ page }) => {
     const consoleLogs: string[] = [];
     page.on('console', msg => {
@@ -96,7 +114,7 @@ test.describe('Experimental Gating', () => {
     });
 
     await page.goto('/');
-    await page.waitForTimeout(5000);
+    await waitForWalletShell(page);
 
     // Verify no secret material in console output
     for (const log of consoleLogs) {

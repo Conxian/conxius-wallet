@@ -3,58 +3,67 @@ name: Android Release
 on:
   workflow_dispatch:
     inputs:
-      track:
-        description: Google Play track to upload to (set to 'skip' to publish APK only)
+      version:
+        description: Repository version to verify and release
         required: true
-        default: internal
-        type: choice
-        options:
-          - internal
-          - alpha
-          - beta
-          - production
-          - skip
-      status:
-        description: Release status in Google Play
+        default: '1.9.5'
+        type: string
+      tag:
+        description: Exact immutable tag to create after production approval
         required: true
-        default: completed
-        type: choice
-        options:
-          - completed
-          - draft
-          - halted
-          - inProgress
+        default: v1.9.5
+        type: string
+
+concurrency:
+  group: android-release-${{ inputs.tag || inputs.version }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
-  release:
+  release-verify:
+    name: Release Verification and Build
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     permissions:
-      contents: write
-
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      version_code: ${{ steps.version.outputs.version_code }}
+      artifact_name: ${{ steps.version.outputs.artifact_name }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Checkout source commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
-      - name: Derive version metadata
+      - name: Validate release version and tag consistency
         id: version
-        shell: bash
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+          EXPECTED_TAG: ${{ inputs.tag }}
         run: |
-          VERSION_NAME=$(node -p "require('./package.json').version")
-          VERSION_CODE=$(echo "$VERSION_NAME" | awk -F. '{ printf "%d%02d%02d", $1, $2, $3 }')
-          echo "version_name=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          node scripts/ci/check_release_version.mjs \
+            --expected-version "$EXPECTED_VERSION" \
+            --expected-tag "$EXPECTED_TAG"
+          echo "version=$EXPECTED_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$EXPECTED_TAG" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=conxius-wallet-release-$EXPECTED_VERSION" >> "$GITHUB_OUTPUT"
+          VERSION_CODE=$(node scripts/ci/derive_android_version_code.mjs "$EXPECTED_VERSION")
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
           echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
 
       - name: Setup Java
-        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22.x
 
@@ -64,14 +73,91 @@ jobs:
           version: 11.13.0
           run_install: false
 
-      - name: Install dependencies
+      - name: Install JavaScript dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build web assets
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Unit tests
+        run: pnpm exec vitest run
+        env:
+          VITEST: true
+
+      - name: Web build
         run: pnpm run build
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: E2E tests
+        run: pnpm run test:e2e
+        env:
+          CI: true
+
+      - name: Dependency audit policy
+        run: pnpm exec node scripts/ci/audit_with_exceptions.mjs
+
+      - name: Android security policy
+        run: bash scripts/ci/validate_android_security.sh
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          set +o pipefail
+          yes | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
+
+      - name: Setup Rust and Android targets
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+        with:
+          toolchain: stable
+          targets: aarch64-linux-android,x86_64-linux-android
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --version 4.1.2 --locked
 
       - name: Sync Capacitor Android project
         run: pnpm exec cap sync android
+
+      - name: Validate release signing preconditions
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          ANDROID_SIGNING_CERT_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          for variable in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [[ -z "${!variable:-}" ]]; then
+              echo "::error::Required Android signing secret is not configured: $variable"
+              exit 1
+            fi
+          done
+          CERT_DIGEST="$(printf '%s' "$ANDROID_SIGNING_CERT_SHA256" | tr -d '[:space:]:-')"
+          if [[ ! "$CERT_DIGEST" =~ ^[0-9a-fA-F]{64}$ ]]; then
+            echo "::error::ANDROID_SIGNING_CERT_SHA256 must be a 64-hex public certificate fingerprint GitHub variable"
+            exit 1
+          fi
+
+      - name: Download and checksum-verify pinned bundletool
+        env:
+          BUNDLETOOL_URL: https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
+          BUNDLETOOL_SHA256: a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29
+        run: |
+          set -euo pipefail
+          BUNDLETOOL_PATH="$RUNNER_TEMP/bundletool-all-1.18.3.jar"
+          curl --fail --location --silent --show-error "$BUNDLETOOL_URL" --output "$BUNDLETOOL_PATH"
+          printf '%s  %s\n' "$BUNDLETOOL_SHA256" "$BUNDLETOOL_PATH" | sha256sum --check --status
+          echo "BUNDLETOOL_PATH=$BUNDLETOOL_PATH" >> "$GITHUB_ENV"
 
       - name: Decode Android release keystore
         shell: bash
@@ -82,104 +168,238 @@ jobs:
           umask 077
           KEYSTORE_FILE="${RUNNER_TEMP}/conxius-release.keystore"
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_FILE"
+          [[ -s "$KEYSTORE_FILE" ]]
           echo "KEYSTORE_PATH=$KEYSTORE_FILE" >> "$GITHUB_ENV"
 
-      - name: Build signed Android App Bundle (AAB)
+      - name: Android lint
+        working-directory: android
+        run: ./gradlew :app:lintRelease --no-daemon
+
+      - name: Android unit tests
+        working-directory: android
+        run: ./gradlew :app:testDebugUnitTest --no-daemon
+
+      - name: Build signed Android APK and AAB
         working-directory: android
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew --no-daemon bundleRelease
+        run: ./gradlew --no-daemon :app:bundleRelease :app:assembleRelease
 
-      - name: Build signed APK (universal)
-        working-directory: android
+      - name: Generate CycloneDX SBOM
+        run: node scripts/ci/generate_sbom.mjs --output "$RUNNER_TEMP/release-payload/conxius-wallet.sbom.json"
+
+      - name: Verify signatures, checksums, and artifact existence
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew --no-daemon assembleRelease
+          APK_PATH: android/app/build/outputs/apk/release/app-release.apk
+          AAB_PATH: android/app/build/outputs/bundle/release/app-release.aab
+          VERSION: ${{ steps.version.outputs.version }}
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          TAG: ${{ steps.version.outputs.tag }}
+          GIT_SHA: ${{ github.sha }}
+          EXPECTED_SIGNING_CERT_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+        run: bash scripts/ci/prepare_release_payload.sh "$RUNNER_TEMP/release-payload"
 
-      - name: Generate checksums
+      - name: Upload verified release payload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ steps.version.outputs.artifact_name }}
+          path: ${{ runner.temp }}/release-payload
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove temporary keystore
+        if: always()
         shell: bash
         run: |
-          APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
-          sha256sum "$APK_PATH" > "conxius-wallet-v${{ steps.version.outputs.version_name }}.apk.sha256"
+          if [[ -n "${KEYSTORE_PATH:-}" && -f "$KEYSTORE_PATH" ]]; then
+            shred -u "$KEYSTORE_PATH" || rm -f "$KEYSTORE_PATH"
+          fi
 
-      - name: Upload AAB artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+  release-attest:
+    name: Release Artifact Attestation
+    needs: release-verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download verified release payload
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: android-release-aab
-          path: android/app/build/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+          name: ${{ needs.release-verify.outputs.artifact_name }}
+          path: release-payload
+      - name: Attest release payload checksums
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
         with:
-          name: android-release-apk
-          path: |
-            android/app/build/outputs/apk/release/app-release.apk
-            conxius-wallet-v*.apk.sha256
-          if-no-files-found: error
+          subject-checksums: release-payload/SHA256SUMS
 
-      - name: Upload to Google Play
-        if: inputs.track != 'skip'
+  release-publish:
+    name: Production Release Publish
+    needs: [release-verify, release-attest]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: write
+      actions: read
+      attestations: read
+    steps:
+      - name: Checkout source commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Download exactly verified release payload
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ needs.release-verify.outputs.artifact_name }}
+          path: release-payload
+
+      - name: Verify provenance attestation for every release subject
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          expected_subjects=(
+            app-release.apk
+            app-release.aab
+            conxius-wallet.sbom.json
+            apk-signature.txt
+            aab-signature.txt
+            release-metadata.json
+          )
+          declare -A seen=()
+          subject_count=0
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            [[ "$line" =~ ^([0-9a-fA-F]{64})[[:space:]]{2}([^[:space:]]+)$ ]] \
+              || { echo "::error::SHA256SUMS contains an invalid attestation subject line"; exit 1; }
+            digest="${BASH_REMATCH[1]}"
+            subject="${BASH_REMATCH[2]}"
+            case "$subject" in
+              app-release.apk|app-release.aab|conxius-wallet.sbom.json|apk-signature.txt|aab-signature.txt|release-metadata.json) ;;
+              *) echo "::error::SHA256SUMS contains an unexpected attestation subject"; exit 1 ;;
+            esac
+            [[ -z "${seen[$subject]:-}" ]] \
+              || { echo "::error::SHA256SUMS contains an unexpected or duplicate attestation subject"; exit 1; }
+            seen["$subject"]=1
+            actual_digest="$(sha256sum "release-payload/$subject" | awk '{print $1}')"
+            [[ "${actual_digest,,}" == "${digest,,}" ]] \
+              || { echo "::error::Attested subject checksum does not match the downloaded file"; exit 1; }
+            gh attestation verify "release-payload/$subject" \
+              --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/android-release.yml" \
+              --source-digest "$GITHUB_SHA"
+            subject_count=$((subject_count + 1))
+          done < release-payload/SHA256SUMS
+          [[ "$subject_count" -eq "${#expected_subjects[@]}" ]] \
+            || { echo "::error::Every release subject must have a verified provenance attestation"; exit 1; }
+          for subject in "${expected_subjects[@]}"; do
+            [[ -n "${seen[$subject]:-}" ]] \
+              || { echo "::error::Missing attestation subject: $subject"; exit 1; }
+          done
+
+      - name: Setup Java for Android artifact verification
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Android SDK for artifact verification
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+
+      - name: Install Android artifact verification tools
+        shell: bash
+        env:
+          ANDROID_BUILD_TOOLS_VERSION: 35.0.0
+        run: |
+          set +o pipefail
+          yes | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platform-tools" "build-tools;35.0.0"
+
+      - name: Download and checksum-verify pinned bundletool for publish verification
+        env:
+          BUNDLETOOL_URL: https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
+          BUNDLETOOL_SHA256: a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29
+        run: |
+          set -euo pipefail
+          BUNDLETOOL_PATH="$RUNNER_TEMP/bundletool-all-1.18.3.jar"
+          curl --fail --location --silent --show-error "$BUNDLETOOL_URL" --output "$BUNDLETOOL_PATH"
+          printf '%s  %s\n' "$BUNDLETOOL_SHA256" "$BUNDLETOOL_PATH" | sha256sum --check --status
+          echo "BUNDLETOOL_PATH=$BUNDLETOOL_PATH" >> "$GITHUB_ENV"
+
+      - name: Verify downloaded payload and source identity
+        env:
+          EXPECTED_SIGNING_CERT_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+        run: |
+          bash scripts/ci/verify_release_payload.sh \
+            release-payload \
+            "${{ needs.release-verify.outputs.version }}" \
+            "${{ needs.release-verify.outputs.tag }}" \
+            "${{ github.sha }}" \
+            "${{ needs.release-verify.outputs.version_code }}"
+
+      - name: Validate production publishing preconditions
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${PLAY_SERVICE_ACCOUNT_JSON:-}" ]]; then
+            echo "::error::PLAY_SERVICE_ACCOUNT_JSON is not configured for the production environment"
+            exit 1
+          fi
+
+      - name: Reject an existing release tag
+        env:
+          TAG: ${{ needs.release-verify.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --refs origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Release tag already exists: $TAG"
+            exit 1
+          fi
+
+      - name: Publish exact AAB to Google Play production track
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.conxius.wallet
-          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
-          track: ${{ inputs.track }}
-          status: ${{ inputs.status }}
+          releaseFiles: release-payload/app-release.aab
+          tracks: production
+          status: completed
 
-      - name: Create git tag
-        shell: bash
+      - name: Create immutable release tag
+        env:
+          TAG: ${{ needs.release-verify.outputs.tag }}
         run: |
-          TAG="v${{ steps.version.outputs.version_name }}"
+          set -euo pipefail
           git config user.name "conxius-ci"
           git config user.email "ci@conxian.io"
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists, skipping."
-          else
-            git tag -a "$TAG" -m "Release $TAG"
-            git push origin "$TAG"
-          fi
+          git tag -a "$TAG" "$GITHUB_SHA" -m "Release $TAG"
+          git push origin "$TAG"
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2.0.9
+      - name: Create GitHub release from verified payload
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          tag_name: v${{ steps.version.outputs.version_name }}
-          name: Conxius Wallet v${{ steps.version.outputs.version_name }}
+          tag_name: ${{ needs.release-verify.outputs.tag }}
+          name: Conxius Wallet ${{ needs.release-verify.outputs.tag }}
           body: |
-            ## Conxius Wallet v${{ steps.version.outputs.version_name }}
+            The release payload was built and verified before production publication.
 
-            📱 **Android APK** — attached below. Verify with SHA-256 checksum.
-
-            ### Verification
-            ```sh
-            sha256sum -c conxius-wallet-v${{ steps.version.outputs.version_name }}.apk.sha256
-            ```
-
-            ### Sovereign Distribution
-            Add this release feed to [Obtainium](https://obtainium.imranr.dev/):
-            ```
-            https://github.com/Conxian/conxius-wallet/releases
-            ```
-
-            ### Google Play
-            Track: `${{ inputs.track }}`
-
-            ---
-            *This release was created by Conxius CI on behalf of Conxian Labs.*
+            - Source commit: `${{ github.sha }}`
+            - Android package: `com.conxius.wallet`
+            - Verify all payloads with `sha256sum -c SHA256SUMS`.
+            - SBOM format: CycloneDX 1.5 JSON.
           files: |
-            android/app/build/outputs/apk/release/app-release.apk
-            conxius-wallet-v${{ steps.version.outputs.version_name }}.apk.sha256
-          generate_release_notes: true
-
-      - name: Cleanup temporary keystore
-        if: always()
-        shell: bash
-        run: |
-          if [ -n "${KEYSTORE_PATH:-}" ] && [ -f "$KEYSTORE_PATH" ]; then
-            shred -u "$KEYSTORE_PATH" || rm -f "$KEYSTORE_PATH"
-          fi
+            release-payload/app-release.apk
+            release-payload/app-release.aab
+            release-payload/conxius-wallet.sbom.json
+            release-payload/SHA256SUMS
+            release-payload/apk-signature.txt
+            release-payload/aab-signature.txt
+          fail_on_unmatched_files: true
