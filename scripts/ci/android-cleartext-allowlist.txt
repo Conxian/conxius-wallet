@@ -1,0 +1,5 @@
+# Conxius Wallet has no approved cleartext network exceptions.
+#
+# If a temporary exception is ever required, add one documented entry in the
+# form `host=<fully-qualified-host>` and update the release/security review
+# record before changing the Android manifest or network security config.
