@@ -22,13 +22,12 @@ class WalletSession {
     internal val generation: Long
         get() = walletGeneration.get()
 
-    fun markAuthenticated() {
+    internal fun markAuthenticated() {
         _isUnlocked.value = true
     }
 
-    fun clearAuthentication() {
-        _isUnlocked.value = false
-        walletGeneration.incrementAndGet()
+    internal suspend fun clearAuthentication() {
+        invalidateAuthentication()
     }
 
     internal fun isGenerationActive(expectedGeneration: Long): Boolean =
@@ -41,6 +40,10 @@ class WalletSession {
     }
 
     internal suspend fun invalidateForWalletMutation() {
+        invalidateAuthentication()
+    }
+
+    private suspend fun invalidateAuthentication() {
         mutationMutex.withLock {
             _isUnlocked.value = false
             walletGeneration.incrementAndGet()
@@ -49,8 +52,9 @@ class WalletSession {
 
     /**
      * Serializes a generation check with one Room persistence transaction. A wallet mutation takes
-     * the same mutex before clearing/replacing the seed, so an old scan cannot commit after the
-     * mutation becomes visible.
+     * the same mutex to invalidate the session before its DAO operation, so an old scan cannot
+     * commit after invalidation completes. A transaction already admitted through this gate is
+     * allowed to finish; invalidation then establishes the happens-before boundary for later work.
      */
     internal suspend fun <T> withActiveGeneration(
         expectedGeneration: Long,
