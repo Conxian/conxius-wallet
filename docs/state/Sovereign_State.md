@@ -17,17 +17,18 @@ audit documents are evidence records, not a substitute for current validation.
 
 ## Current repository snapshot (2026-07-20)
 
-GitHub reports **4 open issues** (`#381`, `#357`, `#356`, and `#355`) and **2 open pull requests**
-(`#391` and draft `#390`), for a combined open count of **6**. PR #390 is still a draft. Its
-native BIP-352 slice now includes bounded Esplora transaction ingestion, native Rust/JNI scanning,
-Room cursor/match persistence, shallow reorg fail-closed checks, and the public-only Compose path
-`DashboardScreen` → `WalletViewModel` → `SilentPaymentScanCoordinator`.
+GitHub reports **3 open issues** (`#381`, `#357`, and `#356`) and **2 open pull requests**
+(`#392` and `#391`). PR #390 merged on July 20, 2026 at commit
+`35ca6e0127006f6e82e1fac7b9c972a51a29fde7`. Its native BIP-352 slice includes bounded Esplora
+transaction ingestion, native Rust/JNI scanning, Room cursor/match persistence, shallow reorg
+fail-closed checks, and the public-only Compose path `DashboardScreen` → `WalletViewModel` →
+`SilentPaymentScanCoordinator`.
 
 This snapshot is not release validation. Android SDK-dependent compilation and unit tests, native
 ABI packaging, Room migration execution, and device/emulator flows remain unverified in the current
 environment. The issue-355 benchmark is host-only; compact-filter discovery, spending/tweak
 recovery, native address encoding, authoritative spentness, labels/passphrases, raw/merkle proof
-verification, and deeper reorg recovery remain outside this draft slice.
+verification, and deeper reorg recovery remain outside this merged slice.
 
 ## 🛡️ Security Architecture
 - **CXN Guardian**: Local privacy filtering active for all AI/Network egress.
