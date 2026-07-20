@@ -81,23 +81,20 @@ class WalletViewModel(
     }
 
     fun unlock(pin: String) {
-        if (_integrityResultSecure.value == false) {
-            _isLocked.value = true
-            walletSession.clearAuthentication()
-            silentPaymentCoordinator.cancel()
-            _error.value = "Security Error: Device compromised"
-            return
-        }
-        _isLocked.value = true
-        walletSession.clearAuthentication()
-        silentPaymentCoordinator.cancel()
         viewModelScope.launch {
+            if (_integrityResultSecure.value == false) {
+                clearAuthenticationAndCancelScan()
+                _isLocked.value = true
+                _error.value = "Security Error: Device compromised"
+                return@launch
+            }
+            clearAuthenticationAndCancelScan()
+            _isLocked.value = true
             try {
                 performUnlock()
             } catch (_: Exception) {
+                clearAuthenticationAndCancelScan()
                 _isLocked.value = true
-                walletSession.clearAuthentication()
-                silentPaymentCoordinator.cancel()
                 _error.value = "Unlock failed: INTERNAL"
             }
         }
@@ -124,9 +121,15 @@ class WalletViewModel(
     }
 
     fun lock() {
-        _isLocked.value = true
-        walletSession.clearAuthentication()
+        viewModelScope.launch {
+            clearAuthenticationAndCancelScan()
+            _isLocked.value = true
+        }
+    }
+
+    private suspend fun clearAuthenticationAndCancelScan() {
         silentPaymentCoordinator.cancel()
+        walletSession.clearAuthentication()
     }
 
     fun refreshBalance() {

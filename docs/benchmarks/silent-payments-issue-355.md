@@ -86,9 +86,14 @@ checksum equality, and scan/match counts between the two processes.
 
 The checksum is a timing-loop sink as well as a cross-runner invariant, so the
 scan result cannot be optimized away without changing the reported checksum.
-JSON parsing and high-level record construction happen outside timed loops; the
-TypeScript reference repeats input/output point validation and conversion inside
 each scan to mirror the Rust API boundary.
+JSON parsing and high-level record construction happen outside timed loops. The
+timed Rust scan includes full structural validation of the input/output records,
+including duplicate and record-shape checks. The TypeScript reference mirrors
+cryptographic point validation and conversion inside each scan to mirror the
+Rust API boundary, but it does not repeat every Rust duplicate/record-shape
+check. The observed Rust speedup is therefore conservative; this is not a
+perfectly identical validation-cost comparison.
 
 ## Interpretation and limitations
 
