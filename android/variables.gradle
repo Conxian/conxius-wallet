@@ -1,7 +1,7 @@
 ext {
     minSdkVersion = 24
-    compileSdkVersion = 34
-    targetSdkVersion = 34
+    compileSdkVersion = 37
+    targetSdkVersion = 35
     androidxAppCompatVersion = '1.6.1'
     androidxCoreVersion = '1.12.0'
     androidxMaterialVersion = '1.10.0'
@@ -15,7 +15,7 @@ ext {
     androidxEspressoCoreVersion = '3.5.1'
     cordovaAndroidVersion = '10.1.1'
     
-    // Overrides to force compatibility with compileSdk 34
+    // Overrides retained for Capacitor compatibility with the Android 35 target.
     androidxActivityVersion = '1.9.0'
     androidxFragmentVersion = '1.6.2'
     androidxCoordinatorLayoutVersion = '1.2.0'

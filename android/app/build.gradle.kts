@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.conxius.wallet"
-    compileSdk = 35
+    compileSdk = 37
 
     // The directory is generated only by the explicit native build task. An empty directory keeps
     // normal Gradle configuration/builds independent of Rust, cargo-ndk, and the Android NDK.
