@@ -30,26 +30,22 @@ No raw result file is committed; the exact measured values are recorded below.
 
 ## Current measurements
 
-Both runs used the same deterministic fixture, `5` warmups, `11` timed samples,
-and `250` iterations per sample. Throughput is derived from the median
-nanoseconds per scan. Speedup is `TypeScript median / Rust median`.
+The current committed-code run used the deterministic fixture, `5` warmups,
+`11` timed samples, and `250` iterations per sample. Throughput is derived from
+the median nanoseconds per scan. Speedup is `TypeScript median / Rust median`.
 
 | Run | Workload | Rust median (ns/scan) | Rust throughput (scans/s) | TS median (ns/scan) | TS throughput (scans/s) | Rust speedup | 2.0x threshold |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| 1 | unlabeled no-match | 149,463.856 | 6,690.580765 | 1,013,925.436 | 986.265818 | 6.783750x | PASS |
-| 1 | multi-match | 484,559.548 | 2,063.729843 | 3,526,121.552 | 283.597711 | 7.276962x | PASS |
-| 2 | unlabeled no-match | 149,432.708 | 6,691.975361 | 1,017,521.804 | 982.779923 | 6.809231x | PASS |
-| 2 | multi-match | 484,701.728 | 2,063.124479 | 3,512,785.180 | 284.674396 | 7.247313x | PASS |
+| 1 | unlabeled no-match | 149,299.856 | 6,697.930104 | 1,017,374.004 | 982.922697 | 6.814300x | PASS |
+| 1 | multi-match | 485,340.364 | 2,060.409713 | 3,531,903.944 | 283.133408 | 7.277169x | PASS |
 
-The measured threshold passed on both runs for both workloads. The benchmark
-does not discard the first run or select a favorable sample; both complete runs
-are retained here. The measured match counts were `0` per scan for unlabeled
-no-match and `8` per scan for multi-match (`22,000` matches across the `2,750`
-timed scans in each multi-match run).
+The measured threshold passed for both workloads. The measured match counts were
+`0` per scan for unlabeled no-match and `8` per scan for multi-match (`22,000`
+matches across the `2,750` timed scans in the multi-match run).
 
 ### Host and tool metadata
 
-The runner recorded the following metadata for both measurements:
+The runner recorded the following metadata for the current measurement:
 
 | Field | Value |
 | --- | --- |
@@ -59,11 +55,11 @@ The runner recorded the following metadata for both measurements:
 | Rust | `rustc 1.89.0 (29483883e 2025-08-04)` |
 | Cargo | `cargo 1.89.0 (c24e10642 2025-06-23)` |
 | TypeScript ECC backend | `tiny-secp256k1 2.2.4` WASM |
-| Rust base HEAD during measurement | `91518032549dab724c7c23ba1121be2dd399592f` |
+| Generated at (UTC) | `2026-07-20T19:05:47.904Z` |
+| Rust code commit during measurement | `3b97c2875f2be38d3d3ee86f327898cdd3a59a39` |
 
-The benchmark files were the local working-tree changes on top of that base
-HEAD when the measurements ran; the hash above identifies the repository base,
-not a benchmark-only commit.
+The benchmark was run after the implementation commit above; the documentation
+update is a follow-up commit and is not part of the measured code.
 
 ## Fixture and correctness scope
 
@@ -99,9 +95,9 @@ perfectly identical validation-cost comparison.
 
 ## Interpretation and limitations
 
-The result supports the narrow statement that, on this host and fixture, the
-Rust production scan core was approximately `6.78x–6.81x` faster for the
-unlabeled no-match workload and `7.25x–7.28x` faster for the multi-match
+The current result supports the narrow statement that, on this host and
+fixture, the Rust production scan core was approximately `6.8143x` faster for
+the unlabeled no-match workload and `7.2772x` faster for the multi-match
 workload than the benchmark-local TypeScript reference.
 
 It does **not** establish any of the following:
