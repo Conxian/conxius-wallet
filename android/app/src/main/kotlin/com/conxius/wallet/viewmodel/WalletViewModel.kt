@@ -138,11 +138,20 @@ class WalletViewModel(
 
     // --- Bridged Protocol Actions ---
 
-    fun scanSilentPayments(scanSk: String, spendPk: String, startBlock: Long, endBlock: Long) {
+    fun scanSilentPayments(
+        network: SilentPaymentNetwork,
+        startBlock: Long,
+        endBlock: Long,
+        blockSource: BlockSource,
+    ) {
         viewModelScope.launch {
             try {
-                val utxos = silentPaymentManager.scanForPayments(scanSk, spendPk, startBlock, endBlock)
-                _error.value = "Silent Payment Scan Complete: Found ${utxos.size} UTXOs"
+                val result = silentPaymentManager.scanForPayments(
+                    network = network,
+                    range = ScanRange(startBlock, endBlock),
+                    blockSource = blockSource,
+                )
+                _error.value = "Silent Payment Scan Complete: Found ${result.matches.size} matches"
             } catch (e: Exception) {
                 _error.value = "Silent Payment scan failed: ${e.message}"
             }

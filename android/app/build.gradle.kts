@@ -7,6 +7,12 @@ android {
     namespace = "com.conxius.wallet"
     compileSdk = 35
 
+    // The directory is generated only by the explicit native build task. An empty directory keeps
+    // normal Gradle configuration/builds independent of Rust, cargo-ndk, and the Android NDK.
+    sourceSets["main"].jniLibs.directories.add(
+        layout.buildDirectory.get().asFile.resolve("generated/silent-payments/jniLibs").absolutePath
+    )
+
     val keystorePath = System.getenv("KEYSTORE_PATH")
     val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
     val keyAlias = System.getenv("KEY_ALIAS")
@@ -61,6 +67,25 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+}
+
+tasks.register<Exec>("buildSilentPaymentsNative") {
+    group = "native"
+    description = "Build arm64-v8a and x86_64 silent-payment JNI libraries with cargo-ndk."
+    val outputDirectory = layout.buildDirectory.dir("generated/silent-payments/jniLibs")
+    inputs.file(rootProject.file("../scripts/build-silent-payments-android.sh"))
+    outputs.dir(outputDirectory)
+    doFirst {
+        commandLine(
+            "bash",
+            rootProject.file("../scripts/build-silent-payments-android.sh").absolutePath,
+            outputDirectory.get().asFile.absolutePath,
+        )
+    }
+}
+
+tasks.register<Delete>("cleanSilentPaymentsNative") {
+    delete(layout.buildDirectory.dir("generated/silent-payments/jniLibs"))
 }
 
 dependencies {

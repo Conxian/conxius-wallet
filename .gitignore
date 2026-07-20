@@ -31,6 +31,7 @@ blob-report
 
 # Android
 android/app/build
+android/app/build/generated/silent-payments/
 android/.gradle
 android/local.properties
 android/captures
