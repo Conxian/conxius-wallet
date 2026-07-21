@@ -4,10 +4,10 @@ use conxius_silent_payments::{
     scan_transaction, EligibleInput, EligibleInputPublicKey, MatchKind, OutPoint, ScanError,
     ScanOutcome, ScanSecret, ScanSkipReason, ScanStopReason, TaprootOutput, K_MAX,
 };
-use ripemd::Ripemd160;
+use ripemd::{Digest as RipemdDigest, Ripemd160};
 use secp256k1::{Parity, PublicKey, Scalar, Secp256k1, SecretKey};
 use serde_json::Value;
-use sha2::{Digest, Sha256};
+use sha2::{Digest as Sha2Digest, Sha256};
 
 const OFFICIAL_VECTORS: &str = include_str!("data/send_and_receive_test_vectors.json");
 
@@ -112,8 +112,8 @@ fn compressed_key(bytes: &[u8]) -> Option<EligibleInputPublicKey> {
 }
 
 fn hash160(bytes: &[u8]) -> [u8; 20] {
-    let sha256 = Sha256::digest(bytes);
-    Ripemd160::digest(sha256).into()
+    let sha256 = <Sha256 as Sha2Digest>::digest(bytes);
+    <Ripemd160 as RipemdDigest>::digest(sha256).into()
 }
 
 fn input_public_key(vin: &Value) -> Option<EligibleInputPublicKey> {
@@ -231,7 +231,7 @@ fn scan_secret(given: &Value) -> ScanSecret {
 }
 
 fn spend_public_key(given: &Value) -> [u8; 33] {
-    let spend_secret = SecretKey::from_byte_array(&fixed::<32>(string_field(
+    let spend_secret = SecretKey::from_byte_array(fixed::<32>(string_field(
         &given["key_material"],
         "spend_priv_key",
     )))
@@ -241,7 +241,7 @@ fn spend_public_key(given: &Value) -> [u8; 33] {
 
 fn spend_public_key_point(given: &Value) -> PublicKey {
     let spend_public_key = spend_public_key(given);
-    PublicKey::from_byte_array_compressed(&spend_public_key).expect("official spend public key")
+    PublicKey::from_byte_array_compressed(spend_public_key).expect("official spend public key")
 }
 
 fn labels(given: &Value) -> Vec<u32> {
@@ -275,10 +275,10 @@ fn independent_scalar(bytes: [u8; 32]) -> Scalar {
 fn public_key_from_input(input: &EligibleInput) -> PublicKey {
     match input.public_key {
         EligibleInputPublicKey::Compressed(bytes) => {
-            PublicKey::from_byte_array_compressed(&bytes).expect("official input key")
+            PublicKey::from_byte_array_compressed(bytes).expect("official input key")
         }
         EligibleInputPublicKey::XOnly(bytes) => {
-            let x_only = secp256k1::XOnlyPublicKey::from_byte_array(&bytes)
+            let x_only = secp256k1::XOnlyPublicKey::from_byte_array(bytes)
                 .expect("official taproot input key");
             PublicKey::from_x_only_public_key(x_only, Parity::Even)
         }
@@ -307,7 +307,7 @@ fn independent_shared_secret_tweak(shared_secret: &[u8; 33], k: u32) -> Scalar {
 
 fn add_scalars(left: Scalar, right: Scalar) -> Scalar {
     let left_bytes = left.to_be_bytes();
-    let mut result = SecretKey::from_byte_array(&left_bytes)
+    let mut result = SecretKey::from_byte_array(left_bytes)
         .expect("official scalar must be usable as a secret key")
         .add_tweak(&right)
         .expect("official scalar addition must remain non-zero");
@@ -360,7 +360,7 @@ fn assert_expected_intermediates(
         .expect("official input tweak point");
 
     let scan_secret = fixed::<32>(string_field(&given["key_material"], "scan_priv_key"));
-    let scan_secret_key = SecretKey::from_byte_array(&scan_secret).expect("official scan secret");
+    let scan_secret_key = SecretKey::from_byte_array(scan_secret).expect("official scan secret");
     let shared_secret = tweak_point
         .mul_tweak(&secp, &Scalar::from(scan_secret_key))
         .expect("official shared secret point");
@@ -686,7 +686,7 @@ fn ordered_output_adapter_preserves_duplicate_identities() {
 #[test]
 fn malformed_public_records_fail_closed_without_secret_bearing_errors() {
     let scan_secret = ScanSecret::from_bytes([1u8; 32]).expect("test scan secret");
-    let spend_secret = SecretKey::from_byte_array(&[2u8; 32]).expect("test spend secret");
+    let spend_secret = SecretKey::from_byte_array([2u8; 32]).expect("test spend secret");
     let spend_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &spend_secret).serialize();
     let input = EligibleInput {
         outpoint: OutPoint {
