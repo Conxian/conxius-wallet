@@ -350,16 +350,20 @@ class SilentPaymentScanCoordinator(
         if (batch.blockHeight != null && batch.blockHeight !in range.startBlock..range.endBlock) {
             throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
         }
-        if (batch.currentTipHeight != null && batch.currentTipHeight < range.endBlock) {
+        val currentTipHeight = batch.currentTipHeight
+        if (currentTipHeight != null && currentTipHeight < range.endBlock) {
             throw NativeSilentPaymentException(NativeErrorCode.INVALID_REQUEST)
         }
-        if (batch.blockHash != null && !batch.blockHash.matches(HEX_64)) {
+        val blockHash = batch.blockHash
+        if (blockHash != null && !blockHash.matches(HEX_64)) {
             throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
         }
-        if (batch.previousBlockHash != null && !batch.previousBlockHash.matches(HEX_64)) {
+        val previousBlockHash = batch.previousBlockHash
+        if (previousBlockHash != null && !previousBlockHash.matches(HEX_64)) {
             throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
         }
-        if (batch.currentTipHash != null && !batch.currentTipHash.matches(HEX_64)) {
+        val currentTipHash = batch.currentTipHash
+        if (currentTipHash != null && !currentTipHash.matches(HEX_64)) {
             throw NativeSilentPaymentException(NativeErrorCode.INVALID_PUBLIC_RECORD)
         }
     }
