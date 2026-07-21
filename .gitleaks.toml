@@ -1,12 +1,3 @@
-[allowlist]
-description = "Whitelist documentation, tests, and generated assets"
-paths = [
-    "docs/",
-    "tests/",
-    "android/app/src/main/assets/public/",
-    "pnpm-lock.yaml",
-    ".gitleaks.toml",
-    "CHANGELOG.md",
-    "README.md",
-    "AGENTS.md"
-]
+[[allowlists]]
+description = "No repository-wide path exclusions; documentation and tests remain scanned."
+paths = ['^$']
