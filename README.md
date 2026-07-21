@@ -55,6 +55,8 @@ This repository is maintained by Conxian Labs as a public product surface for th
 - Production releases are tagged.
 - Every release requires a `CHANGELOG.md` entry.
 - Promotion to `main` requires successful validation and approval according to repository policy.
+- Release gates and external GitHub settings: [docs/operations/CI_CD_BASELINE.md](docs/operations/CI_CD_BASELINE.md)
+- Rollback procedure: [docs/operations/RELEASE_ROLLBACK.md](docs/operations/RELEASE_ROLLBACK.md)
 
 ## Prerequisites
 
