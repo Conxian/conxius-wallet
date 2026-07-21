@@ -35,13 +35,13 @@ mod jni_bridge {
     use jni::{
         objects::{JByteArray, JClass},
         sys::{jbyteArray, jlong},
-        JNIEnv,
+        Env, EnvUnowned,
     };
 
     use crate::{error::NativeErrorCode, scan::scan_public_batch_with_cancellation};
 
-    const MAX_SECRET_BYTES: i32 = crate::codec::MAX_MNEMONIC_BYTES as i32;
-    const MAX_BATCH_BYTES: i32 = crate::codec::MAX_BATCH_BYTES as i32;
+    const MAX_SECRET_BYTES: usize = crate::codec::MAX_MNEMONIC_BYTES;
+    const MAX_BATCH_BYTES: usize = crate::codec::MAX_BATCH_BYTES;
 
     static NEXT_CANCELLATION_HANDLE: AtomicU64 = AtomicU64::new(1);
     static CANCELLATION_HANDLES: OnceLock<Mutex<HashMap<u64, Arc<AtomicBool>>>> = OnceLock::new();
@@ -86,45 +86,74 @@ mod jni_bridge {
         }
     }
 
-    fn clear_pending_exception(env: &mut JNIEnv<'_>) {
-        if env.exception_check().unwrap_or(false) {
-            let _ = env.exception_clear();
+    fn clear_pending_exception(env: &mut Env<'_>) {
+        if env.exception_check() {
+            env.exception_clear();
         }
     }
 
-    fn stable_error(env: &mut JNIEnv<'_>, code: NativeErrorCode) -> Vec<u8> {
+    fn stable_error(env: &mut Env<'_>, code: NativeErrorCode) -> Vec<u8> {
         clear_pending_exception(env);
         crate::error::encode_error_result(code)
     }
 
     /// Create a cooperative cancellation token for one blocking native scan.
     #[no_mangle]
-    pub extern "system" fn Java_com_conxius_wallet_bitcoin_NativeSilentPayments_nativeCreateCancellationHandle(
-        _env: JNIEnv,
-        _class: JClass,
+    pub extern "system" fn Java_com_conxius_wallet_bitcoin_NativeSilentPayments_nativeCreateCancellationHandle<
+        'local,
+    >(
+        mut unowned_env: EnvUnowned<'local>,
+        _class: JClass<'local>,
     ) -> jlong {
-        catch_unwind(create_cancellation_handle).unwrap_or(0)
+        match catch_unwind(AssertUnwindSafe(|| {
+            unowned_env
+                .with_env(|_| -> Result<jlong, jni::errors::Error> {
+                    Ok(create_cancellation_handle())
+                })
+                .into_outcome()
+        })) {
+            Ok(jni::Outcome::Ok(handle)) => handle,
+            Ok(jni::Outcome::Err(_)) | Ok(jni::Outcome::Panic(_)) | Err(_) => 0,
+        }
     }
 
     /// Mark one native scan token cancelled. The core checks the flag between records and in its
     /// bounded BIP-352 output-index loop; it cannot interrupt an individual secp256k1 primitive.
     #[no_mangle]
-    pub extern "system" fn Java_com_conxius_wallet_bitcoin_NativeSilentPayments_nativeCancel(
-        _env: JNIEnv,
-        _class: JClass,
+    pub extern "system" fn Java_com_conxius_wallet_bitcoin_NativeSilentPayments_nativeCancel<
+        'local,
+    >(
+        mut unowned_env: EnvUnowned<'local>,
+        _class: JClass<'local>,
         handle: jlong,
     ) {
-        let _ = catch_unwind(|| cancel_cancellation_handle(handle));
+        let _ = catch_unwind(AssertUnwindSafe(|| {
+            let _ = unowned_env
+                .with_env(|_| -> Result<(), jni::errors::Error> {
+                    cancel_cancellation_handle(handle);
+                    Ok(())
+                })
+                .into_outcome();
+        }));
     }
 
     /// Release one native scan token after the Kotlin coroutine has completed.
     #[no_mangle]
-    pub extern "system" fn Java_com_conxius_wallet_bitcoin_NativeSilentPayments_nativeDestroyCancellationHandle(
-        _env: JNIEnv,
-        _class: JClass,
+    pub extern "system" fn Java_com_conxius_wallet_bitcoin_NativeSilentPayments_nativeDestroyCancellationHandle<
+        'local,
+    >(
+        mut unowned_env: EnvUnowned<'local>,
+        _class: JClass<'local>,
         handle: jlong,
     ) {
-        let _ = catch_unwind(|| destroy_cancellation_handle(handle));
+        let _ = catch_unwind(AssertUnwindSafe(|| {
+            let _ = unowned_env
+                .with_env(|_| -> Result<(), jni::errors::Error> {
+                    destroy_cancellation_handle(handle);
+                    Ok(())
+                })
+                .into_outcome();
+        }));
     }
 
     /// JNI export for `NativeSilentPayments.nativeScan`.
@@ -136,76 +165,80 @@ mod jni_bridge {
     /// pending JVM exception while creating that result array), because JNI cannot reliably
     /// allocate a replacement envelope.
     #[no_mangle]
-    pub extern "system" fn Java_com_conxius_wallet_bitcoin_NativeSilentPayments_nativeScan(
-        mut env: JNIEnv,
-        _class: JClass,
-        mnemonic: JByteArray,
-        passphrase: JByteArray,
-        public_batch: JByteArray,
+    pub extern "system" fn Java_com_conxius_wallet_bitcoin_NativeSilentPayments_nativeScan<
+        'local,
+    >(
+        mut unowned_env: EnvUnowned<'local>,
+        _class: JClass<'local>,
+        mnemonic: JByteArray<'local>,
+        passphrase: JByteArray<'local>,
+        public_batch: JByteArray<'local>,
         cancellation_handle: jlong,
     ) -> jbyteArray {
-        let response = catch_unwind(AssertUnwindSafe(|| {
-            if mnemonic.as_raw().is_null()
-                || passphrase.as_raw().is_null()
-                || public_batch.as_raw().is_null()
-            {
-                return stable_error(&mut env, NativeErrorCode::InvalidSecret);
-            }
+        match unowned_env
+            .with_env(|env| -> Result<JByteArray<'local>, jni::errors::Error> {
+                let response = catch_unwind(AssertUnwindSafe(|| {
+                    if mnemonic.as_raw().is_null()
+                        || passphrase.as_raw().is_null()
+                        || public_batch.as_raw().is_null()
+                    {
+                        return stable_error(env, NativeErrorCode::InvalidSecret);
+                    }
 
-            let mnemonic_length = match env.get_array_length(&mnemonic) {
-                Ok(length) => length,
-                Err(_) => return stable_error(&mut env, NativeErrorCode::Internal),
-            };
-            let passphrase_length = match env.get_array_length(&passphrase) {
-                Ok(length) => length,
-                Err(_) => return stable_error(&mut env, NativeErrorCode::Internal),
-            };
-            let batch_length = match env.get_array_length(&public_batch) {
-                Ok(length) => length,
-                Err(_) => return stable_error(&mut env, NativeErrorCode::Internal),
-            };
+                    let mnemonic_length = match mnemonic.len(env) {
+                        Ok(length) => length,
+                        Err(_) => return stable_error(env, NativeErrorCode::Internal),
+                    };
+                    let passphrase_length = match passphrase.len(env) {
+                        Ok(length) => length,
+                        Err(_) => return stable_error(env, NativeErrorCode::Internal),
+                    };
+                    let batch_length = match public_batch.len(env) {
+                        Ok(length) => length,
+                        Err(_) => return stable_error(env, NativeErrorCode::Internal),
+                    };
 
-            if mnemonic_length < 0 || passphrase_length < 0 || batch_length < 0 {
-                return stable_error(&mut env, NativeErrorCode::Internal);
-            }
-            if mnemonic_length > MAX_SECRET_BYTES || passphrase_length > MAX_SECRET_BYTES {
-                return stable_error(&mut env, NativeErrorCode::InvalidSecret);
-            }
-            if batch_length > MAX_BATCH_BYTES {
-                return stable_error(&mut env, NativeErrorCode::ResourceLimit);
-            }
+                    if mnemonic_length > MAX_SECRET_BYTES || passphrase_length > MAX_SECRET_BYTES {
+                        return stable_error(env, NativeErrorCode::InvalidSecret);
+                    }
+                    if batch_length > MAX_BATCH_BYTES {
+                        return stable_error(env, NativeErrorCode::ResourceLimit);
+                    }
 
-            let cancellation = match get_cancellation_handle(cancellation_handle) {
-                Some(token) => token,
-                None => return stable_error(&mut env, NativeErrorCode::Internal),
-            };
-            let mnemonic = match env.convert_byte_array(mnemonic) {
-                Ok(bytes) => zeroize::Zeroizing::new(bytes),
-                Err(_) => return stable_error(&mut env, NativeErrorCode::Internal),
-            };
-            let passphrase = match env.convert_byte_array(passphrase) {
-                Ok(bytes) => zeroize::Zeroizing::new(bytes),
-                Err(_) => return stable_error(&mut env, NativeErrorCode::Internal),
-            };
-            let public_batch = match env.convert_byte_array(public_batch) {
-                Ok(bytes) => bytes,
-                Err(_) => return stable_error(&mut env, NativeErrorCode::Internal),
-            };
+                    let cancellation = match get_cancellation_handle(cancellation_handle) {
+                        Some(token) => token,
+                        None => return stable_error(env, NativeErrorCode::Internal),
+                    };
+                    let mnemonic = match env.convert_byte_array(mnemonic) {
+                        Ok(bytes) => zeroize::Zeroizing::new(bytes),
+                        Err(_) => return stable_error(env, NativeErrorCode::Internal),
+                    };
+                    let passphrase = match env.convert_byte_array(passphrase) {
+                        Ok(bytes) => zeroize::Zeroizing::new(bytes),
+                        Err(_) => return stable_error(env, NativeErrorCode::Internal),
+                    };
+                    let public_batch = match env.convert_byte_array(public_batch) {
+                        Ok(bytes) => bytes,
+                        Err(_) => return stable_error(env, NativeErrorCode::Internal),
+                    };
 
-            scan_public_batch_with_cancellation(
-                &mnemonic,
-                &passphrase,
-                &public_batch,
-                cancellation.as_ref(),
-            )
-            .map(|result| crate::codec::encode_scan_result(&result))
-            .unwrap_or_else(crate::error::encode_error_result)
-        }))
-        .unwrap_or_else(|_| stable_error(&mut env, NativeErrorCode::Internal));
+                    scan_public_batch_with_cancellation(
+                        &mnemonic,
+                        &passphrase,
+                        &public_batch,
+                        cancellation.as_ref(),
+                    )
+                    .map(|result| crate::codec::encode_scan_result(&result))
+                    .unwrap_or_else(crate::error::encode_error_result)
+                }))
+                .unwrap_or_else(|_| stable_error(env, NativeErrorCode::Internal));
 
-        match catch_unwind(AssertUnwindSafe(|| env.byte_array_from_slice(&response))) {
-            Ok(Ok(array)) => array.into_raw(),
-            Ok(Err(_)) | Err(_) => ptr::null_mut(),
+                env.byte_array_from_slice(&response)
+            })
+            .into_outcome()
+        {
+            jni::Outcome::Ok(array) => array.into_raw(),
+            jni::Outcome::Err(_) | jni::Outcome::Panic(_) => ptr::null_mut(),
         }
     }
 }
