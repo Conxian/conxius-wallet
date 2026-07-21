@@ -134,9 +134,10 @@ Then update `DeviceIntegrityPlugin.java` to call Play Integrity API alongside lo
 
 ### Security Verification
 
-- [ ] `FLAG_SECURE` is set in `MainActivity.kt` ✅ (verified)
+- [ ] `bash scripts/ci/validate_android_security.sh` passes, including `FLAG_SECURE`, backup/data-extraction, cleartext, and release-debuggability checks
 - [ ] Root detection plugin registered ✅ (DeviceIntegrityPlugin)
-- [ ] No secrets in source code (run TruffleHog)
+- [ ] Mandatory repository-owned, tokenless Gitleaks CLI scan passes with `.gitleaks.toml`
+- [ ] Gitleaks scan has no commercial-license secret prerequisite
 - [ ] No debug logging of sensitive data
 - [ ] All experimental features properly gated
 - [ ] Biometric authentication working on physical device
@@ -148,7 +149,7 @@ Then update `DeviceIntegrityPlugin.java` to call Play Integrity API alongside lo
 - [ ] `pnpm exec cap sync android` completes without errors
 - [ ] `cd android && ./gradlew bundleRelease` produces signed AAB
 - [ ] AAB size is reasonable (< 50MB target)
-- [ ] All unit tests pass (`pnpm test` — 106/106 ✅)
+- [ ] All unit tests pass (`pnpm exec vitest run`)
 - [ ] E2E tests pass (`pnpm run test:e2e`)
 
 ### Compliance
@@ -175,25 +176,73 @@ Then update `DeviceIntegrityPlugin.java` to call Play Integrity API alongside lo
 
 ### GitHub Actions Workflow
 
-Release automation is implemented in `.github/workflows/android-release.yml` and runs via `workflow_dispatch`.
+Release automation is implemented in `.github/workflows/android-release.yml` and
+runs only through `workflow_dispatch`. A normal `publish` has three explicit
+stages:
 
-1. Configure required GitHub Secrets:
-   - `KEYSTORE_BASE64` — Base64-encoded keystore file content
-   - `KEYSTORE_PASSWORD`
-   - `KEY_ALIAS`
-   - `KEY_PASSWORD`
-   - `PLAY_SERVICE_ACCOUNT_JSON` — Google Play service account JSON
+1. **Release Verification and Build** validates the expected `1.9.5` version/tag,
+   runs lint, typecheck, unit tests, E2E, web build, dependency audit, Android
+   security policy, Android lint, and Android unit tests, installs
+   `platforms;android-36` for the modules' `compileSdk = 36`, then builds the
+   signed APK and AAB once.
+2. **Release Artifact Attestation** downloads the uploaded payload and creates
+   provenance for every subject listed in `SHA256SUMS`.
+3. **Production Release Publish** requires the separately configured
+   `production` environment, verifies every subject attestation and re-extracts
+   APK/AAB package identity, version, versionCode, and public signing
+   certificate identity without rebuilding. It creates and verifies the
+   immutable tag and GitHub Release **before** publishing the exact AAB to the
+   fixed Google Play `production` track.
 
-2. The workflow does the following:
-   - Builds production web assets: `pnpm run build`
-   - Syncs Capacitor Android project: `pnpm exec cap sync android`
-   - Decodes `${{ secrets.KEYSTORE_BASE64 }}` into a temporary file under `${RUNNER_TEMP}`
-   - Exports that path as `KEYSTORE_PATH` via `$GITHUB_ENV`
-   - Runs `cd android && ./gradlew --no-daemon bundleRelease` with signing env vars
-   - Uploads `android/app/build/outputs/bundle/release/app-release.aab` as an artifact
-   - Uploads to Google Play using `r0adkll/upload-google-play` with `PLAY_SERVICE_ACCOUNT_JSON`
+If the source run's evidence step succeeds but its Google Play step fails or is
+cancelled, use the explicit `retry` operation rather than `publish` or `recover`.
+Retry requires the source run ID, the source commit SHA, production-environment
+approval, and the version-bound literal
+`PLAY_NOT_PUBLISHED_<versionCode>`. Before dispatching it, an authorized release
+owner must check Google Play for the exact versionCode and confirm that it is
+absent and not pending. A retry then downloads the artifact from that exact
+source run, verifies its provenance, checksums, metadata, Android identity, and
+existing immutable tag/release assets, and republishes the same AAB. It does not
+run Gradle, rebuild, create or upload GitHub evidence, or use a different
+artifact. If Play's state is ambiguous or the versionCode is present, do not
+retry; treat it as an incident and follow the rollback procedure.
 
-3. Keystore encoding helper for `KEYSTORE_BASE64`:
+The same workflow has an explicit `recover` operation for an Android Release
+dispatch whose Google Play publication step completed but which failed while
+finalizing release evidence. Recovery requires the source run ID, source commit
+SHA, production-environment approval, and the literal `PLAY_PUBLISHED`
+confirmation after checking Play Console. It also requires the source run's
+Google Play step to be recorded as successful, downloads the payload from that
+exact run, re-verifies provenance, checksums, artifact identity, and source
+metadata, then idempotently completes or verifies the tag and GitHub Release.
+Recovery never runs Gradle, rebuilds artifacts, or invokes the Google Play
+upload action; keep it separate from the failed-or-uncertain-publication `retry`
+operation.
+
+Repository files cannot create the required branch protection checks, reviewers,
+environment, or secrets. See [CI_CD_BASELINE.md](CI_CD_BASELINE.md) for the
+external settings that a maintainer must configure and verify.
+
+Required secrets/preconditions:
+
+- `KEYSTORE_BASE64` — Base64-encoded keystore file content
+- `KEYSTORE_PASSWORD`
+- `KEY_ALIAS`
+- `KEY_PASSWORD`
+- `ANDROID_SIGNING_CERT_SHA256` — Repository variable containing the expected
+  public upload-signing certificate SHA-256 fingerprint, with colons optional
+- `PLAY_SERVICE_ACCOUNT_JSON` — Google Play service account JSON in the
+  `production` environment
+
+The workflow derives `VERSION_CODE` from the strict `major.minor.patch`
+release version using `scripts/ci/derive_android_version_code.mjs`; release
+Gradle tasks fail closed when it is missing, non-integer, or non-positive.
+Release verification downloads `bundletool-all-1.18.3.jar` from the official
+Google bundletool release and checks its pinned SHA-256 before reading AAB
+manifest identity. The production job uses GitHub's attestation verifier for
+each downloaded subject before any Play or GitHub release mutation.
+
+Keystore encoding helper for `KEYSTORE_BASE64`:
 
    ```bash
    # Linux
@@ -207,12 +256,17 @@ Release automation is implemented in `.github/workflows/android-release.yml` and
 
 ## 6. Release Commands (Manual)
 
+The commands below are for local validation and troubleshooting only. They do
+not replace the verified-artifact workflow and must not be used to publish a
+production APK/AAB or to bypass the `production` environment gate.
+
 ```bash
 # 0. Export signing env vars (or decode KEYSTORE_BASE64 to a temp file and export KEYSTORE_PATH)
 export KEYSTORE_PATH=/absolute/path/to/conxius-upload.keystore
 export KEYSTORE_PASSWORD=<STORE_PASSWORD>
 export KEY_ALIAS=<KEY_ALIAS>
 export KEY_PASSWORD=<KEY_PASSWORD>
+export VERSION_CODE="$(node scripts/ci/derive_android_version_code.mjs 1.9.5)"
 
 # 1. Build frontend
 pnpm run build
@@ -234,6 +288,7 @@ cd android && ./gradlew --no-daemon bundleRelease
 - Monitor Play Integrity API responses
 - Set up staged rollout (10% → 50% → 100%)
 - Enable Play Protect pre-launch report
+- Follow [RELEASE_ROLLBACK.md](RELEASE_ROLLBACK.md) if the rollout must be halted or reversed.
 
 ---
 
