@@ -171,6 +171,7 @@ const NTTBridge: React.FC = () => {
                        <div className="space-y-3">
                           <label className="text-[10px] font-black uppercase tracking-widest text-brand-earth ml-1">Source Layer</label>
                           <select
+                            aria-label="Source Layer"
                             value={sourceLayer}
                             onChange={(e) => setSourceLayer(e.target.value)}
                             className="w-full bg-off-white border border-border rounded-2xl py-5 px-6 font-bold text-brand-deep focus:outline-none focus:border-orange-500/50 transition-all appearance-none"
@@ -183,6 +184,7 @@ const NTTBridge: React.FC = () => {
                        <div className="space-y-3">
                           <label className="text-[10px] font-black uppercase tracking-widest text-brand-earth ml-1">Target Layer</label>
                           <select
+                            aria-label="Target Layer"
                             value={targetLayer}
                             onChange={(e) => setTargetLayer(e.target.value)}
                             className="w-full bg-off-white border border-border rounded-2xl py-5 px-6 font-bold text-brand-deep focus:outline-none focus:border-orange-500/50 transition-all appearance-none"
@@ -200,6 +202,7 @@ const NTTBridge: React.FC = () => {
                       <div className="relative">
                          <input
                            type="number"
+                           aria-label="Amount to Bridge"
                            value={amount}
                            onChange={(e) => setAmount(e.target.value)}
                            placeholder="0.00"

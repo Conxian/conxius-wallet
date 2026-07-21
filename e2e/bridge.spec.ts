@@ -1,42 +1,45 @@
 import { test, expect } from '@playwright/test';
+import { bridgePersistenceKeys, openFeature, resetBrowserState, waitForWalletShell } from './helpers';
 
 test.describe('Sovereign Bridge Flow', () => {
+  test.beforeEach(async ({ page }) => {
+    await resetBrowserState(page);
+  });
+
   test('should render bridge component and handle intent selection', async ({ page }) => {
     await page.goto('/');
+    await waitForWalletShell(page);
+    await openFeature(page, 'NTT Bridge', 'Bridge');
 
-    // Wait for app to boot
-    await page.waitForTimeout(5000);
+    await expect(page.getByRole('heading', { name: 'Sovereign Bridge', exact: true })).toBeVisible();
 
-    // Navigate to Bridge (if not active tab)
-    // Assuming we can click a bottom nav item
-    const bridgeTab = page.locator('button:has-text("Bridge")');
-    if (await bridgeTab.isVisible()) {
-        await bridgeTab.click();
-    }
-
-    // Check for Bridge title
-    await expect(page.locator('text=Sovereign Bridge')).toBeVisible();
-
-    // Verify intent buttons
-    await expect(page.locator('text=BTC DeFi')).toBeVisible();
-    await expect(page.locator('text=Sidechain')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'NTT Protocol', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Native Peg-In', exact: true })).toBeVisible();
+    await expect(page.getByLabel('Source Layer', { exact: true })).toHaveValue('Mainnet');
+    await expect(page.getByLabel('Target Layer', { exact: true })).toHaveValue('Stacks');
   });
 
   test('should persist bridge state across reload', async ({ page }) => {
     await page.goto('/');
-    await page.waitForTimeout(2000);
+    await waitForWalletShell(page);
+    await openFeature(page, 'NTT Bridge', 'Bridge');
 
-    // Mock localStorage for a pending transaction
+    // Use NTTBridge's documented pending-transfer storage fixture. This is the
+    // same contract used by the native peg flow after a broadcast.
     await page.evaluate(() => {
       localStorage.setItem('PENDING_NTT_TX', '0xmocktxhash123456789');
-      localStorage.setItem('PENDING_NTT_TARGET', 'Liquid');
+      localStorage.setItem('PENDING_NTT_TARGET', 'Stacks');
     });
 
     await page.reload();
-    await page.waitForTimeout(5000);
+    await waitForWalletShell(page);
+    await openFeature(page, 'NTT Bridge', 'Bridge');
 
-    // Should automatically be on step 4 (Transfer in Transit)
-    await expect(page.locator('text=Transfer in Transit')).toBeVisible();
-    await expect(page.locator('text=0xmocktxhash123456789')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Transfer Initiated', exact: true })).toBeVisible();
+    await expect(page.getByText('0xmocktxhash123456789', { exact: true })).toBeVisible();
+    await expect(page.getByText('Monitoring settlement on Stacks...', { exact: true })).toBeVisible();
+    await expect(page.evaluate((keys) => localStorage.getItem(keys.transaction), bridgePersistenceKeys)).resolves.toBe(
+      '0xmocktxhash123456789',
+    );
   });
 });
