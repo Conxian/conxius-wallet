@@ -21,13 +21,13 @@ class OnboardingViewModel private constructor(
         repository: WalletRepository,
         strongBoxManager: StrongBoxManager,
     ) : this(
-        hasPersistedWallet = { repository.getEncryptedSeed() != null },
-        walletCreationService = WalletCreationService(
+        suspend { repository.getEncryptedSeed() != null },
+        WalletCreationService(
             generateMnemonic = { SecureMnemonicGenerator.generate() },
             encrypt = strongBoxManager::encrypt,
             persist = repository::saveSeed,
         ),
-        operationScope = null,
+        null,
     )
 
     internal constructor(
@@ -35,9 +35,9 @@ class OnboardingViewModel private constructor(
         hasPersistedWallet: suspend () -> Boolean = { false },
         operationScope: CoroutineScope? = null,
     ) : this(
-        hasPersistedWallet = hasPersistedWallet,
-        walletCreationService = walletCreationService,
-        operationScope = operationScope,
+        hasPersistedWallet,
+        walletCreationService,
+        operationScope,
     )
 
     private val walletCreationCoordinator = WalletCreationCoordinator(
