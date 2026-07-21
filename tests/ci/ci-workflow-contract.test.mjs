@@ -23,7 +23,7 @@ describe('CI workflow contracts', () => {
   it.each(['android-lint', 'android-unit-tests'])('makes %s consume Web Build assets before sync', (jobId) => {
     const job = jobSection(jobId);
     expect(job).toContain('needs: web-build');
-    expect(job).toContain('actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093');
+    expect(job).toContain('actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c');
     expect(job).toMatch(/name: web-dist[\s\S]*path: dist/);
     expect(job.indexOf('Download web assets')).toBeLessThan(job.indexOf('pnpm exec cap sync android'));
   });
