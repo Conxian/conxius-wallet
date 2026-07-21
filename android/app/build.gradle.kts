@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.conxius.wallet"
-    compileSdk = 35
+    compileSdk = 36
 
     // The directory is generated only by the explicit native build task. An empty directory keeps
     // normal Gradle configuration/builds independent of Rust, cargo-ndk, and the Android NDK.
@@ -18,12 +18,15 @@ android {
     val keyAlias = System.getenv("KEY_ALIAS")
     val keyPassword = System.getenv("KEY_PASSWORD")
     val versionCodeEnv = System.getenv("VERSION_CODE")
+    val configuredVersionCode = versionCodeEnv?.toIntOrNull()?.takeIf { it > 0 }
 
     defaultConfig {
         applicationId = "com.conxius.wallet"
         minSdk = 26
         targetSdk = 35
-        versionCode = versionCodeEnv?.toIntOrNull() ?: 1
+        // Debug/developer builds retain a harmless local default. Release tasks
+        // are guarded below and fail closed when VERSION_CODE is absent/invalid.
+        versionCode = configuredVersionCode ?: 1
         versionName = "1.9.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -44,11 +47,24 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
+            isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+    gradle.taskGraph.whenReady {
+        val releaseTaskRequested = allTasks.any { task ->
+            task.path.substringAfterLast(':').contains("release", ignoreCase = true)
+        }
+        if (releaseTaskRequested && configuredVersionCode == null) {
+            throw GradleException(
+                "VERSION_CODE must be a positive integer for Android release builds; " +
+                    "derive it with scripts/ci/derive_android_version_code.mjs and export it before Gradle.",
+            )
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -61,6 +77,7 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
+        buildConfig = true
     }
     packaging {
         resources {
@@ -76,6 +93,9 @@ val silentPaymentsNativeArm64Library = silentPaymentsNativeOutput.map {
 val silentPaymentsNativeX8664Library = silentPaymentsNativeOutput.map {
     it.file("x86_64/libconxius_silent_payments_jni.so").asFile
 }
+val silentPaymentsNativeRepositoryDir = rootProject.file("..")
+val silentPaymentsNativeCrateDir = silentPaymentsNativeRepositoryDir.resolve("native/silent-payments-jni")
+val silentPaymentsNativeManifest = silentPaymentsNativeCrateDir.resolve("Cargo.toml")
 val silentPaymentsNativeScript = rootProject.file("../scripts/build-silent-payments-android.sh")
 val silentPaymentsNativeInputs = fileTree(rootProject.file("../native")) {
     include("**/*.rs")
@@ -88,6 +108,7 @@ val buildSilentPaymentsNative = tasks.register<Exec>("buildSilentPaymentsNative"
     group = "native"
     description = "Build arm64-v8a and x86_64 silent-payment JNI libraries with cargo-ndk."
     inputs.files(silentPaymentsNativeInputs)
+    inputs.file(silentPaymentsNativeManifest)
     inputs.file(silentPaymentsNativeScript)
     inputs.files(
         rootProject.file("../rust-toolchain"),
@@ -95,6 +116,7 @@ val buildSilentPaymentsNative = tasks.register<Exec>("buildSilentPaymentsNative"
         rootProject.file("../.cargo/config"),
         rootProject.file("../.cargo/config.toml"),
     ).optional()
+    workingDir(silentPaymentsNativeRepositoryDir)
     inputs.property("androidNdkHome", providers.environmentVariable("ANDROID_NDK_HOME").orNull ?: "")
     inputs.property("androidNdkRoot", providers.environmentVariable("ANDROID_NDK_ROOT").orNull ?: "")
     inputs.property("androidHome", providers.environmentVariable("ANDROID_HOME").orNull ?: "")
@@ -166,10 +188,11 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.navigation.compose)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
 
     implementation(libs.bdk.android)
     implementation(libs.androidx.room.runtime)
