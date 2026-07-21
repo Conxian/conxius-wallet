@@ -3,12 +3,16 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_DIR="${1:-$ROOT_DIR/android/app/build/generated/silent-payments/jniLibs}"
-MANIFEST="$ROOT_DIR/native/silent-payments-jni/Cargo.toml"
+CRATE_DIR="$ROOT_DIR/native/silent-payments-jni"
+MANIFEST="$CRATE_DIR/Cargo.toml"
 
 fail() {
   printf 'silent-payments native build: %s\n' "$1" >&2
   exit 1
 }
+
+[[ -d "$CRATE_DIR" ]] || fail "JNI crate directory not found at $CRATE_DIR"
+[[ -f "$MANIFEST" ]] || fail "JNI Cargo manifest not found at $MANIFEST"
 
 command -v cargo >/dev/null 2>&1 || fail "cargo is required; install Rust via rustup"
 command -v cargo-ndk >/dev/null 2>&1 || fail "cargo-ndk is required; install with 'cargo install cargo-ndk'"
@@ -31,18 +35,22 @@ for target in aarch64-linux-android x86_64-linux-android; do
     fail "Rust target $target is missing; install with 'rustup target add $target'"
 done
 
-[[ -f "$MANIFEST" ]] || fail "JNI Cargo manifest not found at $MANIFEST"
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 
 printf 'Building silent-payments JNI for arm64-v8a and x86_64 into %s\n' "$OUTPUT_DIR"
-cargo ndk \
-  -t arm64-v8a \
-  -t x86_64 \
-  -o "$OUTPUT_DIR" \
-  build \
-  --manifest-path "$MANIFEST" \
-  --release
+(
+  cd "$CRATE_DIR" || fail "unable to enter JNI crate directory: $CRATE_DIR"
+  cargo metadata --manifest-path "$MANIFEST" --no-deps >/dev/null \
+    || fail "cargo metadata failed for JNI crate at $MANIFEST"
+  cargo ndk \
+    -t arm64-v8a \
+    -t x86_64 \
+    -o "$OUTPUT_DIR" \
+    build \
+    --manifest-path "$MANIFEST" \
+    --release
+)
 
 for abi in arm64-v8a x86_64; do
   LIBRARY="$OUTPUT_DIR/$abi/libconxius_silent_payments_jni.so"
