@@ -87,7 +87,7 @@ fn derived_output_key(
     k: u32,
 ) -> [u8; 32] {
     let secp = Secp256k1::new();
-    let input_public_key = PublicKey::from_byte_array_compressed(&input_public_key).unwrap();
+    let input_public_key = PublicKey::from_byte_array_compressed(input_public_key).unwrap();
     let input_hash = tagged_hash(
         b"BIP0352/Inputs",
         &[
@@ -106,7 +106,7 @@ fn derived_output_key(
     let tweak =
         secp256k1::Scalar::from_be_bytes(tagged_hash(b"BIP0352/SharedSecret", &tweak_message))
             .unwrap();
-    PublicKey::from_byte_array_compressed(&spend_public_key)
+    PublicKey::from_byte_array_compressed(spend_public_key)
         .unwrap()
         .add_exp_tweak(&secp, &tweak)
         .unwrap()
@@ -131,7 +131,7 @@ fn sample_batch() -> PublicBatch {
         txid_le: [7u8; 32],
         vout: 1,
     };
-    let spend_secret = SecretKey::from_byte_array(&[2u8; 32]).expect("fixture secret");
+    let spend_secret = SecretKey::from_byte_array([2u8; 32]).expect("fixture secret");
     let spend_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &spend_secret).serialize();
     PublicBatch {
         network: Network::Testnet,
@@ -253,7 +253,7 @@ fn public_batch_adapter_derives_keys_and_returns_public_matches() {
         txid_le: [7u8; 32],
         vout: 1,
     };
-    let input_secret = SecretKey::from_byte_array(&[2u8; 32]).expect("fixture input secret");
+    let input_secret = SecretKey::from_byte_array([2u8; 32]).expect("fixture input secret");
     let input_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &input_secret).serialize();
     let derived = conxius_silent_payments_jni::derive_receiver_keys(
         b"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
@@ -318,7 +318,7 @@ fn public_batch_adapter_rejects_pathological_ecc_work_before_secret_derivation()
         txid_le: [12u8; 32],
         vout: 0,
     };
-    let input_secret = SecretKey::from_byte_array(&[2u8; 32]).expect("fixture input secret");
+    let input_secret = SecretKey::from_byte_array([2u8; 32]).expect("fixture input secret");
     let input_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &input_secret).serialize();
     let outputs: Vec<_> = (0..MAX_TAPROOT_OUTPUTS)
         .map(|vout| TaprootOutput {
@@ -505,7 +505,7 @@ fn official_bip352_core_vector_adapter_is_separate_from_jni_e2e() {
         given["key_material"]["scan_priv_key"].as_str().unwrap(),
     ))
     .expect("official scan secret");
-    let spend_secret = SecretKey::from_byte_array(&fixed::<32>(
+    let spend_secret = SecretKey::from_byte_array(fixed::<32>(
         given["key_material"]["spend_priv_key"].as_str().unwrap(),
     ))
     .expect("official spend secret");
