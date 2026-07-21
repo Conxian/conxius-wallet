@@ -1,45 +1,30 @@
 import { test, expect } from '@playwright/test';
+import { openFeature, resetBrowserState, waitForWalletShell } from './helpers';
 
 test.describe('CXN Guardian AI: Privacy Boundary Verification', () => {
-    test('should redact sensitive data in simulated DeFi flows', async ({ page }) => {
-        await page.goto('/');
-
-        // Bypass onboarding if needed
-        if (await page.getByText('Get Started').isVisible()) {
-            await page.click('text=Get Started');
-            await page.click('text=Create New Wallet');
-            await page.click("text=I've backed it up");
-        }
-
-        // Navigate to DeFi Enclave
-        await page.click('text=DeFi Enclave');
-        await page.click('text=Yield & Insurance Discovery');
-
-        // Simulate a scenario where a user might input a sensitive string or an API returns one
-        // Since we are in simulation mode, we can verify that the UI components that use
-        // the sanitizer are working.
-
-        // This is a placeholder for actual CXN Guardian testing which might involve
-        // monitoring network requests or checking redacted labels in the UI.
-        // For now, we verify the DeFi dashboard elements are correctly rendered.
-        await expect(page.getByText('Lido')).toBeVisible();
-        await expect(page.getByText('Protocol Insurance')).toBeVisible();
+    test.beforeEach(async ({ page }) => {
+        await resetBrowserState(page);
     });
 
-    test('should ensure marketplace items are correctly displayed', async ({ page }) => {
+    test('should expose the current local privacy controls', async ({ page }) => {
         await page.goto('/');
+        await waitForWalletShell(page);
+        await openFeature(page, 'Privacy Enclave', 'Privacy');
 
-        if (await page.getByText('Get Started').isVisible()) {
-            await page.click('text=Get Started');
-            await page.click('text=Create New Wallet');
-            await page.click("text=I've backed it up");
-        }
+        await expect(page.getByRole('heading', { name: 'Privacy Enclave', exact: true })).toBeVisible();
+        await expect(page.getByText('Local-Only Key Generation', { exact: true })).toBeVisible();
+        await expect(page.getByText('Always Route through Tor', { exact: true })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Satoshi AI: Privacy Audit', exact: true })).toBeVisible();
+    });
 
-        await page.click('text=Sovereign Bazaar');
+    test('should keep the sovereign marketplace gated until its privacy rail is active', async ({ page }) => {
+        await page.goto('/');
+        await waitForWalletShell(page);
+        await openFeature(page, 'Marketplace & Services', 'Bazaar');
 
-        // Check for new integrated services
-        await expect(page.getByText('Bitcoin 2024 Ticket')).toBeVisible();
-        await expect(page.getByText('Travala Gift Card')).toBeVisible();
-        await expect(page.getByText('Global Ghost eSIM')).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Sovereign Bazaar', exact: true })).toBeVisible();
+        await expect(page.getByText('Marketplace Offline', { exact: true })).toBeVisible();
+        await expect(page.getByText(/requires active tor circuit/i)).toBeVisible();
+        await expect(page.getByText('Global Ghost eSIM', { exact: true })).toHaveCount(0);
     });
 });

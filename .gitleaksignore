@@ -1,18 +1,4 @@
 # .gitleaksignore
-# Whitelist for non-sensitive example fragments, docs, and tests
-
-# Tests with dynamic secret construction or safe fragments
-tests/ai-security.test.ts
-tests/crypto.test.ts
-tests/seed.test.ts
-tests/signer.test.ts
-tests/web5.test.ts
-
-# Documentation examples
-docs/architecture/SDK_OWNERSHIP_AND_VERSION_POLICY.md
-docs/reports/SDK_RESEARCH.md
-README.md
-
-# Redacted placeholders
-*.stub.json
-*.mock.json
+# Deliberately empty: documentation, tests, examples, and generated text are
+# scanned. Add only an exact, reviewed fingerprint/path when evidence requires
+# a narrowly scoped exception.
