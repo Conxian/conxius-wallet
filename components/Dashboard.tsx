@@ -85,6 +85,7 @@ const Dashboard: React.FC = () => {
             <div className="flex gap-4">
                <button
                 onClick={() => { setShowSend(true); setSendStep('form'); }}
+                aria-label="Send payment"
                 className="flex-1 md:flex-none flex items-center justify-center gap-3 bg-accent-earth hover:bg-accent-earth/90 text-white px-8 py-5 rounded-2xl font-black uppercase tracking-widest transition-all hover:scale-105 shadow-lg active:scale-95"
                >
                  <ArrowUpRight size={20} />
@@ -92,6 +93,7 @@ const Dashboard: React.FC = () => {
                </button>
                <button
                 onClick={() => setShowReceive(true)}
+                aria-label="Receive payment"
                 className="flex-1 md:flex-none flex items-center justify-center gap-3 bg-white text-brand-deep px-8 py-5 rounded-2xl font-black uppercase tracking-widest transition-all hover:scale-105 shadow-lg active:scale-95"
                >
                  <ArrowDownLeft size={20} />
