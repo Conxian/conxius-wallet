@@ -12,7 +12,7 @@ const SignLoginMessageModal: React.FC<SignLoginMessageModalProps> = ({ message, 
     const parsed = parseBip322Message(message);
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-sm bg-brand-deep/60 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-sm bg-brand-deep/60 animate-in fade-in duration-300">
             <div className="w-full max-w-md bg-white border border-border rounded-[2.5rem] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-8 duration-500">
                 <div className="p-8 space-y-8">
                     <div className="flex justify-between items-center">
