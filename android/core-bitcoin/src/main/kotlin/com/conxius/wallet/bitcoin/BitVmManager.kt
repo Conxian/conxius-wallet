@@ -46,6 +46,17 @@ class BitVmManager {
     }
 
     /**
+     * Verifies every executable segment in a raw proof.
+     * Release builds remain fail-closed until native verification is enabled.
+     */
+    fun verifyProof(rawProof: String): Boolean {
+        val segments = generateSegments(rawProof)
+        return segments.withIndex().all { (index, segment) ->
+            verifySegment(index, segment)
+        }
+    }
+
+    /**
      * Signs a challenge for a specific tap if the operator proof is fraudulent.
      */
     fun signDispute(tapIndex: Int, commitment: String): String {
