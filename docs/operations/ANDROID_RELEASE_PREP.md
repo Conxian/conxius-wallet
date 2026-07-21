@@ -177,7 +177,8 @@ Then update `DeviceIntegrityPlugin.java` to call Play Integrity API alongside lo
 ### GitHub Actions Workflow
 
 Release automation is implemented in `.github/workflows/android-release.yml` and
-runs only through `workflow_dispatch`. It has three explicit stages:
+runs only through `workflow_dispatch`. A normal `publish` has three explicit
+stages:
 
 1. **Release Verification and Build** validates the expected `1.9.5` version/tag,
    runs lint, typecheck, unit tests, E2E, web build, dependency audit, Android
@@ -193,6 +194,19 @@ runs only through `workflow_dispatch`. It has three explicit stages:
    immutable tag and GitHub Release **before** publishing the exact AAB to the
    fixed Google Play `production` track.
 
+If the source run's evidence step succeeds but its Google Play step fails or is
+cancelled, use the explicit `retry` operation rather than `publish` or `recover`.
+Retry requires the source run ID, the source commit SHA, production-environment
+approval, and the version-bound literal
+`PLAY_NOT_PUBLISHED_<versionCode>`. Before dispatching it, an authorized release
+owner must check Google Play for the exact versionCode and confirm that it is
+absent and not pending. A retry then downloads the artifact from that exact
+source run, verifies its provenance, checksums, metadata, Android identity, and
+existing immutable tag/release assets, and republishes the same AAB. It does not
+run Gradle, rebuild, create or upload GitHub evidence, or use a different
+artifact. If Play's state is ambiguous or the versionCode is present, do not
+retry; treat it as an incident and follow the rollback procedure.
+
 The same workflow has an explicit `recover` operation for an Android Release
 dispatch whose Google Play publication step completed but which failed while
 finalizing release evidence. Recovery requires the source run ID, source commit
@@ -202,7 +216,8 @@ Google Play step to be recorded as successful, downloads the payload from that
 exact run, re-verifies provenance, checksums, artifact identity, and source
 metadata, then idempotently completes or verifies the tag and GitHub Release.
 Recovery never runs Gradle, rebuilds artifacts, or invokes the Google Play
-upload action; do not use it for a failed or uncertain Play publication.
+upload action; keep it separate from the failed-or-uncertain-publication `retry`
+operation.
 
 Repository files cannot create the required branch protection checks, reviewers,
 environment, or secrets. See [CI_CD_BASELINE.md](CI_CD_BASELINE.md) for the

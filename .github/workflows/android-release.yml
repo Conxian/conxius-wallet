@@ -14,23 +14,28 @@ on:
         default: v1.9.5
         type: string
       operation:
-        description: Publish a newly verified payload or recover evidence after a prior Play publication
+        description: Publish a new payload, retry Play from an evidence-complete failed run, or recover evidence after Play publication
         required: true
         default: publish
         type: choice
         options:
           - publish
+          - retry
           - recover
       source_run_id:
-        description: Successful Android Release run ID whose verified payload should be recovered
+        description: Android Release run ID containing the exact verified payload to retry or recover
         required: false
         type: string
       source_sha:
-        description: Full source commit SHA from the successful Android Release run
+        description: Full source commit SHA that produced the verified payload in the source run
         required: false
         type: string
       recovery_confirmation:
         description: Type PLAY_PUBLISHED only after confirming the exact version in Google Play
+        required: false
+        type: string
+      retry_confirmation:
+        description: Type PLAY_NOT_PUBLISHED_<versionCode> only after confirming that exact versionCode is absent and not pending in Google Play
         required: false
         type: string
 
@@ -354,6 +359,156 @@ jobs:
             publish
 
       - name: Publish exact AAB to Google Play production track
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.conxius.wallet
+          releaseFiles: release-payload/app-release.aab
+          tracks: production
+          status: completed
+
+  release-retry:
+    if: inputs.operation == 'retry'
+    name: Retry Production Release Publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: read
+      actions: read
+      attestations: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout release workflow helpers
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Validate explicit retry request
+        env:
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          EXPECTED_VERSION: ${{ inputs.version }}
+          RETRY_CONFIRMATION: ${{ inputs.retry_confirmation }}
+        run: |
+          set -euo pipefail
+          VERSION_CODE="$(node scripts/ci/derive_android_version_code.mjs "$EXPECTED_VERSION")"
+          bash scripts/ci/validate_release_retry_request.sh \
+            "$SOURCE_RUN_ID" \
+            "$SOURCE_SHA" \
+            "$VERSION_CODE" \
+            "$RETRY_CONFIRMATION"
+
+      - name: Verify failed source publication run and immutable evidence step
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          run_json="$(gh run view "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --json conclusion,event,headSha,jobs,workflowName)"
+          RUN_JSON="$run_json" SOURCE_SHA="$SOURCE_SHA" node --input-type=module <<'NODE'
+          const run = JSON.parse(process.env.RUN_JSON);
+          const publishJob = run.jobs?.find((job) => job.name === 'Production Release Publish');
+          const evidenceStep = publishJob?.steps?.find(
+            (step) => step.name === 'Finalize immutable release evidence before publication',
+          );
+          const publishStep = publishJob?.steps?.find(
+            (step) => step.name === 'Publish exact AAB to Google Play production track',
+          );
+          if (
+            run.event !== 'workflow_dispatch' ||
+            run.workflowName !== 'Android Release' ||
+            run.headSha !== process.env.SOURCE_SHA ||
+            typeof run.conclusion !== 'string' ||
+            run.conclusion === 'success' ||
+            evidenceStep?.conclusion !== 'success' ||
+            !publishStep ||
+            publishStep.conclusion === 'success'
+          ) {
+            throw new Error('source run must be a completed Android Release publish with verified evidence and no successful Play publication for the requested source SHA');
+          }
+          NODE
+
+      - name: Download exactly verified release payload from source run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: conxius-wallet-release-${{ inputs.version }}
+          path: release-payload
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.source_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Verify provenance attestation for retried subjects
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bash scripts/ci/verify_release_attestation.sh release-payload "${{ inputs.source_sha }}"
+
+      - name: Setup Java for Android artifact verification
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Android SDK for artifact verification
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+
+      - name: Install Android artifact verification tools
+        run: |
+          set +o pipefail
+          yes | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platform-tools" "build-tools;35.0.0"
+
+      - name: Download and checksum-verify pinned bundletool for retry verification
+        env:
+          BUNDLETOOL_URL: https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
+          BUNDLETOOL_SHA256: a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29
+        run: |
+          set -euo pipefail
+          BUNDLETOOL_PATH="$RUNNER_TEMP/bundletool-all-1.18.3.jar"
+          curl --fail --location --silent --show-error "$BUNDLETOOL_URL" --output "$BUNDLETOOL_PATH"
+          printf '%s  %s\n' "$BUNDLETOOL_SHA256" "$BUNDLETOOL_PATH" | sha256sum --check --status
+          echo "BUNDLETOOL_PATH=$BUNDLETOOL_PATH" >> "$GITHUB_ENV"
+
+      - name: Verify exact payload and source identity without rebuilding
+        env:
+          EXPECTED_SIGNING_CERT_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          VERSION_CODE="$(node scripts/ci/derive_android_version_code.mjs "${{ inputs.version }}")"
+          bash scripts/ci/verify_release_payload.sh \
+            release-payload \
+            "${{ inputs.version }}" \
+            "${{ inputs.tag }}" \
+            "${{ inputs.source_sha }}" \
+            "$VERSION_CODE"
+
+      - name: Validate production retry preconditions
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${PLAY_SERVICE_ACCOUNT_JSON:-}" ]]; then
+            echo "::error::PLAY_SERVICE_ACCOUNT_JSON is not configured for the production environment"
+            exit 1
+          fi
+
+      - name: Verify existing immutable release evidence before retry publication
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bash scripts/ci/finalize_release_evidence.sh \
+            release-payload \
+            "${{ inputs.version }}" \
+            "${{ inputs.tag }}" \
+            "${{ inputs.source_sha }}" \
+            retry
+
+      - name: Retry exact AAB to Google Play production track
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}

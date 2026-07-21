@@ -62,9 +62,13 @@ resulting state in the console rather than relying on a successful API response.
 2. Do not force-move, delete, or recreate a published tag to point at a
    different commit. A corrective release must use a new version and tag.
 3. If the GitHub release was created but Play publication failed, record the
-   partial state and either complete the approved publication or withdraw the
-   release according to the incident decision. Do not silently rerun only the
-   final upload step with an unreviewed artifact.
+   partial state. If the exact versionCode is confirmed absent and not pending
+   in Play Console, the approved `retry` operation in
+   `.github/workflows/android-release.yml` may republish only the verified AAB
+   from the source run, using the required version-bound confirmation. If Play
+   state is ambiguous or the versionCode is present, do not retry; withdraw or
+   otherwise contain the release according to the incident decision. Never
+   silently rerun only the final upload step with an unreviewed artifact.
 4. Link the corrective release to the incident and include its source commit,
    artifact checksums, SBOM, signature evidence, and provenance attestation.
 
