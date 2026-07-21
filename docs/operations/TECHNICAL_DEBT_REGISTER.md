@@ -138,7 +138,11 @@ its exit criteria and validation are recorded in the implementation change.
 - **Impact:** CI attempted uploads for directories no job produced, and scheduled cleanup deleted only ephemeral runner-local state.
 - **Owner:** Unassigned
 - **Exit criteria:** No artifact upload exists without a producing job and explicit failure-artifact contract; the no-op cleanup workflow is removed or replaced with durable retention management.
-- **Validation:** Removed the upload step because no job produces its paths and deleted the weekly runner-local cleanup workflow; changed workflow files pass diff review. A remote CI run is still required to confirm hosted-runner behavior.
+- **Validation:** Removed the unproduced failure-artifact uploads and deleted the
+  weekly runner-local cleanup workflow; the Web Build job now produces the
+  `web-dist` artifact consumed by both Android CI jobs. Changed workflow files
+  pass diff review. A remote CI run is still required to confirm hosted-runner
+  behavior.
 - **Target milestone:** M16 release baseline
 - **Metrics baseline:** Four unproduced artifact paths and one weekly ephemeral-runner cleanup workflow.
 - **Evidence:** [`CI_WORKFLOW_REMEDIATION_REPORT.md`](../reports/CI_WORKFLOW_REMEDIATION_REPORT.md); `.github/workflows/ci.yml`
