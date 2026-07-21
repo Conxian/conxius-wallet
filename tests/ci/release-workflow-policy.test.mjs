@@ -49,7 +49,7 @@ describe('Android release workflow policy', () => {
 
   it('recovers only from the exact verified artifact and never rebuilds or republishes Play', () => {
     const recovery = jobSection('release-recover');
-    expect(recovery).toContain('actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093');
+    expect(recovery).toContain('actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c');
     expect(recovery).toContain('run-id: ${{ inputs.source_run_id }}');
     expect(recovery).toContain('verify_release_attestation.sh');
     expect(recovery).toContain('verify_release_payload.sh');
@@ -71,7 +71,7 @@ describe('Android release workflow policy', () => {
     expect(retry).toContain('gh run view');
     expect(retry).toContain("evidenceStep?.conclusion !== 'success'");
     expect(retry).toContain("publishStep.conclusion === 'success'");
-    expect(retry).toContain('actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093');
+    expect(retry).toContain('actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c');
     expect(retry).toContain('run-id: ${{ inputs.source_run_id }}');
     expect(retry).toContain('verify_release_attestation.sh');
     expect(retry).toContain('verify_release_payload.sh');
