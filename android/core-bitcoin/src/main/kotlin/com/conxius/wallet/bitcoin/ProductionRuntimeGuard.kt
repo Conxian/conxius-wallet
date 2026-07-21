@@ -1,6 +1,6 @@
 package com.conxius.wallet.bitcoin
 
-import com.conxius.wallet.BuildConfig
+import com.conxius.wallet.bitcoin.BuildConfig
 
 /**
  * Production Runtime Guard
