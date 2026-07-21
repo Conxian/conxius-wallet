@@ -115,6 +115,28 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  silent-payments-rust:
+    name: Silent Payments Rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+        with:
+          toolchain: stable
+          components: rustfmt
+      - name: Check Rust formatting
+        working-directory: native/silent-payments
+        run: cargo fmt --check
+      - name: Check Rust dependencies
+        working-directory: native/silent-payments
+        run: cargo check --locked
+      - name: Run Rust tests
+        working-directory: native/silent-payments
+        run: cargo test --locked
+
   e2e:
     name: E2E
     runs-on: ubuntu-latest
