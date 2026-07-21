@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Create or safely recover immutable release evidence without rebuilding or
-# republishing the Google Play payload.
+# Create or verify immutable release evidence without rebuilding the Google Play
+# payload. Retry mode only verifies already-complete evidence before republishing.
 set -euo pipefail
 
 if [[ $# -ne 5 ]]; then
@@ -26,8 +26,8 @@ fail() {
   || fail "source SHA must be a full 40-character commit SHA"
 [[ -n "$VERSION" && -n "$TAG" ]] \
   || fail "version and tag are required"
-[[ "$MODE" == "publish" || "$MODE" == "recover" ]] \
-  || fail "mode must be publish or recover"
+[[ "$MODE" == "publish" || "$MODE" == "recover" || "$MODE" == "retry" ]] \
+  || fail "mode must be publish, retry, or recover"
 
 declare -a RELEASE_ASSETS=(
   app-release.apk
@@ -96,10 +96,12 @@ resolve_remote_tag() {
 }
 
 if (( tag_exists == 1 )); then
-  [[ "$MODE" == "recover" ]] \
-    || fail "release tag already exists; use the explicit recover operation instead of republishing"
+  [[ "$MODE" == "recover" || "$MODE" == "retry" ]] \
+    || fail "release tag already exists; use the explicit retry or recover operation instead of republishing"
   resolve_remote_tag
 else
+  [[ "$MODE" == "publish" ]] \
+    || fail "${MODE} requires the existing immutable release tag; refusing to create evidence"
   git tag -a "$TAG" "$SOURCE_SHA" -m "Release $TAG"
   if ! git push origin "refs/tags/$TAG"; then
     git tag -d "$TAG" >/dev/null 2>&1 || true
@@ -130,6 +132,8 @@ if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
 fi
 
 if (( release_exists == 0 )); then
+  [[ "$MODE" == "publish" || "$MODE" == "recover" ]] \
+    || fail "retry requires the existing GitHub Release; refusing to create evidence"
   release_paths=()
   for asset in "${RELEASE_ASSETS[@]}" SHA256SUMS; do
     release_paths+=("$PAYLOAD_DIR/$asset")
@@ -141,8 +145,8 @@ if (( release_exists == 0 )); then
     --notes-file "$NOTES_PATH" \
     "${release_paths[@]}"
 else
-  [[ "$MODE" == "recover" ]] \
-    || fail "GitHub Release already exists; use the explicit recover operation instead of republishing"
+  [[ "$MODE" == "recover" || "$MODE" == "retry" ]] \
+    || fail "GitHub Release already exists; use the explicit retry or recover operation instead of republishing"
   release_tag="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName --jq '.tagName')"
   [[ "$release_tag" == "$TAG" ]] \
     || fail "existing GitHub Release has an unexpected tag name: $release_tag"
@@ -157,6 +161,8 @@ else
     grep -Fqx -- "$asset" <<< "$asset_names" || missing_assets+=("$asset")
   done
   if (( ${#missing_assets[@]} > 0 )); then
+    [[ "$MODE" == "recover" ]] \
+      || fail "retry requires every immutable GitHub Release asset to already exist"
     upload_paths=()
     for asset in "${missing_assets[@]}"; do
       upload_paths+=("$PAYLOAD_DIR/$asset")
