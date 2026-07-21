@@ -181,16 +181,28 @@ runs only through `workflow_dispatch`. It has three explicit stages:
 
 1. **Release Verification and Build** validates the expected `1.9.5` version/tag,
    runs lint, typecheck, unit tests, E2E, web build, dependency audit, Android
-   security policy, Android lint, and Android unit tests, then builds the signed
-   APK and AAB once.
+   security policy, Android lint, and Android unit tests, installs
+   `platforms;android-36` for the modules' `compileSdk = 36`, then builds the
+   signed APK and AAB once.
 2. **Release Artifact Attestation** downloads the uploaded payload and creates
    provenance for every subject listed in `SHA256SUMS`.
 3. **Production Release Publish** requires the separately configured
    `production` environment, verifies every subject attestation and re-extracts
    APK/AAB package identity, version, versionCode, and public signing
-   certificate identity without rebuilding, then publishes the exact AAB to the
-   fixed Google Play `production` track and GitHub release. There is no
-   skip/bypass input.
+   certificate identity without rebuilding. It creates and verifies the
+   immutable tag and GitHub Release **before** publishing the exact AAB to the
+   fixed Google Play `production` track.
+
+The same workflow has an explicit `recover` operation for an Android Release
+dispatch whose Google Play publication step completed but which failed while
+finalizing release evidence. Recovery requires the source run ID, source commit
+SHA, production-environment approval, and the literal `PLAY_PUBLISHED`
+confirmation after checking Play Console. It also requires the source run's
+Google Play step to be recorded as successful, downloads the payload from that
+exact run, re-verifies provenance, checksums, artifact identity, and source
+metadata, then idempotently completes or verifies the tag and GitHub Release.
+Recovery never runs Gradle, rebuilds artifacts, or invokes the Google Play
+upload action; do not use it for a failed or uncertain Play publication.
 
 Repository files cannot create the required branch protection checks, reviewers,
 environment, or secrets. See [CI_CD_BASELINE.md](CI_CD_BASELINE.md) for the
