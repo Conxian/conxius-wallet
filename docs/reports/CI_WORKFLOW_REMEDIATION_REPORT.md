@@ -16,7 +16,9 @@
 
 ## 3. Remediation Actions
 - **Narrowed Contamination Scan**: `scripts/ci/check_runtime_contamination.sh` is now targeted explicitly at `android/core-bitcoin` and `WalletViewModel.kt`.
-- **Gitleaks Hardening**: Added `.gitleaksignore` to whitelist safe documentation patterns.
+- **Gitleaks Hardening**: The repository-owned scan uses a pinned, checksum-
+  verified tokenless CLI; `.gitleaksignore` remains intentionally empty so
+  documentation, tests, examples, and generated text stay scanned.
 - **Billing Unblocked**: Verified that CON-794 (Org Billing) is marked as Done, restoring the dependency-review workflow.
 - **Test Secret Construction**: Reconfirmed that sensitive strings in `tests/` are constructed dynamically using fragments and `.join("")` to evade regex-based scanners.
 
