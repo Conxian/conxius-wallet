@@ -155,7 +155,7 @@ impl ScanSecret {
     /// Creates a scan secret from raw big-endian bytes.
     pub fn from_bytes(bytes: [u8; 32]) -> Result<Self, ScanError> {
         let mut secret_key =
-            SecretKey::from_byte_array(&bytes).map_err(|_| ScanError::InvalidScanSecret)?;
+            SecretKey::from_byte_array(bytes).map_err(|_| ScanError::InvalidScanSecret)?;
         secret_key.non_secure_erase();
         Ok(Self(Zeroizing::new(bytes)))
     }
@@ -401,7 +401,7 @@ pub fn scan_transaction_with_cancellation<C: CancellationToken>(
     }
 
     let secp = Secp256k1::new();
-    let spend_public_key = PublicKey::from_byte_array_compressed(&spend_public_key)
+    let spend_public_key = PublicKey::from_byte_array_compressed(spend_public_key)
         .map_err(|_| ScanError::InvalidSpendPublicKey)?;
 
     if inputs.is_empty() {
@@ -418,9 +418,9 @@ pub fn scan_transaction_with_cancellation<C: CancellationToken>(
         }
         let public_key = match input.public_key {
             EligibleInputPublicKey::Compressed(bytes) => {
-                PublicKey::from_byte_array_compressed(&bytes)
+                PublicKey::from_byte_array_compressed(bytes)
             }
-            EligibleInputPublicKey::XOnly(bytes) => XOnlyPublicKey::from_byte_array(&bytes)
+            EligibleInputPublicKey::XOnly(bytes) => XOnlyPublicKey::from_byte_array(bytes)
                 .map(|x_only| PublicKey::from_x_only_public_key(x_only, Parity::Even)),
         }
         .map_err(|_| ScanError::InvalidInputPublicKey(index))?;
@@ -442,7 +442,7 @@ pub fn scan_transaction_with_cancellation<C: CancellationToken>(
         if cancellation.is_cancelled() {
             return Err(ScanError::Cancelled);
         }
-        let x_only = XOnlyPublicKey::from_byte_array(&output.output_key)
+        let x_only = XOnlyPublicKey::from_byte_array(output.output_key)
             .map_err(|_| ScanError::InvalidOutputKey(index))?;
         parsed_outputs.push((
             *output,
@@ -651,7 +651,7 @@ fn build_label_candidates(
         let mut scalar = valid_nonzero_scalar(&tagged_hash(LABEL_TAG, message.as_ref()))
             .ok_or(ScanError::InvalidLabel(index))?;
         let scalar_bytes = Zeroizing::new(scalar.to_be_bytes());
-        let mut secret_key = match SecretKey::from_byte_array(&scalar_bytes) {
+        let mut secret_key = match SecretKey::from_byte_array(*scalar_bytes) {
             Ok(secret_key) => secret_key,
             Err(_) => {
                 scalar.non_secure_erase();
@@ -698,7 +698,7 @@ mod tests {
     use std::sync::atomic::AtomicUsize;
 
     fn test_spend_public_key() -> [u8; PUBLIC_KEY_SIZE] {
-        let spend_secret = SecretKey::from_byte_array(&[2u8; 32]).expect("test spend secret");
+        let spend_secret = SecretKey::from_byte_array([2u8; 32]).expect("test spend secret");
         PublicKey::from_secret_key(&Secp256k1::new(), &spend_secret).serialize()
     }
 
@@ -954,7 +954,7 @@ mod tests {
 
         let output_key = PublicKey::from_secret_key(
             &Secp256k1::new(),
-            &SecretKey::from_byte_array(&[3u8; 32]).expect("test output secret"),
+            &SecretKey::from_byte_array([3u8; 32]).expect("test output secret"),
         )
         .x_only_public_key()
         .0
@@ -1007,7 +1007,7 @@ mod tests {
         let input_outpoint = test_outpoint(0);
         let output_key = PublicKey::from_secret_key(
             &Secp256k1::new(),
-            &SecretKey::from_byte_array(&[3u8; 32]).expect("test output secret"),
+            &SecretKey::from_byte_array([3u8; 32]).expect("test output secret"),
         )
         .x_only_public_key()
         .0
