@@ -6,5 +6,7 @@
 - [Roadmap](ROADMAP.md)
 - [SAB Wallet Map](SAB_WALLET_MAP.md)
 - [Android Release Prep](ANDROID_RELEASE_PREP.md)
+- [Strict CI/CD Baseline](CI_CD_BASELINE.md)
+- [Release Rollback](RELEASE_ROLLBACK.md)
 - [Recovery Registry](RECOVERY_REGISTRY.md)
 - [Verification Pathway](VERIFICATION_PATHWAY.md)
