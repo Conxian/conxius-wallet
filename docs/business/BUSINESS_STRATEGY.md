@@ -28,7 +28,7 @@ Conxius employs an **Operational Benefit Model** where infrastructure costs are 
 
 ### 3.1 Cost Optimization & Sovereignty
 *   **Sovereign Rails:** Deploying dedicated proxies for swaps (Changelly) and trading (Bisq) eliminates "API middleware" fees and increases reliability.
-*   **ZKP Efficiency:** Using BitVM and on-device STARK verifiers reduces L1 verification costs.
+*   **ZKP Efficiency:** BitVM2 and any on-device verifier remain future research; no reviewed wallet verifier is currently available to make L1 cost or integrity claims.
 
 ### 3.2 Revenue Diversification
 *   **B2C:** Utility fees (0.1% - 0.25%), Pro Subscriptions, Affiliate Rebates.

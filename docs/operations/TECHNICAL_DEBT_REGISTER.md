@@ -73,12 +73,12 @@ current candidate results.
 
 - **Category:** Native bridge / protocol integrity
 - **Priority:** P0
-- **Status:** Open
+- **Status:** Open — BitVM2 quarantine tracked by issue #427
 - **Affected paths:** `android/core-bitcoin/src/main/kotlin/com/conxius/wallet/bitcoin/`, `services/ark.ts`, `services/bitvm.ts`, `services/rgb.ts`, `services/ntt.ts`, `services/lightning.ts`
-- **Impact:** Several protocol paths are described as bridged or production-ready while reports identify stubs, simulations, placeholder cryptography, or incomplete native implementations. Synthetic success can mask unsupported production operations.
+- **Impact:** Several protocol paths are described as bridged or production-ready while reports identify stubs, simulations, placeholder cryptography, or incomplete native implementations. Synthetic success can mask unsupported production operations. BitVM2 specifically had boolean/synthetic verification and signing shapes; issue #427 replaces those with typed fail-closed outcomes and a canonical proof-envelope gate.
 - **Owner:** Unassigned
 - **Exit criteria:** Every production-capable protocol operation has a verified native implementation or an explicit fail-closed guard; tests distinguish simulation from production and cannot report synthetic success as production readiness.
-- **Validation:** Protocol-by-protocol evidence review, native unit/instrumentation tests, and negative tests for unsupported production operations.
+- **Validation:** Protocol-by-protocol evidence review, native unit/instrumentation tests, and negative tests for unsupported production operations. BitVM2 requires arbitrary/malformed/wrong-key/mutated/encoding/tap-index/binding cases, explicit non-authoritative simulation labels, and proof that unsupported/simulated results never invoke a signer.
 - **PR #390 evidence:** The draft adds a bounded BIP-352 Rust/JNI scanner, Kotlin Esplora source, persistence/cursor coordination, shallow reorg fail-closed checks, and focused source/codec/manager tests. It does not close this broader debt: Android release validation, device evidence, compact filters, spending/tweak recovery, address encoding, and other protocol gaps remain open.
 - **Target milestone:** M16 release baseline gate, then M17 protocol completion
 - **Metrics baseline:** `docs/reports/GAP_MATRIX_2026.md` lists seven protocol gaps; `docs/reports/v1.9.5_CODE_GAP_MAPPING.md` maps native and service-layer stubs.
