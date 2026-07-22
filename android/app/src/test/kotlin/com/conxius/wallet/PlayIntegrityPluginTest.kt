@@ -34,7 +34,7 @@ class PlayIntegrityPluginTest {
     fun passesExactRequestHashAndReturnsOpaqueTokenUnchanged() = runBlocking {
         val requestHash = "  canonical-request-hash/with-padding  "
         val opaqueToken = "eyJ-encrypted.and.signed.token=="
-        val client = RecordingClient { opaqueToken }
+        val client = RecordingClient(tokenFactory = { opaqueToken })
         val plugin = PlayIntegrityPlugin(cloudProjectNumber = 7L, client = client)
 
         val actualToken = plugin.requestIntegrityToken(requestHash)
@@ -45,7 +45,7 @@ class PlayIntegrityPluginTest {
 
     @Test
     fun cachesPreparedProviderAcrossRequests() = runBlocking {
-        val client = RecordingClient { requestHash -> "opaque:$requestHash" }
+        val client = RecordingClient(tokenFactory = { requestHash -> "opaque:$requestHash" })
         val plugin = PlayIntegrityPlugin(cloudProjectNumber = 4_200L, client = client)
 
         assertEquals("opaque:first", plugin.requestIntegrityToken("first"))
