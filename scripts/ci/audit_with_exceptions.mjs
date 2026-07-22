@@ -1,11 +1,21 @@
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, lstatSync, realpathSync } from 'node:fs';
+import {
+  closeSync,
+  constants as fsConstants,
+  fchmodSync,
+  lstatSync,
+  openSync,
+  readFileSync,
+  realpathSync,
+  writeSync,
+} from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const LEDGER_SCHEMA_VERSION = 1;
+export const LEDGER_SCHEMA_VERSION = 2;
+export const EVIDENCE_SCHEMA_VERSION = 2;
 export const AUDIT_COMMAND = ['audit', '--audit-level=low', '--json'];
 export const AUDIT_SEVERITIES = ['low', 'moderate', 'high', 'critical'];
 
@@ -18,6 +28,12 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 const ADVISORY_PATTERN = /^(?:GHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}|CVE-\d{4}-\d{4,})$/;
 const PLACEHOLDER_PATTERN = /^(?:$|tbd|todo|unknown|pending|n\/a|none|example(?:\.com)?|placeholder)$/i;
+const FINGERPRINT_PATTERN = /^[a-f0-9]{64}$/;
+const ROLE_TOKEN_PATTERN = /^(?:production|(?:development|optional|bundled)(?:\+(?:development|optional|bundled))*)$/;
+const LINEAR_APPROVAL_REFERENCE_PATTERN = /^\/conxian-labs\/issue\/[^/?#]+(?:\/[^?#]*)?$/;
+const LINEAR_APPROVAL_FRAGMENT_PATTERN = /^#comment-[A-Za-z0-9-]+$/;
+const GITHUB_APPROVAL_PATH_PATTERN = /^\/(?:Conxian\/conxius-wallet)\/(?:issues|pull)\/\d+$/;
+const GITHUB_APPROVAL_FRAGMENT_PATTERN = /^#(?:(?:issuecomment|pullrequestreview|reviewcomment)-[A-Za-z0-9_-]+|discussion_r[A-Za-z0-9_-]+)$/;
 
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -110,7 +126,90 @@ function sameValues(left, right) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-function assertAllowedEvidenceUrl(value, context) {
+function assertBoolean(value, context) {
+  if (typeof value !== 'boolean') {
+    throw new Error(`${context} must be a boolean.`);
+  }
+  return value;
+}
+
+function compareReachabilityRows(left, right) {
+  for (const field of ['version', 'path']) {
+    if (left[field] !== right[field]) {
+      return left[field] < right[field] ? -1 : 1;
+    }
+  }
+  for (const field of ['dev', 'optional', 'bundled']) {
+    if (left[field] !== right[field]) {
+      return left[field] ? 1 : -1;
+    }
+  }
+  return 0;
+}
+
+function roleLabel(row) {
+  const roles = [];
+  if (row.dev) roles.push('development');
+  if (row.optional) roles.push('optional');
+  if (row.bundled) roles.push('bundled');
+  return roles.length === 0 ? 'production' : roles.join('+');
+}
+
+export function classifyReachability(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new Error('Reachability rows must be a non-empty array.');
+  }
+  const labels = [...new Set(rows.map((row) => roleLabel(row)))].sort();
+  return labels.length === 1 ? labels[0] : `mixed:${labels.join(',')}`;
+}
+
+export function canonicaliseReachabilityRows(rows, context = 'reachability rows') {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new Error(`${context} must be a non-empty array.`);
+  }
+  const canonicalRows = rows.map((row, index) => {
+    const rowContext = `${context}[${index}]`;
+    assertObject(row, rowContext);
+    assertExactKeys(row, ['version', 'path', 'dev', 'optional', 'bundled'], ['version', 'path', 'dev', 'optional', 'bundled'], rowContext);
+    const version = assertVersion(row.version, `${rowContext}.version`);
+    const path = assertNonEmptyString(row.path, `${rowContext}.path`);
+    const dev = assertBoolean(row.dev, `${rowContext}.dev`);
+    const optional = assertBoolean(row.optional, `${rowContext}.optional`);
+    const bundled = assertBoolean(row.bundled, `${rowContext}.bundled`);
+    return { version, path, dev, optional, bundled };
+  });
+  canonicalRows.sort(compareReachabilityRows);
+  return canonicalRows;
+}
+
+export function computeReachabilityFingerprint(rows) {
+  const canonicalRows = canonicaliseReachabilityRows(rows);
+  return createHash('sha256').update(JSON.stringify(canonicalRows)).digest('hex');
+}
+
+function assertReachabilityFingerprint(value, context) {
+  if (typeof value !== 'string' || !FINGERPRINT_PATTERN.test(value)) {
+    throw new Error(`${context} must be a lowercase SHA-256 fingerprint.`);
+  }
+  return value;
+}
+
+function assertRoleClassification(value, context) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error(`${context} must be a non-empty reachability role classification.`);
+  }
+  const classification = value.trim();
+  const tokens = classification.startsWith('mixed:') ? classification.slice('mixed:'.length).split(',') : [classification];
+  if (tokens.length === 0 || tokens.some((token) => !ROLE_TOKEN_PATTERN.test(token))) {
+    throw new Error(`${context} has unsupported reachability role classification ${classification}.`);
+  }
+  if (classification.startsWith('mixed:') && tokens.length < 2) {
+    throw new Error(`${context} mixed classification must contain at least two roles.`);
+  }
+  return classification;
+}
+
+function assertAllowedApprovalReference(value, context) {
   assertNonEmptyString(value, context);
   assertNonPlaceholder(value, context);
   let url;
@@ -119,8 +218,26 @@ function assertAllowedEvidenceUrl(value, context) {
   } catch {
     throw new Error(`${context} must be a durable HTTPS URL.`);
   }
-  if (url.protocol !== 'https:' || !url.hostname || url.pathname === '/' || /(?:example|invalid|localhost)/i.test(url.hostname)) {
-    throw new Error(`${context} must be a durable HTTPS URL, not a placeholder.`);
+  if (
+    url.protocol !== 'https:'
+    || url.username
+    || url.password
+    || url.port
+    || url.search
+    || !url.hostname
+  ) {
+    throw new Error(`${context} must be a canonical HTTPS comment URL.`);
+  }
+
+  const hostname = url.hostname.toLowerCase();
+  const isLinearComment = hostname === 'linear.app'
+    && LINEAR_APPROVAL_REFERENCE_PATTERN.test(url.pathname)
+    && LINEAR_APPROVAL_FRAGMENT_PATTERN.test(url.hash);
+  const isGitHubComment = hostname === 'github.com'
+    && GITHUB_APPROVAL_PATH_PATTERN.test(url.pathname)
+    && GITHUB_APPROVAL_FRAGMENT_PATTERN.test(url.hash);
+  if (!isLinearComment && !isGitHubComment) {
+    throw new Error(`${context} must reference a canonical Linear or Conxius Wallet GitHub comment.`);
   }
 }
 
@@ -140,7 +257,7 @@ function validateApproval(approval, context, today) {
       ['status', 'reference', 'approver', 'approvedOn'],
       context,
     );
-    assertAllowedEvidenceUrl(approval.reference, `${context}.reference`);
+    assertAllowedApprovalReference(approval.reference, `${context}.reference`);
     const approver = assertNonEmptyString(approval.approver, `${context}.approver`);
     assertNonPlaceholder(approver, `${context}.approver`);
     const approvedOn = assertDate(approval.approvedOn, `${context}.approvedOn`, today);
@@ -167,8 +284,34 @@ export function validateLedger(ledger, { today = new Date().toISOString().slice(
     assertObject(record, context);
     assertExactKeys(
       record,
-      ['advisory', 'package', 'severity', 'observedVersions', 'disposition', 'reviewedOn', 'owner', 'rationale', 'remediation', 'expiresOn', 'approval', 'evidence'],
-      ['advisory', 'package', 'severity', 'observedVersions', 'disposition', 'reviewedOn'],
+      [
+        'advisory',
+        'package',
+        'severity',
+        'observedVersions',
+        'pathCount',
+        'roleClassification',
+        'reachabilityFingerprint',
+        'disposition',
+        'reviewedOn',
+        'owner',
+        'rationale',
+        'remediation',
+        'expiresOn',
+        'approval',
+        'evidence',
+      ],
+      [
+        'advisory',
+        'package',
+        'severity',
+        'observedVersions',
+        'pathCount',
+        'roleClassification',
+        'reachabilityFingerprint',
+        'disposition',
+        'reviewedOn',
+      ],
       context,
     );
 
@@ -182,13 +325,51 @@ export function validateLedger(ledger, { today = new Date().toISOString().slice(
     }
     const severity = assertSeverity(record.severity, `${context}.severity`);
     const observedVersions = normaliseVersions(record.observedVersions, `${context}.observedVersions`);
+    if (!Number.isInteger(record.pathCount) || record.pathCount <= 0) {
+      throw new Error(`${context}.pathCount must be a positive integer.`);
+    }
+    const roleClassification = assertRoleClassification(record.roleClassification, `${context}.roleClassification`);
+    const reachabilityFingerprint = assertReachabilityFingerprint(
+      record.reachabilityFingerprint,
+      `${context}.reachabilityFingerprint`,
+    );
     const reviewedOn = assertDate(record.reviewedOn, `${context}.reviewedOn`, today);
 
     if (record.disposition === 'exception') {
       assertExactKeys(
         record,
-        ['advisory', 'package', 'severity', 'observedVersions', 'disposition', 'reviewedOn', 'owner', 'rationale', 'remediation', 'expiresOn', 'approval'],
-        ['advisory', 'package', 'severity', 'observedVersions', 'disposition', 'reviewedOn', 'owner', 'rationale', 'remediation', 'expiresOn', 'approval'],
+        [
+          'advisory',
+          'package',
+          'severity',
+          'observedVersions',
+          'pathCount',
+          'roleClassification',
+          'reachabilityFingerprint',
+          'disposition',
+          'reviewedOn',
+          'owner',
+          'rationale',
+          'remediation',
+          'expiresOn',
+          'approval',
+        ],
+        [
+          'advisory',
+          'package',
+          'severity',
+          'observedVersions',
+          'pathCount',
+          'roleClassification',
+          'reachabilityFingerprint',
+          'disposition',
+          'reviewedOn',
+          'owner',
+          'rationale',
+          'remediation',
+          'expiresOn',
+          'approval',
+        ],
         context,
       );
       const owner = assertNonEmptyString(record.owner, `${context}.owner`);
@@ -207,6 +388,9 @@ export function validateLedger(ledger, { today = new Date().toISOString().slice(
         package: packageName,
         severity,
         observedVersions,
+        pathCount: record.pathCount,
+        roleClassification,
+        reachabilityFingerprint,
         disposition: 'exception',
         reviewedOn,
         owner,
@@ -218,8 +402,32 @@ export function validateLedger(ledger, { today = new Date().toISOString().slice(
     } else if (record.disposition === 'not-affected') {
       assertExactKeys(
         record,
-        ['advisory', 'package', 'severity', 'observedVersions', 'disposition', 'reviewedOn', 'rationale', 'evidence'],
-        ['advisory', 'package', 'severity', 'observedVersions', 'disposition', 'reviewedOn', 'rationale', 'evidence'],
+        [
+          'advisory',
+          'package',
+          'severity',
+          'observedVersions',
+          'pathCount',
+          'roleClassification',
+          'reachabilityFingerprint',
+          'disposition',
+          'reviewedOn',
+          'rationale',
+          'evidence',
+        ],
+        [
+          'advisory',
+          'package',
+          'severity',
+          'observedVersions',
+          'pathCount',
+          'roleClassification',
+          'reachabilityFingerprint',
+          'disposition',
+          'reviewedOn',
+          'rationale',
+          'evidence',
+        ],
         context,
       );
       const rationale = assertNonEmptyString(record.rationale, `${context}.rationale`);
@@ -238,6 +446,9 @@ export function validateLedger(ledger, { today = new Date().toISOString().slice(
         package: packageName,
         severity,
         observedVersions,
+        pathCount: record.pathCount,
+        roleClassification,
+        reachabilityFingerprint,
         disposition: 'not-affected',
         reviewedOn,
         rationale,
@@ -300,7 +511,7 @@ export function normaliseAuditReport(report) {
     }
 
     const observedVersions = [];
-    let pathCount = 0;
+    const reachabilityRows = [];
     for (const [findingIndex, finding] of advisory.findings.entries()) {
       const findingContext = `pnpm audit advisory ${advisoryId}.findings[${findingIndex}]`;
       assertObject(finding, findingContext);
@@ -309,20 +520,42 @@ export function normaliseAuditReport(report) {
       if (!Array.isArray(finding.paths) || finding.paths.length === 0 || finding.paths.some((path) => typeof path !== 'string' || path.trim() === '')) {
         throw new Error(`${findingContext}.paths must be a non-empty array of paths.`);
       }
+      const dev = finding.dev ?? false;
+      const optional = finding.optional ?? false;
+      const bundled = finding.bundled ?? false;
       for (const field of ['dev', 'optional', 'bundled']) {
         if (Object.prototype.hasOwnProperty.call(finding, field) && typeof finding[field] !== 'boolean') {
           throw new Error(`${findingContext}.${field} must be a boolean when present.`);
         }
       }
-      pathCount += finding.paths.length;
+      for (const [pathIndex, rawPath] of finding.paths.entries()) {
+        const path = assertNonEmptyString(rawPath, `${findingContext}.paths[${pathIndex}]`);
+        if (path !== rawPath) {
+          throw new Error(`${findingContext}.paths[${pathIndex}] must not contain surrounding whitespace.`);
+        }
+        reachabilityRows.push({
+          version: finding.version,
+          path,
+          dev,
+          optional,
+          bundled,
+        });
+      }
     }
+
+    const canonicalReachabilityRows = canonicaliseReachabilityRows(
+      reachabilityRows,
+      `pnpm audit advisory ${advisoryId} reachability rows`,
+    );
 
     const normalized = {
       advisory: advisoryId,
       package: packageName,
       severity,
       observedVersions: [...new Set(observedVersions)].sort(),
-      pathCount,
+      pathCount: canonicalReachabilityRows.length,
+      roleClassification: classifyReachability(canonicalReachabilityRows),
+      reachabilityFingerprint: computeReachabilityFingerprint(canonicalReachabilityRows),
     };
     findings.push(normalized);
     advisoryById.set(advisoryId, normalized);
@@ -336,8 +569,19 @@ export function normaliseAuditReport(report) {
 }
 
 export function evaluateAuditReport(report, ledger, { today = new Date().toISOString().slice(0, 10) } = {}) {
-  const audit = normaliseAuditReport(report);
-  const ledgerState = validateLedger(ledger, { today });
+  let audit;
+  try {
+    audit = normaliseAuditReport(report);
+  } catch (error) {
+    throw policyError('audit_report_invalid', error instanceof Error ? error.message : 'The current dependency audit report is invalid.');
+  }
+
+  let ledgerState;
+  try {
+    ledgerState = validateLedger(ledger, { today });
+  } catch (error) {
+    throw policyError('ledger_invalid', error instanceof Error ? error.message : 'The dependency audit ledger is invalid.');
+  }
   const errors = [];
 
   for (const finding of audit.findings) {
@@ -355,6 +599,15 @@ export function evaluateAuditReport(report, ledger, { today = new Date().toISOSt
     if (!sameValues(record.observedVersions, finding.observedVersions)) {
       errors.push(`Observed version drift for ${finding.advisory}: ledger has ${record.observedVersions.join(', ')}, audit reports ${finding.observedVersions.join(', ')}.`);
     }
+    if (record.pathCount !== finding.pathCount) {
+      errors.push(`Reachability path-count drift for ${finding.advisory}: ledger has ${record.pathCount}, audit reports ${finding.pathCount}.`);
+    }
+    if (record.roleClassification !== finding.roleClassification) {
+      errors.push(`Reachability role drift for ${finding.advisory}: ledger has ${record.roleClassification}, audit reports ${finding.roleClassification}.`);
+    }
+    if (record.reachabilityFingerprint !== finding.reachabilityFingerprint) {
+      errors.push(`Reachability fingerprint drift for ${finding.advisory}: dependency paths or role flags changed.`);
+    }
   }
 
   for (const record of ledgerState.records) {
@@ -364,7 +617,7 @@ export function evaluateAuditReport(report, ledger, { today = new Date().toISOSt
   }
 
   if (errors.length > 0) {
-    throw new Error(errors.join('\n'));
+    throw policyError('evaluation_drift', errors.join('\n'));
   }
 
   const pendingExceptions = ledgerState.records.filter(
@@ -435,6 +688,8 @@ export function buildEvidence({
       observedVersions: finding.observedVersions,
       versionCount: finding.observedVersions.length,
       pathCount: finding.pathCount,
+      roleClassification: finding.roleClassification,
+      reachabilityFingerprint: finding.reachabilityFingerprint,
       disposition: record.disposition,
       approvalStatus: record.disposition === 'exception' ? record.approval.status : 'not-applicable',
     };
@@ -443,7 +698,7 @@ export function buildEvidence({
   const versionCount = findings.reduce((sum, finding) => sum + finding.versionCount, 0);
   const pathCount = findings.reduce((sum, finding) => sum + finding.pathCount, 0);
   return {
-    schemaVersion: 1,
+    schemaVersion: EVIDENCE_SCHEMA_VERSION,
     generatedAt,
     mode,
     nodeVersion,
@@ -484,13 +739,38 @@ function pathIsWithinOrEqual(root, candidate) {
   return root === candidate || pathIsWithin(root, candidate);
 }
 
+function validateEvidenceRoot(root, context) {
+  if (typeof root !== 'string' || root.trim() === '') {
+    throw new Error(`${context} must be an existing temporary directory.`);
+  }
+  const resolvedRoot = resolve(root);
+  let rootStat;
+  try {
+    rootStat = lstatSync(resolvedRoot);
+  } catch {
+    throw new Error(`${context} must be an existing temporary directory.`);
+  }
+  if (rootStat.isSymbolicLink() || !rootStat.isDirectory()) {
+    throw new Error(`${context} must be a real directory, not a symbolic link.`);
+  }
+  return realpathSync(resolvedRoot);
+}
+
 export function assertSafeEvidencePath(evidencePath, { runnerTemp = process.env.RUNNER_TEMP, systemTemp = tmpdir() } = {}) {
   if (typeof evidencePath !== 'string' || evidencePath.trim() === '') {
     throw new Error('Evidence path must be a non-empty path.');
   }
   const candidate = resolve(evidencePath);
-  const roots = [...new Set([systemTemp, runnerTemp].filter(Boolean).map((root) => resolve(root)))];
-  if (!roots.some((root) => pathIsWithin(root, candidate))) {
+  const roots = [];
+  for (const [index, root] of [systemTemp, runnerTemp].entries()) {
+    if (root) {
+      const canonicalRoot = validateEvidenceRoot(root, `Evidence temporary root ${index}`);
+      if (!roots.includes(canonicalRoot)) {
+        roots.push(canonicalRoot);
+      }
+    }
+  }
+  if (roots.length === 0 || !roots.some((root) => pathIsWithin(root, candidate))) {
     throw new Error(`Evidence output must be under a temporary or runner-temp directory: ${candidate}.`);
   }
 
@@ -501,13 +781,18 @@ export function assertSafeEvidencePath(evidencePath, { runnerTemp = process.env.
   } catch {
     throw new Error(`Evidence output parent directory must already exist: ${parent}.`);
   }
-  if (!roots.some((root) => pathIsWithinOrEqual(realpathSync(root), realParent))) {
+  if (realParent !== parent) {
+    throw new Error(`Evidence output parent must not contain symbolic links: ${parent}.`);
+  }
+  if (!roots.some((root) => pathIsWithinOrEqual(root, realParent))) {
     throw new Error(`Evidence output parent resolves outside a temporary directory: ${parent}.`);
   }
   try {
-    if (lstatSync(candidate).isSymbolicLink()) {
+    const existing = lstatSync(candidate);
+    if (existing.isSymbolicLink()) {
       throw new Error(`Evidence output must not be a symbolic link: ${candidate}.`);
     }
+    throw new Error(`Evidence output must not already exist: ${candidate}.`);
   } catch (error) {
     if (error?.code !== 'ENOENT') {
       throw error;
@@ -518,7 +803,22 @@ export function assertSafeEvidencePath(evidencePath, { runnerTemp = process.env.
 
 export function writeEvidence(evidencePath, evidence, options) {
   const safePath = assertSafeEvidencePath(evidencePath, options);
-  writeFileSync(safePath, `${JSON.stringify(evidence, null, 2)}\n`, { encoding: 'utf8' });
+  const contents = `${JSON.stringify(evidence, null, 2)}\n`;
+  const noFollow = fsConstants.O_NOFOLLOW ?? 0;
+  const flags = fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow;
+  let descriptor;
+  try {
+    descriptor = openSync(safePath, flags, 0o600);
+    fchmodSync(descriptor, 0o600);
+    let offset = 0;
+    while (offset < contents.length) {
+      offset += writeSync(descriptor, contents, offset, contents.length - offset, 'utf8');
+    }
+  } finally {
+    if (descriptor !== undefined) {
+      closeSync(descriptor);
+    }
+  }
   return safePath;
 }
 
@@ -558,51 +858,173 @@ function readJson(path, context) {
   return value;
 }
 
+function policyError(code, message) {
+  const error = new Error(message);
+  error.policyCode = code;
+  return error;
+}
+
+export function assertAcceptedAuditExit(status, signal = null) {
+  if (signal) {
+    throw policyError('audit_signal', 'pnpm audit was terminated by a signal before policy evaluation.');
+  }
+  if (status !== 0 && status !== 1) {
+    const renderedStatus = status === null || status === undefined ? 'unknown' : String(status);
+    throw policyError(
+      'audit_exit_unexpected',
+      `pnpm audit returned unexpected exit status ${renderedStatus}; expected 0 or 1.`,
+    );
+  }
+  return status;
+}
+
+export function parseAuditResult(auditResult) {
+  if (auditResult?.error) {
+    throw policyError('audit_spawn_failed', 'Unable to start pnpm audit.');
+  }
+  const status = auditResult?.status ?? null;
+  const signal = auditResult?.signal ?? null;
+  assertAcceptedAuditExit(status, signal);
+  try {
+    return {
+      report: JSON.parse(typeof auditResult?.stdout === 'string' ? auditResult.stdout : ''),
+      status,
+      signal,
+    };
+  } catch {
+    throw policyError('audit_invalid_json', 'pnpm audit did not return valid JSON.');
+  }
+}
+
+function assertVersionProcessResult(result) {
+  if (result?.error || result?.signal || result?.status !== 0 || typeof result?.stdout !== 'string' || result.stdout.trim() === '') {
+    throw policyError('pnpm_version_unavailable', 'Unable to determine the pnpm version.');
+  }
+  return result.stdout.trim();
+}
+
+function failureCodeFor(error, stage) {
+  if (error?.policyCode) {
+    return error.policyCode;
+  }
+  if (stage === 'ledger') return 'ledger_invalid';
+  if (stage === 'evaluation') return 'evaluation_drift';
+  if (stage === 'pnpm-version') return 'pnpm_version_unavailable';
+  if (stage === 'release-policy') return 'release_pending_approval';
+  if (stage === 'evidence-write') return 'evidence_write_failed';
+  return 'dependency_audit_failed';
+}
+
+const FAILURE_MESSAGES = new Map([
+  ['audit_spawn_failed', 'Unable to start pnpm audit.'],
+  ['audit_signal', 'pnpm audit was terminated before policy evaluation.'],
+  ['audit_exit_unexpected', 'pnpm audit returned an unexpected exit status; expected 0 or 1.'],
+  ['audit_invalid_json', 'pnpm audit did not return valid JSON.'],
+  ['ledger_invalid', 'The dependency audit ledger is invalid.'],
+  ['audit_report_invalid', 'The current dependency audit report is invalid.'],
+  ['evaluation_drift', 'Current dependency findings do not match the versioned disposition ledger.'],
+  ['pnpm_version_unavailable', 'The pnpm version could not be determined.'],
+  ['release_pending_approval', 'Release dependency audit requires approved exception references.'],
+  ['evidence_write_failed', 'Dependency audit evidence could not be written.'],
+]);
+
+function lockfileSha256OrNull(lockfilePath) {
+  try {
+    return sha256File(lockfilePath);
+  } catch {
+    return null;
+  }
+}
+
+export function buildFailureEvidence({
+  lockfilePath = DEFAULT_LOCKFILE_PATH,
+  generatedAt = new Date().toISOString(),
+  mode = 'default',
+  auditExitCode = null,
+  auditSignal = null,
+  failureCode = 'dependency_audit_failed',
+}) {
+  return {
+    schemaVersion: EVIDENCE_SCHEMA_VERSION,
+    generatedAt,
+    mode,
+    auditCommand: `pnpm ${AUDIT_COMMAND.join(' ')}`,
+    auditExitCode,
+    ...(auditSignal ? { auditSignal: String(auditSignal) } : {}),
+    failure: {
+      code: failureCode,
+      message: FAILURE_MESSAGES.get(failureCode) ?? 'Dependency audit policy failed before a passing result was produced.',
+    },
+    lockfile: {
+      path: basename(lockfilePath),
+      sha256: lockfileSha256OrNull(lockfilePath),
+    },
+  };
+}
+
 export function runPolicy({
   ledgerPath = DEFAULT_LEDGER_PATH,
   lockfilePath = DEFAULT_LOCKFILE_PATH,
   evidencePath = null,
   requireApprovedExceptions = false,
   today = new Date().toISOString().slice(0, 10),
+  spawnSyncImpl = spawnSync,
 } = {}) {
-  const ledger = readJson(ledgerPath, 'dependency audit ledger');
-  const audit = spawnSync('pnpm', AUDIT_COMMAND, {
-    encoding: 'utf8',
-    maxBuffer: 20 * 1024 * 1024,
-  });
-  if (audit.error) {
-    throw new Error(`Unable to run pnpm audit: ${audit.error.message}`);
-  }
-  if (audit.signal) {
-    throw new Error(`pnpm audit was terminated by ${audit.signal}.`);
-  }
-
-  let report;
+  const mode = requireApprovedExceptions ? 'release' : 'default';
+  let stage = 'ledger';
+  let auditExitCode = null;
+  let auditSignal = null;
   try {
-    report = JSON.parse(audit.stdout);
-  } catch {
-    const stderr = audit.stderr?.trim();
-    throw new Error(`pnpm audit did not return valid JSON (exit ${audit.status ?? 'unknown'}).${stderr ? ` ${stderr}` : ''}`);
-  }
+    const ledger = readJson(ledgerPath, 'dependency audit ledger');
+    stage = 'audit';
+    const audit = spawnSyncImpl('pnpm', AUDIT_COMMAND, {
+      encoding: 'utf8',
+      maxBuffer: 20 * 1024 * 1024,
+    });
+    auditExitCode = audit?.status ?? null;
+    auditSignal = audit?.signal ?? null;
+    const parsedAudit = parseAuditResult(audit);
+    const { report } = parsedAudit;
 
-  const evaluation = evaluateAuditReport(report, ledger, { today });
-  const pnpmVersionResult = spawnSync('pnpm', ['--version'], { encoding: 'utf8' });
-  if (pnpmVersionResult.error || pnpmVersionResult.status !== 0) {
-    throw new Error(`Unable to determine pnpm version: ${pnpmVersionResult.error?.message ?? pnpmVersionResult.stderr?.trim() ?? 'unknown error'}`);
+    stage = 'evaluation';
+    const evaluation = evaluateAuditReport(report, ledger, { today });
+    stage = 'pnpm-version';
+    const pnpmVersionResult = spawnSyncImpl('pnpm', ['--version'], { encoding: 'utf8' });
+    const pnpmVersion = assertVersionProcessResult(pnpmVersionResult);
+    const evidence = buildEvidence({
+      report,
+      evaluation,
+      pnpmVersion,
+      lockfilePath,
+      mode,
+      auditExitCode,
+    });
+    stage = 'release-policy';
+    assertReleasePolicy(evaluation, { requireApprovedExceptions });
+    if (evidencePath) {
+      stage = 'evidence-write';
+      writeEvidence(evidencePath, evidence);
+    }
+    return { report, evaluation, evidence, evidencePath };
+  } catch (error) {
+    if (evidencePath) {
+      try {
+        writeEvidence(
+          evidencePath,
+          buildFailureEvidence({
+            lockfilePath,
+            mode,
+            auditExitCode,
+            auditSignal,
+            failureCode: failureCodeFor(error, stage),
+          }),
+        );
+      } catch {
+        // Preserve the original policy failure if best-effort evidence cannot be created.
+      }
+    }
+    throw error;
   }
-  const evidence = buildEvidence({
-    report,
-    evaluation,
-    pnpmVersion: pnpmVersionResult.stdout.trim(),
-    lockfilePath,
-    mode: requireApprovedExceptions ? 'release' : 'default',
-    auditExitCode: audit.status,
-  });
-  if (evidencePath) {
-    writeEvidence(evidencePath, evidence);
-  }
-  assertReleasePolicy(evaluation, { requireApprovedExceptions });
-  return { report, evaluation, evidence, evidencePath };
 }
 
 function main() {
