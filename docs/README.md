@@ -25,6 +25,7 @@ Welcome to the official technical documentation for the Conxius Wallet, the sove
 - [Operations Overview](operations/)
 - [Operating Model](operations/OPERATING_MODEL.md)
 - [BIP-110 Client-Side Alignment](operations/BIP110_COMPLIANCE.md)
+- [KeyMint / StrongBox and Play Integrity Qualification](reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md)
 - [Production Artifact Contracts](operations/PRODUCTION_ARTIFACT_CONTRACTS.md)
 - [SAB Wallet Map](operations/SAB_WALLET_MAP.md)
 - [Android Release Prep](operations/ANDROID_RELEASE_PREP.md)
@@ -33,6 +34,7 @@ Welcome to the official technical documentation for the Conxius Wallet, the sove
 - [Archive Overview](archive/)
 
 ## 🧪 Research & Reports
+- [KeyMint / StrongBox and Play Integrity Qualification](reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md)
 - [SDK Research](reports/SDK_RESEARCH.md)
 - [FDC3 Interoperability Proposal](reports/FDC3_INTEROPERABILITY_PROPOSAL.md)
 - [Native Bridge Research](protocols/NATIVE_BRIDGE_RESEARCH.md)
