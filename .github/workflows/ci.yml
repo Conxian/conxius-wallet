@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Run TypeScript compiler
-        run: pnpm exec tsc --noEmit
+        run: pnpm run typecheck
 
   unit-tests:
     name: Unit Tests
