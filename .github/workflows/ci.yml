@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Run TypeScript compiler
-        run: pnpm exec tsc --noEmit
+        run: pnpm run typecheck
 
   unit-tests:
     name: Unit Tests
@@ -116,9 +116,17 @@ jobs:
           retention-days: 1
 
   silent-payments-rust:
-    name: Silent Payments Rust
+    name: Silent Payments Rust (${{ matrix.crate }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - crate: core
+            working-directory: native/silent-payments
+          - crate: jni
+            working-directory: native/silent-payments-jni
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -126,16 +134,70 @@ jobs:
         uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
           toolchain: stable
-          components: rustfmt
+          components: rustfmt, clippy
       - name: Check Rust formatting
-        working-directory: native/silent-payments
+        working-directory: ${{ matrix.working-directory }}
         run: cargo fmt --check
       - name: Check Rust dependencies
-        working-directory: native/silent-payments
+        working-directory: ${{ matrix.working-directory }}
         run: cargo check --locked
       - name: Run Rust tests
-        working-directory: native/silent-payments
-        run: cargo test --locked
+        working-directory: ${{ matrix.working-directory }}
+        run: cargo test --locked --all-targets
+      - name: Run Rust clippy
+        working-directory: ${{ matrix.working-directory }}
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+  silent-payments-msrv:
+    name: Silent Payments MSRV (${{ matrix.crate }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - crate: core
+            working-directory: native/silent-payments
+          - crate: jni
+            working-directory: native/silent-payments-jni
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Setup pinned MSRV toolchain
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+        with:
+          toolchain: 1.85.1
+      - name: Check Rust dependencies on MSRV
+        working-directory: ${{ matrix.working-directory }}
+        run: cargo check --locked
+      - name: Run Rust tests on MSRV
+        working-directory: ${{ matrix.working-directory }}
+        run: cargo test --locked --all-targets
+
+  silent-payments-audit:
+    name: Silent Payments Dependency Audit (${{ matrix.crate }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - crate: core
+            lockfile: native/silent-payments/Cargo.lock
+          - crate: jni
+            lockfile: native/silent-payments-jni/Cargo.lock
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Setup Rust stable toolchain
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+        with:
+          toolchain: stable
+      - name: Audit Rust dependencies
+        uses: actions-rust-lang/audit@72c09e02f132669d52284a3323acdb503cfc1a24 # v1
+        with:
+          file: ${{ matrix.lockfile }}
+          createIssues: false
 
   e2e:
     name: E2E
