@@ -1,5 +1,6 @@
 package com.conxius.wallet.crypto
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
@@ -8,19 +9,35 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
+import android.security.keystore.StrongBoxUnavailableException
+import java.io.ByteArrayInputStream
+import java.security.AlgorithmParameters
 import java.security.GeneralSecurityException
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.PrivateKey
-import java.security.cert.Certificate
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
+import java.security.interfaces.ECPublicKey
+import java.security.spec.ECFieldFp
 import java.security.spec.ECGenParameterSpec
+import java.security.spec.ECParameterSpec
 import java.util.Locale
 
 private const val ANDROID_KEYSTORE_PROVIDER = "AndroidKeyStore"
 private const val P256_CURVE = "secp256r1"
 private const val MIN_STRONGBOX_API = 28
 private const val KEY_ALIAS_MAX_LENGTH = 128
+
+/**
+* Stable Android Keystore namespace owned by [KeyMintAuthorizationManager].
+*
+* Callers must provide aliases in the form
+* `ConxiusAuthorizationKey.v1.<caller-supplied-id>`. Other Keystore aliases,
+* including the wallet's seed/database aliases, are outside this API.
+*/
+const val AUTHORIZATION_KEY_ALIAS_PREFIX = "ConxiusAuthorizationKey.v1."
 
 /** How an authorization key was provisioned for this request. */
 enum class AuthorizationKeyProvisioningPath {
@@ -32,14 +49,28 @@ enum class AuthorizationKeyProvisioningPath {
 
 /** Explicit reason for a TEE fallback under [AuthorizationPolicy.TEE_ALLOWED]. */
 enum class AuthorizationKeyFallbackReason(val code: String) {
-    STRONGBOX_GENERATION_FAILED("strongbox_generation_failed"),
+    STRONGBOX_UNAVAILABLE("strongbox_unavailable"),
+}
+
+/** Stable reasons for rejecting a key that cannot prove the authorization profile. */
+enum class AuthorizationKeyProfileReason(val code: String) {
+    KEYSTORE_ALIAS_MISMATCH("keystore_alias_mismatch"),
+    KEY_MATERIAL_EMPTY("key_material_empty"),
+    KEY_ALGORITHM_MISMATCH("key_algorithm_mismatch"),
+    KEY_SIZE_MISMATCH("key_size_mismatch"),
+    KEY_PURPOSES_MISMATCH("key_purposes_mismatch"),
+    KEY_DIGESTS_MISMATCH("key_digests_mismatch"),
+    CERTIFICATE_CHAIN_INVALID("certificate_chain_invalid"),
+    CERTIFICATE_PUBLIC_KEY_MISMATCH("certificate_public_key_mismatch"),
+    EC_CURVE_MISMATCH("ec_curve_mismatch"),
 }
 
 /**
 * Request to create a dedicated P-256 authorization key.
 *
-* The challenge is copied at the boundary and is only used as an Android
-* KeyMint attestation challenge. The private key never leaves Android Keystore.
+* [alias] must use [AUTHORIZATION_KEY_ALIAS_PREFIX]. The challenge is copied
+* at the boundary, must be 1–128 bytes, and is only used as an Android KeyMint
+* attestation challenge. The private key never leaves Android Keystore.
 */
 class AuthorizationKeyRequest(
     val alias: String,
@@ -48,6 +79,9 @@ class AuthorizationKeyRequest(
 ) {
     private val attestationChallengeValue = attestationChallenge.copyOf().also {
         require(it.isNotEmpty()) { "attestationChallenge must not be empty" }
+        require(it.size <= MAX_ATTESTATION_CHALLENGE_BYTES) {
+            "attestationChallenge must be at most $MAX_ATTESTATION_CHALLENGE_BYTES bytes"
+        }
     }
 
     val attestationChallenge: ByteArray
@@ -139,6 +173,15 @@ sealed class KeyMintAuthorizationException(
         cause,
     )
 
+    class KeyProfileRejected(
+        val reason: AuthorizationKeyProfileReason,
+        alias: String,
+        cause: Throwable? = null,
+    ) : KeyMintAuthorizationException(
+        "authorization key profile rejected by ${reason.code} for alias $alias",
+        cause,
+    )
+
     class PackageIdentityUnavailable(cause: Throwable) : KeyMintAuthorizationException(
         "package signing identity unavailable",
         cause,
@@ -152,11 +195,16 @@ sealed class KeyMintAuthorizationException(
     )
 }
 
-/** Internal key-store output; it intentionally carries no private key handle. */
+/**
+* Internal key-store output; it intentionally carries no private key handle.
+* The adapter must echo the inspected Keystore alias so the manager can bind
+* evidence to the namespace-validated request.
+*/
 internal data class StoredAuthorizationKey(
     val publicKeyEncoded: ByteArray,
     val certificateChain: List<ByteArray>,
     val localKeyInfo: LocalKeyInfoEvidence,
+    val keystoreAlias: String? = null,
 )
 
 /** Android KeyMint adapter, injectable in JVM tests without hardware. */
@@ -233,7 +281,10 @@ class KeyMintAuthorizationManager private constructor(
                 requestStrongBox = shouldRequestStrongBox,
             )
         } catch (error: Exception) {
-            if (!shouldRequestStrongBox || request.policy == AuthorizationPolicy.STRONGBOX_REQUIRED) {
+            if (!shouldRequestStrongBox ||
+                request.policy != AuthorizationPolicy.TEE_ALLOWED ||
+                !isExplicitStrongBoxUnavailable(error)
+            ) {
                 deleteQuietly(request.alias)
                 throw KeyMintAuthorizationException.GenerationFailed(
                     alias = request.alias,
@@ -242,11 +293,11 @@ class KeyMintAuthorizationManager private constructor(
                 )
             }
 
-            // TEE_ALLOWED makes the downgrade explicit in the returned path;
-            // it is never hidden behind a generic "best effort" result.
+            // TEE_ALLOWED makes the downgrade explicit, but only an Android
+            // StrongBoxUnavailableException is an allowed downgrade signal.
             deleteQuietly(request.alias)
             provisioningPath = AuthorizationKeyProvisioningPath.TRUSTED_ENVIRONMENT_FALLBACK
-            fallbackReason = AuthorizationKeyFallbackReason.STRONGBOX_GENERATION_FAILED
+            fallbackReason = AuthorizationKeyFallbackReason.STRONGBOX_UNAVAILABLE
             try {
                 keyStore.create(
                     alias = request.alias,
@@ -269,6 +320,7 @@ class KeyMintAuthorizationManager private constructor(
             requestedAttestationChallengeHash = CryptoDigest.sha256(request.attestationChallenge),
             provisioningPath = provisioningPath,
             fallbackReason = fallbackReason,
+            deleteOnFailure = true,
         )
     }
 
@@ -293,8 +345,13 @@ class KeyMintAuthorizationManager private constructor(
             requestedAttestationChallengeHash = null,
             provisioningPath = AuthorizationKeyProvisioningPath.EXISTING_KEY,
             fallbackReason = null,
+            deleteOnFailure = false,
         )
     }
+
+    @SuppressLint("NewApi")
+    private fun isExplicitStrongBoxUnavailable(error: Throwable): Boolean =
+        apiLevel >= MIN_STRONGBOX_API && error is StrongBoxUnavailableException
 
     private fun shouldRequestStrongBox(policy: AuthorizationPolicy, alias: String): Boolean {
         return when (policy) {
@@ -333,15 +390,29 @@ class KeyMintAuthorizationManager private constructor(
         requestedAttestationChallengeHash: ByteArray?,
         provisioningPath: AuthorizationKeyProvisioningPath,
         fallbackReason: AuthorizationKeyFallbackReason?,
+        deleteOnFailure: Boolean,
     ): AuthorizationKeyEvidence {
+        try {
+            AuthorizationKeyProfileValidator.validate(alias, storedKey)
+        } catch (error: KeyMintAuthorizationException.KeyProfileRejected) {
+            if (deleteOnFailure) {
+                deleteQuietly(alias)
+            }
+            throw error
+        }
+
         val decision = AuthorizationPolicyEvaluator.evaluate(policy, storedKey.localKeyInfo)
         if (!decision.accepted) {
-            deleteQuietly(alias)
+            if (deleteOnFailure) {
+                deleteQuietly(alias)
+            }
             throw KeyMintAuthorizationException.PolicyRejected(decision, alias)
         }
 
         if (storedKey.publicKeyEncoded.isEmpty() || storedKey.certificateChain.isEmpty()) {
-            deleteQuietly(alias)
+            if (deleteOnFailure) {
+                deleteQuietly(alias)
+            }
             throw KeyMintAuthorizationException.EvidenceUnavailable(alias)
         }
 
@@ -365,12 +436,111 @@ class KeyMintAuthorizationManager private constructor(
     }
 
     private fun validateAlias(alias: String) {
+        val suffix = alias.removePrefix(AUTHORIZATION_KEY_ALIAS_PREFIX)
         if (alias.isBlank() || alias.length > KEY_ALIAS_MAX_LENGTH ||
-            alias.any { !(it.isLetterOrDigit() || it == '.' || it == '_' || it == '-') }
+            !alias.startsWith(AUTHORIZATION_KEY_ALIAS_PREFIX) || suffix.isBlank() ||
+            suffix.any { !(it.isAsciiLetterOrDigit() || it == '.' || it == '_' || it == '-') }
         ) {
             throw KeyMintAuthorizationException.InvalidAlias(alias)
         }
     }
+}
+
+private fun Char.isAsciiLetterOrDigit(): Boolean =
+    this in 'a'..'z' || this in 'A'..'Z' || this in '0'..'9'
+
+/**
+* Validates the exact key profile requested by this manager before any local
+* security-tier policy decision can expose authorization evidence.
+*/
+private object AuthorizationKeyProfileValidator {
+    private val expectedDigests = setOf(KeyProperties.DIGEST_SHA256)
+
+    fun validate(alias: String, storedKey: StoredAuthorizationKey) {
+        if (storedKey.keystoreAlias != alias) {
+            reject(alias, AuthorizationKeyProfileReason.KEYSTORE_ALIAS_MISMATCH)
+        }
+
+        val localKeyInfo = storedKey.localKeyInfo as? LocalKeyInfoEvidence.Available
+            ?: return
+
+        if (storedKey.publicKeyEncoded.isEmpty() || storedKey.certificateChain.isEmpty()) {
+            reject(alias, AuthorizationKeyProfileReason.KEY_MATERIAL_EMPTY)
+        }
+        if (localKeyInfo.keyAlgorithm != KeyProperties.KEY_ALGORITHM_EC) {
+            reject(alias, AuthorizationKeyProfileReason.KEY_ALGORITHM_MISMATCH)
+        }
+        if (localKeyInfo.keySize != 256) {
+            reject(alias, AuthorizationKeyProfileReason.KEY_SIZE_MISMATCH)
+        }
+        if (localKeyInfo.purposes != KeyProperties.PURPOSE_SIGN) {
+            reject(alias, AuthorizationKeyProfileReason.KEY_PURPOSES_MISMATCH)
+        }
+        if (localKeyInfo.digests != expectedDigests) {
+            reject(alias, AuthorizationKeyProfileReason.KEY_DIGESTS_MISMATCH)
+        }
+
+        val certificates = try {
+            val certificateFactory = CertificateFactory.getInstance("X.509")
+            storedKey.certificateChain.map { encodedCertificate ->
+                certificateFactory.generateCertificate(
+                    ByteArrayInputStream(encodedCertificate),
+                ) as? X509Certificate
+                    ?: throw GeneralSecurityException("certificate is not X.509")
+            }
+        } catch (error: Exception) {
+            reject(
+                alias = alias,
+                reason = AuthorizationKeyProfileReason.CERTIFICATE_CHAIN_INVALID,
+                cause = error,
+            )
+        }
+
+        val leafPublicKey = certificates.first().publicKey
+        if (!leafPublicKey.encoded.contentEquals(storedKey.publicKeyEncoded)) {
+            reject(alias, AuthorizationKeyProfileReason.CERTIFICATE_PUBLIC_KEY_MISMATCH)
+        }
+
+        val ecPublicKey = leafPublicKey as? ECPublicKey
+            ?: reject(alias, AuthorizationKeyProfileReason.KEY_ALGORITHM_MISMATCH)
+        val expectedParameters = try {
+            AlgorithmParameters.getInstance("EC").apply {
+                init(ECGenParameterSpec(P256_CURVE))
+            }.getParameterSpec(ECParameterSpec::class.java)
+        } catch (error: Exception) {
+            reject(
+                alias = alias,
+                reason = AuthorizationKeyProfileReason.EC_CURVE_MISMATCH,
+                cause = error,
+            )
+        }
+
+        if (!sameCurve(ecPublicKey.params, expectedParameters)) {
+            reject(alias, AuthorizationKeyProfileReason.EC_CURVE_MISMATCH)
+        }
+    }
+
+    private fun sameCurve(actual: ECParameterSpec, expected: ECParameterSpec): Boolean {
+        val actualField = actual.curve.field as? ECFieldFp ?: return false
+        val expectedField = expected.curve.field as? ECFieldFp ?: return false
+        return actualField.p == expectedField.p &&
+            actual.curve.a == expected.curve.a &&
+            actual.curve.b == expected.curve.b &&
+            actual.generator.affineX == expected.generator.affineX &&
+            actual.generator.affineY == expected.generator.affineY &&
+            actual.order == expected.order &&
+            actual.cofactor == expected.cofactor
+    }
+
+    private fun reject(
+        alias: String,
+        reason: AuthorizationKeyProfileReason,
+        cause: Throwable? = null,
+    ): Nothing = throw KeyMintAuthorizationException.KeyProfileRejected(
+        reason = reason,
+        alias = alias,
+        cause = cause,
+    )
 }
 
 private object AndroidStrongBoxCapability {
@@ -437,6 +607,7 @@ private class AndroidAuthorizationKeyStore : AuthorizationKeyStore {
             alias,
             KeyProperties.PURPOSE_SIGN,
         )
+            .setKeySize(256)
             .setAlgorithmParameterSpec(ECGenParameterSpec(P256_CURVE))
             .setDigests(KeyProperties.DIGEST_SHA256)
             .setAttestationChallenge(attestationChallenge.copyOf())
@@ -478,6 +649,7 @@ private class AndroidAuthorizationKeyStore : AuthorizationKeyStore {
             publicKeyEncoded = leafCertificate.publicKey.encoded.copyOf(),
             certificateChain = certificateChain.map { it.copyOf() },
             localKeyInfo = keyInfo.toLocalEvidence(),
+            keystoreAlias = keyInfo.keystoreAlias,
         )
     }
 
@@ -497,6 +669,9 @@ private class AndroidAuthorizationKeyStore : AuthorizationKeyStore {
                 KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT ->
                     KeySecurityTier.TRUSTED_ENVIRONMENT
                 KeyProperties.SECURITY_LEVEL_SOFTWARE -> KeySecurityTier.SOFTWARE
+                // This includes SECURITY_LEVEL_UNKNOWN_SECURE. It may be
+                // stronger than TEE, but it does not prove the exact tier
+                // required by this boundary and must remain fail-closed.
                 else -> KeySecurityTier.UNKNOWN
             }
             return LocalKeyInfoEvidence.Available(
