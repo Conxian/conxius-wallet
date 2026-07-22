@@ -44,7 +44,8 @@ class MainActivity : FragmentActivity() {
             app.yieldManager,
             app.insuranceManager,
             app.interoperabilityManager,
-            app.b2bManager
+            app.b2bManager,
+            app.playIntegrityPlugin,
         )
 
         setContent {

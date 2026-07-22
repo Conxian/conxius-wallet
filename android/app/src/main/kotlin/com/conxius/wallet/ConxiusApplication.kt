@@ -11,6 +11,7 @@ import com.conxius.wallet.scan.SilentPaymentScanCoordinator
 import com.conxius.wallet.session.WalletSession
 
 class ConxiusApplication : Application() {
+    val playIntegrityPlugin by lazy { PlayIntegrityPlugin(this) }
     val strongBoxManager by lazy { StrongBoxManager(this) }
     val database by lazy { AppDatabase.getDatabase(this, strongBoxManager.getDatabasePassphrase()) }
     val walletSession by lazy { WalletSession() }

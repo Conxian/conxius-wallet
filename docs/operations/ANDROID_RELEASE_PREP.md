@@ -6,7 +6,7 @@ permalink: /docs/android-release-prep
 
 # Android Release Preparation Guide
 
-**Last Updated:** 2026-07-20
+**Last Updated:** 2026-07-22
 **Status:** Pre-release checklist — all items must be completed before Play Store submission.
 
 For the current release-baseline debt inventory and evidence requirements, see
@@ -24,7 +24,7 @@ the [Technical Debt Register](TECHNICAL_DEBT_REGISTER.md).
 
 ### 1.2 Enable Required APIs
 
-- **Play Integrity API** — Required for `DeviceIntegrityPlugin.java` to use Google's attestation
+- **Play Integrity API** — Used by the client-side `PlayIntegrityPlugin.kt`; backend verification is still required before enforcement
 - **Firebase Cloud Messaging** — If push notifications are needed
 - **Google Play Developer API** — For automated publishing
 
@@ -119,14 +119,27 @@ Ensure `proguard-rules.pro` has rules for:
 - Breez SDK
 - BouncyCastle
 
-### 3.3 Play Integrity (Optional Enhancement)
+### 3.3 Play Integrity client boundary (not a production gate)
 
 ```kotlin
-// Add to dependencies in android/app/build.gradle.kts
-implementation("com.google.android.play:integrity:1.3.0")
+// android/gradle/libs.versions.toml
+play-integrity = "1.6.0"
+
+// android/app/build.gradle.kts
+implementation(libs.play.integrity)
 ```
 
-Then update `DeviceIntegrityPlugin.java` to call Play Integrity API alongside local checks.
+The app's `PlayIntegrityPlugin` uses the Standard API with
+`PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER` (or the Gradle property
+`playIntegrityCloudProjectNumber`) and passes only a deterministic,
+URL-safe Base64 representation of the existing SHA-256 authorization request
+hash as `requestHash`. The SDK token is returned as an opaque value and is not
+decoded, logged, or trusted on-device.
+
+This is client SDK/token acquisition only. Backend token decryption and verdict
+verification, request-hash comparison, real-device qualification,
+replay/freshness trust policy, and production enforcement are still required
+before this becomes a release gate.
 
 ---
 
