@@ -95,6 +95,25 @@ class AuthorizationRequestCanonicalizerTest {
         assertArrayEquals(byteArrayOf(1, 2, 3), request.operationDigest)
     }
 
+    @Test
+    fun attestationChallengeCannotExceedTheRequestBoundary() {
+        val error = runCatching {
+            CanonicalAuthorizationRequest(
+                operationDigest = byteArrayOf(1),
+                nonce = byteArrayOf(2),
+                attestationChallenge = ByteArray(MAX_ATTESTATION_CHALLENGE_BYTES + 1),
+                keyIdentity = "sha256:key",
+                packageSigningIdentity = PackageSigningIdentity(
+                    packageName = "com.conxius.wallet",
+                    signingCertificateSha256 = listOf("cert-a"),
+                ),
+                policy = AuthorizationPolicy.TEE_ALLOWED,
+            )
+        }.exceptionOrNull()
+
+        assertTrue(error is IllegalArgumentException)
+    }
+
     private fun request(
         certificates: List<String> = listOf("cert-a"),
     ) = CanonicalAuthorizationRequest(
