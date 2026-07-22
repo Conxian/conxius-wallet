@@ -4,8 +4,9 @@
 qualification, authorization enforcement, and independent release evidence
 remain open.
 
-**Reviewed:** 2026-07-22 against `main` commit
-`d0d128bf829a902125e0b588bcac52e6eed5a37a` (merged PRs #441 and #442).
+**Reviewed:** 2026-07-22 against current `main` commit
+`0b6757711df80824b932a32e91947064659199d6` (after merged PRs #441, #442, and
+#443).
 
 **Canonical tracker:** [CON-1544](https://linear.app/conxian-labs/issue/CON-1544/p0-qualify-android-keymintstrongbox-authorization-and-play-integrity)
 
@@ -76,12 +77,38 @@ rollback procedures, and independent review are complete.
 - Opaque token return without client-side decryption, verdict inspection,
   logging, local trust decisions, or wallet-operation gating.
 
-### Open follow-up: PR #443 is not delivered by this report
+### Current-main hardening: PR #443
 
-[PR #443](https://github.com/Conxian/conxius-wallet/pull/443) remains open. Its
-hardening changes are intentionally **not** represented as merged, shipped, or
-validated here. In particular, this report does not claim its alias ownership,
-P-256 profile checks, challenge bounds, or fallback refinements are delivered.
+[PR #443](https://github.com/Conxian/conxius-wallet/pull/443) is now merged into
+current `main`. Its hardening changes are recorded here as wallet-side
+implementation detail only; they do **not** qualify real-device hardware, a
+backend verifier, production authorization, or protocol signing keys.
+
+- Authorization aliases use the manager-owned
+  `ConxiusAuthorizationKey.v1.` namespace; wallet seed/database aliases are
+  rejected before inspection.
+- Attestation challenges are bounded to 1–128 bytes before key generation or
+  inspection.
+- Accepted keys prove the manager profile: EC `secp256r1` (P-256), 256-bit
+  size, exact `PURPOSE_SIGN`, exact SHA-256 digest authorization, and
+  X.509 leaf-certificate/public-key consistency. Existing keys that cannot
+  prove that profile fail closed with stable profile reasons.
+- A `TEE_ALLOWED` StrongBox request falls back only for the explicit Android
+  `StrongBoxUnavailableException`, and the returned path includes the
+  `strongbox_unavailable` reason code. Malformed challenges, evidence
+  inspection failures, and other provider failures do not retry. A
+  `STRONGBOX_REQUIRED` request never takes that fallback.
+- `SECURITY_LEVEL_UNKNOWN_SECURE` remains an unknown tier. It is not silently
+  promoted to StrongBox or trusted-environment evidence.
+
+Unknown or unavailable local evidence is rejected before it can be returned as
+policy-accepted authorization evidence. The client does not make an
+authorization decision from a Play Integrity token or a web fallback; the
+token remains opaque until a trusted backend verifies it.
+
+These implementation details do not close the qualification blockers, backend
+verification checklist, centralized value-operation gate, or P0 exit gate
+documented below.
 
 ### Implementation references
 
@@ -279,4 +306,4 @@ will remain unchanged.
 - [CON-1519 — independent security review and release acceptance](https://linear.app/conxian-labs/issue/CON-1519/p0-complete-independent-security-review-and-release-acceptance)
 - [PR #441 — KeyMint authorization boundary](https://github.com/Conxian/conxius-wallet/pull/441)
 - [PR #442 — Play Integrity SDK request boundary](https://github.com/Conxian/conxius-wallet/pull/442)
-- [PR #443 — open KeyMint hardening follow-up](https://github.com/Conxian/conxius-wallet/pull/443)
+- [PR #443 — merged KeyMint hardening follow-up](https://github.com/Conxian/conxius-wallet/pull/443)
