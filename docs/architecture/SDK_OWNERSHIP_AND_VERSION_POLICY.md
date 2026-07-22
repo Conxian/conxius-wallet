@@ -20,7 +20,7 @@ To maintain boundary clarity and prevent dependency sprawl, ownership of core SD
 | **BDK Kotlin** | `conxius-wallet` (:core-bitcoin) | Wallet (Native) | PRODUCTION (v0.30.0) |
 | **Wormhole SDK** | `conxian-gateway` | Wallet (BFF), UI | BRIDGED |
 | **Clarity SDK** | `conxian-nexus` | Protocol, Orbit | DEVELOPMENT |
-| **BitVM2 (Rust)** | `lib-conxian-core` | Gateway, Nexus | ALPHA |
+| **BitVM2 (Rust)** | `lib-conxian-core` (future verifier boundary) | Gateway, Nexus | RESEARCH / QUARANTINED |
 | **FDC3 (Native)** | `conxius-wallet` | Enterprise Plugins | RESEARCH |
 | **Enclave Primitives**| `conxius-enclave-sdk` | Wallet (:core-crypto) | SECURITY-CRITICAL |
 
