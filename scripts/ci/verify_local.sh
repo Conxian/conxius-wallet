@@ -21,6 +21,11 @@ fi
 echo "--- 🛡️ Security & Logic Audit ---"
 bash scripts/ci/check_runtime_contamination.sh
 
+echo "--- 🔀 TypeScript Dual Toolchain ---"
+"${PNPM[@]}" run check:typescript-toolchain
+"${PNPM[@]}" run typecheck:ts6
+"${PNPM[@]}" run typecheck:ts7
+
 echo "--- 🧪 Running Unit Tests ---"
 "${PNPM[@]}" test --run
 
