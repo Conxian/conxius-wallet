@@ -4,6 +4,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  APPROVED_TYPESCRIPT_BRIDGE_PACKAGE,
+  APPROVED_TYPESCRIPT_BRIDGE_SPECIFIER,
+  APPROVED_TYPESCRIPT_BRIDGE_VERSION,
   APPROVED_TYPESCRIPT_VERSION,
   MIGRATION_ISSUE,
   readInstalledPackageMetadata,
@@ -30,12 +33,15 @@ afterEach(() => {
   }
 });
 
-function packageFixture(specifier = APPROVED_TYPESCRIPT_VERSION) {
+function packageFixture(specifier = APPROVED_TYPESCRIPT_BRIDGE_SPECIFIER) {
   return { devDependencies: { typescript: specifier } };
 }
 
-function lockfileFixture(specifier = APPROVED_TYPESCRIPT_VERSION, version = APPROVED_TYPESCRIPT_VERSION) {
-  return `lockfileVersion: '9.0'\n\nimporters:\n\n  .:\n    devDependencies:\n      typescript:\n        specifier: ${specifier}\n        version: ${version}\n\npackages:\n`;
+function lockfileFixture(
+  specifier = APPROVED_TYPESCRIPT_BRIDGE_SPECIFIER,
+  version = `${APPROVED_TYPESCRIPT_BRIDGE_PACKAGE}@${APPROVED_TYPESCRIPT_BRIDGE_VERSION}`,
+) {
+  return `lockfileVersion: '9.0'\n\nimporters:\n\n  .:\n    devDependencies:\n      typescript:\n        specifier: ${specifier}\n        version: ${version}\n\npackages:\n  '${APPROVED_TYPESCRIPT_BRIDGE_PACKAGE}@${APPROVED_TYPESCRIPT_BRIDGE_VERSION}':\n    resolution: {integrity: fixture}\n\nsnapshots:\n  '${APPROVED_TYPESCRIPT_BRIDGE_PACKAGE}@${APPROVED_TYPESCRIPT_BRIDGE_VERSION}':\n    dependencies:\n      '@typescript/old': typescript@${APPROVED_TYPESCRIPT_VERSION}\n\n  typescript@${APPROVED_TYPESCRIPT_VERSION}: {}\n`;
 }
 
 function validateFixture({ specifier, lockSpecifier, lockVersion, installedTypeScriptVersion } = {}) {
@@ -83,9 +89,9 @@ describe('TypeScript compatibility contract', () => {
   it('accepts the approved TypeScript 6 bridge', () => {
     expect(
       validateFixture({
-        specifier: APPROVED_TYPESCRIPT_VERSION,
-        lockSpecifier: APPROVED_TYPESCRIPT_VERSION,
-        lockVersion: APPROVED_TYPESCRIPT_VERSION,
+        specifier: APPROVED_TYPESCRIPT_BRIDGE_SPECIFIER,
+        lockSpecifier: APPROVED_TYPESCRIPT_BRIDGE_SPECIFIER,
+        lockVersion: `${APPROVED_TYPESCRIPT_BRIDGE_PACKAGE}@${APPROVED_TYPESCRIPT_BRIDGE_VERSION}`,
         installedTypeScriptVersion: APPROVED_TYPESCRIPT_VERSION,
       }),
     ).toEqual([]);
@@ -115,7 +121,7 @@ describe('TypeScript compatibility contract', () => {
   it('rejects lockfile drift even when package.json remains pinned', () => {
     const errors = validateFixture({ lockVersion: '7.0.2' });
 
-    expect(errors.join('\n')).toMatch(/pnpm-lock\.yaml resolves TypeScript 7\.0\.2/);
+    expect(errors.join('\n')).toMatch(/pnpm-lock\.yaml resolves the TypeScript bridge 7\.0\.2/);
   });
 
   it('rejects an installed compiler that does not match the approved bridge', () => {
@@ -130,7 +136,9 @@ describe('TypeScript compatibility contract', () => {
     );
     expect(packageJson.scripts.lint).toContain('pnpm run check:typescript-compat');
     expect(packageJson.scripts.typecheck).toContain('pnpm run check:typescript-compat');
+    expect(packageJson.scripts.typecheck).toContain('pnpm run typecheck:dual');
     expect(packageJson.scripts.build).toContain('pnpm run check:typescript-compat');
+    expect(packageJson.scripts['typecheck:dual']).toContain('pnpm run check:typescript-toolchain');
     expect(workflow).toContain('run: pnpm run typecheck');
     expect(releaseWorkflow).toContain('run: pnpm run typecheck');
   });
