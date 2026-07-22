@@ -2,8 +2,8 @@
 
 **Authority:** Canonical technical-debt inventory for `Conxian/conxius-wallet`.
 **Issue:** [#357](https://github.com/Conxian/conxius-wallet/issues/357)
-**Baseline captured:** 2026-07-22 from `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57` (historical pre-#429 snapshot)
-**Current candidate base:** `origin/main` at `493d2c0b397469e83f3d7ee5b78d40cdf365a727` after PR #429 and merged PR #433
+**Current main reviewed:** 2026-07-22 at `d0d128bf829a902125e0b588bcac52e6eed5a37a` after merged PRs #441 and #442.
+**Historical baseline:** The pre-#429 measurements below are retained as historical evidence where explicitly labeled; they do not describe the current main commit.
 **Target milestone:** M16 / v1.9.5 release baseline, before production promotion.
 
 This register is the source of truth for release-baseline debt. Historical audit
@@ -23,12 +23,12 @@ and is intentionally not hidden behind lint suppression or broad rule changes.
 | Local pnpm | `10.28.1` | Disagreed with CI (`11.13.0`) and Android release (`10.30.3`); `package.json` had no `packageManager` declaration. |
 | TypeScript / typescript-eslint | Historical pre-#429 snapshot: TypeScript `7.0.2`; `typescript-eslint` `8.65.0` supports `>=4.8.4 <6.1.0` | Current main and the post-PR-#433 candidate use the exact TypeScript `6.0.3` bridge; TypeScript 7 remains separate migration work under issue #396, not a current lint blocker. |
 | Lint | Historical pre-#429 snapshot: `pnpm run lint` exited `2` during `typescript-eslint` initialization | Current candidate `pnpm run lint` passed with 0 errors and 630 warnings. |
-| JavaScript tests | Historical pre-#429 snapshot: 61 files; 245 passed, 1 skipped; about 52s | Current candidate: 74 files; 347 passed, 1 skipped. Existing tests still do not prove native or protocol production paths. |
-| Android configuration | AGP `9.3.0`; configuration failed before task discovery because `org.jetbrains.kotlin.android` is rejected by AGP 9; Jetifier deprecation warning present | Android validation was blocked at configuration time. |
-| CI artifacts | CI uploaded `test-results`, `playwright-report`, `blob-report`, and `coverage` with no producing job | Successful CI could attempt empty uploads. |
-| Scheduled cleanup | One workflow checked out the repository and deleted runner-local directories | No durable cleanup value on ephemeral GitHub-hosted runners. |
-| Static debt scan | 62 console calls, 131 explicit `any` matches, 66 placeholder/simulation/stub/mock/TODO markers across production paths | Broad hygiene debt remains; counts are directional and must be regenerated before burn-down claims. |
-| Active npm command/config scan | One active command invocation plus Capacitor `npmClient: npm` | pnpm migration was incomplete in active tooling. |
+| JavaScript tests | Historical pre-#429 snapshot: 61 files; 245 passed, 1 skipped; about 52s | PR #441 reported 76 files with 401 passed / 1 skipped on the merged feature delta. Existing tests still do not prove native hardware, backend verification, or protocol production paths. |
+| Android configuration | Historical pre-#429 configuration failure | PRs #441/#442 report the focused Gradle tasks were blocked before execution because this devbox has no Android SDK; hosted CI is separate from real-device qualification. |
+| CI artifacts | Historical pre-#429 upload mismatch | The remediation is recorded as completed in TD-P1-007; current job/artifact behavior still requires hosted-run evidence when changed. |
+| Scheduled cleanup | Historical pre-#429 runner-local cleanup workflow | The no-op cleanup was removed; this row is not a current open debt. |
+| Static debt scan | Historical directional scan: 62 console calls, 131 explicit `any` matches, 66 placeholder/simulation/stub/mock/TODO markers across production paths | Broad hygiene debt remains; counts must be regenerated before burn-down claims. |
+| Active npm command/config scan | Historical active-command/config mismatch | Active paths were updated; historical documentation may still require classification under TD-P2-010. |
 
 ## Issue #357 branch checkpoint (historical #429 evidence)
 
@@ -112,6 +112,20 @@ current candidate results.
 - **Metrics baseline:** Configuration failed before task discovery; AGP emitted an `android.enableJetifier=true` deprecation warning.
 - **Evidence:** AGP configuration error captured during #357 investigation; `android/gradle/libs.versions.toml`; [`ANDROID_SDK_REVIEW.md`](../reports/ANDROID_SDK_REVIEW.md)
 
+### TD-P0-013 — Android KeyMint / StrongBox and Play Integrity qualification
+
+- **Category:** Android attestation / value-operation authorization
+- **Priority:** P0
+- **Status:** In Progress — client collection and request binding are merged; real-device qualification, backend verification, durable freshness/replay policy, centralized enforcement, rollout controls, and independent review remain open.
+- **Affected paths:** `android/core-crypto/src/main/kotlin/com/conxius/wallet/crypto/KeySecurityPolicy.kt`, `android/core-crypto/src/main/kotlin/com/conxius/wallet/crypto/KeyMintAuthorizationManager.kt`, `android/core-crypto/src/main/kotlin/com/conxius/wallet/crypto/AuthorizationRequest.kt`, `android/app/src/main/kotlin/com/conxius/wallet/PlayIntegrityPlugin.kt`, `docs/reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md`
+- **Impact:** Client-side KeyMint evidence and Play Integrity token acquisition can be mistaken for hardware qualification, server verification, or protocol-signing authorization. That would permit false release claims or an unenforced value-operation boundary.
+- **Owner:** Unassigned
+- **Exit criteria:** The qualification matrix in the canonical report passes on real StrongBox, TEE-only, legacy API, unsupported, and relevant Play installation states; a trusted backend verifies Android Key Attestation chain/root/revocation/challenge/app identity/key profile/security level/verified-boot/patch state; the backend decrypts and verifies Play Integrity and compares package/signing identity/request hash/timestamp/verdict policy; durable nonce/operation consumption and freshness prevent replay/cross-operation reuse; every value operation uses the centralized gate and fails closed on missing, stale, unverifiable, or outage states; privacy-minimized telemetry and staged rollout/rollback/outage procedures are reviewed; and independent security review/release acceptance is recorded.
+- **Validation:** PR #441 merged the KeyMint policy/evidence/canonical-binding client slice; PR #442 merged Play Integrity SDK `1.6.0` opaque-token acquisition. Local Android Gradle tests remain SDK-blocked in this devbox. No client/unit/hosted CI result is accepted as hardware qualification or backend verification.
+- **Target milestone:** M16 release baseline gate
+- **Metrics baseline:** Client boundary present; backend verifier, real-device evidence matrix, centralized production gate, privacy-minimized telemetry, staged rollout/runbook, and independent acceptance are not delivered by this change.
+- **Evidence:** [`CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md`](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md); [PR #441](https://github.com/Conxian/conxius-wallet/pull/441); [PR #442](https://github.com/Conxian/conxius-wallet/pull/442); [CON-1543](https://linear.app/conxian-labs/issue/CON-1543/p0-operationalize-attestation-roots-collateral-revocation-and); [CON-1512](https://linear.app/conxian-labs/issue/CON-1512/p0-enforce-hardware-backed-signing-and-mandatory-attestation-for-value); [CON-1546](https://linear.app/conxian-labs/issue/CON-1546/p0-add-centralized-wallet-value-operation-gate-and-quarantine); [CON-1519](https://linear.app/conxian-labs/issue/CON-1519/p0-complete-independent-security-review-and-release-acceptance)
+
 ### TD-P1-005 — Deterministic JavaScript toolchain and lint compatibility
 
 - **Category:** Toolchain / lint
@@ -131,14 +145,14 @@ current candidate results.
 
 - **Category:** Test coverage / release confidence
 - **Priority:** P1
-- **Status:** Open
+- **Status:** Completed for named hosted CI job coverage; local SDK, real-device, and attestation qualification remain open under TD-P0-013.
 - **Affected paths:** `.github/workflows/ci.yml`, `.github/workflows/android-release.yml`, `playwright.config.ts`, `e2e/`, `android/`
-- **Impact:** CI runs Vitest and a web build but does not run Playwright E2E or the requested Android unit-test gates. Release confidence is therefore narrower than the documented checklist.
+- **Impact:** The former baseline overstated the absence of CI coverage. Current workflows define named E2E, Android lint, and Android unit-test jobs; those jobs still do not prove physical-device StrongBox behavior, Play installation state, backend verification, or release authorization.
 - **Owner:** Unassigned
 - **Exit criteria:** CI has intentional, resource-bounded Playwright coverage and Android unit-test coverage; failure artifacts are produced by the jobs that upload them; release checks are separated from publishing.
-- **Validation:** Successful CI runs with named E2E and Android test jobs, plus local reproductions. PR #390 adds focused Esplora/Kotlin unit coverage but no Compose test because the current environment lacks the Android SDK; this does not satisfy the Android/E2E gate.
+- **Validation:** `.github/workflows/ci.yml` defines `E2E`, `Android Lint`, and `Android Unit Tests` jobs, and PRs #441/#442 record the hosted checks as passing. This satisfies job-presence coverage only; local Gradle execution in this devbox is blocked by the missing Android SDK, and no hosted job is a substitute for the TD-P0-013 device/backend matrix.
 - **Target milestone:** M16 release baseline / M17 coverage expansion
-- **Metrics baseline:** Current CI has one JavaScript test command and one build command; no E2E or Android test job.
+- **Metrics baseline:** Historical baseline had no named E2E or Android test job; current workflow has named jobs and retained real-device/backend gaps.
 - **Evidence:** `.github/workflows/ci.yml`; [`ANDROID_RELEASE_PREP.md`](ANDROID_RELEASE_PREP.md); [`MOBILE_TESTING_GUIDE.md`](MOBILE_TESTING_GUIDE.md)
 
 ### TD-P1-007 — CI artifact and runner-cleanup contracts

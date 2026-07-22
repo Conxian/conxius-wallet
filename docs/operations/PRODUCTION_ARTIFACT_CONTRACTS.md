@@ -1,13 +1,13 @@
 # Production Artifact Contracts (v1.0)
 
-**Date:** 2026-06-15
-**Status:** ALIGNED
+**Date:** 2026-07-22
+**Status:** DEFINED — pre-release; Play Integrity verification and production enforcement pending
 **Issue:** CON-1204
 
 ## 1. Conxius Wallet (Mobile)
 - **Artifact:** Android App Bundle (.aab), APK (.apk)
 - **Publish Destination:** Google Play Store (Internal/Production), GitHub Releases
-- **Install Verification:** Play Integrity API Attestation (planned release control; client token acquisition exists, backend verification and enforcement remain pending)
+- **Install Verification:** Play Integrity API attestation is a planned release control. Client token acquisition exists; backend verification, request binding, durable freshness/replay policy, centralized enforcement, and real-device qualification remain pending. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md).
 - **Rollback Expectation:** Versioned rollback via Play Console
 - **Promotion Owner:** COO (Sizwe Nkosi) & Lead Engineer
 

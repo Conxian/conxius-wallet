@@ -8,11 +8,11 @@ permalink: /prd
 
 ## 1. Executive Summary
 
-**Product:** Conxius Wallet, the **Ultimate Multi-Chain Sovereign Interface for the Full Bitcoin Ecosystem**. It is an offline-first Android wallet that provides native, hardware-level security for every layer of the Bitcoin stack: L1 (BTC), Lightning, Liquid, Stacks, Rootstock (RSK), BOB (Build On Bitcoin), RGB, Ordinals, Runes, Ark, BitVM, State Chains, and Maven.
+**Product:** Conxius Wallet, the **Ultimate Multi-Chain Sovereign Interface for the Full Bitcoin Ecosystem**. It is an offline-first Android wallet that uses Android Keystore-backed security boundaries across the Bitcoin stack: L1 (BTC), Lightning, Liquid, Stacks, Rootstock (RSK), BOB (Build On Bitcoin), RGB, Ordinals, Runes, Ark, BitVM, State Chains, and Maven. The hardware security tier is device- and policy-specific and remains subject to release qualification.
 
 **Mission:** Empower users with sovereign control over the entire Bitcoin landscape through a unified, secure, and intuitive mobile interface.
 
-**Value Proposition:** *The Citadel in your pocket.* Hardware-grade security (TEE/StrongBox) for the entire Bitcoin ecosystem without external hardware.
+**Value Proposition:** *The Citadel in your pocket.* Android Keystore-backed security for the Bitcoin ecosystem without external hardware; StrongBox is requested or required only where explicit evidence and release policy support that claim.
 
 **Institutional Expansion:** The ecosystem is enhanced by the **Conxian Gateway** (hosted at `conxianlabs.com`), a B2B-focused web portal for corporate treasury, institutional token launches, and shielded enterprise payments, fully integrated with the mobile enclave.
 
@@ -22,7 +22,7 @@ permalink: /prd
 
 ## 2. Business & Competitive Landscape
 
-### 2.1. Business State: [PRODUCTION] (Complexity: $O(1)$)
+### 2.1. Business State: [RELEASE-BASELINE HARDENING IN PROGRESS] (Complexity: $O(1)$)
 
 - **[MARKET_FIT]:** [ORCHESTRATING]
 - **[RISK_COMPLIANCE]:** [ORCHESTRATING]
@@ -35,18 +35,23 @@ permalink: /prd
 
 ### 3.1. Bridged Sovereign Architecture (Complexity: $O(1)$)
 
-Conxius utilizes a **Bridged Sovereign Architecture** to balance rapid protocol support with hardware-level security:
-- **Native Enclave Core**: All private keys and seeds are managed by the Android Keystore + StrongBox. Signing occurs exclusively in the native layer via dedicated Kotlin managers.
+Conxius utilizes a **Bridged Sovereign Architecture** to balance rapid protocol support with Android Keystore-backed security:
+- **Native Enclave Core**: Private keys and seeds are managed by Android Keystore-backed boundaries. Existing AES seed/database storage requests StrongBox where supported but can explicitly fall back to TEE. Native signing is a custody boundary, not proof that every protocol key is StrongBox-backed or hardware-qualified.
 - **TypeScript Protocol Layer**: High-level protocol logic (payload construction, API interaction) is handled in a secure TS environment.
 - **Native Bridge Managers**: A full suite of 20+ Kotlin managers (e.g., `BdkManager`, `YieldManager`) bridge the TS layer to native Rust/Kotlin libraries for critical operations.
 
 ### 3.2. Native Migration (Phase 5: "Clean Break") (Complexity: $O(1)$)
 
 The project is transitioning to a **pure native Android architecture** (Kotlin/Rust):
-- **Core Security**: StrongBox-backed AES-GCM encryption for BIP-39 seeds. [PRODUCTION]
+- **Core Security**: Android Keystore AES-GCM encryption for BIP-39 seeds, requesting StrongBox where supported with an explicit TEE fallback. Device-specific StrongBox qualification remains pending. [IMPLEMENTED / RELEASE VALIDATION PENDING]
 - **Protocol Core**: BDK (Bitcoin Dev Kit) for on-chain management. [PRODUCTION]
 - **Persistence**: Room DB with KSP for reactive, encrypted data storage. [PRODUCTION]
 - **UI/UX**: Jetpack Compose for a high-performance interface. [PRODUCTION]
+
+The dedicated P-256 KeyMint authorization boundary and Play Integrity client
+boundary are documented in the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md).
+They do not by themselves authorize value operations or qualify protocol
+signing keys for StrongBox-backed production use.
 
 ---
 

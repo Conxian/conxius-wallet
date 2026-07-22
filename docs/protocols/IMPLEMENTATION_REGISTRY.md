@@ -48,10 +48,10 @@ permalink: /docs/implementation-registry
 | Component | Status | Tech Stack |
 | :--- | :--- | :--- |
 | **UI Layer** | ✅ NATIVE | Jetpack Compose, Material 3 |
-| **Secure Enclave** | ✅ NATIVE | StrongBox, TEE-backed Keystore |
+| **Secure Enclave** | ✅ NATIVE | Android Keystore with StrongBox requested where supported; existing AES storage may fall back to TEE. Universal StrongBox backing and protocol-signing qualification are not claimed. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md). |
 | **Bitcoin Logic** | ✅ NATIVE | BDK Kotlin (v0.30.0) |
 | **Database** | ✅ NATIVE | Room + SQLCipher (Encrypted) |
-| **Integrity** | 🟡 IN PROGRESS | Root detection is local; Play Integrity SDK `1.6.0` Standard API client/token acquisition is present with opaque-token handling and deterministic request-hash binding. Backend decryption/verdict verification/request-hash comparison, real-device qualification, replay/freshness trust policy, and production enforcement remain pending. |
+| **Integrity** | 🟡 IN PROGRESS | Root detection is local; Play Integrity SDK `1.6.0` Standard API client/token acquisition is present with opaque-token handling and deterministic request-hash binding. Backend decryption/verdict verification/request-hash comparison, Android Key Attestation chain/root/revocation and device qualification, replay/freshness trust policy, centralized value-operation enforcement, and production rollout remain pending. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md). |
 
 ## BitVM2 Enablement Gate
 

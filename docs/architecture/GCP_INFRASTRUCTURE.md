@@ -8,7 +8,7 @@ permalink: /docs/gcp-infrastructure
 
 This document maps the Conxius "No Mock" production requirements to Google Cloud Platform (GCP) services.
 
-**Target Project:** `gen-lang-client-0264096458`
+**Deployment project:** The project is environment configuration, not a universal product constant. The current proxy workflow uses `gen-lang-client-0264096458`; Play Integrity must use the Google Cloud project number linked to the released Play application.
 
 ---
 
@@ -18,9 +18,9 @@ This document maps the Conxius "No Mock" production requirements to Google Cloud
 |-----------|-------------|-----------|-----------|
 | **Changelly Proxy** | **Cloud Run** | Stateless, scales to zero, HTTPS out-of-the-box. | Free Tier eligible (if low traffic) |
 | **Bisq Node** | **Compute Engine (e2-medium)** | Stateful (Tor, Wallet, P2P), needs persistent disk. | ~$25-30/mo |
-| **Secrets** | **Secret Manager** | Secure storage for API keys and seed phrases. | Pay-per-access |
+| **Secrets** | **Secret Manager** | Secure storage for service/API credentials only; never wallet seed phrases, mnemonics, private keys, or signing material. | Pay-per-access |
 | **Static Configs** | **Cloud Storage** | Hosting Liquid federation scripts/metadata. | Cents/mo |
-| **Play Integrity** | **API & Services** | Native Android attestation service. | Free tier (10k req/day) |
+| **Play Integrity** | **API & Services** | Backend decryption and verdict verification for the client-acquired opaque token; quota and billing are subject to the configured Google Cloud/Play Integrity account. | Configuration-dependent |
 
 ---
 
@@ -77,7 +77,13 @@ This document maps the Conxius "No Mock" production requirements to Google Cloud
 
 ## 3. Play Integrity API (Security)
 
-**Role:** The app acquires an opaque Play Integrity token. Backend decryption, verdict and request-hash verification, and enforcement remain required and pending; the client does not yet verify device integrity.
+**Role:** The app acquires an opaque Play Integrity token. Backend decryption, verdict and request-hash verification, freshness/replay policy, and value-operation enforcement remain required and pending; the client does not verify device integrity.
+
+The wallet-side boundary and qualification matrix are maintained in the
+[CON-1544 report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md). Use
+the official [Standard request guidance](https://developer.android.com/google/play/integrity/standard)
+and [verdict validation guidance](https://developer.android.com/google/play/integrity/verdicts)
+for the server flow.
 
 1. Go to **APIs & Services > Library**.
 2. Search for **"Play Integrity API"**.
@@ -93,6 +99,11 @@ Store the following in **Secret Manager**:
 - `changelly-api-secret`
 - `bisq-wallet-password` (if automated)
 - `marketplace-api-keys`
+
+Never place wallet seed phrases, mnemonics, private keys, authorization private
+keys, or protocol signing material in GCP Secret Manager. The wallet remains
+local-first and non-custodial; server-side secrets are limited to service/API
+credentials required by the deployment.
 
 ---
 
@@ -112,7 +123,8 @@ We use GitHub Actions to automatically build and deploy the Changelly Proxy to C
 
 ### Required Secrets
 
-You must set the following secrets in your GitHub repository (`botshelomokoka/opsource`).
+You must set the following secrets in the repository that owns the deployment
+workflow (`Conxian/conxius-wallet` for `.github/workflows/deploy-proxy.yml`).
 
 | Secret Name | Description |
 |-------------|-------------|
@@ -126,11 +138,11 @@ Run these commands in your terminal to securely set the secrets:
 
 ```bash
 # 1. Set GCP Credentials (paste the JSON content when prompted)
-gh secret set GCP_CREDENTIALS -R botshelomokoka/opsource
+gh secret set GCP_CREDENTIALS -R Conxian/conxius-wallet
 
 # 2. Set Changelly Keys
-gh secret set CHANGELLY_API_KEY -b "your_actual_api_key" -R botshelomokoka/opsource
-gh secret set CHANGELLY_API_SECRET -b "your_actual_api_secret" -R botshelomokoka/opsource
+gh secret set CHANGELLY_API_KEY -b "your_actual_api_key" -R Conxian/conxius-wallet
+gh secret set CHANGELLY_API_SECRET -b "your_actual_api_secret" -R Conxian/conxius-wallet
 ```
 
 > **Note:** You can generate your Changelly keys here: [Changelly Developer Portal](https://docs.changelly.com/development/generate-keys)
