@@ -60,6 +60,10 @@ class KeySecurityPolicyTest {
             policy = AuthorizationPolicy.TEE_ALLOWED,
             evidence = availableEvidence(KeySecurityTier.SOFTWARE),
         )
+        val unknownAvailableDecision = AuthorizationPolicyEvaluator.evaluate(
+            policy = AuthorizationPolicy.TEE_ALLOWED,
+            evidence = availableEvidence(KeySecurityTier.UNKNOWN),
+        )
         val unknownDecision = AuthorizationPolicyEvaluator.evaluate(
             policy = AuthorizationPolicy.TEE_ALLOWED,
             evidence = LocalKeyInfoEvidence.Unavailable(
@@ -83,6 +87,11 @@ class KeySecurityPolicyTest {
         assertEquals(
             AuthorizationDecisionReason.REJECTED_SOFTWARE_BACKED,
             softwareDecision.reason,
+        )
+        assertFalse(unknownAvailableDecision.accepted)
+        assertEquals(
+            AuthorizationDecisionReason.REJECTED_UNKNOWN_EVIDENCE,
+            unknownAvailableDecision.reason,
         )
         assertFalse(unknownDecision.accepted)
         assertEquals(
