@@ -5,6 +5,9 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 import java.util.Locale
 
+/** Maximum attestation-challenge size accepted at an authorization boundary. */
+const val MAX_ATTESTATION_CHALLENGE_BYTES = 128
+
 /**
 * Package identity used for request binding.
 *
@@ -53,6 +56,9 @@ class CanonicalAuthorizationRequest(
     }
     private val attestationChallengeValue = attestationChallenge.copyOf().also {
         require(it.isNotEmpty()) { "attestationChallenge must not be empty" }
+        require(it.size <= MAX_ATTESTATION_CHALLENGE_BYTES) {
+            "attestationChallenge must be at most $MAX_ATTESTATION_CHALLENGE_BYTES bytes"
+        }
     }
 
     val keyIdentity: String = keyIdentity.trim().also {
