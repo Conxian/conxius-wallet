@@ -231,11 +231,11 @@ export const redeemVtxo = async (vtxo: VTXO, vault: string, network: Network): P
             });
         }
 
-        notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'BitVM Verification', message: 'Unilateral Exit Broadcasted' });
+        notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'Ark Redemption', message: 'Unilateral Exit Broadcasted' });
         return "redemption_tx_" + Date.now();
 
     } catch (e: any) {
-        notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'BitVM Verification', message: `Redemption failed: ${e.message}` });
+        notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'Ark Redemption', message: `Redemption failed: ${e.message}` });
         throw e;
     }
 };
