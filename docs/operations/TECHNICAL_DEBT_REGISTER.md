@@ -45,7 +45,7 @@ and is intentionally not hidden behind lint suppression or broad rule changes.
 | Web production build | Blocked by environment | TypeScript completed, then Vite was killed with exit `137` during chunk rendering after 4,736 modules transformed. |
 | Repository verify | Blocked by web production build | Tests and lint completed; Vite again exited `137` during chunk rendering. |
 | Capacitor sync | Blocked by missing build output | `corepack pnpm exec cap sync android` exited 1 because `./dist/index.html` is absent; the authoritative root config uses `npmClient: pnpm`, while the tracked generated asset was reverted to its prior state because no successful sync was produced. |
-| Dependency audit | Passed with time-bounded exception | `corepack pnpm exec node scripts/ci/audit_with_exceptions.mjs` ran `pnpm audit --audit-level=high --json`: 6 findings total (3 low, 2 moderate, 1 high), with only `GHSA-3gc7-fjrx-p6mg` for `bigint-buffer@1.1.5` allowed through 2026-08-19; any other high/critical advisory fails CI. |
+| Dependency audit | Default CI passes with explicit pending-approval warnings; release gate blocks | `pnpm audit --audit-level=low --json` reports three residual findings: pending exceptions for `bigint-buffer@1.1.5` and `elliptic@6.6.1`, plus a production/release `not-affected` disposition for `esbuild@0.27.3`. The ledger and temp evidence artifact are enforced by `scripts/ci/audit_with_exceptions.mjs`; release mode blocks until both exceptions are approved. |
 
 ## Inventory
 
@@ -199,15 +199,30 @@ and is intentionally not hidden behind lint suppression or broad rule changes.
 
 - **Category:** Dependency security / supply chain
 - **Priority:** P1
-- **Status:** In Progress — three advisories are fixed in the #399 candidate branch; the production-reachable `bigint-buffer` high advisory plus `esbuild` and `elliptic` low advisories remain unresolved and pending security/COO review.
-- **Affected paths:** `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `scripts/ci/audit_with_exceptions.mjs`, `scripts/ci/dependency-audit-exceptions.json`, CI security-audit step
-- **Impact:** The repository still reports one high and two lower-severity dependency vulnerabilities; release policy needs a documented remediation or accepted exception before promotion.
+- **Status:** In Progress — compatible overrides fixed three advisories; three residual findings are explicitly dispositioned, but the two exception approvals remain pending.
+- **Affected paths:** `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `scripts/ci/audit_with_exceptions.mjs`, `scripts/ci/dependency-audit-exceptions.json`, `tests/ci/dependency-audit-policy.test.mjs`, `.github/workflows/ci.yml`, `.github/workflows/android-release.yml`
+- **Impact:** The reproducible dependency graph still contains one high and one low finding that cannot currently be moved to a published patched package without breaking compatibility. PR CI must expose the pending decision without inventing approval, while release promotion must remain blocked until security/COO approval is durable.
 - **Owner:** Conxian security maintainers
-- **Exit criteria:** `pnpm audit` reports no high/critical findings, or every remaining finding has a reviewed, time-bounded exception with an upstream/remediation plan.
-- **Validation:** The 2026-07-22 #399 candidate ran `CI=true pnpm install --frozen-lockfile`, full and production `pnpm audit --audit-level=low --json`, and `pnpm exec node scripts/ci/audit_with_exceptions.mjs`. Both audits now report three findings: `GHSA-3gc7-fjrx-p6mg` for `bigint-buffer@1.1.5` (high), `GHSA-g7r4-m6w7-qqqr` for `esbuild@0.27.3` (low), and `GHSA-848j-6mx2-7j84` for `elliptic@6.6.1` (low). The wrapper passes only because the exact active `bigint-buffer` exception expires 2026-08-19; it does not approve the issue-level disposition. The fixed-package evidence, esbuild safety decision, and removal criteria are recorded in [`DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md`](DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md).
+- **Exit criteria:** `pnpm audit` reports no residual findings, or every remaining finding has a reviewed, time-bounded disposition with evidence; release mode passes only when every active exception has a real approval URL, approver identity, and approval date.
+- **Validation:** The versioned ledger at `scripts/ci/dependency-audit-exceptions.json` strictly matches every current low-or-higher audit advisory by ID, package, severity, and observed version. Default `pnpm exec node scripts/ci/audit_with_exceptions.mjs --evidence "$RUNNER_TEMP/conxius-dependency-audit.json"` passes with three findings and warnings for the two pending approvals. `--require-approved-exceptions` writes release evidence but fails specifically for `GHSA-3gc7-fjrx-p6mg` and `GHSA-848j-6mx2-7j84`, so promotion remains blocked. The reproducible security overrides remain in `pnpm-workspace.yaml` and the lockfile; `CI=true corepack pnpm install --frozen-lockfile` must remain lockfile-clean.
 - **Target milestone:** M16 release baseline
-- **Metrics baseline:** Baseline was 6 findings: 3 low, 2 moderate, 1 high. The candidate result is 3 findings: 2 low, 1 high; no critical findings are present.
-- **Evidence:** `scripts/ci/audit_with_exceptions.mjs`; `scripts/ci/dependency-audit-exceptions.json`; `pnpm-workspace.yaml`; [`DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md`](DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md); [`Sovereign_State.md`](../state/Sovereign_State.md)
+- **Metrics baseline:** Three fixed advisories are removed from the current ledger by compatible overrides: `GHSA-2g4f-4pwh-qvx6` (`ajv@8.12.0` → `8.18.0`), `GHSA-w5hq-g745-h8pq` (`uuid` versions `8.3.2`, `10.0.0`, and `11.1.0` → `11.1.1`), and `GHSA-4x5r-pxfx-6jf8` (`@babel/core@7.29.0` → `7.29.7`). Residual state is `bigint-buffer@1.1.5` high/exception/pending, `elliptic@6.6.1` low/exception/pending, and `esbuild@0.27.3` low/not-affected for production and release. All residual exceptions expire on **2026-08-19**; no approval is recorded.
+- **Evidence:** `scripts/ci/audit_with_exceptions.mjs`; `scripts/ci/dependency-audit-exceptions.json`; `tests/ci/fixtures/dependency-audit-report.json`; `pnpm-workspace.yaml`; `.github/workflows/ci.yml`; `.github/workflows/android-release.yml`; [`Sovereign_State.md`](../state/Sovereign_State.md); [`ANDROID_RELEASE_PREP.md`](ANDROID_RELEASE_PREP.md)
+
+#### Current disposition ledger (reviewed 2026-07-22)
+
+| Advisory | Package / observed version | Severity | Disposition | Evidence / decision state |
+| --- | --- | --- | --- | --- |
+| `GHSA-3gc7-fjrx-p6mg` | `bigint-buffer@1.1.5` | High | Time-bound `exception`, approval `pending`, expires **2026-08-19** | Production Wormhole/Solana paths; advisory says `>=1.1.6`, but npm has no `1.1.6+` release. `CON-1525` and GitHub `#399` are tracking context only, not approval evidence. |
+| `GHSA-848j-6mx2-7j84` | `elliptic@6.6.1` | Low | Time-bound `exception`, approval `pending`, expires **2026-08-19** | Production Wormhole/CosmJS and Payjoin paths; advisory says `>=6.6.2`, but npm has no `6.6.2` release. `CON-1525` and GitHub `#399` are tracking context only, not approval evidence. |
+| `GHSA-g7r4-m6w7-qqqr` | `esbuild@0.27.3` | Low | `not-affected` for production/release | The advisory is confined to the local Vite development-server response-read surface. Release uses `pnpm run build` and does not run/expose that dev server; `0.28.1` was tested and breaks `vite-plugin-top-level-await` production builds. |
+
+The default PR gate explicitly warns on pending approval and may merge the
+remediation work. The release gate invokes
+`--require-approved-exceptions`; it blocks promotion while either exception is
+pending. A future `approved` record must contain a real durable approval URL,
+approver identity, and approval date. This implementation does **not** mark
+CON-1525 complete and does **not** claim security or COO approval.
 
 ### TD-P0-012 — Deterministic Android onboarding wallet creation
 
