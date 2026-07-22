@@ -1,0 +1,67 @@
+{
+  "advisories": {
+    "1103747": {
+      "github_advisory_id": "GHSA-3gc7-fjrx-p6mg",
+      "module_name": "bigint-buffer",
+      "severity": "high",
+      "findings": [
+        {
+          "version": "1.1.5",
+          "paths": [
+            ".>@wormhole-foundation/sdk>@wormhole-foundation/sdk-solana>bigint-buffer",
+            ".>@wormhole-foundation/sdk-solana>bigint-buffer"
+          ],
+          "dev": false,
+          "optional": false,
+          "bundled": false
+        }
+      ]
+    },
+    "1112030": {
+      "github_advisory_id": "GHSA-848j-6mx2-7j84",
+      "module_name": "elliptic",
+      "severity": "low",
+      "findings": [
+        {
+          "version": "6.6.1",
+          "paths": [
+            ".>@wormhole-foundation/sdk>@cosmjs/crypto>elliptic",
+            ".>payjoin-client>elliptic"
+          ],
+          "dev": false,
+          "optional": false,
+          "bundled": false
+        }
+      ]
+    },
+    "1120680": {
+      "github_advisory_id": "GHSA-g7r4-m6w7-qqqr",
+      "module_name": "esbuild",
+      "severity": "low",
+      "findings": [
+        {
+          "version": "0.27.3",
+          "paths": [
+            ".>vite>esbuild"
+          ],
+          "dev": false,
+          "optional": true,
+          "bundled": false
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 2,
+      "moderate": 0,
+      "high": 1,
+      "critical": 0
+    },
+    "dependencies": 648,
+    "devDependencies": 382,
+    "optionalDependencies": 134,
+    "totalDependencies": 1151
+  }
+}

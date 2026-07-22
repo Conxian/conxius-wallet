@@ -1,11 +1,57 @@
-[
-  {
-    "advisory": "GHSA-3gc7-fjrx-p6mg",
-    "package": "bigint-buffer",
-    "severity": "high",
-    "owner": "Conxian security maintainers",
-    "expiresOn": "2026-08-19",
-    "rationale": "The advisory marks bigint-buffer versions through 1.1.5 as vulnerable and lists >=1.1.6 as patched, but npm currently publishes no 1.1.6 or later release. The current Wormhole/Solana dependency path requires bigint-buffer ^1.1.5 and is treated as production-reachable; this is not a not-affected claim. The pinned lockfile, exact-advisory/expiry validator, frozen-install policy, and review-gated release process are compensating controls while the exception is active.",
-    "remediation": "Adopt the first upstream bigint-buffer release containing the fix, or replace the Wormhole/Solana dependency path with a validated alternative before 2026-08-19. Do not extend or alter the owner or expiry without explicit COO/security approval; remove the exception only after clean-install, audit, and affected Wormhole/Solana path verification."
-  }
-]
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "advisory": "GHSA-3gc7-fjrx-p6mg",
+      "package": "bigint-buffer",
+      "severity": "high",
+      "observedVersions": [
+        "1.1.5"
+      ],
+      "disposition": "exception",
+      "reviewedOn": "2026-07-22",
+      "owner": "Conxian security maintainers",
+      "rationale": "The advisory marks bigint-buffer versions through 1.1.5 as vulnerable and lists >=1.1.6 as patched, but npm currently publishes no 1.1.6 or later release. The production Wormhole/Solana paths remain on bigint-buffer@1.1.5; forcing the nonexistent patched version would break reproducible installation.",
+      "remediation": "Adopt the first upstream bigint-buffer release containing the fix, or replace the Wormhole/Solana dependency path with a validated alternative before the exception expires.",
+      "expiresOn": "2026-08-19",
+      "approval": {
+        "status": "pending",
+        "reference": "CON-1525; GitHub #399 (tracking context only; not approval evidence)"
+      }
+    },
+    {
+      "advisory": "GHSA-848j-6mx2-7j84",
+      "package": "elliptic",
+      "severity": "low",
+      "observedVersions": [
+        "6.6.1"
+      ],
+      "disposition": "exception",
+      "reviewedOn": "2026-07-22",
+      "owner": "Conxian security maintainers",
+      "rationale": "The advisory marks elliptic versions through 6.6.1 as vulnerable and lists >=6.6.2 as patched, but npm currently publishes no 6.6.2 release. The production Wormhole/CosmJS and Payjoin paths remain on elliptic@6.6.1 while the dependency paths are evaluated for a compatible fix.",
+      "remediation": "Adopt the first upstream elliptic release containing the fix, or replace the affected Wormhole/CosmJS and Payjoin dependency paths with validated alternatives before the exception expires.",
+      "expiresOn": "2026-08-19",
+      "approval": {
+        "status": "pending",
+        "reference": "CON-1525; GitHub #399 (tracking context only; not approval evidence)"
+      }
+    },
+    {
+      "advisory": "GHSA-g7r4-m6w7-qqqr",
+      "package": "esbuild",
+      "severity": "low",
+      "observedVersions": [
+        "0.27.3"
+      ],
+      "disposition": "not-affected",
+      "reviewedOn": "2026-07-22",
+      "rationale": "This advisory is confined to the local Vite development-server response-read surface. Production and release artifacts do not run or expose that development server.",
+      "evidence": [
+        "The production command is `pnpm run build`, which emits the static `dist` artifact and does not start a Vite development server.",
+        "The `Web build` step in `.github/workflows/android-release.yml` runs `pnpm run build` before Android packaging; the release workflow has no Vite development-server step.",
+        "esbuild@0.28.1 was tested and breaks `vite-plugin-top-level-await` production builds, so esbuild@0.27.3 is retained for compatibility while this advisory remains explicitly tracked."
+      ]
+    }
+  ]
+}
