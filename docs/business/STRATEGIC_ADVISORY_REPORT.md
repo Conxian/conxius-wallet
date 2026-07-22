@@ -66,8 +66,8 @@ We must pivot from "App Development" to "Platform Operations".
 **Goal:** Make the app safe for grandmother-level users.
 
 1. **Implement Play Integrity (Attestation):**
-    - The native plugin exists (`DeviceIntegrityPlugin.java`) but needs the GCP backend hook.
-    - **Why:** Prevents the app from running on rooted/compromised devices where the Keystore might be vulnerable.
+    - The client-side `PlayIntegrityPlugin.kt` now acquires opaque Standard API tokens, but the GCP backend hook, request-hash comparison, and production enforcement remain pending.
+    - **Why:** A verified backend policy can help prevent sensitive operations from proceeding on environments that fail the reviewed integrity requirements.
 
 2. **E2E Testing Suite:**
     - Write Playwright tests that run against *Testnet* infrastructure.
