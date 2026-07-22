@@ -48,8 +48,34 @@ verification, and deeper reorg recovery remain outside this merged slice.
 - **Secret Scanning**: A checksum-verified, tokenless Gitleaks CLI plus optional
   GitGuardian are integrated in CI. `.gitleaks.toml` is narrow and
   `.gitleaksignore` is intentionally empty.
-- **Dependency Security**: Security overrides are authoritative in `pnpm-workspace.yaml` and reproduced in `pnpm-lock.yaml`; pnpm `11.13.0` ignores the obsolete `package.json` `pnpm` field. The remaining high `bigint-buffer` advisory is controlled by the expiring exception in `scripts/ci/dependency-audit-exceptions.json` and the CI validator.
+- **Dependency Security**: Security overrides are authoritative in `pnpm-workspace.yaml` and reproduced in `pnpm-lock.yaml`; pnpm `11.13.0` ignores the obsolete `package.json` `pnpm` field. The versioned ledger in `scripts/ci/dependency-audit-exceptions.json` currently matches three low-or-higher findings: pending exceptions for high `bigint-buffer@1.1.5` and low `elliptic@6.6.1`, both expiring **2026-08-19**, plus a low `esbuild@0.27.3` `not-affected` disposition for production/release. `CON-1525` and GitHub `#399` are tracking context only; no approval is recorded.
 - **Security Journal**: `.jules/` hardening journal documents vulnerability patterns and prevention guides.
+
+## Dependency audit disposition state (reviewed 2026-07-22)
+
+The prior compatible-override change fixed and removed these advisories from the
+current audit ledger: `GHSA-2g4f-4pwh-qvx6` for `ajv@8.12.0` via `8.18.0`,
+`GHSA-w5hq-g745-h8pq` for `uuid` versions `8.3.2`, `10.0.0`, and `11.1.0`
+via `11.1.1`, and `GHSA-4x5r-pxfx-6jf8` for `@babel/core@7.29.0` via `7.29.7`.
+
+The current `pnpm audit --audit-level=low --json` result has exactly three
+findings. `GHSA-3gc7-fjrx-p6mg` (`bigint-buffer@1.1.5`, high) is a time-bound
+exception for production Wormhole/Solana paths because npm has no published
+`1.1.6+`; `GHSA-848j-6mx2-7j84` (`elliptic@6.6.1`, low) is a time-bound
+exception for production Wormhole/CosmJS and Payjoin paths because npm has no
+published `6.6.2`. Both exceptions expire on **2026-08-19** and have approval
+status **pending**. `CON-1525` and GitHub `#399` are tracking references only,
+not approval evidence; no approver or approval date is recorded.
+
+`GHSA-g7r4-m6w7-qqqr` (`esbuild@0.27.3`, low) is explicitly tracked as
+`not-affected` for production/release: the advisory is limited to the local Vite
+development-server response-read surface, release artifacts use `pnpm run build`
+and do not expose that server, and `esbuild@0.28.1` breaks
+`vite-plugin-top-level-await` production builds. Default PR CI emits a pending
+approval warning and may pass; the Android release workflow runs
+`--require-approved-exceptions`, uploads evidence from `$RUNNER_TEMP`, and blocks
+promotion until both exception records have real durable approval URL,
+approver, and approval date. This state does not mark CON-1525 complete.
 
 ## ⛓️ Protocol Support
 - **L1**: BDK Kotlin (Native)
