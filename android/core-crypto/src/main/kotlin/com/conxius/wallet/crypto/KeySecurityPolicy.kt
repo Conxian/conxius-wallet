@@ -95,6 +95,9 @@ data class AuthorizationPolicyDecision(
 * Fail-closed policy evaluation for authorization-key evidence.
 *
 * Software, unknown, unavailable, and unsupported evidence is never accepted.
+* Platform values such as SECURITY_LEVEL_UNKNOWN_SECURE remain
+* [KeySecurityTier.UNKNOWN] until this boundary defines an explicit policy for
+* them; they are never silently promoted to StrongBox or TEE evidence.
 * StrongBox is accepted for both policies because it is stronger than the
 * minimum required by [TEE_ALLOWED].
 */
