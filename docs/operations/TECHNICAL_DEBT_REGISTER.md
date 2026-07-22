@@ -193,15 +193,15 @@ its exit criteria and validation are recorded in the implementation change.
 
 - **Category:** Dependency security / supply chain
 - **Priority:** P1
-- **Status:** In Progress — one reviewed, time-bounded high-severity exception remains.
+- **Status:** In Progress — three advisories are fixed in the #399 candidate branch; the production-reachable `bigint-buffer` high advisory plus `esbuild` and `elliptic` low advisories remain unresolved and pending security/COO review.
 - **Affected paths:** `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `scripts/ci/audit_with_exceptions.mjs`, `scripts/ci/dependency-audit-exceptions.json`, CI security-audit step
-- **Impact:** The repository still reports one high and five lower-severity dependency vulnerabilities; release policy needs a documented remediation or accepted exception before promotion.
+- **Impact:** The repository still reports one high and two lower-severity dependency vulnerabilities; release policy needs a documented remediation or accepted exception before promotion.
 - **Owner:** Conxian security maintainers
 - **Exit criteria:** `pnpm audit` reports no high/critical findings, or every remaining finding has a reviewed, time-bounded exception with an upstream/remediation plan.
-- **Validation:** `corepack pnpm exec node scripts/ci/audit_with_exceptions.mjs` runs `pnpm audit --audit-level=high --json`, validates exception ownership/expiry, and fails on any high/critical advisory other than the exact active exception. The current exception is `GHSA-3gc7-fjrx-p6mg` for `bigint-buffer@1.1.5`, expires 2026-08-19, and has no published `bigint-buffer` `1.1.6+` release available to install. The reproducible security overrides remain in `pnpm-workspace.yaml` and the lockfile; `CI=true corepack pnpm install --frozen-lockfile` passed without lockfile changes.
+- **Validation:** The 2026-07-22 #399 candidate ran `CI=true pnpm install --frozen-lockfile`, full and production `pnpm audit --audit-level=low --json`, and `pnpm exec node scripts/ci/audit_with_exceptions.mjs`. Both audits now report three findings: `GHSA-3gc7-fjrx-p6mg` for `bigint-buffer@1.1.5` (high), `GHSA-g7r4-m6w7-qqqr` for `esbuild@0.27.3` (low), and `GHSA-848j-6mx2-7j84` for `elliptic@6.6.1` (low). The wrapper passes only because the exact active `bigint-buffer` exception expires 2026-08-19; it does not approve the issue-level disposition. The fixed-package evidence, esbuild safety decision, and removal criteria are recorded in [`DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md`](DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md).
 - **Target milestone:** M16 release baseline
-- **Metrics baseline:** 6 findings: 3 low, 2 moderate, 1 high; current gate passes only because the single high finding has the reviewed exception above. No critical findings are present.
-- **Evidence:** `scripts/ci/audit_with_exceptions.mjs`; `scripts/ci/dependency-audit-exceptions.json`; `pnpm-workspace.yaml`; [`Sovereign_State.md`](../state/Sovereign_State.md)
+- **Metrics baseline:** Baseline was 6 findings: 3 low, 2 moderate, 1 high. The candidate result is 3 findings: 2 low, 1 high; no critical findings are present.
+- **Evidence:** `scripts/ci/audit_with_exceptions.mjs`; `scripts/ci/dependency-audit-exceptions.json`; `pnpm-workspace.yaml`; [`DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md`](DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md); [`Sovereign_State.md`](../state/Sovereign_State.md)
 
 ### TD-P0-012 — Deterministic Android onboarding wallet creation
 

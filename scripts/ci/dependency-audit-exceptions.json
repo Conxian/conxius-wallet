@@ -5,7 +5,7 @@
     "severity": "high",
     "owner": "Conxian security maintainers",
     "expiresOn": "2026-08-19",
-    "rationale": "The advisory marks bigint-buffer versions through 1.1.5 as vulnerable and lists >=1.1.6 as patched, but npm currently publishes no 1.1.6 or later release. The current Wormhole/Solana dependency path requires bigint-buffer ^1.1.5; forcing the nonexistent patched version would break reproducible installation.",
-    "remediation": "Adopt the first upstream bigint-buffer release containing the fix, or replace the Wormhole/Solana dependency path with a validated alternative before the exception expires."
+    "rationale": "The advisory marks bigint-buffer versions through 1.1.5 as vulnerable and lists >=1.1.6 as patched, but npm currently publishes no 1.1.6 or later release. The current Wormhole/Solana dependency path requires bigint-buffer ^1.1.5 and is treated as production-reachable; this is not a not-affected claim. The pinned lockfile, exact-advisory/expiry validator, frozen-install policy, and review-gated release process are compensating controls while the exception is active.",
+    "remediation": "Adopt the first upstream bigint-buffer release containing the fix, or replace the Wormhole/Solana dependency path with a validated alternative before 2026-08-19. Do not extend or alter the owner or expiry without explicit COO/security approval; remove the exception only after clean-install, audit, and affected Wormhole/Solana path verification."
   }
 ]
