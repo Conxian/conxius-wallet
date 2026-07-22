@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "pnpm run check:typescript-compat && tsc && vite build",
     "preview": "vite preview",
     "android:build": "pnpm run build && pnpm cap sync && pnpm cap open android",
     "test": "vitest",
@@ -14,8 +14,10 @@
     "test:e2e:ui": "playwright test --ui",
     "bench:silent-payments": "node scripts/bench-silent-payments.mjs",
     "prepare": "husky",
-    "lint": "node scripts/ci/check_typescript_compatibility.mjs && eslint .",
+    "lint": "pnpm run check:typescript-compat && eslint .",
+    "typecheck": "pnpm run check:typescript-compat && tsc --noEmit",
     "verify": "bash scripts/ci/verify_local.sh",
+    "check:typescript-compat": "node scripts/ci/check_typescript_compatibility.mjs",
     "check:release-version": "node scripts/ci/check_release_version.mjs",
     "check:workflow-pins": "python3 scripts/ci/check_workflow_pins.py",
     "check:android-security": "bash scripts/ci/validate_android_security.sh"
