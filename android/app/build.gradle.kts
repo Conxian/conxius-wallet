@@ -3,6 +3,15 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+val configuredPlayIntegrityCloudProjectNumber = providers.gradleProperty("playIntegrityCloudProjectNumber")
+    .orElse(providers.environmentVariable("PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER"))
+    .orNull
+    ?.trim()
+    ?: ""
+
+fun String.toBuildConfigStringLiteral(): String =
+    "\"${replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")}\""
+
 android {
     namespace = "com.conxius.wallet"
     compileSdk = 36
@@ -28,6 +37,11 @@ android {
         // are guarded below and fail closed when VERSION_CODE is absent/invalid.
         versionCode = configuredVersionCode ?: 1
         versionName = "1.9.5"
+        buildConfigField(
+            "String",
+            "PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER",
+            configuredPlayIntegrityCloudProjectNumber.toBuildConfigStringLiteral(),
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -198,6 +212,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
 
     implementation("com.google.android.material:material:1.14.0")
+    implementation(libs.play.integrity)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)

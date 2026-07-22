@@ -51,7 +51,7 @@ permalink: /docs/implementation-registry
 | **Secure Enclave** | ✅ NATIVE | StrongBox, TEE-backed Keystore |
 | **Bitcoin Logic** | ✅ NATIVE | BDK Kotlin (v0.30.0) |
 | **Database** | ✅ NATIVE | Room + SQLCipher (Encrypted) |
-| **Integrity** | ✅ NATIVE | Play Integrity API + Root Detection |
+| **Integrity** | 🟡 IN PROGRESS | Root detection is local; Play Integrity SDK `1.6.0` Standard API client/token acquisition is present with opaque-token handling and deterministic request-hash binding. Backend decryption/verdict verification/request-hash comparison, real-device qualification, replay/freshness trust policy, and production enforcement remain pending. |
 
 ## BitVM2 Enablement Gate
 
