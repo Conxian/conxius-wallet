@@ -2,6 +2,7 @@ package com.conxius.wallet.crypto
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
+import java.util.Base64
 import java.util.Locale
 
 /** Maximum attestation-challenge size accepted at an authorization boundary. */
@@ -113,6 +114,13 @@ object AuthorizationRequestCanonicalizer {
 
     fun requestHash(request: CanonicalAuthorizationRequest): ByteArray =
         CryptoDigest.sha256(canonicalize(request))
+
+    /**
+     * URL-safe, unpadded transport representation of the existing SHA-256
+     * request hash. The hash bytes are unchanged before encoding.
+     */
+    fun requestHashBase64Url(request: CanonicalAuthorizationRequest): String =
+        Base64.getUrlEncoder().withoutPadding().encodeToString(requestHash(request))
 
     private fun writeString(output: ByteArrayOutputStream, field: String, value: String) {
         writeUtf8(output, field)

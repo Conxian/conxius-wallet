@@ -77,7 +77,7 @@ This document maps the Conxius "No Mock" production requirements to Google Cloud
 
 ## 3. Play Integrity API (Security)
 
-**Role:** Verifies the request is coming from a genuine, unrooted Android device.
+**Role:** The app acquires an opaque Play Integrity token. Backend decryption, verdict and request-hash verification, and enforcement remain required and pending; the client does not yet verify device integrity.
 
 1. Go to **APIs & Services > Library**.
 2. Search for **"Play Integrity API"**.

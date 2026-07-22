@@ -29,6 +29,10 @@ class AuthorizationRequestCanonicalizerTest {
             "3e05250f231860b23abfe345ad63fbef34efbbaff2d113be05873a639911273a",
             firstHash.toLowerHex(),
         )
+        assertEquals(
+            "PgUlDyMYYLI6v-NFrWP77zTvu6_y0RO-BYc6Y5kRJzo",
+            AuthorizationRequestCanonicalizer.requestHashBase64Url(first),
+        )
     }
 
     @Test
