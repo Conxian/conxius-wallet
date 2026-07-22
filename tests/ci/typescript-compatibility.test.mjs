@@ -8,8 +8,13 @@ import {
   runToolchainGuard,
 } from '../../scripts/ci/check_typescript_toolchain.mjs';
 import {
+  APPROVED_TYPESCRIPT_VERSION,
   MIGRATION_ISSUE,
+  readInstalledPackageMetadata,
+  readInstalledTypeScriptCompatibility,
   runTypeScriptCompatibilityCheck,
+  satisfiesVersionRange,
+  validateInstalledTypeScriptCompatibility,
   validateTypeScriptCompatibility,
 } from '../../scripts/ci/check_typescript_compatibility.mjs';
 
@@ -18,6 +23,10 @@ const packageJson = JSON.parse(readFileSync(resolve(repositoryRoot, 'package.jso
 const workflow = readFileSync(resolve(repositoryRoot, '.github/workflows/ci.yml'), 'utf8');
 const releaseWorkflow = readFileSync(resolve(repositoryRoot, '.github/workflows/android-release.yml'), 'utf8');
 const temporaryRoots = [];
+const supportedTypescriptEslint = {
+  version: '8.65.0',
+  peerDependencies: { typescript: '>=4.8.4 <6.1.0' },
+};
 
 afterEach(() => {
   for (const root of temporaryRoots.splice(0)) {
@@ -76,18 +85,40 @@ function validateFixture({ packageOverride, lockfile = lockfileFixture(), compil
   });
 }
 
-function createRepositoryFixture() {
+function createRepositoryFixture({
+  typescriptVersion = '7.0.2',
+  includeTypescriptEslint = true,
+  typescriptEslintVersion = supportedTypescriptEslint.version,
+  typescriptPeerRange = supportedTypescriptEslint.peerDependencies.typescript,
+} = {}) {
   const root = mkdtempSync(join(tmpdir(), 'conxius-typescript-compat-'));
   temporaryRoots.push(root);
-  mkdirSync(join(root, 'node_modules'), { recursive: true });
+  mkdirSync(join(root, 'node_modules/typescript'), { recursive: true });
   const packageOverride = packageFixture();
-  packageOverride.devDependencies.typescript = '7.0.2';
+  packageOverride.devDependencies.typescript = typescriptVersion;
   writeFileSync(join(root, 'package.json'), JSON.stringify(packageOverride));
   const lockfile = lockfileFixture().replace(
     `specifier: ${EXPECTED_TOOLCHAIN.typescriptAlias}\n        version: '@typescript/typescript6@${EXPECTED_TOOLCHAIN.typescriptVersion}'`,
-    'specifier: npm:typescript@7.0.2\n        version: typescript@7.0.2',
+    `specifier: ${typescriptVersion}\n        version: typescript@${typescriptVersion}`,
   );
   writeFileSync(join(root, 'pnpm-lock.yaml'), lockfile);
+
+  writeFileSync(
+    join(root, 'node_modules/typescript/package.json'),
+    JSON.stringify({ version: typescriptVersion }),
+  );
+
+  if (includeTypescriptEslint) {
+    mkdirSync(join(root, 'node_modules/typescript-eslint'), { recursive: true });
+    writeFileSync(
+      join(root, 'node_modules/typescript-eslint/package.json'),
+      JSON.stringify({
+        version: typescriptEslintVersion,
+        peerDependencies: { typescript: typescriptPeerRange },
+      }),
+    );
+  }
+
   return root;
 }
 
@@ -136,5 +167,95 @@ describe('TypeScript compatibility guard delegation', () => {
 
   it('preserves the authoritative guard result for the checked-out repository', () => {
     expect(runToolchainGuard(repositoryRoot).errors).toEqual([]);
+  });
+});
+
+describe('Installed TypeScript and typescript-eslint compatibility', () => {
+  it('accepts a TypeScript version inside the installed peer range', () => {
+    expect(
+      validateInstalledTypeScriptCompatibility({
+        typescript: { version: '6.0.3' },
+        typescriptEslint: supportedTypescriptEslint,
+      }),
+    ).toEqual({
+      typescriptVersion: '6.0.3',
+      typescriptEslintVersion: '8.65.0',
+      supportedRange: '>=4.8.4 <6.1.0',
+    });
+  });
+
+  it('rejects an unsupported TypeScript version with actionable output', () => {
+    expect(() =>
+      validateInstalledTypeScriptCompatibility({
+        typescript: { version: '7.0.2' },
+        typescriptEslint: supportedTypescriptEslint,
+      }),
+    ).toThrow(
+      /installed TypeScript: 7\.0\.2[\s\S]*typescript-eslint: 8\.65\.0[\s\S]*supported TypeScript range: >=4\.8\.4 <6\.1\.0[\s\S]*remediation:/,
+    );
+  });
+
+  it('fails closed when package metadata uses unsupported range syntax', () => {
+    expect(() =>
+      validateInstalledTypeScriptCompatibility({
+        typescript: { version: '6.0.3' },
+        typescriptEslint: {
+          version: '9.0.0',
+          peerDependencies: { typescript: 'workspace:*' },
+        },
+      }),
+    ).toThrow(/cannot evaluate installed typescript-eslint metadata[\s\S]*not valid npm semver syntax[\s\S]*workspace:\*/);
+  });
+
+  it('supports standard npm semver comparator, caret, tilde, partial, x-range, and OR syntax', () => {
+    expect(satisfiesVersionRange('6.0.3', '>=4.8.4 <6.1.0')).toBe(true);
+    expect(satisfiesVersionRange('6.0.3', '^6.0.0')).toBe(true);
+    expect(satisfiesVersionRange('6.0.3', '~6.0.0')).toBe(true);
+    expect(satisfiesVersionRange('6.2.4', '6.x')).toBe(true);
+    expect(satisfiesVersionRange('6.0.3', '6')).toBe(true);
+    expect(satisfiesVersionRange('7.0.0', '<6.0.0 || >=6.0.3 <7.0.0')).toBe(false);
+    expect(satisfiesVersionRange('6.0.3', '<6.0.0 || >=6.0.3 <7.0.0')).toBe(true);
+  });
+
+  it('uses npm semver prerelease behavior', () => {
+    expect(satisfiesVersionRange('6.0.3-beta.1', '^6.0.0')).toBe(false);
+    expect(satisfiesVersionRange('6.0.3-beta.1', '>=6.0.3-beta.1 <6.1.0')).toBe(true);
+  });
+
+  it('rejects an invalid npm range even when another alternative would match', () => {
+    expect(() => satisfiesVersionRange('6.0.3', '>=4.8.4 <6.1.0 || workspace:*')).toThrow(
+      /not valid npm semver syntax[\s\S]*workspace:\*/,
+    );
+  });
+
+  it('resolves package metadata through pnpm package exports', () => {
+    expect(readInstalledPackageMetadata('typescript')).toEqual(
+      expect.objectContaining({ version: expect.any(String) }),
+    );
+    expect(readInstalledPackageMetadata('typescript-eslint')).toEqual(
+      expect.objectContaining({ version: expect.any(String), peerDependencies: expect.any(Object) }),
+    );
+  });
+
+  it('validates the repository-installed TypeScript and typescript-eslint pair', () => {
+    const installed = readInstalledTypeScriptCompatibility();
+    const result = validateInstalledTypeScriptCompatibility(installed);
+
+    expect(result).toEqual({
+      typescriptVersion: installed.typescript.version,
+      typescriptEslintVersion: installed.typescriptEslint.version,
+      supportedRange: installed.typescriptEslint.peerDependencies.typescript,
+    });
+  });
+
+  it('fails closed when installed typescript-eslint metadata is unavailable', () => {
+    const root = createRepositoryFixture({
+      typescriptVersion: APPROVED_TYPESCRIPT_VERSION,
+      includeTypescriptEslint: false,
+    });
+
+    expect(() => runTypeScriptCompatibilityCheck(root)).toThrow(
+      /unable to resolve installed typescript-eslint metadata/,
+    );
   });
 });
