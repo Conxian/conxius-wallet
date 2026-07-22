@@ -1,21 +1,23 @@
 # Dependency Advisory Dispositions — 2026-07-22
 
 **Issue:** [#399](https://github.com/Conxian/conxius-wallet/issues/399)
-**Historical baseline:** `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57`
-**Rebased validation base:** `origin/main` at `81b704bf0777d80dcb425a7b963e89a342746743`
+**Historical baseline:** `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57` (pre-#429/#433 snapshot)
+**Current base:** `origin/main` at `c135148af3e7903d474609cc9f2cb3fd1a427e83` after PRs #429, #433, #436, #437, and #438
+**Candidate:** `charlie/con-1525-dependency-advisories`, containing current-main integration and verified advisory-policy enforcement on **2026-07-22**
 **Status:** Proposed remediation evidence; this document does not record COO,
 security-owner, or release approval.
 
 ## Result at a glance
 
-The historical pre-remediation baseline audit on **2026-07-22** reported six
-findings: one high, two moderate, and three low. Upstream dependency
-remediation already removed the `ajv`, `uuid`, and `@babel/core` findings from
-the rebased base; the rebased branch retains those compatible overrides,
-including `@babel/core@7.29.7`. Fresh full and production audits on the rebased
-branch both report exactly three findings: the high `bigint-buffer` and low
-`elliptic` findings, plus the low `esbuild` finding that is explicitly tracked
-as not affected for production/release.
+The historical pre-remediation audit on **2026-07-22** reported six findings:
+one high, two moderate, and three low. After PR #433 landed the `ajv` and
+`uuid` fixes, PR #439's compatible `@babel/core@7.29.7` override is retained.
+Fresh full and production audits on the current-main integration report exactly
+three findings: one high and two low, with the low `esbuild` finding explicitly
+tracked as not affected for production/release. The remaining findings are the
+production-reachable `bigint-buffer` high advisory and the `elliptic` low
+advisory, both covered only by time-bounded exceptions whose approvals remain
+pending. This PR does not record approval or close CON-1525.
 
 The high advisory remains production-reachable through the Wormhole/Solana
 path. It is still covered only by the existing time-bounded exception, which
@@ -29,7 +31,7 @@ not-affected determination is made here.
 | `GHSA-w5hq-g745-h8pq` (`uuid`) | Moderate | Present | Absent | Fixed with exact global `11.1.1` after CJS/ESM consumer compatibility checks; pending normal security/dependency review. |
 | `GHSA-g7r4-m6w7-qqqr` (`esbuild`) | Low | Present | Present | Published `0.28.1` was tested but rejected: it breaks the production build through `vite-plugin-top-level-await`; no safe override is applied. |
 | `GHSA-4x5r-pxfx-6jf8` (`@babel/core`) | Low | Present | Absent | Fixed with exact workspace override `7.29.7`; pending normal security/dependency review. |
-| `GHSA-848j-6mx2-7j84` (`elliptic`) | Low | Present | Present | Unresolved and unsuppressed; no published `6.6.2`; pending security/dependency and release review. |
+| `GHSA-848j-6mx2-7j84` (`elliptic`) | Low | Present | Present | Time-bound exception remains active with approval pending; no published `6.6.2`; pending security/dependency and release review. |
 
 ## Per-advisory evidence
 
@@ -61,7 +63,7 @@ not-affected determination is made here.
 - **Path/runtime surface:** Web5/DWN schema validation through
   `@web5/api` → `@web5/agent` → `@tbd54566975/dwn-sdk-js@0.5.1` → `ajv`.
   ESLint's separate `ajv@6.15.0` tree is intentionally unchanged.
-- **Fix state:** Fixed in the candidate lockfile with the published exact
+- **Fix state:** Fixed in the post-PR-#433 lockfile with the published exact
   version `8.18.0` using the scoped pnpm selector
   `@tbd54566975/dwn-sdk-js@0.5.1>ajv`.
 - **Owner/review:** Conxian dependency maintainers; security/dependency PR
@@ -77,13 +79,13 @@ not-affected determination is made here.
 - **Path/runtime surface:** The advisory spans DWN/Web5, `jayson`,
   `rpc-websockets@7` and `@9`, and `vite-plugin-top-level-await`; it reaches
   Web5, Wormhole/Solana, and Vite tooling through different parent trees.
-- **Fix state:** Fixed in the candidate lockfile with exact global `uuid@11.1.1`.
+- **Fix state:** Fixed in the post-PR-#433 lockfile with exact global `uuid@11.1.1`.
   An unconstrained `>=11.1.1` override was deliberately not used because it
   could select a future ESM-only major.
 - **Compatibility evidence:** Each affected parent resolved CJS `v1`, `v4`,
   and `v5`; the ESM build exported the same functions; imports of Web5,
   Solana, Wormhole, and Wormhole-Solana succeeded; focused Web5/Wormhole tests
-  passed; the rebased full suite passed 75 files with 384 tests passed and 1 skipped.
+  passed; the current-main integration full suite passed 76 files with 399 tests passed and 1 skipped.
 - **Owner/review:** Conxian dependency maintainers; security/dependency PR
   review is required before merge. No exception approval is asserted.
 - **Compensating controls:** Exact pinning, frozen lockfile installation,
@@ -102,10 +104,10 @@ not-affected determination is made here.
   `vite-plugin-top-level-await@1.6.0` while transforming its generated bundle
   for Vite's existing browser target (`chrome87`, `edge88`, `firefox78`,
   `safari14`, `es2020`). The registry has no later esbuild release to test.
-- **Safety decision:** The candidate does not force `0.28.1`. Setting the Vite
+- **Safety decision:** The current-main integration does not force `0.28.1`. Setting the Vite
   target to `es2021` makes the build pass, but changes browser compatibility and
   is not a narrowly justified dependency-only remediation. The branch retains
-  the baseline `esbuild@0.27.3` lock resolution so the existing build remains
+  the baseline `esbuild@0.27.3` lock resolution so the current build remains
   green; the advisory remains visible to audit.
 - **Owner/review:** Conxian dependency maintainers; security/dependency and
   release review are required before promotion. No exception approval is
@@ -131,9 +133,10 @@ not-affected determination is made here.
   published fixed version. The lockfile also records the compatible Babel
   helper updates selected by that package.
 - **Owner/review:** Conxian dependency maintainers; normal security/dependency
-  review is required before merge. The separate TypeScript 6 bridge and
-  TypeScript 7 dual-toolchain validation remain explicit rather than being
-  hidden behind dependency-policy changes.
+  review is required before merge. The current main TypeScript `6.0.3`
+  compatibility bridge and this candidate's explicit TypeScript 7
+  dual-toolchain validation remain separate from the dependency-policy change;
+  no TypeScript 7 migration or approval is asserted here.
 - **Compensating controls:** Exact pinning, frozen install, Babel transform
   smoke test, and lint verification with the dual-toolchain compatibility
   guards passing.
@@ -146,8 +149,9 @@ not-affected determination is made here.
 - **Path/runtime surface:** Primarily Wormhole CosmWasm → CosmJS crypto and
   the legacy payjoin-client → bitcoinjs-lib → tiny-secp256k1 chain. Both are
   retained in the lock graph; this branch does not claim not affected.
-- **Fix/exception state:** No published `elliptic@6.6.2` is available. No
-  blanket override, suppression, or exception was added.
+- **Fix/exception state:** No published `elliptic@6.6.2` is available. The
+  versioned ledger records a time-bound exception with approval **pending**;
+  this is not a not-affected claim, blanket suppression, or published fix.
 - **Owner/review:** Conxian dependency and security maintainers; affected
   protocol/release review is required before promotion. No approval is
   asserted.
@@ -163,13 +167,24 @@ not-affected determination is made here.
 
 ## Clean verification record
 
-Recorded on **2026-07-22** from this candidate branch:
+Recorded on **2026-07-22** from the current-main integration based on
+`origin/main` at `c135148af3e7903d474609cc9f2cb3fd1a427e83`, after PRs #436,
+#437, and #438:
 
 ```text
 CI=true pnpm install --frozen-lockfile
 pnpm audit --audit-level=low --json
 pnpm audit --prod --audit-level=low --json
-pnpm exec node scripts/ci/audit_with_exceptions.mjs
+pnpm exec node scripts/ci/audit_with_exceptions.mjs --evidence "$RUNNER_TEMP/conxius-dependency-audit.json"
+pnpm exec node scripts/ci/audit_with_exceptions.mjs --require-approved-exceptions --evidence "$RUNNER_TEMP/conxius-dependency-audit-release.json"
+pnpm exec vitest run tests/ci/dependency-audit-policy.test.mjs tests/ci/ci-workflow-contract.test.mjs tests/ci/release-workflow-policy.test.mjs tests/bitvm.test.ts tests/recharts-rendering.test.tsx
+pnpm test --run
+pnpm run typecheck
+pnpm run build
+pnpm run lint
+CI=true pnpm run test:e2e
+pnpm run check:workflow-pins
+git diff --check
 ```
 
 The frozen install completed without lockfile changes. Both audit commands
@@ -183,17 +198,20 @@ not approval for the remaining issue-level dispositions.
 
 Final validation on the same branch also recorded:
 
-- `pnpm why` for all six packages: completed; the fixed trees resolve
-  `ajv@8.18.0`, `uuid@11.1.1`, and `@babel/core@7.29.7`; unresolved trees remain
-  visible as `esbuild@0.27.3`, `bigint-buffer@1.1.5`, and `elliptic@6.6.1`.
+- Lockfile trees resolve `ajv@8.18.0`, `uuid@11.1.1`, and `@babel/core@7.29.7`;
+  unresolved trees remain visible as `esbuild@0.27.3`, `bigint-buffer@1.1.5`,
+  and `elliptic@6.6.1`.
 - `pnpm run typecheck`: passed — TypeScript 6 bridge/API, `tsc6` 6.0.3, and
   `tsc` 7.0.2 validation all passed.
-- `pnpm test --run`: passed — 75 files, 384 tests passed, 1 skipped.
+- Focused policy and merged-feature tests: passed — 5 files, 69 tests.
+- `pnpm test --run`: passed — 76 files, 399 tests passed, 1 skipped.
 - `pnpm run build`: passed — 4,760 modules transformed.
 - Release policy gate
   (`tests/ci/release-artifact-policy.test.mjs`, `release-version.test.mjs`,
   `release-workflow-policy.test.mjs`, and `workflow-pins.test.mjs`): passed —
   26 tests.
-- `CI=true pnpm run test:e2e`: passed — 30 Playwright tests.
-- `pnpm run lint`: passed with 0 errors and 630 warnings; the TypeScript 6
+- `CI=true pnpm run test:e2e`: passed — 36 Playwright tests.
+- `pnpm run lint`: passed with 0 errors and 627 warnings; the TypeScript 6
   bridge and dual-toolchain compatibility guards passed.
+- `pnpm run check:workflow-pins`: passed.
+- `git diff --check`: passed.

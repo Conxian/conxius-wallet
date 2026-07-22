@@ -15,6 +15,17 @@ The [Technical Debt Register](../operations/TECHNICAL_DEBT_REGISTER.md) is the
 canonical inventory for open and completed release-hardening work. Historical
 audit documents are evidence records, not a substitute for current validation.
 
+## BitVM2 current state
+
+BitVM2 is **RESEARCH / QUARANTINED**. The wallet has no reviewed BitVM2
+verifier, challenge backend, segment generator, or authoritative dispute signer.
+The TypeScript and Android paths validate the canonical envelope fields
+(`schemaVersion`, proof, verification-key identifier/digest, ordered public
+inputs, curve, circuit ID, encoding, network/block context, tap count/index,
+domain separation, and transaction/state bindings) and return typed
+non-authoritative outcomes. No input can be treated as `verified`, and
+simulation cannot authorize signing.
+
 ## Implementation state note (updated 2026-07-20)
 
 PR #390 merged on July 20, 2026 at commit
@@ -73,6 +84,7 @@ approver, and approval date. This state does not mark CON-1525 complete.
 - **Asset Protocols**: Ordinals, Runes, RGB, Taproot Assets.
 - **Bridge/Messaging**: Trust-tier policy enforcement via `services/trust-policy.ts` (T1-T4).
 - **FDC3**: Native resolver with intent handlers (`services/fdc3.ts` → `Fdc3Plugin.kt`).
+- **BitVM2**: Research/scaffolding only; verification and dispute signing are quarantined pending a reviewed native backend.
 
 ## 🏗️ Infrastructure
 - **Gateway**: OData v4 synchronization for ERP/Institutional workflows.

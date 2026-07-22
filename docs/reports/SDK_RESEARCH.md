@@ -7,18 +7,16 @@ permalink: /docs/sdk-research
 # SDK Research Report: Full Bitcoin Ecosystem Enhancements
 
 **Date:** 2026-06-20
-**Status:** EXPANDED
+**Status:** EXPANDED — BitVM2 remains research/scaffolding
 **Context:** Researching SDKs for BitVM2, Babylon, Ark, and Sovereign Node Enhancements.
 
 ## 1. BitVM Bridge (BitVM2)
 
-- **SDK:** `/bitvm/bitvm` (Rust/Script).
-- **Status:** **INTEGRATED (ALPHA)**.
-- **Deep Dive (CON-1217)**: The Groth16 verification process (BN254 curve) is split into **364 independent taps** for on-chain execution to bypass Bitcoin's script limits.
-  - **VALIDATING_TAPS (1)**: Handles core arithmetic verification of the SNARK proof.
-  - **HASHING_TAPS (363)**: Verifies the hash chain of intermediate states.
-  - **Disprove Logic**: Verifiers can challenge fraudulent operator claims via `disprove_core` which asserts `Hash_fn(input) == operator_claimed_input_hash` and triggers if `Hash_fn(output) != operator_claimed_output_hash`.
-  - **Optimization**: Utilize `/api/generate-groth16-segments` to generate the 364 executable script segments from a raw proof.
+- **SDK:** `/bitvm/bitvm` (research reference only).
+- **Status:** **RESEARCH / QUARANTINED**.
+- The wallet currently performs structural validation of a canonical envelope and returns typed `unsupported` results. It does not integrate a reviewed cryptographic verifier, generate executable segments, discover real challenges, or sign an authoritative dispute.
+- The 364-tap count, candidate curve, proof encoding, circuit identifier, verification-key identifier/digest, ordered public inputs, network/block context, domain separation, and transaction/state bindings are enablement-gate metadata—not evidence that verification is implemented.
+- No reviewed wallet verifier exists. Upstream research, SDKs, or published mainnet demonstrations must not be treated as a production mobile verifier.
 
 ## 2. Babylon Staking
 
@@ -56,7 +54,7 @@ permalink: /docs/sdk-research
 
 | Technology | Preferred SDK | Target Version | Status |
 | :--- | :--- | :--- | :--- |
-| **BitVM2** | `bitvm/bitvm` | 1.9 | ✅ |
+| **BitVM2** | Research reference only | 1.9 | 🔬 QUARANTINED |
 | **Babylon** | `BabylonManager.kt` | 1.9 | ✅ |
 | **Ark V-UTXO** | `ArkManager.kt` | 1.9 | 🚀 |
 | **FDC3 Resolver**| `Fdc3Plugin.kt` | 1.9 | 🚀 |
