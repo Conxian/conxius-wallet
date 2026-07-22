@@ -7,8 +7,10 @@ Ensure that all implementation changes are independently verified using automate
 
 ### 1. Fast Track (TypeScript)
 - **Scope**: All files in `services/` and `components/`.
-- **Tools**: `vitest`, `eslint`, `tsc`.
-- **Command**: `pnpm test && pnpm lint`
+- **Tools**: `vitest`, `eslint`, guarded TypeScript 6 API validation, and TypeScript 7 compiler validation.
+- **Command**: `pnpm run check:typescript-toolchain && pnpm run typecheck:ts6 && pnpm run typecheck:ts7 && pnpm run lint && pnpm test`
+- **Build command**: `pnpm run build` (the default build path explicitly invokes TypeScript 7 before Vite).
+- **Decision record**: [`TYPESCRIPT_DUAL_TOOLCHAIN.md`](TYPESCRIPT_DUAL_TOOLCHAIN.md)
 
 ### 2. Security Audit (CXN Guardian)
 - **Scope**: PII and Secret egress.

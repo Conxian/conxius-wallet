@@ -35,6 +35,18 @@ describe('CI workflow contracts', () => {
     );
   });
 
+  it('keeps lint on the guarded TypeScript 6 API lane and typecheck on both compiler lanes', () => {
+    const lint = jobSection('lint');
+    const typecheck = jobSection('typecheck');
+
+    expect(lint).toContain('pnpm run check:typescript-toolchain');
+    expect(lint).toContain('pnpm run lint');
+    expect(typecheck).toContain('name: Typecheck (TS6 + TS7)');
+    expect(typecheck).toContain('pnpm run check:typescript-toolchain');
+    expect(typecheck).toContain('pnpm run typecheck:ts6');
+    expect(typecheck).toContain('pnpm run typecheck:ts7');
+  });
+
   it.each(['android-lint', 'android-unit-tests'])('validates the native Cargo contract before %s runs Gradle', (jobId) => {
     const job = jobSection(jobId);
     expect(job).toContain('node scripts/ci/validate_silent_payments_native_build.mjs');

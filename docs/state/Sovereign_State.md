@@ -52,7 +52,14 @@ verification, and deeper reorg recovery remain outside this merged slice.
 - **Gateway**: OData v4 synchronization for ERP/Institutional workflows.
 - **Wasm**: Local-first verification layer for high-performance mobile execution.
 - **CI/CD**: GitHub Actions with pinned SHAs, dependabot (npm daily, actions/gradle weekly).
-- **Build policy**: pnpm `11.13.0` via the root `packageManager` declaration and Corepack; TypeScript must remain on the supported `typescript-eslint` line. See the register for current validation evidence.
+- **Build policy**: pnpm `11.13.0` via the root `packageManager` declaration and Corepack. TypeScript 7.0.2 owns `tsc`/build validation through `@typescript/native`; the package named `typescript` is the TypeScript 6 API alias required by `typescript-eslint@8.65.0`. The guarded `tsc6` and `tsc` lanes are documented in [`TYPESCRIPT_DUAL_TOOLCHAIN.md`](../operations/TYPESCRIPT_DUAL_TOOLCHAIN.md); see the register for current validation evidence.
+
+## TypeScript toolchain state
+
+- **Compatibility API:** `typescript: npm:@typescript/typescript6@6.0.2` reports compiler version `6.0.3` and is consumed by ESLint/`typescript-eslint`.
+- **Compiler/build validation:** `@typescript/native: npm:typescript@7.0.2` reports compiler version `7.0.2`; `pnpm run typecheck:ts7` and the default build path use this lane.
+- **Guard:** `scripts/ci/check_typescript_toolchain.mjs` fails closed on alias, lockfile, script-ownership, or reported-version drift. TypeScript 7 promotion is not a routine Dependabot/direct-wildcard update and requires COO approval.
+- **Open evidence:** editor selection, hosted Android/NDK/Rust/device validation, signed release validation, and any environment-specific Vite/plugin behavior remain separate gates.
 
 ## 📜 Historical Repository State (2026-06-30)
 - **Branch**: `main` only. All 13 stale branches archived.

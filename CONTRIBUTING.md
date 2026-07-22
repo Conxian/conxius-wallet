@@ -37,6 +37,22 @@ We use **pnpm** (strictly version `11.13.0`) for dependency management and **Vit
 - Tests should be located in the `/tests` directory.
 - Ensure that all tests pass before submitting a Pull Request: `pnpm test`.
 
+### TypeScript dual-toolchain
+
+The repository deliberately validates two TypeScript roles:
+
+- `pnpm run typecheck:ts6` runs `tsc6` from the TypeScript 6 API alias used by
+  `typescript-eslint` and lint compatibility checks.
+- `pnpm run typecheck:ts7` runs `tsc` from the TypeScript 7 compiler alias and
+  owns application typechecking and the default build path.
+- `pnpm run check:typescript-toolchain` verifies exact aliases, compiler versions,
+  scripts, and lockfile evidence. Run it after any dependency or lockfile change.
+
+Do not replace the aliases with a direct TypeScript 7 dependency named
+`typescript`, weaken type-aware linting, or promote TypeScript 7 through a
+routine/wildcard update. See [`TYPESCRIPT_DUAL_TOOLCHAIN.md`](docs/operations/TYPESCRIPT_DUAL_TOOLCHAIN.md)
+for editor, Vite, native bridge, rollback, and hosted-validation guidance.
+
 ## 🧪 Testing Protocols
 
 Before submitting a change:
@@ -46,8 +62,9 @@ Before submitting a change:
    - Runtime contamination guards (detects simulated/debug leaks in production paths)
    - Unit tests execution (Vitest)
    - Production build verification (TSC + Vite)
-2. **Run E2E Tests**: `pnpm run test:e2e` (Playwright)
-3. **Verify UI**: Ensure that sensitive fields have `autoComplete="off"` and
+2. **Run TypeScript lanes**: `pnpm run check:typescript-toolchain && pnpm run typecheck:ts6 && pnpm run typecheck:ts7`
+3. **Run E2E Tests**: `pnpm run test:e2e` (Playwright)
+4. **Verify UI**: Ensure that sensitive fields have `autoComplete="off"` and
    other security attributes.
 5. **Check Logs**: Ensure no sensitive data is leaked to the console or Android
    logs.

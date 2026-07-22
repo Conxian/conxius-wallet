@@ -40,11 +40,13 @@ jobs:
           run_install: false
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Validate TypeScript toolchain
+        run: pnpm run check:typescript-toolchain
       - name: Run ESLint
         run: pnpm run lint
 
   typecheck:
-    name: Typecheck
+    name: Typecheck (TS6 + TS7)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -61,8 +63,12 @@ jobs:
           run_install: false
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Run TypeScript compiler
-        run: pnpm run typecheck
+      - name: Validate TypeScript toolchain
+        run: pnpm run check:typescript-toolchain
+      - name: Run TypeScript 6 compatibility check
+        run: pnpm run typecheck:ts6
+      - name: Run TypeScript 7 validation check
+        run: pnpm run typecheck:ts7
 
   unit-tests:
     name: Unit Tests

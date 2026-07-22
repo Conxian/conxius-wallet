@@ -22,6 +22,14 @@ describe('Android release workflow policy', () => {
     expect(verification).not.toContain('platforms;android-35');
   });
 
+  it('validates the guarded TypeScript 6 and TypeScript 7 lanes before release checks', () => {
+    const verification = jobSection('release-verify');
+    expect(verification).toContain('pnpm run check:typescript-toolchain');
+    expect(verification).toContain('pnpm run typecheck:ts6');
+    expect(verification).toContain('pnpm run typecheck:ts7');
+    expect(verification).toContain('pnpm run typecheck');
+  });
+
   it('creates and verifies immutable release evidence before Play publication', () => {
     const publish = jobSection('release-publish');
     expect(publish).toContain('finalize_release_evidence.sh');

@@ -27,6 +27,12 @@ echo "--- 🧪 Running Unit Tests ---"
 echo "--- 🧹 Running Lint ---"
 "${PNPM[@]}" run lint
 
+echo "--- TypeScript Toolchain Guard ---"
+"${PNPM[@]}" run check:typescript-toolchain
+
+echo "--- TypeScript 6 Compatibility Check ---"
+"${PNPM[@]}" run typecheck:ts6
+
 echo "--- 🏗️ Type-Checking & Build ---"
 "${PNPM[@]}" run build
 

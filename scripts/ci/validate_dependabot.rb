@@ -6,6 +6,7 @@ require "psych"
 REPOSITORY_ROOT = File.expand_path("../..", __dir__)
 CONFIG_PATH = File.join(REPOSITORY_ROOT, ".github", "dependabot.yml")
 REQUIRED_NPM_MIGRATION_DEPENDENCIES = ["typescript", "@testing-library/jest-dom"].freeze
+REQUIRED_TYPESCRIPT_PROMOTION_GUARDS = ["typescript", "@typescript/native"].freeze
 EXPECTED_CARGO_DIRECTORIES = [
   "/native/silent-payments",
   "/native/silent-payments-jni"
@@ -113,8 +114,19 @@ fail_validation("npm ignore rules must preserve @noble/hashes") unless ignore_ru
 end
 
 REQUIRED_NPM_MIGRATION_DEPENDENCIES.each do |dependency_name|
+  next if dependency_name == "typescript"
+
   fail_validation("#{dependency_name} must not be suppressed by an ignore rule") if ignore_rules.any? do |rule|
     rule.is_a?(Hash) && rule["dependency-name"] == dependency_name
+  end
+end
+
+REQUIRED_TYPESCRIPT_PROMOTION_GUARDS.each do |dependency_name|
+  matching_rules = ignore_rules.select do |rule|
+    rule.is_a?(Hash) && rule["dependency-name"] == dependency_name
+  end
+  fail_validation("#{dependency_name} must ignore TypeScript 7 or later") unless matching_rules.any? do |rule|
+    Array(rule["versions"]) == [">= 7.0.0"]
   end
 end
 

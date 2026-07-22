@@ -2,7 +2,7 @@
 
 **Authority:** Canonical technical-debt inventory for `Conxian/conxius-wallet`.
 **Issue:** [#357](https://github.com/Conxian/conxius-wallet/issues/357)
-**Baseline captured:** 2026-07-22 from `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57`
+**Baseline captured:** 2026-07-22 from `origin/main` at `b96119cf03decccbd094d3d0716fca44a37efff8`
 **Target milestone:** M16 / v1.9.5 release baseline, before production promotion.
 
 This register is the source of truth for release-baseline debt. Historical audit
@@ -105,16 +105,16 @@ its exit criteria and validation are recorded in the implementation change.
 
 - **Category:** Toolchain / lint
 - **Priority:** P1
-- **Status:** In Progress — TypeScript 7 regression remediated on the restore branch; TypeScript 7 migration remains open under issue #396.
-- **Affected paths:** `package.json`, `pnpm-lock.yaml`, `scripts/ci/check_typescript_compatibility.mjs`, `tests/ci/typescript-compatibility.test.mjs`, `.github/workflows/ci.yml`, `.github/workflows/android-release.yml`, `eslint.config.js`
-- **Impact:** Local, CI, and release environments selected different pnpm versions, while PR #425 promoted TypeScript `7.0.2` outside `typescript-eslint` `8.65.0` support and crashed lint. The approved bridge is TypeScript `6.0.3`; TypeScript 7 requires the separate migration and validation tracked by issue #396.
-- **Regression/remediation:** PR #425 introduced the TypeScript 7 regression on `main`; this change restores the exact TypeScript `6.0.3` bridge and adds a repository-owned guard that fails before lint, typecheck, or build when the approved contract drifts. No wallet or native runtime behavior is changed.
+- **Status:** In Progress — TypeScript 6 API compatibility and TypeScript 7 compiler validation are separated; hosted/device evidence and COO approval remain open.
+- **Affected paths:** `package.json`, `pnpm-lock.yaml`, `tsconfig.ts6.json`, `tsconfig.ts7.json`, `scripts/ci/check_typescript_compatibility.mjs`, `scripts/ci/check_typescript_toolchain.mjs`, `tests/ci/typescript-compatibility.test.mjs`, `tests/ci/typescript-toolchain.test.mjs`, `.github/workflows/ci.yml`, `.github/workflows/android-release.yml`, `eslint.config.js`
+- **Impact:** PR #425 promoted TypeScript `7.0.2` under `typescript`, outside `typescript-eslint` `8.65.0` support, and caused lint to exit `2`. Treating typecheck as sufficient would leave lint compatibility, compiler-lane ownership, and promotion policy implicit.
+- **Regression/remediation:** The restored TypeScript 6 bridge remains the lint/parser API lane; this change adds the exact TypeScript 6/7 aliases, explicit compiler lanes, and a repository-owned guard that fails before lint, typecheck, or build when the contract drifts. No wallet or native runtime behavior is changed.
 - **Owner:** Unassigned
-- **Exit criteria:** `packageManager` declares pnpm `11.13.0`; CI/release/local verification select it through Corepack or the action; TypeScript is pinned to the exact approved bridge `6.0.3`; the compatibility guard fails clearly for a promoted unsupported major and points to issue #396; frozen install and lint pass without broad rule weakening.
-- **Validation:** `CI=true pnpm install --frozen-lockfile` passed; `pnpm run check:typescript-compat` passed; focused compatibility tests passed 6/6; `pnpm run lint` passed with 0 errors and 630 warnings; `pnpm run typecheck` passed; `pnpm test --run` passed 73 files with 334 passed and 1 skipped; `pnpm run build` passed; `pnpm run test:e2e` passed 30/30. TypeScript 7 remains open migration work under issue #396.
+- **Exit criteria:** `packageManager` declares pnpm `11.13.0`; exact `@typescript/native`/`typescript` aliases and lockfile evidence are guarded; `tsc6` owns the compatibility lane, `tsc` owns TypeScript 7 validation/builds, frozen install and lint pass without broad rule weakening, and TypeScript 7 promotion requires explicit review and COO approval.
+- **Validation:** See [`TYPESCRIPT_DUAL_TOOLCHAIN.md`](TYPESCRIPT_DUAL_TOOLCHAIN.md), `tests/ci/typescript-toolchain.test.mjs`, and the pull request's command-by-command evidence. Android SDK/NDK/device/signing and editor validation remain external gates when unavailable locally.
 - **Target milestone:** M16 release baseline
 - **Metrics baseline:** Local `10.28.1`, CI `11.13.0`, release `10.30.3`; after PR #425, TypeScript `7.0.2` caused lint exit `2` while typecheck still passed.
-- **Evidence:** [`CONTRIBUTING.md`](../../CONTRIBUTING.md); [`Sovereign_State.md`](../state/Sovereign_State.md); `scripts/ci/check_typescript_compatibility.mjs`; `eslint.config.js`; [issue #396](https://github.com/Conxian/conxius-wallet/issues/396)
+- **Evidence:** [`TYPESCRIPT_DUAL_TOOLCHAIN.md`](TYPESCRIPT_DUAL_TOOLCHAIN.md); [`CONTRIBUTING.md`](../../CONTRIBUTING.md); [`Sovereign_State.md`](../state/Sovereign_State.md); `scripts/ci/check_typescript_compatibility.mjs`; `scripts/ci/check_typescript_toolchain.mjs`; `eslint.config.js`; [issue #396](https://github.com/Conxian/conxius-wallet/issues/396)
 
 ### TD-P1-006 — E2E and Android CI coverage
 

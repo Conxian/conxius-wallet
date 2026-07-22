@@ -102,10 +102,19 @@ jobs:
       - name: Install JavaScript dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate TypeScript toolchain
+        run: pnpm run check:typescript-toolchain
+
+      - name: TypeScript 6 compatibility check
+        run: pnpm run typecheck:ts6
+
+      - name: TypeScript 7 validation check
+        run: pnpm run typecheck:ts7
+
       - name: Lint
         run: pnpm run lint
 
-      - name: Typecheck
+      - name: Typecheck (default TS7 lane)
         run: pnpm run typecheck
 
       - name: Unit tests

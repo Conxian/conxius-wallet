@@ -34,6 +34,12 @@ updates:
     ignore:
       - dependency-name: "@noble/hashes"
         versions: ["< 2.0.1"] # Critical for current implementation specs
+      # TypeScript 7 is an explicit validation lane, not a routine promotion.
+      # The repository-owned toolchain guard remains authoritative for direct PRs.
+      - dependency-name: "typescript"
+        versions: [">= 7.0.0"]
+      - dependency-name: "@typescript/native"
+        versions: [">= 7.0.0"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

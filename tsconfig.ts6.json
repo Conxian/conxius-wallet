@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "android",
+    "dist",
+    "node_modules",
+    "playwright-report",
+    "test-results"
+  ]
+}
