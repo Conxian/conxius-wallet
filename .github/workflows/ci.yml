@@ -243,7 +243,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Enforce dependency audit policy
-        run: pnpm exec node scripts/ci/audit_with_exceptions.mjs
+        run: pnpm exec node scripts/ci/audit_with_exceptions.mjs --evidence "$RUNNER_TEMP/conxius-dependency-audit.json"
+      - name: Upload dependency audit evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: dependency-audit-evidence
+          path: ${{ runner.temp }}/conxius-dependency-audit.json
+          if-no-files-found: error
 
   runtime-contamination:
     name: Runtime Contamination Guard

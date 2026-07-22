@@ -22,6 +22,18 @@ describe('Android release workflow policy', () => {
     expect(verification).not.toContain('platforms;android-35');
   });
 
+  it('requires approved dependency exceptions and uploads release evidence before the gate', () => {
+    const verification = jobSection('release-verify');
+    expect(verification).toContain('continue-on-error: true');
+    expect(verification).toContain('--require-approved-exceptions');
+    expect(verification).toContain('--evidence "$RUNNER_TEMP/conxius-dependency-audit-release.json"');
+    expect(verification).toContain('actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+    expect(verification).toContain('path: ${{ runner.temp }}/conxius-dependency-audit-release.json');
+    expect(verification).toContain("if: steps.dependency-audit.outcome == 'failure'");
+    expect(verification.indexOf('Dependency audit policy')).toBeLessThan(verification.indexOf('Upload dependency audit release evidence'));
+    expect(verification.indexOf('Upload dependency audit release evidence')).toBeLessThan(verification.indexOf('Enforce release dependency audit gate'));
+  });
+
   it('creates and verifies immutable release evidence before Play publication', () => {
     const publish = jobSection('release-publish');
     expect(publish).toContain('finalize_release_evidence.sh');
