@@ -2,7 +2,7 @@
 name = "conxius-silent-payments-jni"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.85"
 description = "Thin JNI boundary for the Conxius Wallet BIP-352 scanner"
 license = "MIT"
 
