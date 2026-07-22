@@ -7,7 +7,7 @@
 ## 1. Conxius Wallet (Mobile)
 - **Artifact:** Android App Bundle (.aab), APK (.apk)
 - **Publish Destination:** Google Play Store (Internal/Production), GitHub Releases
-- **Install Verification:** Play Integrity API Attestation
+- **Install Verification:** Play Integrity API Attestation (planned release control; client token acquisition exists, backend verification and enforcement remain pending)
 - **Rollback Expectation:** Versioned rollback via Play Console
 - **Promotion Owner:** COO (Sizwe Nkosi) & Lead Engineer
 
