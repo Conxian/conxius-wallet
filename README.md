@@ -62,7 +62,7 @@ This repository is maintained by Conxian Labs as a public product surface for th
 
 - **Node.js**: `22.x` (LTS recommended)
 - **Package Manager**: `pnpm` (strictly version `11.13.0`)
-- **Android Development**: Android Studio with SDK 35 and Java/JVM 21
+- **Android Development**: Android Studio with SDK 36 and Java/JVM 21
 - **Capacitor CLI**: For mobile bridge operations
 
 ## Development

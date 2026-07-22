@@ -105,15 +105,15 @@ its exit criteria and validation are recorded in the implementation change.
 
 - **Category:** Toolchain / lint
 - **Priority:** P1
-- **Status:** Completed
-- **Affected paths:** `package.json`, `pnpm-lock.yaml`, `scripts/ci/verify_local.sh`, `.github/workflows/ci.yml`, `.github/workflows/android-release.yml`, `eslint.config.js`
-- **Impact:** Local, CI, and release environments selected different pnpm versions, while TypeScript `7.0.2` was outside `typescript-eslint` `8.64.0` support and crashed lint.
+- **Status:** Completed — issue #356 restored the supported TypeScript line and added a fail-closed compatibility guard.
+- **Affected paths:** `package.json`, `pnpm-lock.yaml`, `scripts/ci/check_typescript_compatibility.mjs`, `tests/ci/typescript-compatibility.test.mjs`, `scripts/ci/verify_local.sh`, `.github/workflows/ci.yml`, `.github/workflows/android-release.yml`, `eslint.config.js`
+- **Impact:** Local, CI, and release environments selected different pnpm versions, while TypeScript `7.0.2` was outside `typescript-eslint` `8.65.0` support and crashed lint. Dependency automation also had no repository-owned check to prevent the unsupported pairing from returning.
 - **Owner:** Unassigned
-- **Exit criteria:** `packageManager` declares pnpm `11.13.0`; CI/release/local verification select it through Corepack or the action; TypeScript is on a supported line; frozen install and lint pass without broad rule weakening.
-- **Validation:** `corepack pnpm --version` reports `11.13.0`; `CI=true corepack pnpm install --frozen-lockfile` passed; `corepack pnpm exec tsc --noEmit` passed; `corepack pnpm run lint` passed with 0 errors and 667 warnings. Repository verify reaches the web build and is separately blocked by environment exit `137`.
+- **Exit criteria:** `packageManager` declares pnpm `11.13.0`; CI/release/local verification select it through Corepack or the action; TypeScript is pinned to supported `6.0.3`; the lint path validates the installed `typescript-eslint` peer range from package metadata; frozen install and lint pass without broad rule weakening.
+- **Validation:** `CI=true corepack pnpm install --frozen-lockfile` passed; `pnpm exec vitest run tests/ci/typescript-compatibility.test.mjs` passed 6/6; `pnpm run lint` passed with 0 errors and 630 warnings; `pnpm exec tsc --noEmit` passed; full `pnpm exec vitest run` passed 73 files with 334 passed and 1 skipped; `pnpm run build` passed. The workflow-pin, Android-security, runtime-contamination, dependency-audit, and release-version checks also passed.
 - **Target milestone:** M16 release baseline
-- **Metrics baseline:** Local `10.28.1`, CI `11.13.0`, release `10.30.3`; lint exit `2` with the `Cjs` crash.
-- **Evidence:** [`CONTRIBUTING.md`](../../CONTRIBUTING.md); [`Sovereign_State.md`](../state/Sovereign_State.md); `eslint.config.js`
+- **Metrics baseline:** Local `10.28.1`, CI `11.13.0`, release `10.30.3`; lint exit `2` with the TypeScript `7.0.2` / `typescript-eslint` `8.65.0` incompatibility.
+- **Evidence:** [`CONTRIBUTING.md`](../../CONTRIBUTING.md); [`Sovereign_State.md`](../state/Sovereign_State.md); `eslint.config.js`; `scripts/ci/check_typescript_compatibility.mjs`; issue [#356](https://github.com/Conxian/conxius-wallet/issues/356)
 
 ### TD-P1-006 — E2E and Android CI coverage
 
