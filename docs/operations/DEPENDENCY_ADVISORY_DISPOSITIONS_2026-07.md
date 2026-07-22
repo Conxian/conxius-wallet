@@ -1,17 +1,21 @@
 # Dependency Advisory Dispositions — 2026-07-22
 
 **Issue:** [#399](https://github.com/Conxian/conxius-wallet/issues/399)
-**Baseline:** `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57`
+**Historical baseline:** `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57` (pre-#429/#433 snapshot)
+**Current base:** `origin/main` at `493d2c0b397469e83f3d7ee5b78d40cdf365a727` after PR #429 and merged PR #433
+**Candidate:** `charlie/399-refresh-post-merge-evidence`, a docs-only follow-up from current `main` on **2026-07-22**
 **Status:** Proposed remediation evidence; this document does not record COO,
 security-owner, or release approval.
 
 ## Result at a glance
 
-The fresh baseline audit on **2026-07-22** reported six findings: one high, two
-moderate, and three low. This candidate branch removes the `ajv`, `uuid`, and
-`@babel/core` findings with published versions, reducing the full and
-production audit results to three findings: the existing high `bigint-buffer`
-exception plus the unresolved low `esbuild` and `elliptic` advisories.
+The historical pre-remediation audit on **2026-07-22** reported six findings:
+one high, two moderate, and three low. After PR #433 landed the `ajv`, `uuid`,
+and `@babel/core` remediations, both the full and production audits on current
+`main` report exactly three findings: one high and two low, with zero moderate
+or critical findings. The remaining findings are the existing high
+`bigint-buffer` exception plus the unresolved low `esbuild` and `elliptic`
+advisories; issue #399 is not resolved by this documentation follow-up.
 
 The high advisory remains production-reachable through the Wormhole/Solana
 path. It is still covered only by the existing time-bounded exception, which
@@ -57,7 +61,7 @@ not-affected determination is made here.
 - **Path/runtime surface:** Web5/DWN schema validation through
   `@web5/api` → `@web5/agent` → `@tbd54566975/dwn-sdk-js@0.5.1` → `ajv`.
   ESLint's separate `ajv@6.15.0` tree is intentionally unchanged.
-- **Fix state:** Fixed in the candidate lockfile with the published exact
+- **Fix state:** Fixed in the post-PR-#433 lockfile with the published exact
   version `8.18.0` using the scoped pnpm selector
   `@tbd54566975/dwn-sdk-js@0.5.1>ajv`.
 - **Owner/review:** Conxian dependency maintainers; security/dependency PR
@@ -73,13 +77,13 @@ not-affected determination is made here.
 - **Path/runtime surface:** The advisory spans DWN/Web5, `jayson`,
   `rpc-websockets@7` and `@9`, and `vite-plugin-top-level-await`; it reaches
   Web5, Wormhole/Solana, and Vite tooling through different parent trees.
-- **Fix state:** Fixed in the candidate lockfile with exact global `uuid@11.1.1`.
+- **Fix state:** Fixed in the post-PR-#433 lockfile with exact global `uuid@11.1.1`.
   An unconstrained `>=11.1.1` override was deliberately not used because it
   could select a future ESM-only major.
 - **Compatibility evidence:** Each affected parent resolved CJS `v1`, `v4`,
   and `v5`; the ESM build exported the same functions; imports of Web5,
   Solana, Wormhole, and Wormhole-Solana succeeded; focused Web5/Wormhole tests
-  passed; the full suite passed 72 files with 328 tests passed and 1 skipped.
+  passed; the full suite passed 74 files with 347 tests passed and 1 skipped.
 - **Owner/review:** Conxian dependency maintainers; security/dependency PR
   review is required before merge. No exception approval is asserted.
 - **Compensating controls:** Exact pinning, frozen lockfile installation,
@@ -98,10 +102,10 @@ not-affected determination is made here.
   `vite-plugin-top-level-await@1.6.0` while transforming its generated bundle
   for Vite's existing browser target (`chrome87`, `edge88`, `firefox78`,
   `safari14`, `es2020`). The registry has no later esbuild release to test.
-- **Safety decision:** The candidate does not force `0.28.1`. Setting the Vite
+- **Safety decision:** Current main does not force `0.28.1`. Setting the Vite
   target to `es2021` makes the build pass, but changes browser compatibility and
   is not a narrowly justified dependency-only remediation. The branch retains
-  the baseline `esbuild@0.27.3` lock resolution so the existing build remains
+  the baseline `esbuild@0.27.3` lock resolution so the current build remains
   green; the advisory remains visible to audit.
 - **Owner/review:** Conxian dependency maintainers; security/dependency and
   release review are required before promotion. No exception approval is
@@ -127,11 +131,12 @@ not-affected determination is made here.
   published fixed version. The lockfile also records the compatible Babel
   helper updates selected by that package.
 - **Owner/review:** Conxian dependency maintainers; normal security/dependency
-  review is required before merge. The separate TypeScript 7 lint baseline is
-  not silently changed by this remediation.
-- **Compensating controls:** Exact pinning, frozen install, Babel transform
-  smoke test, and lint verification with the known TypeScript 7 compatibility
-  failure reported separately.
+  review is required before merge. Current main uses the TypeScript `6.0.3`
+  compatibility bridge restored by PR #429; no TypeScript 7 migration or
+  approval is asserted here.
+- **Compensating controls:** Exact pinning, frozen install, a direct Babel
+  transform smoke check, and current lint verification (`0` errors, `630`
+  warnings).
 - **Override removal criteria:** Remove the override when the parent package
   naturally resolves a fixed `@babel/core >=7.29.1` release; rerun lint and
   audit verification.
@@ -158,13 +163,21 @@ not-affected determination is made here.
 
 ## Clean verification record
 
-Recorded on **2026-07-22** from this candidate branch:
+Recorded on **2026-07-22** from the docs-only follow-up branch based on
+`origin/main` at `493d2c0b397469e83f3d7ee5b78d40cdf365a727`, after PR #433:
 
 ```text
 CI=true pnpm install --frozen-lockfile
 pnpm audit --audit-level=low --json
 pnpm audit --prod --audit-level=low --json
 pnpm exec node scripts/ci/audit_with_exceptions.mjs
+pnpm run check:typescript-compat
+pnpm run lint
+pnpm exec tsc --noEmit
+pnpm test --run
+pnpm run build
+pnpm exec vitest run tests/ci/release-artifact-policy.test.mjs tests/ci/release-version.test.mjs tests/ci/release-workflow-policy.test.mjs tests/ci/workflow-pins.test.mjs
+CI=true pnpm run test:e2e
 ```
 
 The frozen install completed without lockfile changes. Both audit commands
@@ -178,16 +191,22 @@ wrapper is not approval for the remaining issue-level dispositions.
 Final validation on the same branch also recorded:
 
 - `pnpm why` for all six packages: completed; the fixed trees resolve
-  `ajv@8.18.0`, `uuid@11.1.1`, and `@babel/core@7.29.6`; unresolved trees remain
-  visible as `esbuild@0.27.3`, `bigint-buffer@1.1.5`, and `elliptic@6.6.1`.
+  `ajv@6.15.0` and `8.18.0`, `uuid@11.1.1`, and `@babel/core@7.29.6`;
+  unresolved trees remain visible as `esbuild@0.27.3`,
+  `bigint-buffer@1.1.5`, and `elliptic@6.6.1`.
+- `pnpm run check:typescript-compat`: passed; the approved TypeScript version
+  is `6.0.3`.
+- TypeScript compatibility tests: passed — 6 tests.
+- `pnpm run lint`: passed — 0 errors, 630 warnings.
 - `pnpm exec tsc --noEmit`: passed.
-- `pnpm test --run`: passed — 72 files, 328 tests passed, 1 skipped.
+- `pnpm test --run`: passed — 74 files, 347 tests passed, 1 skipped.
+- Focused Web5/NTT/AI-security tests: passed — 3 files, 17 tests.
 - `pnpm run build`: passed — 4,760 modules transformed.
 - Release policy gate
   (`tests/ci/release-artifact-policy.test.mjs`, `release-version.test.mjs`,
   `release-workflow-policy.test.mjs`, and `workflow-pins.test.mjs`): passed —
   25 tests.
 - `CI=true pnpm run test:e2e`: passed — 30 Playwright tests.
-- `pnpm run lint`: remains blocked by the pre-existing TypeScript `7.0.2` /
-  `typescript-eslint@8.65.0` incompatibility; this remediation does not alter
-  that baseline.
+- Direct dependency smoke checks: passed — UUID CJS/ESM `v1`/`v4`/`v5` exports,
+  AJV schema compilation, Babel transform, and Web5/Wormhole/Wormhole-Solana
+  imports.

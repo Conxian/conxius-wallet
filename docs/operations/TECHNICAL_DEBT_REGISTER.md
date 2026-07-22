@@ -2,7 +2,8 @@
 
 **Authority:** Canonical technical-debt inventory for `Conxian/conxius-wallet`.
 **Issue:** [#357](https://github.com/Conxian/conxius-wallet/issues/357)
-**Baseline captured:** 2026-07-22 from `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57`
+**Baseline captured:** 2026-07-22 from `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57` (historical pre-#429 snapshot)
+**Current candidate base:** `origin/main` at `493d2c0b397469e83f3d7ee5b78d40cdf365a727` after PR #429 and merged PR #433
 **Target milestone:** M16 / v1.9.5 release baseline, before production promotion.
 
 This register is the source of truth for release-baseline debt. Historical audit
@@ -20,16 +21,21 @@ and is intentionally not hidden behind lint suppression or broad rule changes.
 | Measure | Baseline evidence | Interpretation |
 | --- | --- | --- |
 | Local pnpm | `10.28.1` | Disagreed with CI (`11.13.0`) and Android release (`10.30.3`); `package.json` had no `packageManager` declaration. |
-| TypeScript / typescript-eslint | TypeScript `7.0.2`; `typescript-eslint` `8.65.0` supports `>=4.8.4 <6.1.0` | Unsupported parser/runtime combination introduced by PR #425; TypeScript 7 remains separate migration work under issue #396. |
-| Lint | `pnpm run lint`: exit `2` during `typescript-eslint` initialization because TypeScript 7 is unsupported | Lint could not provide a useful baseline until the supported TypeScript 6 bridge was restored. |
-| JavaScript tests | 61 files; 245 passed, 1 skipped; about 52s | Existing tests pass, but this does not prove native or protocol production paths. |
+| TypeScript / typescript-eslint | Historical pre-#429 snapshot: TypeScript `7.0.2`; `typescript-eslint` `8.65.0` supports `>=4.8.4 <6.1.0` | Current main and the post-PR-#433 candidate use the exact TypeScript `6.0.3` bridge; TypeScript 7 remains separate migration work under issue #396, not a current lint blocker. |
+| Lint | Historical pre-#429 snapshot: `pnpm run lint` exited `2` during `typescript-eslint` initialization | Current candidate `pnpm run lint` passed with 0 errors and 630 warnings. |
+| JavaScript tests | Historical pre-#429 snapshot: 61 files; 245 passed, 1 skipped; about 52s | Current candidate: 74 files; 347 passed, 1 skipped. Existing tests still do not prove native or protocol production paths. |
 | Android configuration | AGP `9.3.0`; configuration failed before task discovery because `org.jetbrains.kotlin.android` is rejected by AGP 9; Jetifier deprecation warning present | Android validation was blocked at configuration time. |
 | CI artifacts | CI uploaded `test-results`, `playwright-report`, `blob-report`, and `coverage` with no producing job | Successful CI could attempt empty uploads. |
 | Scheduled cleanup | One workflow checked out the repository and deleted runner-local directories | No durable cleanup value on ephemeral GitHub-hosted runners. |
 | Static debt scan | 62 console calls, 131 explicit `any` matches, 66 placeholder/simulation/stub/mock/TODO markers across production paths | Broad hygiene debt remains; counts are directional and must be regenerated before burn-down claims. |
 | Active npm command/config scan | One active command invocation plus Capacitor `npmClient: npm` | pnpm migration was incomplete in active tooling. |
 
-## Issue #357 branch checkpoint
+## Issue #357 branch checkpoint (historical #429 evidence)
+
+The following table records the earlier toolchain-restore checkpoint from PR
+#429. Current post-PR-#433 results are recorded in TD-P1-005 and the dependency
+disposition document below; the historical TypeScript 7/lint values are not
+current candidate results.
 
 | Validation | Result | Timing / metric |
 | --- | --- | --- |
@@ -110,15 +116,15 @@ and is intentionally not hidden behind lint suppression or broad rule changes.
 
 - **Category:** Toolchain / lint
 - **Priority:** P1
-- **Status:** In Progress — TypeScript 7 regression remediated by the TypeScript 6 bridge, while issue #396's dual-toolchain implementation remains on a focused branch pending hosted CI review and COO approval.
+- **Status:** In Progress — the approved TypeScript `6.0.3` bridge remains the programmatic/API lane; the TypeScript 7 dual-toolchain validation is source-integrated, while hosted CI review and COO approval remain before any TypeScript 7-only/default promotion.
 - **Affected paths:** `package.json`, `pnpm-lock.yaml`, `tsconfig.ts6.json`, `tsconfig.ts7.json`, `scripts/ci/check_typescript_compatibility.mjs`, `tests/ci/typescript-compatibility.test.mjs`, `scripts/ci/verify_local.sh`, `scripts/ci/verify_typescript_dual_toolchain.mjs`, `.github/workflows/ci.yml`, `.github/workflows/android-release.yml`, `eslint.config.js`
 - **Impact:** Local, CI, and release environments selected different pnpm versions, while PR #425 promoted TypeScript `7.0.2` outside `typescript-eslint` `8.65.0` support and crashed lint. The approved TypeScript 6 bridge must remain the programmatic/API runtime while the TypeScript 7 CLI stays available as an explicit migration lane.
 - **Regression/remediation:** PR #425 introduced the TypeScript 7 regression on `main`; the bridge and repository-owned compatibility guard restore the supported lint/API runtime, validate the installed `typescript-eslint` peer range, and fail before lint, typecheck, or build when the contract drifts. No wallet or native runtime behavior is changed.
 - **Owner:** Unassigned
 - **Exit criteria:** `packageManager` declares pnpm `11.13.0`; CI/release/local verification select it through Corepack or the action; the manifest aliases the TypeScript 7 CLI separately from the exact TypeScript 6 bridge; the compatibility guard and smoke verifier prove the lockfile/API contract, installed `typescript-eslint` peer range, `tsc` 7, `tsc6` 6, and imported TypeScript API 6; both typechecks and lint pass without broad rule weakening; hosted Android/NDK/E2E gates remain intact; and COO approval is recorded before any TypeScript 7-only/default promotion.
-- **Validation:** `CI=true pnpm install --frozen-lockfile` passed; `pnpm run check:typescript-compat` passed; focused compatibility tests passed 15/15; `pnpm run lint` passed with 0 errors and 630 warnings; `pnpm run typecheck` passed; `pnpm test --run` passed 73 files with 343 passed and 1 skipped; `pnpm run build` passed; and the issue #396 branch's dual verifier reported `tsc 7.0.2`, `tsc6 6.0.3`, and imported TypeScript API `6.0.3`. Playwright listed 30 tests, while Android SDK/NDK checks remain hosted-CI gates. This is not sole-toolchain TypeScript 7 completion; hosted CI review and COO approval remain before changing the status to Completed.
+- **Validation:** The dual-toolchain verifier reported `tsc` `7.0.2`, `tsc6` `6.0.3`, and imported TypeScript API `6.0.3`. On the post-PR-#433 candidate, `CI=true pnpm install --frozen-lockfile` passed with pnpm `11.13.0`; `pnpm run check:typescript-compat` passed for the TypeScript `6.0.3` bridge; focused compatibility tests passed 15/15; `pnpm run lint` passed with 0 errors and 630 warnings; `pnpm exec tsc --noEmit` passed; `pnpm test --run` passed 74 files with 347 passed and 1 skipped; `pnpm run build` passed after 4,760 modules transformed; release-policy tests passed 25/25; `CI=true pnpm run test:e2e` passed 30/30. TypeScript 7 remains an explicit migration lane under issue #396; hosted CI review and COO approval remain before any TypeScript 7-only/default promotion.
 - **Target milestone:** M16 release baseline
-- **Metrics baseline:** Local `10.28.1`, CI `11.13.0`, release `10.30.3`; after PR #425, TypeScript `7.0.2` caused lint exit `2` while typecheck still passed.
+- **Metrics baseline:** Historical pre-#429 snapshot recorded local `10.28.1`, CI `11.13.0`, release `10.30.3`, and TypeScript `7.0.2` lint exit `2`; the post-PR-#433 candidate records pnpm `11.13.0`, TypeScript `6.0.3` bridge compatibility, lint at 0 errors / 630 warnings, 74 files with 347 passed and 1 skipped, 4,760 build modules, release policy 25/25, and E2E 30/30.
 - **Evidence:** [`CONTRIBUTING.md`](../../CONTRIBUTING.md); [`Sovereign_State.md`](../state/Sovereign_State.md); [`TYPESCRIPT_DUAL_TOOLCHAIN.md`](TYPESCRIPT_DUAL_TOOLCHAIN.md); `scripts/ci/check_typescript_compatibility.mjs`; `scripts/ci/verify_typescript_dual_toolchain.mjs`; `eslint.config.js`; [issue #396](https://github.com/Conxian/conxius-wallet/issues/396)
 
 ### TD-P1-006 — E2E and Android CI coverage
@@ -199,12 +205,12 @@ and is intentionally not hidden behind lint suppression or broad rule changes.
 
 - **Category:** Dependency security / supply chain
 - **Priority:** P1
-- **Status:** In Progress — three advisories are fixed in the #399 candidate branch; the production-reachable `bigint-buffer` high advisory plus `esbuild` and `elliptic` low advisories remain unresolved and pending security/COO review.
+- **Status:** In Progress — merged PR #433 landed fixes for `ajv`, `uuid`, and `@babel/core`; the production-reachable `bigint-buffer` high advisory plus `esbuild` and `elliptic` low advisories remain unresolved and pending security/COO review. Issue #399 is not resolved by this documentation follow-up.
 - **Affected paths:** `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `scripts/ci/audit_with_exceptions.mjs`, `scripts/ci/dependency-audit-exceptions.json`, CI security-audit step
 - **Impact:** The repository still reports one high and two lower-severity dependency vulnerabilities; release policy needs a documented remediation or accepted exception before promotion.
 - **Owner:** Conxian security maintainers
 - **Exit criteria:** `pnpm audit` reports no high/critical findings, or every remaining finding has a reviewed, time-bounded exception with an upstream/remediation plan.
-- **Validation:** The 2026-07-22 #399 candidate ran `CI=true pnpm install --frozen-lockfile`, full and production `pnpm audit --audit-level=low --json`, and `pnpm exec node scripts/ci/audit_with_exceptions.mjs`. Both audits now report three findings: `GHSA-3gc7-fjrx-p6mg` for `bigint-buffer@1.1.5` (high), `GHSA-g7r4-m6w7-qqqr` for `esbuild@0.27.3` (low), and `GHSA-848j-6mx2-7j84` for `elliptic@6.6.1` (low). The wrapper passes only because the exact active `bigint-buffer` exception expires 2026-08-19; it does not approve the issue-level disposition. The fixed-package evidence, esbuild safety decision, and removal criteria are recorded in [`DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md`](DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md).
+- **Validation:** The 2026-07-22 post-PR-#433 candidate ran `CI=true pnpm install --frozen-lockfile`, full and production `pnpm audit --audit-level=low --json`, and `pnpm exec node scripts/ci/audit_with_exceptions.mjs`. Both audits report exactly three findings: `GHSA-3gc7-fjrx-p6mg` for `bigint-buffer@1.1.5` (high), `GHSA-g7r4-m6w7-qqqr` for `esbuild@0.27.3` (low), and `GHSA-848j-6mx2-7j84` for `elliptic@6.6.1` (low). The wrapper passes only because the exact active `bigint-buffer` exception expires 2026-08-19; it does not approve the issue-level disposition. The fixed-package evidence, esbuild safety decision, and removal criteria are recorded in [`DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md`](DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md).
 - **Target milestone:** M16 release baseline
 - **Metrics baseline:** Baseline was 6 findings: 3 low, 2 moderate, 1 high. The candidate result is 3 findings: 2 low, 1 high; no critical findings are present.
 - **Evidence:** `scripts/ci/audit_with_exceptions.mjs`; `scripts/ci/dependency-audit-exceptions.json`; `pnpm-workspace.yaml`; [`DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md`](DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md); [`Sovereign_State.md`](../state/Sovereign_State.md)
