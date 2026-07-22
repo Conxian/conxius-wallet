@@ -24,7 +24,7 @@ the [Technical Debt Register](TECHNICAL_DEBT_REGISTER.md).
 
 ### 1.2 Enable Required APIs
 
-- **Play Integrity API** — Used by the client-side `PlayIntegrityPlugin.kt`; backend verification is still required before enforcement
+- **Play Integrity API** — Used by the client-side `PlayIntegrityPlugin.kt`; backend verification is still required before enforcement. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md).
 - **Firebase Cloud Messaging** — If push notifications are needed
 - **Google Play Developer API** — For automated publishing
 
@@ -50,7 +50,7 @@ the [Technical Debt Register](TECHNICAL_DEBT_REGISTER.md).
 2. Category: Finance → Cryptocurrency
 3. Content rating: Complete questionnaire (no violence, no gambling)
 4. Privacy policy URL: Required — host at `https://conxius.com/privacy`
-5. Data safety: Declare that app does NOT collect or share user data
+5. Data safety: Complete the form from the actual release build and telemetry policy; do not make a blanket no-data-collection claim while Play Integrity or rollout telemetry is enabled
 
 ### 2.3 App Signing
 
@@ -139,7 +139,12 @@ decoded, logged, or trusted on-device.
 This is client SDK/token acquisition only. Backend token decryption and verdict
 verification, request-hash comparison, real-device qualification,
 replay/freshness trust policy, and production enforcement are still required
-before this becomes a release gate.
+before this becomes a release gate. The separate P-256 KeyMint authorization
+boundary does not qualify the existing AES seed/database fallback path or any
+Bitcoin/Stacks/secp256k1/Schnorr protocol signing key.
+
+The canonical implementation boundary, qualification matrix, backend checklist,
+and non-claims are maintained in the [CON-1544 report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md).
 
 ---
 
@@ -154,7 +159,12 @@ before this becomes a release gate.
 - [ ] No debug logging of sensitive data
 - [ ] All experimental features properly gated
 - [ ] Biometric authentication working on physical device
-- [ ] StrongBox/TEE enforcement verified on target devices
+- [ ] StrongBox/TEE behavior verified on a real-device matrix, including explicit StrongBox, TEE-only, API 26–30 legacy evidence, unsupported, Play-installed, and relevant non-Play states
+- [ ] Android Key Attestation chain, trust root, revocation, challenge, app identity, security level, verified-boot, and patch-state checks pass on the backend
+- [ ] Play Integrity server decryption/verification validates package, signing certificate, canonical request hash, timestamp, and required verdict policy
+- [ ] Durable operation nonce/freshness/replay checks and centralized value-operation gate pass negative tests
+- [ ] Privacy-minimized telemetry, staged rollout, rollback, and Play/verifier outage runbook are reviewed
+- [ ] Independent security review and release acceptance are recorded; client/unit/hosted CI tests are not treated as hardware qualification
 
 ### Build Verification
 

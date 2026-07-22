@@ -12,6 +12,11 @@ The canonical release-baseline debt inventory and burn-down policy is the
 [Technical Debt Register](TECHNICAL_DEBT_REGISTER.md). P0/P1 security, release,
 and compatibility items must be reviewed before promotion to `main`.
 
+The [CON-1544 KeyMint / StrongBox and Play Integrity qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md)
+is the authority for the Android attestation boundary. Client collection and
+request binding are implemented; real-device evidence, backend verification,
+centralized value-operation enforcement, and release acceptance remain pending.
+
 ### Bitcoin fee-estimation alignment
 
 The wallet now has a bounded, client-side BIP-110 alignment path for fee
@@ -47,11 +52,11 @@ before promotion to `main`.
 - **Biz:** Market Fit Pivot, Institutional Bridge
 - **Marketing:** **"The Multi-Layer Citadel"** (L2 Ecosystem Expansion)
 
-### Level 4: The Clean Break (COMPLETED)
+### Level 4: The Clean Break (IMPLEMENTED / RELEASE VALIDATION PENDING)
 - **Focus:** Pure Native Android Migration & Sovereign Persistence.
-- **Tech:** BDK Kotlin, StrongBox-First Security, Jetpack Compose UI.
-- **Biz:** **"Citadel Native"** Launch; Transition from Capacitor to Pure Kotlin/Rust.
-- **Marketing:** **"Native Sovereignty"** (The v1.9.5 Android Release)
+- **Tech:** BDK Kotlin, Android Keystore with StrongBox requested where supported, and Jetpack Compose UI. StrongBox qualification is device-specific and remains open.
+- **Biz:** **"Citadel Native"** implementation; transition from Capacitor to pure Kotlin/Rust remains subject to release gates.
+- **Marketing:** **"Native Sovereignty"** (release/device/artifact qualification pending; do not infer a public release from repository version metadata)
 
 ### Level 5: Global Sovereignty (ACTIVE)
 - **Focus:** B2B SDK & Privacy-Preserving Treasury.
