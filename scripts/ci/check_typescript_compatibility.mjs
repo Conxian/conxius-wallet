@@ -1,10 +1,14 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { satisfies, valid, validRange } from 'semver';
 
 export const APPROVED_TYPESCRIPT_VERSION = '6.0.3';
 export const APPROVED_TYPESCRIPT_MAJOR = 6;
 export const MIGRATION_ISSUE = '#396';
+
+const DEFAULT_REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 function parseVersion(value) {
   const match = String(value ?? '').match(/(?:^|[^\d])(\d+)\.(\d+)\.(\d+)(?:$|[^\d])/);
@@ -46,10 +50,89 @@ function describeVersion(value) {
   return value === undefined || value === null ? 'missing' : `\`${value}\``;
 }
 
+function formatError(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function parseInstalledVersion(version, label) {
+  const normalized = typeof version === 'string' ? valid(version) : null;
+  if (!normalized) {
+    throw new Error(`${label} must be a valid semantic version, found ${JSON.stringify(version)}.`);
+  }
+
+  return {
+    raw: version,
+    normalized,
+  };
+}
+
+export function satisfiesVersionRange(version, range) {
+  const parsedVersion = parseInstalledVersion(version, 'Installed TypeScript version');
+  if (typeof range !== 'string' || range.trim() === '') {
+    throw new Error(`TypeScript peer range must be a non-empty string, found ${JSON.stringify(range)}.`);
+  }
+
+  const normalizedRange = validRange(range);
+  if (!normalizedRange) {
+    throw new Error(
+      `TypeScript peer range is not valid npm semver syntax: ${JSON.stringify(range)}. ` +
+        'Update typescript-eslint to a release with a valid TypeScript peer range.',
+    );
+  }
+
+  return satisfies(parsedVersion.normalized, normalizedRange);
+}
+
+export function validateInstalledTypeScriptCompatibility(metadata = {}) {
+  const { typescript, typescriptEslint } = metadata ?? {};
+  const typescriptVersion = parseInstalledVersion(typescript?.version, 'Installed TypeScript version').raw;
+  const typescriptEslintVersion = parseInstalledVersion(
+    typescriptEslint?.version,
+    'Installed typescript-eslint version',
+  ).raw;
+  const supportedRange = typescriptEslint?.peerDependencies?.typescript;
+
+  if (typeof supportedRange !== 'string' || supportedRange.trim() === '') {
+    throw new Error(
+      `TypeScript compatibility check failed: typescript-eslint ${typescriptEslintVersion} does not declare ` +
+        'a usable TypeScript peer range.',
+    );
+  }
+
+  let supported;
+  try {
+    supported = satisfiesVersionRange(typescriptVersion, supportedRange);
+  } catch (error) {
+    throw new Error(
+      'TypeScript compatibility check cannot evaluate installed typescript-eslint metadata.\n' +
+        `  installed TypeScript: ${typescriptVersion}\n` +
+        `  typescript-eslint: ${typescriptEslintVersion}\n` +
+        `  supported TypeScript range: ${supportedRange}\n` +
+        `  metadata error: ${formatError(error)}`,
+      { cause: error },
+    );
+  }
+
+  if (!supported) {
+    throw new Error(
+      'TypeScript compatibility check failed.\n' +
+        `  installed TypeScript: ${typescriptVersion}\n` +
+        `  typescript-eslint: ${typescriptEslintVersion}\n` +
+        `  supported TypeScript range: ${supportedRange}\n` +
+        '  remediation: pin TypeScript within the declared range or upgrade typescript-eslint to a release that declares support before running ESLint.',
+    );
+  }
+
+  return { typescriptVersion, typescriptEslintVersion, supportedRange };
+}
+
 export function validateTypeScriptCompatibility({
   packageJson,
   lockfile,
   installedTypeScriptVersion,
+  typescript,
+  typescriptEslint,
+  typescriptEslintMetadataError,
 }) {
   const errors = [];
   const declaredSpecifier = packageJson?.devDependencies?.typescript ?? packageJson?.dependencies?.typescript;
@@ -96,6 +179,16 @@ export function validateTypeScriptCompatibility({
     );
   }
 
+  if (typescriptEslintMetadataError) {
+    errors.push(formatError(typescriptEslintMetadataError));
+  } else if (typescript !== undefined || typescriptEslint !== undefined) {
+    try {
+      validateInstalledTypeScriptCompatibility({ typescript, typescriptEslint });
+    } catch (error) {
+      errors.push(formatError(error));
+    }
+  }
+
   return errors;
 }
 
@@ -103,22 +196,58 @@ function readJson(path) {
   return JSON.parse(readFileSync(path, 'utf8'));
 }
 
-function readInstalledTypeScriptVersion(repositoryRoot) {
-  const packagePath = resolve(repositoryRoot, 'node_modules/typescript/package.json');
-  if (!existsSync(packagePath)) {
-    return null;
+export function readInstalledPackageMetadata(packageName, repositoryRoot = DEFAULT_REPOSITORY_ROOT) {
+  const requireFromRepository = createRequire(resolve(repositoryRoot, 'package.json'));
+  let packagePath;
+  try {
+    packagePath = requireFromRepository.resolve(`${packageName}/package.json`);
+  } catch (error) {
+    throw new Error(
+      `TypeScript compatibility check failed: unable to resolve installed ${packageName} metadata. ` +
+        `Install dependencies with the repository's frozen-lockfile command. (${formatError(error)})`,
+      { cause: error },
+    );
   }
-  return readJson(packagePath).version;
+
+  try {
+    return readJson(packagePath);
+  } catch (error) {
+    throw new Error(
+      `TypeScript compatibility check failed: unable to read ${packageName} metadata at ${packagePath}. (${formatError(
+        error,
+      )})`,
+      { cause: error },
+    );
+  }
 }
 
-export function runTypeScriptCompatibilityCheck(repositoryRoot) {
+export function readInstalledTypeScriptCompatibility(repositoryRoot = DEFAULT_REPOSITORY_ROOT) {
+  return {
+    typescript: readInstalledPackageMetadata('typescript', repositoryRoot),
+    typescriptEslint: readInstalledPackageMetadata('typescript-eslint', repositoryRoot),
+  };
+}
+
+function readInstalledPackageMetadataSafely(packageName, repositoryRoot) {
+  try {
+    return { metadata: readInstalledPackageMetadata(packageName, repositoryRoot), error: null };
+  } catch (error) {
+    return { metadata: undefined, error };
+  }
+}
+
+export function runTypeScriptCompatibilityCheck(repositoryRoot = DEFAULT_REPOSITORY_ROOT) {
   const packageJson = readJson(resolve(repositoryRoot, 'package.json'));
   const lockfile = readFileSync(resolve(repositoryRoot, 'pnpm-lock.yaml'), 'utf8');
-  const installedTypeScriptVersion = readInstalledTypeScriptVersion(repositoryRoot);
+  const installedTypeScript = readInstalledPackageMetadataSafely('typescript', repositoryRoot);
+  const installedTypeScriptEslint = readInstalledPackageMetadataSafely('typescript-eslint', repositoryRoot);
   const errors = validateTypeScriptCompatibility({
     packageJson,
     lockfile,
-    installedTypeScriptVersion,
+    installedTypeScriptVersion: installedTypeScript.metadata?.version ?? null,
+    typescript: installedTypeScript.metadata,
+    typescriptEslint: installedTypeScriptEslint.metadata,
+    typescriptEslintMetadataError: installedTypeScriptEslint.error,
   });
 
   if (errors.length > 0) {
@@ -126,7 +255,7 @@ export function runTypeScriptCompatibilityCheck(repositoryRoot) {
       'TypeScript compatibility check failed:',
       ...errors.map((error) => `- ${error}`),
       `Action: keep the repository on TypeScript ${APPROVED_TYPESCRIPT_VERSION} until ${MIGRATION_ISSUE} completes its separately validated TypeScript 7 migration.`,
-      'Scope: this guard enforces Conxius Wallet\'s approved toolchain contract; it is not a claim about all future typescript-eslint compatibility.',
+      'Scope: this guard enforces Conxius Wallet\'s approved toolchain contract and validates the installed typescript-eslint peer range; it is not a claim about all future typescript-eslint compatibility.',
     ].join('\n');
     throw new Error(message);
   }
