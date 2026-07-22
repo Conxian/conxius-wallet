@@ -1,4 +1,3 @@
-import { requestEnclaveSignature } from './signer';
 import { Network } from '../types';
 
 export const NUM_TAPS = 364;
@@ -46,6 +45,7 @@ export interface BitVmProofRequest {
 /** Backward-compatible type alias for callers that imported `BitVmProof`. */
 export type BitVmProof = BitVmProofEnvelope;
 
+/** Reserved for verifier-owned output; caller-constructed evidence is untrusted. */
 export interface BitVmVerifiedEvidence {
     envelope: BitVmProofEnvelope;
     verifierRevision: string;
@@ -98,6 +98,12 @@ export interface BitVmDisputeRequest {
     vault: string | Uint8Array;
 }
 
+/**
+* The signer-related variants remain exported for compatibility with callers
+* that already narrow this result type. The quarantined implementation never
+* constructs either variant until a reviewed verifier and signing backend
+* exist.
+*/
 export type BitVmDisputeResult =
     | {
         status: 'unsupported' | 'simulated' | 'malformed' | 'invalid';
@@ -283,17 +289,6 @@ export const validateBitVmProofEnvelope = (
     };
 };
 
-const isAuthoritativeVerification = (
-    result: BitVmVerificationResult,
-): result is Extract<BitVmVerificationResult, { status: 'verified' }> => (
-    result.status === 'verified'
-    && result.authoritative === true
-    && isRecord(result.evidence)
-    && isRecord(result.evidence.envelope)
-    && isNonEmptyString(result.evidence.verifierRevision)
-    && isNonEmptyString(result.evidence.verifierDigest)
-);
-
 /**
 * Production BitVM2 entrypoint. No reviewed verifier is integrated, so a
 * structurally valid envelope is explicitly unavailable in every environment.
@@ -316,8 +311,9 @@ const legacyDisputeFailure = (reason: string): BitVmDisputeResult => (
 );
 
 /**
-* Dispute signing is reachable only from authoritative evidence plus a fully
-* bound canonical PSBT. Current verification never emits that evidence.
+* Dispute APIs retain structural validation for compatibility, but no
+* caller-supplied verification result can authorize a signer while the
+* reviewed verifier is unavailable.
 */
 export function initiateDispute(request: BitVmDisputeRequest): Promise<BitVmDisputeResult>;
 export function initiateDispute(tapIndex: number, rawProof: string, network: Network): Promise<BitVmDisputeResult>;
@@ -327,10 +323,16 @@ export async function initiateDispute(
     network?: Network,
 ): Promise<BitVmDisputeResult> {
     if (typeof requestOrTapIndex === 'number') {
+        void rawProof;
+        void network;
         return legacyDisputeFailure('Legacy BitVM2 dispute requests lack the canonical proof and transaction bindings');
     }
 
     const request = requestOrTapIndex;
+    if (!isRecord(request)) {
+        return disputeFailure('malformed', 'A BitVM2 dispute request object is required');
+    }
+
     const validation = validateBitVmProofEnvelope(request.envelope);
     if (!validation.valid) {
         return disputeFailure(validation.result.status, validation.result.reason);
@@ -344,7 +346,8 @@ export async function initiateDispute(
         return disputeFailure('malformed', 'A canonical dispute transaction binding is required before signing');
     }
 
-    switch (request.verification.status) {
+    const verificationStatus = isRecord(request.verification) ? request.verification.status : undefined;
+    switch (verificationStatus) {
         case 'unsupported':
             return disputeFailure('unsupported', 'Dispute signing requires reviewed BitVM2 verification evidence');
         case 'simulated':
@@ -354,68 +357,12 @@ export async function initiateDispute(
         case 'invalid':
             return disputeFailure('invalid', 'Invalid BitVM2 verification evidence cannot be signed');
         case 'verified':
-            if (!isAuthoritativeVerification(request.verification)) {
-                return disputeFailure('unsupported', 'BitVM2 verification evidence is not authoritative');
-            }
-            {
-                const evidenceValidation = validateBitVmProofEnvelope(request.verification.evidence.envelope);
-                if (!evidenceValidation.valid) {
-                    return disputeFailure(evidenceValidation.result.status, evidenceValidation.result.reason);
-                }
-
-                const requestedEnvelope = validation.envelope;
-                const evidenceEnvelope = evidenceValidation.envelope;
-                const evidenceMatchesRequest = requestedEnvelope.schemaVersion === evidenceEnvelope.schemaVersion
-                    && requestedEnvelope.proof === evidenceEnvelope.proof
-                    && requestedEnvelope.verificationKeyId === evidenceEnvelope.verificationKeyId
-                    && requestedEnvelope.verificationKeyDigest === evidenceEnvelope.verificationKeyDigest
-                    && requestedEnvelope.curve === evidenceEnvelope.curve
-                    && requestedEnvelope.circuitId === evidenceEnvelope.circuitId
-                    && requestedEnvelope.encoding === evidenceEnvelope.encoding
-                    && requestedEnvelope.network === evidenceEnvelope.network
-                    && requestedEnvelope.blockContext.height === evidenceEnvelope.blockContext.height
-                    && requestedEnvelope.blockContext.hash === evidenceEnvelope.blockContext.hash
-                    && requestedEnvelope.tapCount === evidenceEnvelope.tapCount
-                    && requestedEnvelope.tapIndex === evidenceEnvelope.tapIndex
-                    && requestedEnvelope.domainSeparation === evidenceEnvelope.domainSeparation
-                    && requestedEnvelope.transactionBinding === evidenceEnvelope.transactionBinding
-                    && requestedEnvelope.stateBinding === evidenceEnvelope.stateBinding
-                    && requestedEnvelope.publicInputs.length === evidenceEnvelope.publicInputs.length
-                    && requestedEnvelope.publicInputs.every((input, index) => input === evidenceEnvelope.publicInputs[index]);
-
-                if (!evidenceMatchesRequest) {
-                    return disputeFailure('malformed', 'BitVM2 verification evidence is not bound to the requested envelope');
-                }
-            }
-            break;
-    }
-
-    try {
-        const signResult = await requestEnclaveSignature({
-            type: 'psbt',
-            layer: 'BitVM',
-            payload: {
-                psbt: request.disputePsbt,
-                tapIndex: validation.envelope.tapIndex,
-                transactionBinding: validation.envelope.transactionBinding,
-                stateBinding: validation.envelope.stateBinding,
-            },
-            description: 'Sign an authoritative BitVM2 dispute transaction',
-        }, request.vault);
-
-        return {
-            status: 'signed',
-            authoritative: true,
-            signerInvoked: true,
-            signature: signResult.signature,
-        };
-    } catch {
-        return {
-            status: 'signer_failed',
-            authoritative: false,
-            signerInvoked: true,
-            reason: 'The native enclave signer rejected the BitVM2 dispute transaction',
-        };
+            return disputeFailure(
+                'unsupported',
+                'Caller-supplied BitVM2 verification evidence cannot authorize signing; the reviewed verifier is unavailable',
+            );
+        default:
+            return disputeFailure('malformed', 'BitVM2 verification evidence has an unknown status');
     }
 }
 
@@ -432,15 +379,21 @@ export async function signBitVmCommitment(
     vault?: string,
 ): Promise<BitVmSigningResult> {
     if (typeof requestOrChallengeId === 'string') {
+        void commitment;
+        void vault;
         return legacyDisputeFailure('Legacy BitVM2 commitment requests lack canonical verification and transaction bindings');
     }
 
     const request = requestOrChallengeId;
+    if (!isRecord(request)) {
+        return disputeFailure('malformed', 'A BitVM2 commitment request object is required');
+    }
+
     if (!isNonEmptyString(request.challengeId) || !isNonEmptyString(request.commitment)) {
         return disputeFailure('malformed', 'BitVM2 challenge and commitment identifiers are required');
     }
 
-    if (request.commitment !== request.envelope.stateBinding) {
+    if (!isRecord(request.envelope) || request.commitment !== request.envelope.stateBinding) {
         return disputeFailure('malformed', 'BitVM2 commitment is not bound to the canonical state commitment');
     }
 
@@ -448,8 +401,11 @@ export async function signBitVmCommitment(
 }
 
 /** BitVM challenge discovery remains unavailable; no synthetic challenge is returned. */
-export const fetchBitVmChallenges = async (_layer: string): Promise<BitVmChallengeResult> => ({
-    status: 'unsupported',
-    authoritative: false,
-    reason: 'BitVM2 challenge discovery is unavailable until a reviewed protocol backend exists',
-});
+export const fetchBitVmChallenges = async (_layer: string): Promise<BitVmChallengeResult> => {
+    void _layer;
+    return {
+        status: 'unsupported',
+        authoritative: false,
+        reason: 'BitVM2 challenge discovery is unavailable until a reviewed protocol backend exists',
+    };
+};
