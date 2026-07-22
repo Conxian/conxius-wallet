@@ -106,7 +106,7 @@ jobs:
         run: pnpm run lint
 
       - name: Typecheck
-        run: pnpm exec tsc --noEmit
+        run: pnpm run typecheck
 
       - name: Unit tests
         run: pnpm exec vitest run
