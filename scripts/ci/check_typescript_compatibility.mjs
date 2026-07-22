@@ -1,13 +1,60 @@
-#!/usr/bin/env node
-
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { pathToFileURL } from 'node:url';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { satisfies, valid, validRange } from 'semver';
 
-const require = createRequire(import.meta.url);
+export const APPROVED_TYPESCRIPT_VERSION = '6.0.3';
+export const APPROVED_TYPESCRIPT_MAJOR = 6;
+export const MIGRATION_ISSUE = '#396';
 
-function parseVersion(version, label) {
+const DEFAULT_REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+
+function parseVersion(value) {
+  const match = String(value ?? '').match(/(?:^|[^\d])(\d+)\.(\d+)\.(\d+)(?:$|[^\d])/);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    major: Number(match[1]),
+    minor: Number(match[2]),
+    patch: Number(match[3]),
+  };
+}
+
+function cleanLockValue(value) {
+  return value.trim().replace(/^['"]|['"]$/g, '');
+}
+
+function readRootLockfileEntry(lockfile) {
+  const importer = lockfile.match(/^  \.:\n([\s\S]*?)(?=^packages:\n)/m)?.[1];
+  if (!importer) {
+    return null;
+  }
+
+  const entry = importer.match(
+    /^      typescript:\n        specifier: ([^\n]+)\n        version: ([^\n]+)/m,
+  );
+  if (!entry) {
+    return null;
+  }
+
+  return {
+    specifier: cleanLockValue(entry[1]),
+    version: cleanLockValue(entry[2]),
+  };
+}
+
+function describeVersion(value) {
+  return value === undefined || value === null ? 'missing' : `\`${value}\``;
+}
+
+function formatError(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function parseInstalledVersion(version, label) {
   const normalized = typeof version === 'string' ? valid(version) : null;
   if (!normalized) {
     throw new Error(`${label} must be a valid semantic version, found ${JSON.stringify(version)}.`);
@@ -20,7 +67,7 @@ function parseVersion(version, label) {
 }
 
 export function satisfiesVersionRange(version, range) {
-  const parsedVersion = parseVersion(version, 'Installed TypeScript version');
+  const parsedVersion = parseInstalledVersion(version, 'Installed TypeScript version');
   if (typeof range !== 'string' || range.trim() === '') {
     throw new Error(`TypeScript peer range must be a non-empty string, found ${JSON.stringify(range)}.`);
   }
@@ -36,10 +83,13 @@ export function satisfiesVersionRange(version, range) {
   return satisfies(parsedVersion.normalized, normalizedRange);
 }
 
-export function validateTypeScriptCompatibility(metadata = {}) {
+export function validateInstalledTypeScriptCompatibility(metadata = {}) {
   const { typescript, typescriptEslint } = metadata ?? {};
-  const typescriptVersion = parseVersion(typescript?.version, 'Installed TypeScript version').raw;
-  const typescriptEslintVersion = parseVersion(typescriptEslint?.version, 'Installed typescript-eslint version').raw;
+  const typescriptVersion = parseInstalledVersion(typescript?.version, 'Installed TypeScript version').raw;
+  const typescriptEslintVersion = parseInstalledVersion(
+    typescriptEslint?.version,
+    'Installed typescript-eslint version',
+  ).raw;
   const supportedRange = typescriptEslint?.peerDependencies?.typescript;
 
   if (typeof supportedRange !== 'string' || supportedRange.trim() === '') {
@@ -58,7 +108,7 @@ export function validateTypeScriptCompatibility(metadata = {}) {
         `  installed TypeScript: ${typescriptVersion}\n` +
         `  typescript-eslint: ${typescriptEslintVersion}\n` +
         `  supported TypeScript range: ${supportedRange}\n` +
-        `  metadata error: ${error.message}`,
+        `  metadata error: ${formatError(error)}`,
       { cause: error },
     );
   }
@@ -76,49 +126,156 @@ export function validateTypeScriptCompatibility(metadata = {}) {
   return { typescriptVersion, typescriptEslintVersion, supportedRange };
 }
 
-export function readInstalledPackageMetadata(packageName) {
+export function validateTypeScriptCompatibility({
+  packageJson,
+  lockfile,
+  installedTypeScriptVersion,
+  typescript,
+  typescriptEslint,
+  typescriptEslintMetadataError,
+}) {
+  const errors = [];
+  const declaredSpecifier = packageJson?.devDependencies?.typescript ?? packageJson?.dependencies?.typescript;
+  const declaredVersion = parseVersion(declaredSpecifier);
+
+  if (typeof declaredSpecifier !== 'string' || !declaredVersion) {
+    errors.push(
+      `Root package.json must declare TypeScript as the exact approved bridge ${APPROVED_TYPESCRIPT_VERSION}; found ${describeVersion(declaredSpecifier)}.`,
+    );
+  } else if (declaredVersion.major > APPROVED_TYPESCRIPT_MAJOR) {
+    errors.push(
+      `Root package.json promotes TypeScript ${declaredSpecifier} above the approved TypeScript major ${APPROVED_TYPESCRIPT_MAJOR}.`,
+    );
+  } else if (declaredSpecifier !== APPROVED_TYPESCRIPT_VERSION) {
+    errors.push(
+      `Root package.json must keep TypeScript pinned to the exact approved bridge ${APPROVED_TYPESCRIPT_VERSION}; found ${declaredSpecifier}.`,
+    );
+  }
+
+  const lockfileEntry = typeof lockfile === 'string' ? readRootLockfileEntry(lockfile) : null;
+  if (!lockfileEntry) {
+    errors.push('pnpm-lock.yaml is missing the root TypeScript importer entry.');
+  } else {
+    if (lockfileEntry.specifier !== APPROVED_TYPESCRIPT_VERSION) {
+      errors.push(
+        `pnpm-lock.yaml records TypeScript specifier ${lockfileEntry.specifier}, expected ${APPROVED_TYPESCRIPT_VERSION}.`,
+      );
+    }
+    if (lockfileEntry.version !== APPROVED_TYPESCRIPT_VERSION) {
+      errors.push(
+        `pnpm-lock.yaml resolves TypeScript ${lockfileEntry.version}, expected ${APPROVED_TYPESCRIPT_VERSION}.`,
+      );
+    }
+  }
+
+  if (installedTypeScriptVersion === null) {
+    errors.push('Installed TypeScript package metadata is missing; run `pnpm install --frozen-lockfile`.');
+  } else if (
+    installedTypeScriptVersion !== undefined &&
+    installedTypeScriptVersion !== APPROVED_TYPESCRIPT_VERSION
+  ) {
+    errors.push(
+      `Installed TypeScript is ${installedTypeScriptVersion}, expected ${APPROVED_TYPESCRIPT_VERSION}; run \`pnpm install --frozen-lockfile\`.`,
+    );
+  }
+
+  if (typescriptEslintMetadataError) {
+    errors.push(formatError(typescriptEslintMetadataError));
+  } else if (typescript !== undefined || typescriptEslint !== undefined) {
+    try {
+      validateInstalledTypeScriptCompatibility({ typescript, typescriptEslint });
+    } catch (error) {
+      errors.push(formatError(error));
+    }
+  }
+
+  return errors;
+}
+
+function readJson(path) {
+  return JSON.parse(readFileSync(path, 'utf8'));
+}
+
+export function readInstalledPackageMetadata(packageName, repositoryRoot = DEFAULT_REPOSITORY_ROOT) {
+  const requireFromRepository = createRequire(resolve(repositoryRoot, 'package.json'));
   let packagePath;
   try {
-    packagePath = require.resolve(`${packageName}/package.json`);
+    packagePath = requireFromRepository.resolve(`${packageName}/package.json`);
   } catch (error) {
     throw new Error(
       `TypeScript compatibility check failed: unable to resolve installed ${packageName} metadata. ` +
-        `Install dependencies with the repository's frozen-lockfile command. (${error.message})`,
+        `Install dependencies with the repository's frozen-lockfile command. (${formatError(error)})`,
       { cause: error },
     );
   }
 
   try {
-    return JSON.parse(readFileSync(packagePath, 'utf8'));
+    return readJson(packagePath);
   } catch (error) {
     throw new Error(
-      `TypeScript compatibility check failed: unable to read ${packageName} metadata at ${packagePath}. (${error.message})`,
+      `TypeScript compatibility check failed: unable to read ${packageName} metadata at ${packagePath}. (${formatError(
+        error,
+      )})`,
       { cause: error },
     );
   }
 }
 
-export function readInstalledTypeScriptCompatibility() {
+export function readInstalledTypeScriptCompatibility(repositoryRoot = DEFAULT_REPOSITORY_ROOT) {
   return {
-    typescript: readInstalledPackageMetadata('typescript'),
-    typescriptEslint: readInstalledPackageMetadata('typescript-eslint'),
+    typescript: readInstalledPackageMetadata('typescript', repositoryRoot),
+    typescriptEslint: readInstalledPackageMetadata('typescript-eslint', repositoryRoot),
   };
 }
 
-export function main() {
-  const result = validateTypeScriptCompatibility(readInstalledTypeScriptCompatibility());
-  console.log(
-    `TypeScript compatibility check passed: TypeScript ${result.typescriptVersion} is supported by ` +
-      `typescript-eslint ${result.typescriptEslintVersion} (${result.supportedRange}).`,
-  );
-  return result;
+function readInstalledPackageMetadataSafely(packageName, repositoryRoot) {
+  try {
+    return { metadata: readInstalledPackageMetadata(packageName, repositoryRoot), error: null };
+  } catch (error) {
+    return { metadata: undefined, error };
+  }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+export function runTypeScriptCompatibilityCheck(repositoryRoot = DEFAULT_REPOSITORY_ROOT) {
+  const packageJson = readJson(resolve(repositoryRoot, 'package.json'));
+  const lockfile = readFileSync(resolve(repositoryRoot, 'pnpm-lock.yaml'), 'utf8');
+  const installedTypeScript = readInstalledPackageMetadataSafely('typescript', repositoryRoot);
+  const installedTypeScriptEslint = readInstalledPackageMetadataSafely('typescript-eslint', repositoryRoot);
+  const errors = validateTypeScriptCompatibility({
+    packageJson,
+    lockfile,
+    installedTypeScriptVersion: installedTypeScript.metadata?.version ?? null,
+    typescript: installedTypeScript.metadata,
+    typescriptEslint: installedTypeScriptEslint.metadata,
+    typescriptEslintMetadataError: installedTypeScriptEslint.error,
+  });
+
+  if (errors.length > 0) {
+    const message = [
+      'TypeScript compatibility check failed:',
+      ...errors.map((error) => `- ${error}`),
+      `Action: keep the repository on TypeScript ${APPROVED_TYPESCRIPT_VERSION} until ${MIGRATION_ISSUE} completes its separately validated TypeScript 7 migration.`,
+      'Scope: this guard enforces Conxius Wallet\'s approved toolchain contract and validates the installed typescript-eslint peer range; it is not a claim about all future typescript-eslint compatibility.',
+    ].join('\n');
+    throw new Error(message);
+  }
+
+  return `TypeScript compatibility check passed: ${APPROVED_TYPESCRIPT_VERSION}`;
+}
+
+function main() {
+  const repositoryRoot = process.argv[2]
+    ? resolve(process.argv[2])
+    : resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+
   try {
-    main();
+    console.log(runTypeScriptCompatibilityCheck(repositoryRoot));
   } catch (error) {
-    console.error(`::error::${error.message}`);
+    console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
   }
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
 }
