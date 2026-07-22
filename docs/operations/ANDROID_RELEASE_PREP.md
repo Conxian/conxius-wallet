@@ -151,6 +151,7 @@ Then update `DeviceIntegrityPlugin.java` to call Play Integrity API alongside lo
 - [ ] AAB size is reasonable (< 50MB target)
 - [ ] All unit tests pass (`pnpm exec vitest run`)
 - [ ] E2E tests pass (`pnpm run test:e2e`)
+- [ ] Release dependency audit passes with `--require-approved-exceptions` and writes evidence under `$RUNNER_TEMP`
 
 ### Compliance
 
@@ -193,6 +194,31 @@ stages:
    certificate identity without rebuilding. It creates and verifies the
    immutable tag and GitHub Release **before** publishing the exact AAB to the
    fixed Google Play `production` track.
+
+### Dependency audit release gate
+
+The dependency audit is a separate release decision from the signed payload;
+it does not change the APK/AAB allowlist, checksum subjects, or attestation
+subjects. CI runs the default policy and uploads
+`$RUNNER_TEMP/conxius-dependency-audit.json`. Release verification runs:
+
+```bash
+pnpm exec node scripts/ci/audit_with_exceptions.mjs \
+  --require-approved-exceptions \
+  --evidence "$RUNNER_TEMP/conxius-dependency-audit-release.json"
+```
+
+The release evidence records the audit timestamp, Node/pnpm versions, audit
+totals, advisory/package/version/path counts, each disposition and approval
+status, and the current `pnpm-lock.yaml` SHA-256. It is uploaded as a separate
+artifact from `$RUNNER_TEMP` and contains no secrets. On the current baseline
+the command is expected to fail because the `bigint-buffer` and `elliptic`
+exceptions both remain **pending** through **2026-08-19**. The `esbuild` finding
+is explicitly `not-affected` for production/release based on the Vite dev-server
+scope and the recorded `0.28.1` production-build incompatibility. Do not treat
+`CON-1525` or GitHub `#399` as approval evidence, and do not promote until the
+two exception records contain real durable approval URL, approver identity, and
+approval date.
 
 If the source run's evidence step succeeds but its Google Play step fails or is
 cancelled, use the explicit `retry` operation rather than `publish` or `recover`.
