@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "records": [
     {
       "advisory": "GHSA-3gc7-fjrx-p6mg",
@@ -8,6 +8,9 @@
       "observedVersions": [
         "1.1.5"
       ],
+      "pathCount": 14,
+      "roleClassification": "production",
+      "reachabilityFingerprint": "9986acccd9f9294e02f9d2813c7b54e100778b307993ead4a11f04e3d505b470",
       "disposition": "exception",
       "reviewedOn": "2026-07-22",
       "owner": "Conxian security maintainers",
@@ -26,6 +29,9 @@
       "observedVersions": [
         "6.6.1"
       ],
+      "pathCount": 100,
+      "roleClassification": "production",
+      "reachabilityFingerprint": "de8cf46ae22c223b19e7ff856c9fb13c107a868c05edf08eef969ffbcd31c000",
       "disposition": "exception",
       "reviewedOn": "2026-07-22",
       "owner": "Conxian security maintainers",
@@ -44,6 +50,9 @@
       "observedVersions": [
         "0.27.3"
       ],
+      "pathCount": 9,
+      "roleClassification": "optional",
+      "reachabilityFingerprint": "d168750cffc66131e823d5d751169a177c652c7b4552ad986a9b5f0e598a7359",
       "disposition": "not-affected",
       "reviewedOn": "2026-07-22",
       "rationale": "This advisory is confined to the local Vite development-server response-read surface. Production and release artifacts do not run or expose that development server.",
