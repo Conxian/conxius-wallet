@@ -209,8 +209,17 @@ const StackingManager: React.FC = () => {
             </div>
             
             <div className="h-64 w-full">
+              <p id="yield-performance-description" className="sr-only">
+                BTC rewards earned per stacking cycle.
+              </p>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={rewardHistory.length > 0 ? rewardHistory : [{cycle: '—', btc: 0, date: ''}]}>
+                <AreaChart
+                  data={rewardHistory.length > 0 ? rewardHistory : [{cycle: '—', btc: 0, date: ''}]}
+                  title="Yield Performance"
+                  desc="BTC rewards earned per stacking cycle."
+                  aria-label="Yield Performance"
+                  aria-describedby="yield-performance-description"
+                >
                   <defs>
                     <linearGradient id="colorBtc" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>

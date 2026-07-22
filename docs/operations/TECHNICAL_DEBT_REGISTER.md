@@ -2,7 +2,8 @@
 
 **Authority:** Canonical technical-debt inventory for `Conxian/conxius-wallet`.
 **Issue:** [#357](https://github.com/Conxian/conxius-wallet/issues/357)
-**Baseline captured:** 2026-07-22 from `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57`
+**Baseline captured:** 2026-07-22 from `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57` (historical pre-#429 snapshot)
+**Current candidate base:** `origin/main` at `493d2c0b397469e83f3d7ee5b78d40cdf365a727` after PR #429 and merged PR #433
 **Target milestone:** M16 / v1.9.5 release baseline, before production promotion.
 
 This register is the source of truth for release-baseline debt. Historical audit
@@ -20,16 +21,21 @@ and is intentionally not hidden behind lint suppression or broad rule changes.
 | Measure | Baseline evidence | Interpretation |
 | --- | --- | --- |
 | Local pnpm | `10.28.1` | Disagreed with CI (`11.13.0`) and Android release (`10.30.3`); `package.json` had no `packageManager` declaration. |
-| TypeScript / typescript-eslint | TypeScript `7.0.2`; `typescript-eslint` `8.65.0` supports `>=4.8.4 <6.1.0` | Unsupported parser/runtime combination introduced by PR #425; TypeScript 7 remains separate migration work under issue #396. |
-| Lint | `pnpm run lint`: exit `2` during `typescript-eslint` initialization because TypeScript 7 is unsupported | Lint could not provide a useful baseline until the supported TypeScript 6 bridge was restored. |
-| JavaScript tests | 61 files; 245 passed, 1 skipped; about 52s | Existing tests pass, but this does not prove native or protocol production paths. |
+| TypeScript / typescript-eslint | Historical pre-#429 snapshot: TypeScript `7.0.2`; `typescript-eslint` `8.65.0` supports `>=4.8.4 <6.1.0` | Current main and the post-PR-#433 candidate use the exact TypeScript `6.0.3` bridge; TypeScript 7 remains separate migration work under issue #396, not a current lint blocker. |
+| Lint | Historical pre-#429 snapshot: `pnpm run lint` exited `2` during `typescript-eslint` initialization | Current candidate `pnpm run lint` passed with 0 errors and 630 warnings. |
+| JavaScript tests | Historical pre-#429 snapshot: 61 files; 245 passed, 1 skipped; about 52s | Current candidate: 74 files; 347 passed, 1 skipped. Existing tests still do not prove native or protocol production paths. |
 | Android configuration | AGP `9.3.0`; configuration failed before task discovery because `org.jetbrains.kotlin.android` is rejected by AGP 9; Jetifier deprecation warning present | Android validation was blocked at configuration time. |
 | CI artifacts | CI uploaded `test-results`, `playwright-report`, `blob-report`, and `coverage` with no producing job | Successful CI could attempt empty uploads. |
 | Scheduled cleanup | One workflow checked out the repository and deleted runner-local directories | No durable cleanup value on ephemeral GitHub-hosted runners. |
 | Static debt scan | 62 console calls, 131 explicit `any` matches, 66 placeholder/simulation/stub/mock/TODO markers across production paths | Broad hygiene debt remains; counts are directional and must be regenerated before burn-down claims. |
 | Active npm command/config scan | One active command invocation plus Capacitor `npmClient: npm` | pnpm migration was incomplete in active tooling. |
 
-## Issue #357 branch checkpoint
+## Issue #357 branch checkpoint (historical #429 evidence)
+
+The following table records the earlier toolchain-restore checkpoint from PR
+#429. Current post-PR-#433 results are recorded in TD-P1-005 and the dependency
+disposition document below; the historical TypeScript 7/lint values are not
+current candidate results.
 
 | Validation | Result | Timing / metric |
 | --- | --- | --- |
@@ -67,12 +73,12 @@ and is intentionally not hidden behind lint suppression or broad rule changes.
 
 - **Category:** Native bridge / protocol integrity
 - **Priority:** P0
-- **Status:** Open
+- **Status:** Open — BitVM2 quarantine tracked by issue #427
 - **Affected paths:** `android/core-bitcoin/src/main/kotlin/com/conxius/wallet/bitcoin/`, `services/ark.ts`, `services/bitvm.ts`, `services/rgb.ts`, `services/ntt.ts`, `services/lightning.ts`
-- **Impact:** Several protocol paths are described as bridged or production-ready while reports identify stubs, simulations, placeholder cryptography, or incomplete native implementations. Synthetic success can mask unsupported production operations.
+- **Impact:** Several protocol paths are described as bridged or production-ready while reports identify stubs, simulations, placeholder cryptography, or incomplete native implementations. Synthetic success can mask unsupported production operations. BitVM2 specifically had boolean/synthetic verification and signing shapes; issue #427 replaces those with typed fail-closed outcomes and a canonical proof-envelope gate.
 - **Owner:** Unassigned
 - **Exit criteria:** Every production-capable protocol operation has a verified native implementation or an explicit fail-closed guard; tests distinguish simulation from production and cannot report synthetic success as production readiness.
-- **Validation:** Protocol-by-protocol evidence review, native unit/instrumentation tests, and negative tests for unsupported production operations.
+- **Validation:** Protocol-by-protocol evidence review, native unit/instrumentation tests, and negative tests for unsupported production operations. BitVM2 requires arbitrary/malformed/wrong-key/mutated/encoding/tap-index/binding cases, explicit non-authoritative simulation labels, and proof that unsupported/simulated results never invoke a signer.
 - **PR #390 evidence:** The draft adds a bounded BIP-352 Rust/JNI scanner, Kotlin Esplora source, persistence/cursor coordination, shallow reorg fail-closed checks, and focused source/codec/manager tests. It does not close this broader debt: Android release validation, device evidence, compact filters, spending/tweak recovery, address encoding, and other protocol gaps remain open.
 - **Target milestone:** M16 release baseline gate, then M17 protocol completion
 - **Metrics baseline:** `docs/reports/GAP_MATRIX_2026.md` lists seven protocol gaps; `docs/reports/v1.9.5_CODE_GAP_MAPPING.md` maps native and service-layer stubs.
@@ -110,15 +116,15 @@ and is intentionally not hidden behind lint suppression or broad rule changes.
 
 - **Category:** Toolchain / lint
 - **Priority:** P1
-- **Status:** In Progress — TypeScript 7 regression remediated by the TypeScript 6 bridge, while issue #396's dual-toolchain implementation remains on a focused branch pending hosted CI review and COO approval.
+- **Status:** In Progress — the approved TypeScript `6.0.3` bridge remains the programmatic/API lane; the TypeScript 7 dual-toolchain validation is source-integrated, while hosted CI review and COO approval remain before any TypeScript 7-only/default promotion.
 - **Affected paths:** `package.json`, `pnpm-lock.yaml`, `tsconfig.ts6.json`, `tsconfig.ts7.json`, `scripts/ci/check_typescript_compatibility.mjs`, `tests/ci/typescript-compatibility.test.mjs`, `scripts/ci/verify_local.sh`, `scripts/ci/verify_typescript_dual_toolchain.mjs`, `.github/workflows/ci.yml`, `.github/workflows/android-release.yml`, `eslint.config.js`
 - **Impact:** Local, CI, and release environments selected different pnpm versions, while PR #425 promoted TypeScript `7.0.2` outside `typescript-eslint` `8.65.0` support and crashed lint. The approved TypeScript 6 bridge must remain the programmatic/API runtime while the TypeScript 7 CLI stays available as an explicit migration lane.
 - **Regression/remediation:** PR #425 introduced the TypeScript 7 regression on `main`; the bridge and repository-owned compatibility guard restore the supported lint/API runtime, validate the installed `typescript-eslint` peer range, and fail before lint, typecheck, or build when the contract drifts. No wallet or native runtime behavior is changed.
 - **Owner:** Unassigned
 - **Exit criteria:** `packageManager` declares pnpm `11.13.0`; CI/release/local verification select it through Corepack or the action; the manifest aliases the TypeScript 7 CLI separately from the exact TypeScript 6 bridge; the compatibility guard and smoke verifier prove the lockfile/API contract, installed `typescript-eslint` peer range, `tsc` 7, `tsc6` 6, and imported TypeScript API 6; both typechecks and lint pass without broad rule weakening; hosted Android/NDK/E2E gates remain intact; and COO approval is recorded before any TypeScript 7-only/default promotion.
-- **Validation:** `CI=true pnpm install --frozen-lockfile` passed; `pnpm run check:typescript-compat` passed; focused compatibility tests passed 15/15; `pnpm run lint` passed with 0 errors and 630 warnings; `pnpm run typecheck` passed; `pnpm test --run` passed 73 files with 343 passed and 1 skipped; `pnpm run build` passed; and the issue #396 branch's dual verifier reported `tsc 7.0.2`, `tsc6 6.0.3`, and imported TypeScript API `6.0.3`. Playwright listed 30 tests, while Android SDK/NDK checks remain hosted-CI gates. This is not sole-toolchain TypeScript 7 completion; hosted CI review and COO approval remain before changing the status to Completed.
+- **Validation:** The dual-toolchain verifier reported `tsc` `7.0.2`, `tsc6` `6.0.3`, and imported TypeScript API `6.0.3`. On the post-PR-#433 candidate, `CI=true pnpm install --frozen-lockfile` passed with pnpm `11.13.0`; `pnpm run check:typescript-compat` passed for the TypeScript `6.0.3` bridge; focused compatibility tests passed 15/15; `pnpm run lint` passed with 0 errors and 630 warnings; `pnpm exec tsc --noEmit` passed; `pnpm test --run` passed 74 files with 347 passed and 1 skipped; `pnpm run build` passed after 4,760 modules transformed; release-policy tests passed 25/25; `CI=true pnpm run test:e2e` passed 30/30. TypeScript 7 remains an explicit migration lane under issue #396; hosted CI review and COO approval remain before any TypeScript 7-only/default promotion.
 - **Target milestone:** M16 release baseline
-- **Metrics baseline:** Local `10.28.1`, CI `11.13.0`, release `10.30.3`; after PR #425, TypeScript `7.0.2` caused lint exit `2` while typecheck still passed.
+- **Metrics baseline:** Historical pre-#429 snapshot recorded local `10.28.1`, CI `11.13.0`, release `10.30.3`, and TypeScript `7.0.2` lint exit `2`; the post-PR-#433 candidate records pnpm `11.13.0`, TypeScript `6.0.3` bridge compatibility, lint at 0 errors / 630 warnings, 74 files with 347 passed and 1 skipped, 4,760 build modules, release policy 25/25, and E2E 30/30.
 - **Evidence:** [`CONTRIBUTING.md`](../../CONTRIBUTING.md); [`Sovereign_State.md`](../state/Sovereign_State.md); [`TYPESCRIPT_DUAL_TOOLCHAIN.md`](TYPESCRIPT_DUAL_TOOLCHAIN.md); `scripts/ci/check_typescript_compatibility.mjs`; `scripts/ci/verify_typescript_dual_toolchain.mjs`; `eslint.config.js`; [issue #396](https://github.com/Conxian/conxius-wallet/issues/396)
 
 ### TD-P1-006 — E2E and Android CI coverage
@@ -199,15 +205,15 @@ and is intentionally not hidden behind lint suppression or broad rule changes.
 
 - **Category:** Dependency security / supply chain
 - **Priority:** P1
-- **Status:** In Progress — compatible overrides fixed three advisories; three residual findings are explicitly dispositioned, but the two exception approvals remain pending.
-- **Affected paths:** `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `scripts/ci/audit_with_exceptions.mjs`, `scripts/ci/dependency-audit-exceptions.json`, `tests/ci/dependency-audit-policy.test.mjs`, `.github/workflows/ci.yml`, `.github/workflows/android-release.yml`
-- **Impact:** The reproducible dependency graph still contains one high and one low finding that cannot currently be moved to a published patched package without breaking compatibility. PR CI must expose the pending decision without inventing approval, while release promotion must remain blocked until security/COO approval is durable.
+- **Status:** In Progress — current main and PR #439's compatible overrides fixed three advisories; three residual findings are explicitly dispositioned, with two time-bound exception approvals pending and the `esbuild` finding marked not affected for production/release. Issue #399 is not resolved by this follow-up.
+- **Affected paths:** `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `scripts/ci/audit_with_exceptions.mjs`, `scripts/ci/dependency-audit-exceptions.json`, `tests/ci/dependency-audit-policy.test.mjs`, `tests/ci/fixtures/dependency-audit-report.json`, `.github/workflows/ci.yml`, `.github/workflows/android-release.yml`, and the CI security-audit step
+- **Impact:** The reproducible dependency graph still contains one high and two low findings. The `bigint-buffer` and `elliptic` paths cannot currently move to published patched packages without breaking compatibility, while `esbuild` remains explicitly tracked as not affected for production/release. PR CI must expose pending decisions without inventing approval, while release promotion must remain blocked until security/COO approval is durable.
 - **Owner:** Conxian security maintainers
 - **Exit criteria:** `pnpm audit` reports no residual findings, or every remaining finding has a reviewed, time-bounded disposition with evidence; release mode passes only when every active exception has a real approval URL, approver identity, and approval date.
-- **Validation:** The versioned ledger at `scripts/ci/dependency-audit-exceptions.json` strictly matches every current low-or-higher audit advisory by ID, package, severity, and observed version. Default `pnpm exec node scripts/ci/audit_with_exceptions.mjs --evidence "$RUNNER_TEMP/conxius-dependency-audit.json"` passes with three findings and warnings for the two pending approvals. `--require-approved-exceptions` writes release evidence but fails specifically for `GHSA-3gc7-fjrx-p6mg` and `GHSA-848j-6mx2-7j84`, so promotion remains blocked. The reproducible security overrides remain in `pnpm-workspace.yaml` and the lockfile; `CI=true corepack pnpm install --frozen-lockfile` must remain lockfile-clean.
+- **Validation:** The versioned ledger at `scripts/ci/dependency-audit-exceptions.json` strictly matches every current low-or-higher audit advisory by ID, package, severity, observed version, role classification, path count, reachability, and disposition. Default `pnpm exec node scripts/ci/audit_with_exceptions.mjs --evidence "$RUNNER_TEMP/conxius-dependency-audit.json"` passes with three findings and warnings for the two pending approvals. `--require-approved-exceptions` writes release evidence but fails specifically for `GHSA-3gc7-fjrx-p6mg` and `GHSA-848j-6mx2-7j84`, so promotion remains blocked. The reproducible security overrides remain in `pnpm-workspace.yaml` and the lockfile; `CI=true corepack pnpm install --frozen-lockfile` must remain lockfile-clean. The current-main audit evidence and PR #439 compatibility checks are recorded in [`DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md`](DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md).
 - **Target milestone:** M16 release baseline
 - **Metrics baseline:** Three fixed advisories are removed from the current ledger by compatible overrides: `GHSA-2g4f-4pwh-qvx6` (`ajv@8.12.0` → `8.18.0`), `GHSA-w5hq-g745-h8pq` (`uuid` versions `8.3.2`, `10.0.0`, and `11.1.0` → `11.1.1`), and `GHSA-4x5r-pxfx-6jf8` (`@babel/core@7.29.0` → `7.29.7`). Residual state is `bigint-buffer@1.1.5` high/exception/pending, `elliptic@6.6.1` low/exception/pending, and `esbuild@0.27.3` low/not-affected for production and release. All residual exceptions expire on **2026-08-19**; no approval is recorded.
-- **Evidence:** `scripts/ci/audit_with_exceptions.mjs`; `scripts/ci/dependency-audit-exceptions.json`; `tests/ci/fixtures/dependency-audit-report.json`; `pnpm-workspace.yaml`; `.github/workflows/ci.yml`; `.github/workflows/android-release.yml`; [`Sovereign_State.md`](../state/Sovereign_State.md); [`ANDROID_RELEASE_PREP.md`](ANDROID_RELEASE_PREP.md)
+- **Evidence:** `scripts/ci/audit_with_exceptions.mjs`; `scripts/ci/dependency-audit-exceptions.json`; `tests/ci/fixtures/dependency-audit-report.json`; `pnpm-workspace.yaml`; `.github/workflows/ci.yml`; `.github/workflows/android-release.yml`; [`DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md`](DEPENDENCY_ADVISORY_DISPOSITIONS_2026-07.md); [`Sovereign_State.md`](../state/Sovereign_State.md); [`ANDROID_RELEASE_PREP.md`](ANDROID_RELEASE_PREP.md)
 
 #### Current disposition ledger (reviewed 2026-07-22)
 

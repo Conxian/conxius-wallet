@@ -12,16 +12,16 @@
 | **FDC3 (Standard)** | 5/5 | 4/5 | 4/5 | **13/15** | Mature standard. Android Intent mapping & TS bridge implemented. |
 | **Liquid (Sidechain)** | 4/5 | 5/5 | 4/5 | **13/15** | Elements-based. Native signing/blinding stubs need FFI. |
 | **Silent Payments** | 4/5 | 4/5 | 5/5 | **13/15** | BIP-352 implemented in TS. Native scanning is a stub. |
-| **BitVM2 (Alpha)** | 3/5 | 3/5 | 5/5 | **11/15** | Orchestration (364 taps) implemented. Needs native BN254 worker. |
+| **BitVM2 (Research)** | 3/5 | 3/5 | 5/5 | **11/15** | Canonical envelope and typed quarantine boundary only. No reviewed verifier or native BN254 worker. |
 | **RGB Protocol** | 3/5 | 3/5 | 5/5 | **11/15** | ALU simulation in TS. Native manager is a stub. |
 | **Babylon Staking** | 3/5 | 3/5 | 5/5 | **11/15** | Native Taproot staking implemented. Finality provider gaps. |
 
 ## 2. Identified Gaps (Updated)
 
 ### G1: BitVM2 Native Verification
-- **Gap**: The 364-tap verification relies on a mocked FFI call in `BitVmManager.kt`.
-- **Status**: **STUBBED**.
-- **Remediation**: Integrate `bitvm-rs` via JNI/FFI for BN254 pairing and script execution.
+- **Gap**: BitVM2 verification, segment generation, challenge discovery, and dispute signing are unavailable in the wallet.
+- **Status**: **RESEARCH / QUARANTINED**.
+- **Remediation**: Integrate a pinned, independently reviewed native verifier and policy-approved transaction signer only after the canonical envelope and negative-vector gates pass.
 
 ### G2: Ark V-UTXO PRF Alignment
 - **Gap**: `ArkManager.kt` uses SHA-256 as a placeholder for Blake2s evaluation.

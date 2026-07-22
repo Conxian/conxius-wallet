@@ -20,9 +20,10 @@ import {
   Globe, Binary, CheckCircle2
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import type { BitVmProofEnvelope, BitVmProofRequest, BitVmVerificationResult } from "@/services/bitvm";
 
 const UPCOMING_PROJECTS = [
-  { id: "bitvm", name: "BitVM Verifier", status: "M6 READY", desc: "On-device ZK-STARK verification for optimistic rollups on Bitcoin.", icon: Binary, color: "text-green-500" },
+  { id: "bitvm", name: "BitVM2 Research", status: "RESEARCH / QUARANTINED", desc: "Proof-envelope research only; no reviewed BitVM2 verifier is integrated.", icon: Binary, color: "text-accent-earth" },
   { id: 'gateway', name: 'Conxian Gateway', status: 'LIVE', desc: 'Sovereign B2B portal for institutional DeFi and shielded assets.', icon: Globe, Binary, CheckCircle2, color: 'text-accent-earth' },
   { id: 'guard', name: 'Conxius Guard', status: 'Incubating', desc: 'Hardware-level entropy monitoring for mobile devices.', icon: Shield, color: 'text-blue-500' },
   { id: 'mesh', name: 'Sovereign Mesh V2', status: 'Alpha', desc: 'Peer-to-peer mempool sharing via encrypted local tunnels.', icon: Cpu, color: 'text-purple-500' },
@@ -32,7 +33,7 @@ const UPCOMING_PROJECTS = [
 const LabsExplorer: React.FC = () => {
   const [bitVmProof, setBitVmProof] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<boolean | null>(null);
+  const [verificationResult, setVerificationResult] = useState<BitVmVerificationResult | null>(null);
 
   const appContext = useContext(AppContext);
   const [activeSubTab, setActiveSubTab] = useState<'incubator' | 'forge'>('incubator');
@@ -46,7 +47,13 @@ const LabsExplorer: React.FC = () => {
     setIsVerifying(true);
     setVerificationResult(null);
     try {
-      const res = await verifyBitVmProof(bitVmProof);
+      let input: string | BitVmProofEnvelope | BitVmProofRequest = bitVmProof;
+      try {
+        input = JSON.parse(bitVmProof) as BitVmProofEnvelope | BitVmProofRequest;
+      } catch {
+        // Raw text is intentionally rejected as malformed by the service.
+      }
+      const res = await verifyBitVmProof(input);
       setVerificationResult(res);
     } finally {
       setIsVerifying(false);
@@ -62,7 +69,7 @@ const LabsExplorer: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey });
       const result = await ai.models.generateContent({
         model: 'gemini-1.5-flash',
-        contents: `Synthesize a technical blueprint for: ${project} within the Conxius Sovereign Ecosystem. Focus on B2B expansion, TEE integration, and Bitcoin-native security.`
+        contents: `Synthesize a technical blueprint for: ${project} within the Conxius Sovereign Ecosystem. Focus on B2B expansion, privacy, and Bitcoin-native security.`
       });
       setBlueprint(result.text ?? null);
     } catch (e) {
@@ -139,33 +146,45 @@ const LabsExplorer: React.FC = () => {
                 
                 <div className="flex-1 p-10 font-mono text-xs text-brand-earth leading-relaxed overflow-y-auto custom-scrollbar">
 
-                   {activeProject === "BitVM Verifier" ? (
+                   {activeProject === "BitVM2 Research" ? (
                       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
-                         <div className="bg-green-600/10 border border-green-500/20 p-6 rounded-2xl">
-                            <h4 className="text-green-500 font-black uppercase text-[10px] tracking-widest mb-2">STARK Proof Input</h4>
+                         <div className="bg-orange-500/10 border border-orange-500/20 p-6 rounded-2xl">
+                            <h4 className="text-accent-earth font-black uppercase text-[10px] tracking-widest mb-2">Canonical BitVM2 Envelope (JSON)</h4>
                             <textarea
                                value={bitVmProof}
                                onChange={(e) => setBitVmProof(e.target.value)}
-                               placeholder="0x... (256+ character ZK-STARK proof)"
-                               className="w-full h-32 bg-ivory border border-border rounded-xl p-4 text-brand-deep font-mono text-[10px] focus:border-green-500/50 outline-none transition-all"
+                               placeholder="Paste the canonical proof envelope JSON; raw proofs are not accepted."
+                               className="w-full h-32 bg-ivory border border-border rounded-xl p-4 text-brand-deep font-mono text-[10px] focus:border-orange-500/50 outline-none transition-all"
                             />
+                            <p className="mt-3 text-[10px] text-brand-earth leading-relaxed">
+                              Research/scaffolding only. No reviewed verifier is integrated, and this surface cannot authorize signing.
+                            </p>
                          </div>
                          <button
                             onClick={handleVerify}
                             disabled={isVerifying || !bitVmProof}
-                            className="w-full py-4 bg-green-600 hover:bg-green-500 disabled:bg-border text-white font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-xl shadow-green-600/10"
+                            className="w-full py-4 bg-accent-earth hover:bg-orange-600 disabled:bg-border text-white font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-xl shadow-orange-600/10"
                          >
                             {isVerifying ? <Loader2 className="animate-spin" size={14} /> : <ShieldCheck size={14} />}
-                            Verify STARK Proof on TEE
+                            Check Envelope Metadata
                          </button>
-                         {verificationResult !== null && (
-                            <div className={`p-4 rounded-xl border flex items-center gap-3 ${verificationResult ? "bg-green-500/10 border-green-500/20 text-green-500" : "bg-red-500/10 border-red-500/20 text-red-500"}`}>
-                               {verificationResult ? <CheckCircle2 size={16} /> : <Zap size={16} />}
-                               <span className="font-black uppercase tracking-widest text-[10px]">
-                                  {verificationResult ? "Proof Verified: Computational Integrity Guaranteed" : "Verification Failed: Proof Corrupted or Invalid"}
-                                </span>
-                            </div>
-                         )}
+                         {verificationResult !== null && (() => {
+                           const statusLabel = verificationResult.status === 'verified' ? 'QUARANTINED' : verificationResult.status.toUpperCase();
+                           const statusMessage = verificationResult.status === 'simulated'
+                             ? 'Simulation results are non-authoritative and cannot be used for signing.'
+                             : verificationResult.status === 'verified'
+                               ? 'Authoritative BitVM2 results are disabled until a reviewed verifier is integrated.'
+                               : verificationResult.reason;
+                           return (
+                             <div className="p-4 rounded-xl border flex items-start gap-3 bg-orange-500/10 border-orange-500/20 text-accent-earth">
+                               <Zap size={16} className="mt-0.5 shrink-0" />
+                               <div className="space-y-1">
+                                 <span className="font-black uppercase tracking-widest text-[10px]">{statusLabel}</span>
+                                 <p className="text-[10px] leading-relaxed">{statusMessage}</p>
+                               </div>
+                             </div>
+                           );
+                         })()}
                       </div>
                    ) : isGenerating ? (
                       <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
@@ -201,7 +220,7 @@ const LabsExplorer: React.FC = () => {
                     <div className="flex justify-between items-start">
                        <div>
                           <h3 className="text-3xl font-black tracking-tighter text-brand-deep">The Forge</h3>
-                          <p className="text-sm text-brand-earth italic">Evolve your Sovereign Pass with verifiable proof-of-work.</p>
+                          <p className="text-sm text-brand-earth italic">Explore Sovereign Pass research signals without wallet-authoritative verification.</p>
                        </div>
                        <div className="w-16 h-16 bg-accent-earth rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-orange-600/40">
                           <Zap size={32} className="text-white fill-current" />
@@ -217,7 +236,7 @@ const LabsExplorer: React.FC = () => {
                              <span className="text-[10px] font-black uppercase text-brand-earth">Socket Trait</span>
                           </div>
                           <h4 className="text-sm font-bold text-brand-deep">Genesis Node Uptime</h4>
-                          <p className="text-[10px] text-brand-earth mt-1 italic">+420 Multiplier | Verified On-Chain</p>
+                          <p className="text-[10px] text-brand-earth mt-1 italic">+420 Multiplier | Research Signal Only</p>
                           <div className="mt-4 w-full h-1 bg-off-white rounded-full overflow-hidden">
                              <div className="w-full h-full bg-blue-500" />
                           </div>

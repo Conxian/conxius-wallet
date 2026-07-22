@@ -12,7 +12,7 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 
 ### Added
 - **Lightning Resilience Implementation**: Integrated SRL-1, SRL-2, and SRL-7 in the TypeScript layer, adding payment state machines, concurrent execution guards (idempotency), and bounded retry logic for Breez (CON-688).
-- **BitVM2 Verification Floor**: Implemented BitVM2 orchestrator spec and verification floor (CON-1264).
+- **BitVM2 Verification Floor**: Historical implementation claim superseded. BitVM2 is now explicitly research/scaffolding and quarantined; the wallet exposes typed envelope validation and no reviewed verifier or authoritative signing path.
 - **FDC3 Native Resolver**: Added FDC3 native resolver support with intent handlers.
 - **Ark VTXO Management**: Added Ark VTXO manager and verification tests.
 - **BOS Knowledge Graph**: Implemented ecosystem entity and relationship registry in `BOS_KNOWLEDGE_GRAPH.md` (CON-1442).

@@ -11,7 +11,7 @@ This directory documents the specific implementation details, standards, and res
 
 ## Advanced & Experimental
 - [Ark V-UTXO](ark.md)
-- [BitVM2 Verification](bitvm.md)
+- [BitVM2 Research / Quarantine](../architecture/specs/BITVM2_ORCHESTRATOR_SPEC.md)
 - [Silent Payments (BIP-352)](silent-payments.md)
 - [RGB Protocol](rgb.md)
 - [Babylon Staking](babylon.md)

@@ -67,7 +67,7 @@ This document provides a comprehensive review of the current crypto wallet marke
 
 ### 3.3. Zero-Knowledge Verifier
 *   **Future-Proofing:** As Bitcoin L2s move towards ZK-Rollups (Citrea, etc.), the wallet must be able to verify proofs.
-*   **Conxius Solution:** The **Verifier Core (M10)**. Integrating ZK-STARK verification directly into the Enclave ensures the user is interacting with a "True" state without trusting a centralized indexer.
+*   **Conxius Roadmap:** The **Verifier Core (M10)** remains future research. No reviewed BitVM2 or other proof verifier is currently integrated into the wallet, so no state-integrity guarantee is claimed here.
 
 ## 4. Conclusion
 
