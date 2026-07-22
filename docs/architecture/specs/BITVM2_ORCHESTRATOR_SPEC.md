@@ -42,8 +42,11 @@ reviewed backend and its immutable artifact registry are available.
 `services/bitvm.ts` exposes the canonical envelope and discriminated result
 types (`unsupported`, `simulated`, `malformed`, `invalid`, and future
 `verified`). The production verifier always returns `unsupported` after
-structural validation. Challenge discovery is unavailable; no synthetic
-challenge or success log is emitted.
+structural validation. `initiateDispute` and `signBitVmCommitment` return only
+non-authoritative outcomes: caller-supplied `verified`/`authoritative` metadata
+cannot invoke the signer, and no current BitVM API can invoke a signer.
+Challenge discovery is unavailable; no synthetic challenge or success log is
+emitted.
 
 ### 3.2 Native Android manager
 
@@ -54,11 +57,12 @@ backend must be reviewed and wired before any authoritative outcome is added.
 
 ### 3.3 Signing boundary
 
-Dispute signing MUST require authoritative verification evidence, a valid tap
-index, the complete canonical envelope, and the exact bound dispute transaction.
-Unsupported, malformed, invalid, or simulated outcomes MUST never reach a
-signer. The current implementation therefore has no usable BitVM2 signing
-path.
+If dispute signing is ever enabled, it MUST require verifier-owned authoritative
+verification evidence, a valid tap index, the complete canonical envelope, and
+the exact bound dispute transaction. Unsupported, malformed, invalid, simulated,
+or caller-fabricated `verified` outcomes MUST never reach a signer. The current
+implementation therefore has no usable BitVM2 signing path or executable
+authoritative signing-success path.
 
 ## 4. Promotion gates
 

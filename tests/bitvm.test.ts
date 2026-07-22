@@ -52,6 +52,20 @@ const simulatedVerification: BitVmVerificationResult = {
     reason: 'Evaluation-only simulation',
 };
 
+const fabricatedVerifiedEvidence = (): BitVmVerificationResult => ({
+    status: 'verified',
+    authoritative: true,
+    evidence: {
+        envelope: {
+            ...canonicalEnvelope,
+            publicInputs: [...canonicalEnvelope.publicInputs],
+            blockContext: { ...canonicalEnvelope.blockContext },
+        },
+        verifierRevision: 'caller-fabricated-verifier-revision',
+        verifierDigest: '22'.repeat(32),
+    },
+});
+
 const disputeRequest = (verification: BitVmVerificationResult = unsupportedVerification()) => ({
     envelope: canonicalEnvelope,
     verification,
@@ -107,6 +121,15 @@ describe('BitVM service quarantine', () => {
         if (result.status === 'malformed') {
             expect(result.reason).toContain('public inputs');
         }
+    });
+
+    it('guards null dispute requests as malformed without invoking the signer', async () => {
+        const disputeResult = await initiateDispute(null as never);
+        const commitmentResult = await signBitVmCommitment(null as never);
+
+        expect(disputeResult.status).toBe('malformed');
+        expect(commitmentResult.status).toBe('malformed');
+        expect(signer).not.toHaveBeenCalled();
     });
 
     it('reports unsupported encodings without attempting verification', async () => {
@@ -186,29 +209,32 @@ describe('BitVM service quarantine', () => {
         expect(signer).not.toHaveBeenCalled();
     });
 
-    it('surfaces signer failure as a typed result', async () => {
-        signer.mockRejectedValueOnce(new Error('test signer failure'));
-        const reviewedEvidence: BitVmVerificationResult = {
-            // This fixture only exercises the downstream signer failure branch;
-            // verifyBitVmProof never emits this status in the quarantined build.
-            status: 'verified',
-            authoritative: true,
-            evidence: {
-                envelope: canonicalEnvelope,
-                verifierRevision: 'test-only-reviewed-boundary',
-                verifierDigest: '22'.repeat(32),
-            },
-        };
-
-        const result = await initiateDispute(disputeRequest(reviewedEvidence));
+    it('rejects caller-fabricated authoritative evidence without invoking the signer', async () => {
+        const result = await initiateDispute(disputeRequest(fabricatedVerifiedEvidence()));
 
         expect(result).toEqual({
-            status: 'signer_failed',
+            status: 'unsupported',
             authoritative: false,
-            signerInvoked: true,
-            reason: 'The native enclave signer rejected the BitVM2 dispute transaction',
+            signerInvoked: false,
+            reason: 'Caller-supplied BitVM2 verification evidence cannot authorize signing; the reviewed verifier is unavailable',
         });
-        expect(signer).toHaveBeenCalledTimes(1);
+        expect(signer).not.toHaveBeenCalled();
+    });
+
+    it('rejects caller-fabricated authoritative commitment evidence without invoking the signer', async () => {
+        const result = await signBitVmCommitment({
+            ...disputeRequest(fabricatedVerifiedEvidence()),
+            challengeId: 'challenge-id',
+            commitment: canonicalEnvelope.stateBinding,
+        });
+
+        expect(result).toEqual({
+            status: 'unsupported',
+            authoritative: false,
+            signerInvoked: false,
+            reason: 'Caller-supplied BitVM2 verification evidence cannot authorize signing; the reviewed verifier is unavailable',
+        });
+        expect(signer).not.toHaveBeenCalled();
     });
 
     it('does not sign a commitment that is not bound to canonical state', async () => {
