@@ -52,7 +52,7 @@ verification, and deeper reorg recovery remain outside this merged slice.
 - **Gateway**: OData v4 synchronization for ERP/Institutional workflows.
 - **Wasm**: Local-first verification layer for high-performance mobile execution.
 - **CI/CD**: GitHub Actions with pinned SHAs, dependabot (npm daily, actions/gradle weekly).
-- **Build policy**: pnpm `11.13.0` via the root `packageManager` declaration and Corepack; TypeScript `6.0.3` is the supported bridge for the current `typescript-eslint` line. The TypeScript 7 dual-toolchain migration remains open in [issue #396](https://github.com/Conxian/conxius-wallet/issues/396); see the register for current validation evidence.
+- **Build policy**: pnpm `11.13.0` via the root `packageManager` declaration and Corepack. The TypeScript dual-toolchain boundary keeps the TypeScript 7 CLI available as `tsc`, while `tsc6` and the imported `typescript` API remain on the TypeScript 6 line for the current `typescript-eslint` tooling. Issue #396 adds explicit dual validation; it is not approval for a TypeScript 7-only/default promotion. See [`TYPESCRIPT_DUAL_TOOLCHAIN.md`](../operations/TYPESCRIPT_DUAL_TOOLCHAIN.md) and the register for current validation evidence.
 
 ## 📜 Historical Repository State (2026-06-30)
 - **Branch**: `main` only. All 13 stale branches archived.

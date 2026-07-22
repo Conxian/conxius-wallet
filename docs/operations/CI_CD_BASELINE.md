@@ -15,7 +15,9 @@ targeting `main`:
 
 - `Workflow Pin Verification`
 - `Lint`
-- `Typecheck`
+- `Typecheck` (the job verifies the dual-toolchain manifest and runs both the
+  TypeScript 6 and TypeScript 7 compiler paths; this is not a TypeScript
+  7-only promotion)
 - `Unit Tests`
 - `Web Build`
 - `E2E`
