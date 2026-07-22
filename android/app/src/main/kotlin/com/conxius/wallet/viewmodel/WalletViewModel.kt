@@ -45,11 +45,11 @@ class WalletViewModel(
     private val yieldManager: YieldManager,
     private val insuranceManager: InsuranceManager,
     private val interoperabilityManager: InteroperabilityManager,
-    private val b2bManager: B2bManager
+    private val b2bManager: B2bManager,
+    private val playIntegrityPlugin: PlayIntegrityPlugin,
 ) : ViewModel() {
 
     private val integrityPlugin = DeviceIntegrityPlugin()
-    private val playIntegrityPlugin = PlayIntegrityPlugin()
 
     val assets: StateFlow<List<AssetEntity>> = repository.allAssets
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -76,9 +76,8 @@ class WalletViewModel(
         _integrityResultSecure.value = result
     }
 
-    fun requestPlayIntegrityToken(nonce: String): String {
-        return playIntegrityPlugin.requestIntegrityToken(nonce)
-    }
+    suspend fun requestPlayIntegrityToken(requestHash: String): String =
+        playIntegrityPlugin.requestIntegrityToken(requestHash)
 
     fun unlock(pin: String) {
         viewModelScope.launch {
