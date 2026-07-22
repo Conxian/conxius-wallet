@@ -1,17 +1,21 @@
 # Dependency Advisory Dispositions — 2026-07-22
 
 **Issue:** [#399](https://github.com/Conxian/conxius-wallet/issues/399)
-**Baseline:** `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57`
+**Historical baseline:** `origin/main` at `ac5ee4651398162617d14b1c982ad977fbbffa57`
+**Rebased validation base:** `origin/main` at `81b704bf0777d80dcb425a7b963e89a342746743`
 **Status:** Proposed remediation evidence; this document does not record COO,
 security-owner, or release approval.
 
 ## Result at a glance
 
-The fresh baseline audit on **2026-07-22** reported six findings: one high, two
-moderate, and three low. This candidate branch removes the `ajv`, `uuid`, and
-`@babel/core` findings with published versions, reducing the full and
-production audit results to three findings: the existing high `bigint-buffer`
-exception plus the unresolved low `esbuild` and `elliptic` advisories.
+The historical pre-remediation baseline audit on **2026-07-22** reported six
+findings: one high, two moderate, and three low. Upstream dependency
+remediation already removed the `ajv`, `uuid`, and `@babel/core` findings from
+the rebased base; the rebased branch retains those compatible overrides,
+including `@babel/core@7.29.7`. Fresh full and production audits on the rebased
+branch both report exactly three findings: the high `bigint-buffer` and low
+`elliptic` findings, plus the low `esbuild` finding that is explicitly tracked
+as not affected for production/release.
 
 The high advisory remains production-reachable through the Wormhole/Solana
 path. It is still covered only by the existing time-bounded exception, which
@@ -24,7 +28,7 @@ not-affected determination is made here.
 | `GHSA-2g4f-4pwh-qvx6` (`ajv`) | Moderate | Present | Absent | Fixed with a targeted DWN override to published `8.18.0`; pending normal security/dependency review. |
 | `GHSA-w5hq-g745-h8pq` (`uuid`) | Moderate | Present | Absent | Fixed with exact global `11.1.1` after CJS/ESM consumer compatibility checks; pending normal security/dependency review. |
 | `GHSA-g7r4-m6w7-qqqr` (`esbuild`) | Low | Present | Present | Published `0.28.1` was tested but rejected: it breaks the production build through `vite-plugin-top-level-await`; no safe override is applied. |
-| `GHSA-4x5r-pxfx-6jf8` (`@babel/core`) | Low | Present | Absent | Fixed with exact workspace override `7.29.6`; pending normal security/dependency review. |
+| `GHSA-4x5r-pxfx-6jf8` (`@babel/core`) | Low | Present | Absent | Fixed with exact workspace override `7.29.7`; pending normal security/dependency review. |
 | `GHSA-848j-6mx2-7j84` (`elliptic`) | Low | Present | Present | Unresolved and unsuppressed; no published `6.6.2`; pending security/dependency and release review. |
 
 ## Per-advisory evidence
@@ -79,7 +83,7 @@ not-affected determination is made here.
 - **Compatibility evidence:** Each affected parent resolved CJS `v1`, `v4`,
   and `v5`; the ESM build exported the same functions; imports of Web5,
   Solana, Wormhole, and Wormhole-Solana succeeded; focused Web5/Wormhole tests
-  passed; the full suite passed 72 files with 328 tests passed and 1 skipped.
+  passed; the rebased full suite passed 75 files with 384 tests passed and 1 skipped.
 - **Owner/review:** Conxian dependency maintainers; security/dependency PR
   review is required before merge. No exception approval is asserted.
 - **Compensating controls:** Exact pinning, frozen lockfile installation,
@@ -123,15 +127,16 @@ not-affected determination is made here.
 
 - **Path/runtime surface:** `eslint-plugin-react-hooks@7.1.1` and its Babel
   helper graph; lint-time tooling only.
-- **Fix state:** Fixed with exact workspace override `@babel/core: 7.29.6`, a
+- **Fix state:** Fixed with exact workspace override `@babel/core: 7.29.7`, a
   published fixed version. The lockfile also records the compatible Babel
   helper updates selected by that package.
 - **Owner/review:** Conxian dependency maintainers; normal security/dependency
-  review is required before merge. The separate TypeScript 7 lint baseline is
-  not silently changed by this remediation.
+  review is required before merge. The separate TypeScript 6 bridge and
+  TypeScript 7 dual-toolchain validation remain explicit rather than being
+  hidden behind dependency-policy changes.
 - **Compensating controls:** Exact pinning, frozen install, Babel transform
-  smoke test, and lint verification with the known TypeScript 7 compatibility
-  failure reported separately.
+  smoke test, and lint verification with the dual-toolchain compatibility
+  guards passing.
 - **Override removal criteria:** Remove the override when the parent package
   naturally resolves a fixed `@babel/core >=7.29.1` release; rerun lint and
   audit verification.
@@ -172,22 +177,23 @@ reported exit `1` with exactly three findings —
 `GHSA-3gc7-fjrx-p6mg` (`bigint-buffer@1.1.5`, high),
 `GHSA-g7r4-m6w7-qqqr` (`esbuild@0.27.3`, low), and
 `GHSA-848j-6mx2-7j84` (`elliptic@6.6.1`, low). The exception wrapper passed its
-high/critical policy with one active exception expiring 2026-08-19. A passing
-wrapper is not approval for the remaining issue-level dispositions.
+default policy with two pending exceptions expiring 2026-08-19; release mode
+correctly failed only for those pending approvals. A passing default wrapper is
+not approval for the remaining issue-level dispositions.
 
 Final validation on the same branch also recorded:
 
 - `pnpm why` for all six packages: completed; the fixed trees resolve
-  `ajv@8.18.0`, `uuid@11.1.1`, and `@babel/core@7.29.6`; unresolved trees remain
+  `ajv@8.18.0`, `uuid@11.1.1`, and `@babel/core@7.29.7`; unresolved trees remain
   visible as `esbuild@0.27.3`, `bigint-buffer@1.1.5`, and `elliptic@6.6.1`.
-- `pnpm exec tsc --noEmit`: passed.
-- `pnpm test --run`: passed — 72 files, 328 tests passed, 1 skipped.
+- `pnpm run typecheck`: passed — TypeScript 6 bridge/API, `tsc6` 6.0.3, and
+  `tsc` 7.0.2 validation all passed.
+- `pnpm test --run`: passed — 75 files, 384 tests passed, 1 skipped.
 - `pnpm run build`: passed — 4,760 modules transformed.
 - Release policy gate
   (`tests/ci/release-artifact-policy.test.mjs`, `release-version.test.mjs`,
   `release-workflow-policy.test.mjs`, and `workflow-pins.test.mjs`): passed —
-  25 tests.
+  26 tests.
 - `CI=true pnpm run test:e2e`: passed — 30 Playwright tests.
-- `pnpm run lint`: remains blocked by the pre-existing TypeScript `7.0.2` /
-  `typescript-eslint@8.65.0` incompatibility; this remediation does not alter
-  that baseline.
+- `pnpm run lint`: passed with 0 errors and 630 warnings; the TypeScript 6
+  bridge and dual-toolchain compatibility guards passed.
