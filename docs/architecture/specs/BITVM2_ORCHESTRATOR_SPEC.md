@@ -1,51 +1,78 @@
 # Technical Specification: BitVM2 Multi-Tap Orchestrator (CON-1217)
 
-**Version:** 1.0
-**Status:** DRAFT
+**Version:** 1.1
+**Status:** RESEARCH / QUARANTINED
 **Owner:** Sovereign Engineering
 
-## 1. Overview
-BitVM2 utilizes a 364-tap verification process for Groth16 SNARK proofs on Bitcoin. This specification defines how the mobile client orchestrates these taps to enable trust-minimized bridges.
+## 1. Scope and current boundary
 
-## 2. Architecture Components
+This document defines the future enablement gate for a BitVM2 wallet
+integration. It does **not** claim that a 364-tap verifier, proof segmenter,
+challenge source, or dispute transaction builder exists in this repository.
 
-### 2.1 BitVmManager (Native Kotlin)
-- **Role**: Entry point for the secure signing of tap commitments.
-- **Methods**:
-  - `generateSegments(rawProof: String): List<String>`: Native FFI call to Rust to segment proof.
-  - `signChallenge(tapIndex: Int, commitment: String): String`: Signs a specific tap challenge.
+The current TypeScript and Android entrypoints perform only structural contract
+validation and return typed non-authoritative outcomes. No reviewed wallet
+verifier exists, and no current input may produce an authoritative `verified`
+result.
 
-### 2.2 BitVmWorker (Rust/Wasm)
-- **Role**: Heavy-lifting arithmetic.
-- **Crate**: `bitvm-rs` (custom fork for mobile).
-- **Functionality**:
-  - BN254 Pairing.
-  - Groth16 Segmenting (364 chunks).
-  - Hash chain verification.
+## 2. Canonical proof envelope
 
-### 2.3 BitVmService (TypeScript)
-- **Role**: Coordination and UI state management.
-- **Workflow**:
-  1. Trigger Segment Generation.
-  2. Monitor Optimistic Verification Period (OVP).
-  3. Initiate Disprove logic if a challenge is detected.
+Every future verifier request MUST use one canonical envelope containing:
 
-## 3. The 364-Tap Workflow
+- `schemaVersion`
+- `proof`
+- `verificationKeyId` and `verificationKeyDigest`
+- ordered `publicInputs`
+- `curve`
+- `circuitId`
+- `encoding`
+- `network` and `blockContext`
+- `tapCount` and `tapIndex`
+- `domainSeparation`
+- `transactionBinding` and `stateBinding`
 
-### Phase 1: Segmentation
-1. The client receives a `RawProof` from the bridge operator.
-2. `BitVmManager` calls `bitvm_segment(proof)` which returns 1 `VALIDATING_TAP` and 363 `HASHING_TAPS`.
-3. These segments are stored in the `EncryptedStorage`.
+The current implementation rejects raw proof strings and malformed/missing
+fields. A structurally complete envelope remains `unsupported` until the
+reviewed backend and its immutable artifact registry are available.
 
-### Phase 2: Verification
-1. The client parallelizes the verification of all 364 segments in the background.
-2. Each segment is checked: `VerifySegment(chunk_i) == true`.
+## 3. Quarantined components
 
-### Phase 3: Dispute (Disproving)
-1. If any segment `i` fails, the client initiates a `Disprove` transaction.
-2. The Enclave signs the dispute for `Tap[i]`.
-3. The transaction is broadcast to Bitcoin L1 to slash the operator.
+### 3.1 TypeScript service
 
-## 4. Security Considerations
-- **Fail-Closed**: If a proof cannot be segmented, the bridge is assumed compromised.
-- **TEE Signing**: Dispute transactions MUST be signed within the Secure Enclave.
+`services/bitvm.ts` exposes the canonical envelope and discriminated result
+types (`unsupported`, `simulated`, `malformed`, `invalid`, and future
+`verified`). The production verifier always returns `unsupported` after
+structural validation. Challenge discovery is unavailable; no synthetic
+challenge or success log is emitted.
+
+### 3.2 Native Android manager
+
+`BitVmManager.kt` exposes sealed outcomes for envelope validation, segment
+generation, verification, and dispute signing. It does not return generated
+segments or synthetic signatures in debug or release builds. A future native
+backend must be reviewed and wired before any authoritative outcome is added.
+
+### 3.3 Signing boundary
+
+Dispute signing MUST require authoritative verification evidence, a valid tap
+index, the complete canonical envelope, and the exact bound dispute transaction.
+Unsupported, malformed, invalid, or simulated outcomes MUST never reach a
+signer. The current implementation therefore has no usable BitVM2 signing
+path.
+
+## 4. Promotion gates
+
+Before enabling `verified`, maintainers MUST provide:
+
+1. An immutable reviewed verifier revision and verification-key/circuit registry.
+2. Reproducible positive and negative vectors, including wrong-key, mutated,
+   malformed, encoding, network, binding, and tap-index cases.
+3. Independent cryptographic review and reproducible Android/native builds.
+4. A native policy boundary that signs only the exact validated dispute
+   transaction and preserves local-first privacy.
+5. Evidence tying the implementation to the pinned protocol artifacts; a
+   research demo or unrelated mainnet transaction is insufficient.
+
+Until those gates pass, the status remains **RESEARCH / QUARANTINED**. Any
+evaluation-only simulation must be explicitly labeled `simulated` and can never
+be used as authoritative signing evidence.

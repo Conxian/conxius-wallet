@@ -61,7 +61,7 @@ The project is transitioning to a **pure native Android architecture** (Kotlin/R
 | **Babylon** | BRIDGED | TS Payload + Native Babylon Manager |
 | **DLCs** | BRIDGED | TS Offer Flow + Native DlcManager |
 | **BOB / RSK** | BRIDGED | TS Ethers + Native EVM Manager |
-| **RGB / BitVM** | BRIDGED | AluVM Simulation (TS) + Native Managers |
+| **RGB / BitVM** | RESEARCH / QUARANTINED | Structural envelope validation only; no reviewed BitVM2 verifier or authoritative signing path |
 | **Ark / StateChain** | PRODUCTION | Native V-UTXO Logic + Stacks Bridge |
 | **Web5** | BRIDGED | Web5 API (TS) + Native Web5 Manager |
 | **Yield / Insurance** | BRIDGED | TS Protocol Entry + Native Managers |
