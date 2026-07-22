@@ -1,5 +1,11 @@
 # PROJECT CONTEXT (June 2026)
 
+> **Historical context:** This archive is not the current release authority.
+> Consult [`Sovereign_State.md`](../state/Sovereign_State.md), the
+> [Technical Debt Register](../operations/TECHNICAL_DEBT_REGISTER.md), and the
+> [Android Release Prep guide](../operations/ANDROID_RELEASE_PREP.md) for
+> current validation state.
+
 **Current Status:** v1.9.5 Protocol Expansion
 **Active Research:** BitVM2, Ark, FDC3, AI Security
 
@@ -18,12 +24,25 @@ Conxius Wallet is a sovereign-first mobile wallet leveraging a Bridged Sovereign
 - **Taproot Asset Light Client**: Porting verification logic to `BdkManager.kt`.
 
 ## 4. CI/CD & Governance
-- **Hardening**: Pinned pnpm to `10.30.3`. Pinned GitHub Actions to stable SHAs.
+- **Hardening (June snapshot)**: Pinned pnpm to `10.30.3`. Current repository policy is maintained separately; do not use this historical version as the active toolchain authority.
 - **Security**: Gitleaks and GitGuardian integrated for secret scanning.
-- **Fail-Closed**: `ProductionRuntimeGuard.kt` enforces security for non-production paths.
+- **Fail-Closed**: `ProductionRuntimeGuard.kt` uses fail-closed release guards; debug simulation allowances and release enforcement must not be conflated.
 
 ---
 *Updated: June 22, 2026*
+
+## Session Notes (2026-07-22 — CON-1544 boundary)
+
+- PR #441 merged the wallet-side KeyMint policy/evidence/canonical-binding
+  boundary, and PR #442 merged Play Integrity SDK `1.6.0` opaque-token client
+  acquisition.
+- The [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md)
+  records the implemented boundary, the legacy AES StrongBox/TEE fallback, the
+  real-device/backend qualification matrix, and the P0 exit gate.
+- PR #443 remains open and is not represented as delivered. Backend
+  verification, real-device evidence, durable freshness/replay, centralized
+  value-operation enforcement, rollout/runbook controls, and independent review
+  remain pending.
 
 ## Session Notes (2026-06-30 — COO Alignment)
 - **Full Maintenance Sync**: Pulled latest main, verified clean working tree.
