@@ -10,6 +10,11 @@ and status documents remain useful evidence, but their completion checkboxes do
 not override the status recorded here. An item is only marked **Completed** when
 its exit criteria and validation are recorded in the implementation change.
 
+**Current JavaScript toolchain state (2026-07-22):** The supported integrated
+lint path uses TypeScript `6.0.3` with `typescript-eslint` `8.65.0`. The TypeScript
+`7.0.2` dual-toolchain migration remains open in [issue #396](https://github.com/Conxian/conxius-wallet/issues/396)
+and is intentionally not hidden behind lint suppression or broad rule changes.
+
 ## Baseline measurements
 
 | Measure | Baseline evidence | Interpretation |
