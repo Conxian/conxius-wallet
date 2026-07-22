@@ -60,7 +60,7 @@ The Gateway acts as a portal for institutional users to interact with their mobi
 * **Mitigation:**
     * **Memory-Only Handling:** Seed phrases are never written to disk.
     * **Biometric Hardening:** Critical actions require biometric re-authentication at the OS level.
-    * **Play Integrity Attestation:** Mandatory for high-value operations to ensure the device environment is uncompromised.
+    * **Play Integrity Attestation:** Client SDK/token acquisition is available, but it is not yet a mandatory production control. Backend decryption/verdict verification, request-hash comparison, replay/freshness trust policy, real-device qualification, and production enforcement remain pending.
 
 ### 4.2 Risk: Third-Party API Failure (Dependency Risk)
 * **Description:** Transak, VALR, or Breez services go offline.
