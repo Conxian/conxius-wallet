@@ -14,12 +14,20 @@ devices and it does **not** verify Play Integrity tokens.
   trusted hardware environment, but never software, unknown, unavailable, or
   unsupported evidence.
 - `KeyMintAuthorizationManager` creates a separate P-256/ECDSA Android
-  Keystore key with an attestation challenge. It returns only the public key,
-  certificate-chain bytes, key identity, package/signing identity, and local
-  `KeyInfo` evidence. The private key is not exported and this slice does not
-  add a signing method.
-- A `TEE_ALLOWED` StrongBox-generation failure is returned as an explicit
-  `TRUSTED_ENVIRONMENT_FALLBACK` path with a reason code. A
+  Keystore key with an attestation challenge of 1–128 bytes. Authorization
+  aliases must use the manager-owned `ConxiusAuthorizationKey.v1.` namespace;
+  wallet seed/database aliases are rejected before inspection. It returns only
+  the public key, certificate-chain bytes, key identity, package/signing
+  identity, and local `KeyInfo` evidence. The private key is not exported and
+  this slice does not add a signing method.
+- Every accepted key proves the complete manager profile: EC `secp256r1`
+  (P-256), 256-bit size, exact `PURPOSE_SIGN`, exact SHA-256 digest
+  authorization, and X.509 leaf-certificate/public-key consistency. Existing
+  keys that cannot prove this profile fail closed with stable profile reasons.
+- A `TEE_ALLOWED` StrongBox request falls back only for the explicit Android
+  `StrongBoxUnavailableException`, and the returned path includes the
+  `strongbox_unavailable` reason code. Malformed challenges, evidence
+  inspection failures, and other provider failures do not retry. A
   `STRONGBOX_REQUIRED` request never takes that fallback.
 - `AuthorizationRequestCanonicalizer` produces a versioned, length-prefixed
   canonical request and SHA-256 `requestHash` binding operation digest, nonce,
@@ -35,6 +43,8 @@ devices and it does **not** verify Play Integrity tokens.
 - Unknown or unavailable local evidence is rejected before it can be returned
   as policy-accepted authorization evidence. The typed evidence boundary cannot
   be populated by the existing debug Play Integrity stub or a web fallback.
+- `SECURITY_LEVEL_UNKNOWN_SECURE` remains an unknown tier in this boundary; it
+  is not silently promoted to StrongBox or TEE evidence.
 - Play Integrity tokens remain opaque. No token decoding, on-device verdict
   trust, replay protection, package verification, server verification, or
   Standard-request integration is included here.
