@@ -19,7 +19,7 @@ We position Conxius as the **"Intelligent Security Layer"** for Bitcoin. The cur
 | Feature | Traditional Wallets | Conxius |
 | :--- | :--- | :--- |
 | Hardware Security | Binary (on/off) | **Adaptive**: TEE for daily ops, StrongBox for vault keys |
-| Key Attestation | Rarely implemented | **Verified**: Play Integrity + Hardware-backed attestation |
+| Key Attestation | Rarely implemented | **In progress**: client Play Integrity token acquisition + hardware-backed attestation; backend verification and enforcement remain pending |
 | Infrastructure | Third-party dependencies | **Sovereign**: Own proxies and validator-ready nodes |
 | Performance | 4-10 second delays | **Optimized**: 300ms daily ops (Persistent Worker) |
 
