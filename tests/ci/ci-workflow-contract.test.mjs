@@ -20,6 +20,14 @@ describe('CI workflow contracts', () => {
     expect(webBuild).toContain('if-no-files-found: error');
   });
 
+  it('runs the default dependency audit policy and uploads temp evidence', () => {
+    const audit = jobSection('dependency-audit');
+    expect(audit).toContain('pnpm exec node scripts/ci/audit_with_exceptions.mjs --evidence "$RUNNER_TEMP/conxius-dependency-audit.json"');
+    expect(audit).toContain('actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+    expect(audit).toContain('path: ${{ runner.temp }}/conxius-dependency-audit.json');
+    expect(audit).toContain('if-no-files-found: error');
+  });
+
   it.each(['android-lint', 'android-unit-tests'])('makes %s consume Web Build assets before sync', (jobId) => {
     const job = jobSection(jobId);
     expect(job).toContain('needs: web-build');

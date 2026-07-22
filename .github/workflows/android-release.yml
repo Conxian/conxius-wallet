@@ -125,7 +125,23 @@ jobs:
           CI: true
 
       - name: Dependency audit policy
-        run: pnpm exec node scripts/ci/audit_with_exceptions.mjs
+        id: dependency-audit
+        continue-on-error: true
+        run: pnpm exec node scripts/ci/audit_with_exceptions.mjs --require-approved-exceptions --evidence "$RUNNER_TEMP/conxius-dependency-audit-release.json"
+
+      - name: Upload dependency audit release evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: dependency-audit-release-${{ inputs.version }}
+          path: ${{ runner.temp }}/conxius-dependency-audit-release.json
+          if-no-files-found: error
+
+      - name: Enforce release dependency audit gate
+        if: steps.dependency-audit.outcome == 'failure'
+        run: |
+          echo "Release dependency audit gate failed; promotion is blocked."
+          exit 1
 
       - name: Android security policy
         run: bash scripts/ci/validate_android_security.sh
