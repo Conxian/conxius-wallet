@@ -138,8 +138,16 @@ const ReserveSystem: React.FC = () => {
                  <PieChartIcon size={16} className="text-accent-earth" /> Reserve Allocation
               </h4>
               <div className="h-64 w-full">
+                 <p id="reserve-allocation-description" className="sr-only">
+                    Verified reserve allocation by asset.
+                 </p>
                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart
+                       title="Reserve Allocation"
+                       desc="Verified reserve allocation by asset."
+                       aria-label="Reserve Allocation"
+                       aria-describedby="reserve-allocation-description"
+                    >
                        <Pie
                           data={chartData}
                           innerRadius={60}

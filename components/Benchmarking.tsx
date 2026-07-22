@@ -71,8 +71,20 @@ const Benchmarking: React.FC = () => {
               Sovereignty Moat Visualization
             </h3>
             <div className="h-80 w-full">
+              <p id="sovereignty-moat-description" className="sr-only">
+                Conxius and industry benchmark scores across sovereignty dimensions.
+              </p>
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={RADAR_DATA}>
+                <RadarChart
+                  cx="50%"
+                  cy="50%"
+                  outerRadius="80%"
+                  data={RADAR_DATA}
+                  title="Sovereignty Moat Visualization"
+                  desc="Conxius and industry benchmark scores across sovereignty dimensions."
+                  aria-label="Sovereignty Moat Visualization"
+                  aria-describedby="sovereignty-moat-description"
+                >
                   <PolarGrid stroke="#27272a" />
                   <PolarAngleAxis dataKey="subject" tick={{ fill: '#71717a', fontSize: 10, fontWeight: 700 }} />
                   <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
