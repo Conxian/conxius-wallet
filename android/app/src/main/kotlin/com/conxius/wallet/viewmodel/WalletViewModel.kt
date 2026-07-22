@@ -311,11 +311,18 @@ class WalletViewModel(
 
     fun verifyBitVmProof(proof: String) {
         viewModelScope.launch {
-            try {
-                val valid = bitVmManager.verifyProof(proof)
-                _error.value = "BitVM Proof Valid: $valid"
-            } catch (e: Exception) {
-                _error.value = "BitVM verification failed: ${e.message}"
+            val outcome = bitVmManager.verifyProof(proof)
+            _error.value = when (outcome) {
+                is BitVmVerificationOutcome.Unsupported ->
+                    "BitVM verification unavailable: ${outcome.reason}"
+                is BitVmVerificationOutcome.Simulated ->
+                    "BitVM simulation is non-authoritative: ${outcome.reason}"
+                is BitVmVerificationOutcome.Malformed ->
+                    "BitVM envelope malformed: ${outcome.reason}"
+                is BitVmVerificationOutcome.Invalid ->
+                    "BitVM verification rejected: ${outcome.reason}"
+                is BitVmVerificationOutcome.Verified ->
+                    "BitVM result is quarantined until the reviewed verifier and signing policy are enabled"
             }
         }
     }

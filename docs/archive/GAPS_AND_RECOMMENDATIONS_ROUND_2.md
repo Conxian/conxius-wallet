@@ -23,12 +23,12 @@ The "Bridged Sovereign" architecture has been fully established in this round:
 ## 2. Security & Integrity Improvements
 
 - **Play Integrity API:** Integrated `PlayIntegrityPlugin.kt` as a bridge to the official Google Play Integrity SDK. [COMPLETED]
-- **Enclave Expansion**: Native managers for RGB, Stacks, and BitVM have been implemented to ensure localized signing for all complex Bitcoin layers. [COMPLETED]
+- **Enclave Expansion**: Native managers exist for RGB, Stacks, and BitVM2 boundaries, but BitVM2 verification and dispute signing remain quarantined until a reviewed backend exists. [PARTIAL / RESEARCH]
 
 ## 3. Native Bridge Alignment
 
 All required native managers have been implemented in the `:core-bitcoin` and `:core-crypto` modules:
-- `BdkManager`, `BabylonManager`, `NwcManager`, `DlcManager`, `ArkManager`, `StateChainManager`, `MavenManager`, `LiquidManager`, `EvmManager`, `StacksManager`, `RgbManager`, `BitVmManager`, `Web5Manager`.
+- `BdkManager`, `BabylonManager`, `NwcManager`, `DlcManager`, `ArkManager`, `StateChainManager`, `MavenManager`, `LiquidManager`, `EvmManager`, `StacksManager`, `RgbManager`, `BitVmManager`, `Web5Manager`; BitVmManager is a fail-closed research boundary, not a production verifier.
 
 ## 4. Documentation Alignment
 

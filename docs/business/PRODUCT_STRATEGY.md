@@ -43,7 +43,7 @@ Retail success feeds the **Conclave SDK** and **Conxian Gateway** institutional 
 
 | Milestone | Feature | Status |
 | :--- | :--- | :--- |
-| **M1-M11** | Core L1/L2, Bridge, Privacy v1, BitVM | COMPLETED |
+| **M1-M11** | Core L1/L2, Bridge, Privacy v1; BitVM2 research only | PARTIAL — BitVM2 quarantined |
 | **M12: Real Rails** | Infrastructure (Changelly/Bisq Proxies) | **ACTIVE** |
 | **M13: Musig2** | Taproot Aggregated Multi-Sig | Q3 2026 |
 | **M14: RGB Pro** | Full WASM Client-Side Validation | Q3 2026 |

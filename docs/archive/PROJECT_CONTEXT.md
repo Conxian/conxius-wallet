@@ -8,12 +8,12 @@ Conxius Wallet is a sovereign-first mobile wallet leveraging a Bridged Sovereign
 
 ## 2. Technical Milestones (v1.9.5)
 - **FDC3 Native Bridge**: Bridged TypeScript FDC3 calls to Native Android Intents (`services/fdc3.ts` -> `Fdc3Plugin.kt`).
-- **BitVM2 Orchestration**: Implemented the 364-tap verification floor in `services/bitvm.ts` for Groth16 optimistic proof verification.
+- **BitVM2 Orchestration**: Research/scaffolding only. The wallet validates a canonical envelope and returns typed fail-closed outcomes; no reviewed verifier or authoritative dispute path exists.
 - **Ark V-UTXO Management**: Aligned `ArkManager.kt` with deterministic Blake2s PRF derivation logic.
 - **AI Security**: Implemented outgoing prompt sanitization and ZWC normalization in `services/ai-security.ts`.
 
 ## 3. Active Gaps & Research
-- **Native Rust Worker**: Transitioning BitVM2 segmentation and Blake2s PRF from mocks to high-performance Rust FFI.
+- **Native Rust Worker**: A reviewed BitVM2 verifier/segmenter remains unimplemented; any future Rust FFI must pass the canonical envelope and independent-review gates before enablement.
 - **RGB Light Client**: Researching pruned validation proofs for client-side validation on mobile devices.
 - **Taproot Asset Light Client**: Porting verification logic to `BdkManager.kt`.
 
@@ -33,7 +33,7 @@ Conxius Wallet is a sovereign-first mobile wallet leveraging a Bridged Sovereign
 - **Security Hardening**: Added pnpm overrides in `pnpm-workspace.yaml` for protobufjs, lodash, ws, undici, form-data. Reduced vulnerabilities from 29 (1 critical) to 6 (1 high, unresolvable bigint-buffer).
 - **Documentation**: Updated AGENTS.md, CHANGELOG.md, PROJECT_CONTEXT.md with current operational state.
 - **Full Verification**: Build (29s) ✅, TypeScript ✅, ESLint (0 errors) ✅, pnpm audit (6 vulns) ✅.
-- **Operational State**: Repository declared at full production operational state. main is clean, synced, and verified.
+- **Operational State**: This historical full-production declaration is superseded for BitVM2. Current status is research/scaffolding with verification quarantined; consult the implementation registry and technical-debt register.
 
 ## Session Notes (2026-06-22)
 - **Gap Audit**: Completed full audit of protocol stubs across services/ and android/.

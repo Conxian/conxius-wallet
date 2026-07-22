@@ -26,7 +26,7 @@ permalink: /docs/implementation-registry
 | **Musig2** | ✅ PRODUCTION | Aligned with `@noble/curves`, native session management. |
 | **Stacks** | ✅ PRODUCTION | Native StacksManager + Stacks.js (TS). |
 | **RGB** | ✅ PRODUCTION | Native RgbManager (Stub) + AluVM Simulation (TS). |
-| **BitVM** | ✅ PRODUCTION | Native BitVmManager + Native BitVmManager bridge. |
+| **BitVM2** | 🔬 RESEARCH / QUARANTINED | Typed proof-envelope validation only. No reviewed wallet verifier, segment backend, challenge source, or authoritative dispute signer exists. |
 | **Web5** | ✅ PRODUCTION | Native Web5Manager + Web5 API (TS). |
 | **Yield (Yield.xyz)** | ✅ PRODUCTION | Native Yield Manager + TS yield discovery. |
 | **Insurance (Parametric)**| ✅ PRODUCTION | Native Insurance Manager + TS cover purchase. |
@@ -53,6 +53,24 @@ permalink: /docs/implementation-registry
 | **Database** | ✅ NATIVE | Room + SQLCipher (Encrypted) |
 | **Integrity** | ✅ NATIVE | Play Integrity API + Root Detection |
 
+## BitVM2 Enablement Gate
+
+BitVM2 is research/scaffolding and is quarantined from authoritative wallet
+operations. Every current production entrypoint returns a typed `unsupported`,
+`malformed`, or other non-authoritative outcome; none can return `verified`.
+
+Before a reviewed verifier may be enabled, the canonical envelope must bind all
+of the following fields without ambiguity: `schemaVersion`, `proof`,
+`verificationKeyId`, `verificationKeyDigest`, ordered `publicInputs`, `curve`,
+`circuitId`, `encoding`, `network`, `blockContext`, `tapCount`, `tapIndex`,
+`domainSeparation`, `transactionBinding`, and `stateBinding`. Promotion also
+requires a reviewed native verifier, reproducible negative and positive vectors,
+independent cryptographic review, and a native policy-approved signer for the
+exact bound dispute transaction.
+
+No reviewed BitVM2 verifier exists in the wallet today. Simulated or structural
+results are never authoritative and cannot authorize signing.
+
 ---
 
 *Status Definitions:*
@@ -61,4 +79,5 @@ permalink: /docs/implementation-registry
 - **BRIDGED:** Core manager in native Kotlin, high-level logic in TS/React.
 - **TS-ONLY:** Logic resides solely in the legacy companion TS service layer.
 
-*Aligned with Nakamoto Clarity & Sovereign v1.9.5. All P0 Action items verified.*
+*Aligned with the current release-baseline evidence. Historical completion
+claims do not override the BitVM2 quarantine or the Technical Debt Register.*
