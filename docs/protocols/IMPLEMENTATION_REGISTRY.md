@@ -18,7 +18,7 @@ permalink: /docs/implementation-registry
 | **NIP-47 (NWC)** | ✅ PRODUCTION | Native NwcManager + TS event support. |
 | **DLC (Discreet Log)** | ✅ PRODUCTION | `core/dlc-orchestrator.clar` implemented. |
 | **sBTC Bridge** | ✅ PRODUCTION | Clarity 4.0 contract in `core/stacks-bridge.clar`. |
-| **Ark** | ✅ PRODUCTION | `core/ark-vutxo.clar` implemented, Kotlin ArkManager native. |
+| **Ark** | 🔬 RESEARCH / QUARANTINED | `core/ark-vutxo.clar` exists, but native V-UTXO derivation/lift/forfeit paths and TS lifecycle operations fail closed pending reviewed backend and ASP confirmation. |
 | **StateChain** | ✅ PRODUCTION | Native StateChainManager + TS Simulation. |
 | **Maven** | ✅ PRODUCTION | Native MavenManager + TS AI Marketplace. |
 | **Liquid** | ✅ PRODUCTION | Native LiquidManager + TS Liquidjs support. |
@@ -59,11 +59,13 @@ BitVM2 is research/scaffolding and is quarantined from authoritative wallet
 operations. Every current production entrypoint returns a typed `unsupported`,
 `malformed`, or other non-authoritative outcome; none can return `verified`.
 
-Before a reviewed verifier may be enabled, the canonical envelope must bind all
-of the following fields without ambiguity: `schemaVersion`, `proof`,
+Before a reviewed verifier may be enabled, the versioned quarantine/request
+envelope must bind all of the following fields without ambiguity: `schemaVersion`, `proof`,
 `verificationKeyId`, `verificationKeyDigest`, ordered `publicInputs`, `curve`,
 `circuitId`, `encoding`, `network`, `blockContext`, `tapCount`, `tapIndex`,
-`domainSeparation`, `transactionBinding`, and `stateBinding`. Promotion also
+`domainSeparation`, `transactionBinding`, and `stateBinding`. This envelope is
+not the final protocol contract; canonical proof/key/public-input/curve/circuit/
+encoding serialization and registries remain unresolved. Promotion also
 requires a reviewed native verifier, reproducible negative and positive vectors,
 independent cryptographic review, and a native policy-approved signer for the
 exact bound dispute transaction.

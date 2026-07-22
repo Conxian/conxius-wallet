@@ -15,7 +15,7 @@ if "BitVmVerificationResult" not in content:
 
 # Update UPCOMING_PROJECTS
 if "BitVM2 Research" not in content:
-    new_project = '  { id: "bitvm", name: "BitVM2 Research", status: "RESEARCH / QUARANTINED", desc: "Proof-envelope research only; no reviewed BitVM2 verifier is integrated.", icon: Binary, color: "text-accent-earth" },'
+    new_project = '  { id: "bitvm", name: "BitVM2 Research", status: "RESEARCH / QUARANTINED", desc: "Versioned quarantine-envelope research only; no reviewed BitVM2 verifier is integrated.", icon: Binary, color: "text-accent-earth" },'
     content = content.replace("const UPCOMING_PROJECTS = [", f"const UPCOMING_PROJECTS = [\n{new_project}")
 
 # Add states
@@ -55,11 +55,11 @@ if 'activeProject === "BitVM2 Research"' not in content:
                    {activeProject === "BitVM2 Research" ? (
                       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
                          <div className="bg-orange-500/10 border border-orange-500/20 p-6 rounded-2xl">
-                            <h4 className="text-accent-earth font-black uppercase text-[10px] tracking-widest mb-2">Canonical BitVM2 Envelope (JSON)</h4>
+                            <h4 className="text-accent-earth font-black uppercase text-[10px] tracking-widest mb-2">Versioned BitVM2 Quarantine Envelope (JSON)</h4>
                             <textarea
                                value={bitVmProof}
                                onChange={(e) => setBitVmProof(e.target.value)}
-                               placeholder="Paste the canonical proof envelope JSON; raw proofs are not accepted."
+                               placeholder="Paste the versioned quarantine envelope JSON; raw proofs are not accepted."
                                className="w-full h-32 bg-ivory border border-border rounded-xl p-4 text-brand-deep font-mono text-[10px] focus:border-orange-500/50 outline-none transition-all"
                             />
                             <p className="mt-3 text-[10px] text-brand-earth leading-relaxed">
@@ -79,7 +79,7 @@ if 'activeProject === "BitVM2 Research"' not in content:
                                <Zap size={16} className="mt-0.5 shrink-0" />
                                <div className="space-y-1">
                                   <span className="font-black uppercase tracking-widest text-[10px]">{verificationResult.status === 'verified' ? 'QUARANTINED' : verificationResult.status.toUpperCase()}</span>
-                                  <p className="text-[10px] leading-relaxed">{verificationResult.status === 'simulated' ? 'Simulation results are non-authoritative and cannot be used for signing.' : verificationResult.status === 'verified' ? 'Authoritative BitVM2 results are disabled until a reviewed verifier is integrated.' : verificationResult.reason}</p>
+                                  <p className="text-[10px] leading-relaxed">{verificationResult.status === 'simulated' ? 'Simulation results are non-authoritative and cannot be used for signing.' : verificationResult.status === 'verified' ? 'Caller-provided verified metadata is not trusted; authoritative verification is disabled until a reviewed verifier is integrated.' : verificationResult.reason}</p>
                                </div>
                             </div>
                          )}

@@ -91,7 +91,7 @@ The Stacks bridge utilizes the following public functions for sBTC management:
 
 ## 12. BitVM
 - **Layer Type:** Computation / Bridge Tech
-- **Mechanism:** Research/scaffolding boundary only. The wallet currently validates canonical proof metadata and returns typed unsupported outcomes; no reviewed verifier or authoritative dispute signer is integrated.
+- **Mechanism:** Research/scaffolding boundary only. The wallet currently validates a versioned quarantine envelope for structural metadata and returns typed unsupported outcomes; no reviewed verifier or authoritative dispute signer is integrated.
 
 ## 13. Ordinals / Runes
 - **Layer Type:** Meta-protocol

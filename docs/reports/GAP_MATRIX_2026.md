@@ -8,11 +8,11 @@
 
 | Candidate | Maturity | Mobile-Friendly | Security | Total Score | Notes |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Ark (V-UTXO)** | 4/5 | 4/5 | 5/5 | **13/15** | PRF (Blake2s) logic in Kotlin. High enclave compatibility. |
+| **Ark (V-UTXO)** | 3/5 | 3/5 | 5/5 | **11/15** | Native manager and TS lifecycle paths fail closed pending reviewed Blake2s/Enclave backend and confirmed ASP flow. |
 | **FDC3 (Standard)** | 5/5 | 4/5 | 4/5 | **13/15** | Mature standard. Android Intent mapping & TS bridge implemented. |
 | **Liquid (Sidechain)** | 4/5 | 5/5 | 4/5 | **13/15** | Elements-based. Native signing/blinding stubs need FFI. |
 | **Silent Payments** | 4/5 | 4/5 | 5/5 | **13/15** | BIP-352 implemented in TS. Native scanning is a stub. |
-| **BitVM2 (Research)** | 3/5 | 3/5 | 5/5 | **11/15** | Canonical envelope and typed quarantine boundary only. No reviewed verifier or native BN254 worker. |
+| **BitVM2 (Research)** | 3/5 | 3/5 | 5/5 | **11/15** | Versioned quarantine envelope and typed boundary only. No reviewed verifier or native BN254 worker. |
 | **RGB Protocol** | 3/5 | 3/5 | 5/5 | **11/15** | ALU simulation in TS. Native manager is a stub. |
 | **Babylon Staking** | 3/5 | 3/5 | 5/5 | **11/15** | Native Taproot staking implemented. Finality provider gaps. |
 
@@ -21,12 +21,12 @@
 ### G1: BitVM2 Native Verification
 - **Gap**: BitVM2 verification, segment generation, challenge discovery, and dispute signing are unavailable in the wallet.
 - **Status**: **RESEARCH / QUARANTINED**.
-- **Remediation**: Integrate a pinned, independently reviewed native verifier and policy-approved transaction signer only after the canonical envelope and negative-vector gates pass.
+- **Remediation**: Integrate a pinned, independently reviewed native verifier and policy-approved transaction signer only after the versioned quarantine envelope and negative-vector gates pass.
 
-### G2: Ark V-UTXO PRF Alignment
-- **Gap**: `ArkManager.kt` uses SHA-256 as a placeholder for Blake2s evaluation.
-- **Status**: **PARTIAL**.
-- **Remediation**: Swap SHA-256 for a proper Blake2s implementation (e.g., from BouncyCastle or Rust FFI) to match arkworks specs.
+### G2: Ark V-UTXO Backend Alignment
+- **Gap**: `ArkManager.kt` intentionally fails closed; reviewed Blake2s derivation, Enclave signing, and lift-request backends are not integrated.
+- **Status**: **RESEARCH / QUARANTINED**.
+- **Remediation**: Integrate a reviewed native backend and require confirmed ASP responses before exposing V-UTXO lifecycle success.
 
 ### G3: RGB / Taproot Asset Light Validation
 - **Gap**: Client-Side Validation (CSV) is simulated in TS; native managers are stubs.

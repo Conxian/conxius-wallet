@@ -23,7 +23,7 @@ import { GoogleGenAI } from "@google/genai";
 import type { BitVmProofEnvelope, BitVmProofRequest, BitVmVerificationResult } from "@/services/bitvm";
 
 const UPCOMING_PROJECTS = [
-  { id: "bitvm", name: "BitVM2 Research", status: "RESEARCH / QUARANTINED", desc: "Proof-envelope research only; no reviewed BitVM2 verifier is integrated.", icon: Binary, color: "text-accent-earth" },
+  { id: "bitvm", name: "BitVM2 Research", status: "RESEARCH / QUARANTINED", desc: "Versioned quarantine-envelope research only; no reviewed BitVM2 verifier is integrated.", icon: Binary, color: "text-accent-earth" },
   { id: 'gateway', name: 'Conxian Gateway', status: 'LIVE', desc: 'Sovereign B2B portal for institutional DeFi and shielded assets.', icon: Globe, Binary, CheckCircle2, color: 'text-accent-earth' },
   { id: 'guard', name: 'Conxius Guard', status: 'Incubating', desc: 'Hardware-level entropy monitoring for mobile devices.', icon: Shield, color: 'text-blue-500' },
   { id: 'mesh', name: 'Sovereign Mesh V2', status: 'Alpha', desc: 'Peer-to-peer mempool sharing via encrypted local tunnels.', icon: Cpu, color: 'text-purple-500' },
@@ -149,11 +149,11 @@ const LabsExplorer: React.FC = () => {
                    {activeProject === "BitVM2 Research" ? (
                       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
                          <div className="bg-orange-500/10 border border-orange-500/20 p-6 rounded-2xl">
-                            <h4 className="text-accent-earth font-black uppercase text-[10px] tracking-widest mb-2">Canonical BitVM2 Envelope (JSON)</h4>
+                            <h4 className="text-accent-earth font-black uppercase text-[10px] tracking-widest mb-2">Versioned BitVM2 Quarantine Envelope (JSON)</h4>
                             <textarea
                                value={bitVmProof}
                                onChange={(e) => setBitVmProof(e.target.value)}
-                               placeholder="Paste the canonical proof envelope JSON; raw proofs are not accepted."
+                               placeholder="Paste the versioned quarantine envelope JSON; raw proofs are not accepted."
                                className="w-full h-32 bg-ivory border border-border rounded-xl p-4 text-brand-deep font-mono text-[10px] focus:border-orange-500/50 outline-none transition-all"
                             />
                             <p className="mt-3 text-[10px] text-brand-earth leading-relaxed">
@@ -173,7 +173,7 @@ const LabsExplorer: React.FC = () => {
                            const statusMessage = verificationResult.status === 'simulated'
                              ? 'Simulation results are non-authoritative and cannot be used for signing.'
                              : verificationResult.status === 'verified'
-                               ? 'Authoritative BitVM2 results are disabled until a reviewed verifier is integrated.'
+                               ? 'Caller-provided verified metadata is not trusted; authoritative verification is disabled until a reviewed verifier is integrated.'
                                : verificationResult.reason;
                            return (
                              <div className="p-4 rounded-xl border flex items-start gap-3 bg-orange-500/10 border-orange-500/20 text-accent-earth">

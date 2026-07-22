@@ -22,16 +22,6 @@ interface Delegation {
 
 const MOCK_PROPOSALS: Proposal[] = [
   { 
-    id: 'SLP-025', 
-    title: 'Implement BitVM Bridge Logic', 
-    description: 'Enable trust-minimized bridging between Bitcoin L1 and Conxius Enclave using BitVM-based fraud proofs.', 
-    status: 'Active', 
-    tierRequired: 2, 
-    votesFor: 1420, 
-    votesAgainst: 42, 
-    endsIn: '2d 14h' 
-  },
-  { 
     id: 'SLP-026', 
     title: 'Increase Stacks Reward Multiplier', 
     description: 'Modify the PoX logic to prioritize Sovereign Pass holders with 99.9% node uptime.', 
@@ -102,7 +92,7 @@ const GovernancePortal: React.FC = () => {
             <Gavel className="text-accent-earth" />
             Governance & Treasury
           </h2>
-          <p className="text-brand-earth text-sm italic">Protocol management via proof-of-contribution and delegated trust.</p>
+          <p className="text-brand-earth text-sm italic">Demo-only governance preview; no proposal or vote is submitted from this surface.</p>
         </div>
         <div className="flex gap-4">
            <div className="bg-off-white border border-border px-6 py-3 rounded-2xl flex items-center gap-4">
@@ -124,6 +114,11 @@ const GovernancePortal: React.FC = () => {
            </button>
         </div>
       </header>
+
+      <div className="flex items-start gap-3 rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 text-xs text-brand-earth">
+         <AlertCircle size={16} className="mt-0.5 shrink-0 text-accent-earth" />
+         <p>Proposal data and vote actions are local mock state. This preview does not invoke enclave signing or claim production governance authority.</p>
+      </div>
 
       {/* Ops Persona Setup Modal */}
       {opsMode === 'setup' && (
@@ -324,7 +319,7 @@ const GovernancePortal: React.FC = () => {
                  <div className="p-6 bg-orange-500/5 border border-orange-500/10 rounded-3xl space-y-4">
                     <div className="flex items-center gap-3">
                        <ShieldCheck size={20} className="text-accent-earth" />
-                       <h4 className="text-xs font-black uppercase text-brand-deep">Sovereign Verification</h4>
+                       <h4 className="text-xs font-black uppercase text-brand-deep">Demo Verification Status</h4>
                     </div>
                     {delegatedTo ? (
                        <div className="flex items-center gap-3 text-accent-earth font-bold text-xs italic">
@@ -334,7 +329,7 @@ const GovernancePortal: React.FC = () => {
                     ) : (
                        <p className="text-xs text-brand-earth leading-relaxed">
                           Your active weight of <span className="text-brand-deep font-bold">{totalVotingPower}</span> allows you to influence this protocol change.
-                          Votes are cryptographically signed using your secure enclave.
+                          This preview does not submit or cryptographically sign votes.
                        </p>
                     )}
                  </div>

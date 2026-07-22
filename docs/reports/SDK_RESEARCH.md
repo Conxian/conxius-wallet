@@ -14,7 +14,7 @@ permalink: /docs/sdk-research
 
 - **SDK:** `/bitvm/bitvm` (research reference only).
 - **Status:** **RESEARCH / QUARANTINED**.
-- The wallet currently performs structural validation of a canonical envelope and returns typed `unsupported` results. It does not integrate a reviewed cryptographic verifier, generate executable segments, discover real challenges, or sign an authoritative dispute.
+- The wallet currently performs structural validation of a versioned quarantine envelope and returns typed `unsupported` results. It does not integrate a reviewed cryptographic verifier, generate executable segments, discover real challenges, or sign an authoritative dispute.
 - The 364-tap count, candidate curve, proof encoding, circuit identifier, verification-key identifier/digest, ordered public inputs, network/block context, domain separation, and transaction/state bindings are enablement-gate metadata—not evidence that verification is implemented.
 - No reviewed wallet verifier exists. Upstream research, SDKs, or published mainnet demonstrations must not be treated as a production mobile verifier.
 
@@ -56,7 +56,7 @@ permalink: /docs/sdk-research
 | :--- | :--- | :--- | :--- |
 | **BitVM2** | Research reference only | 1.9 | 🔬 QUARANTINED |
 | **Babylon** | `BabylonManager.kt` | 1.9 | ✅ |
-| **Ark V-UTXO** | `ArkManager.kt` | 1.9 | 🚀 |
+| **Ark V-UTXO** | `ArkManager.kt` | 1.9 | 🔬 QUARANTINED |
 | **FDC3 Resolver**| `Fdc3Plugin.kt` | 1.9 | 🚀 |
 | **AI Security** | `ai-security.ts` | 1.9 | ✅ |
 

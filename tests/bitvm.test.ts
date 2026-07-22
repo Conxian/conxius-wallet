@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
-    BITVM_PROOF_SCHEMA_VERSION,
+    BITVM_QUARANTINE_SCHEMA_VERSION,
     NUM_TAPS,
     BitVmProofEnvelope,
     BitVmVerificationResult,
@@ -18,8 +19,8 @@ vi.mock('../services/signer', () => ({
 
 const signer = vi.mocked(requestEnclaveSignature);
 
-const canonicalEnvelope: BitVmProofEnvelope = {
-    schemaVersion: BITVM_PROOF_SCHEMA_VERSION,
+const quarantineEnvelope: BitVmProofEnvelope = {
+    schemaVersion: BITVM_QUARANTINE_SCHEMA_VERSION,
     proof: 'deadbeef',
     verificationKeyId: 'bitvm2-research-key',
     verificationKeyDigest: '00'.repeat(32),
@@ -53,11 +54,21 @@ const simulatedVerification: BitVmVerificationResult = {
 };
 
 const disputeRequest = (verification: BitVmVerificationResult = unsupportedVerification()) => ({
-    envelope: canonicalEnvelope,
+    envelope: quarantineEnvelope,
     verification,
-    tapIndex: canonicalEnvelope.tapIndex,
-    disputePsbt: 'canonical-dispute-psbt',
+    tapIndex: quarantineEnvelope.tapIndex,
+    disputePsbt: 'quarantine-dispute-psbt',
     vault: 'test-vault',
+});
+
+const fabricatedVerifiedEvidence = (): BitVmVerificationResult => ({
+    status: 'verified',
+    authoritative: true,
+    evidence: {
+        envelope: quarantineEnvelope,
+        verifierRevision: 'caller-fabricated-revision',
+        verifierDigest: '22'.repeat(32),
+    },
 });
 
 describe('BitVM service quarantine', () => {
@@ -73,19 +84,47 @@ describe('BitVM service quarantine', () => {
     });
 
     it('returns typed unsupported for a structurally complete envelope', async () => {
-        const result = await verifyBitVmProof(canonicalEnvelope);
+        const result = await verifyBitVmProof(quarantineEnvelope);
 
         expect(result).toEqual({
             status: 'unsupported',
             authoritative: false,
-            reason: 'No reviewed BitVM2 verifier is integrated; verification is quarantined',
+            reason: 'No reviewed BitVM2 verifier is integrated; quarantine verification is unsupported',
         });
     });
 
+    it('matches the shared TypeScript/Kotlin quarantine envelope wire shape', () => {
+        const fixture = JSON.parse(readFileSync(new URL('./fixtures/bitvm-quarantine-envelope.json', import.meta.url), 'utf8')) as BitVmProofEnvelope;
+        const validation = validateBitVmProofEnvelope(fixture);
+
+        expect(fixture.schemaVersion).toBe(BITVM_QUARANTINE_SCHEMA_VERSION);
+        expect(Object.keys(fixture).sort()).toEqual([
+            'blockContext',
+            'circuitId',
+            'curve',
+            'domainSeparation',
+            'encoding',
+            'network',
+            'proof',
+            'publicInputs',
+            'schemaVersion',
+            'stateBinding',
+            'tapCount',
+            'tapIndex',
+            'transactionBinding',
+            'verificationKeyDigest',
+            'verificationKeyId',
+        ]);
+        expect(Object.keys(fixture.blockContext).sort()).toEqual(['hash', 'height']);
+        expect(fixture).not.toHaveProperty('blockHeight');
+        expect(fixture).not.toHaveProperty('blockHash');
+        expect(validation.valid).toBe(true);
+    });
+
     it('does not treat a mutated proof or wrong key as verified', async () => {
-        const mutated = await verifyBitVmProof({ ...canonicalEnvelope, proof: 'deedbeef' });
+        const mutated = await verifyBitVmProof({ ...quarantineEnvelope, proof: 'deedbeef' });
         const wrongKey = await verifyBitVmProof({
-            ...canonicalEnvelope,
+            ...quarantineEnvelope,
             verificationKeyId: 'unreviewed-key',
             verificationKeyDigest: '11'.repeat(32),
         });
@@ -96,9 +135,9 @@ describe('BitVM service quarantine', () => {
         expect(wrongKey.status).not.toBe('verified');
     });
 
-    it('reports missing canonical fields as malformed', async () => {
+    it('reports missing quarantine fields as malformed', async () => {
         const missingPublicInputs = {
-            ...canonicalEnvelope,
+            ...quarantineEnvelope,
             publicInputs: undefined,
         } as unknown as BitVmProofEnvelope;
         const result = await verifyBitVmProof(missingPublicInputs as BitVmProofEnvelope);
@@ -110,7 +149,7 @@ describe('BitVM service quarantine', () => {
     });
 
     it('reports unsupported encodings without attempting verification', async () => {
-        const result = await verifyBitVmProof({ ...canonicalEnvelope, encoding: 'stark' });
+        const result = await verifyBitVmProof({ ...quarantineEnvelope, encoding: 'stark' });
 
         expect(result.status).toBe('unsupported');
         if (result.status === 'unsupported') {
@@ -120,12 +159,12 @@ describe('BitVM service quarantine', () => {
 
     it('rejects invalid tap indices before any signing path', async () => {
         const envelopeResult = validateBitVmProofEnvelope({
-            ...canonicalEnvelope,
+            ...quarantineEnvelope,
             tapIndex: NUM_TAPS,
         });
         const disputeResult = await initiateDispute({
             ...disputeRequest(),
-            envelope: { ...canonicalEnvelope, tapIndex: NUM_TAPS },
+            envelope: { ...quarantineEnvelope, tapIndex: NUM_TAPS },
             tapIndex: NUM_TAPS,
         });
 
@@ -171,10 +210,10 @@ describe('BitVM service quarantine', () => {
         expect(signer).not.toHaveBeenCalled();
     });
 
-    it('requires canonical state and transaction bindings before signing', async () => {
+    it('requires quarantine state and transaction bindings before signing', async () => {
         const missingBinding = await initiateDispute({
             ...disputeRequest(),
-            envelope: { ...canonicalEnvelope, stateBinding: '' },
+            envelope: { ...quarantineEnvelope, stateBinding: '' },
         });
         const missingTransaction = await initiateDispute({
             ...disputeRequest(),
@@ -186,32 +225,39 @@ describe('BitVM service quarantine', () => {
         expect(signer).not.toHaveBeenCalled();
     });
 
-    it('surfaces signer failure as a typed result', async () => {
-        signer.mockRejectedValueOnce(new Error('test signer failure'));
-        const reviewedEvidence: BitVmVerificationResult = {
-            // This fixture only exercises the downstream signer failure branch;
-            // verifyBitVmProof never emits this status in the quarantined build.
-            status: 'verified',
-            authoritative: true,
-            evidence: {
-                envelope: canonicalEnvelope,
-                verifierRevision: 'test-only-reviewed-boundary',
-                verifierDigest: '22'.repeat(32),
-            },
-        };
+    it('rejects caller-fabricated authoritative evidence in initiateDispute', async () => {
+        signer.mockResolvedValueOnce({ signature: 'must-not-be-used', pubkey: 'must-not-be-used', timestamp: Date.now() });
 
-        const result = await initiateDispute(disputeRequest(reviewedEvidence));
+        const result = await initiateDispute(disputeRequest(fabricatedVerifiedEvidence()));
 
         expect(result).toEqual({
-            status: 'signer_failed',
+            status: 'unsupported',
             authoritative: false,
-            signerInvoked: true,
-            reason: 'The native enclave signer rejected the BitVM2 dispute transaction',
+            signerInvoked: false,
+            reason: 'Caller-supplied BitVM2 verification evidence cannot authorize signing; the reviewed verifier is unavailable',
         });
-        expect(signer).toHaveBeenCalledTimes(1);
+        expect(signer).not.toHaveBeenCalled();
     });
 
-    it('does not sign a commitment that is not bound to canonical state', async () => {
+    it('rejects caller-fabricated authoritative evidence in signBitVmCommitment', async () => {
+        signer.mockResolvedValueOnce({ signature: 'must-not-be-used', pubkey: 'must-not-be-used', timestamp: Date.now() });
+
+        const result = await signBitVmCommitment({
+            ...disputeRequest(fabricatedVerifiedEvidence()),
+            challengeId: 'challenge-id',
+            commitment: quarantineEnvelope.stateBinding,
+        });
+
+        expect(result).toEqual({
+            status: 'unsupported',
+            authoritative: false,
+            signerInvoked: false,
+            reason: 'Caller-supplied BitVM2 verification evidence cannot authorize signing; the reviewed verifier is unavailable',
+        });
+        expect(signer).not.toHaveBeenCalled();
+    });
+
+    it('does not sign a commitment that is not bound to quarantine state', async () => {
         const result = await signBitVmCommitment({
             ...disputeRequest(),
             challengeId: 'challenge-id',

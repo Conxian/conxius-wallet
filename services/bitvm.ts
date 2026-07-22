@@ -1,10 +1,9 @@
-import { requestEnclaveSignature } from './signer';
 import { Network } from '../types';
 
 export const NUM_TAPS = 364;
 export const VALIDATING_TAPS = 1;
 export const HASHING_TAPS = 363;
-export const BITVM_PROOF_SCHEMA_VERSION = 'conxian.bitvm2.proof.v1';
+export const BITVM_QUARANTINE_SCHEMA_VERSION = 'conxian.bitvm2.quarantine-envelope.v1';
 
 export const SUPPORTED_BITVM_ENCODINGS = ['hex', 'base64', 'base64url'] as const;
 export type BitVmProofEncoding = typeof SUPPORTED_BITVM_ENCODINGS[number];
@@ -15,11 +14,12 @@ export interface BitVmBlockContext {
 }
 
 /**
-* Canonical BitVM2 proof envelope.
+* Versioned BitVM2 quarantine/request envelope.
 *
-* This is an enablement gate, not a cryptographic verifier. A reviewed native
-* verifier must consume this exact metadata before any result can be promoted
-* to `verified`.
+* This is a structural transport shape for the current quarantine boundary,
+* not the final BitVM2 protocol contract or a cryptographic verifier. The
+* canonical proof, key, circuit, public-input, curve, and encoding formats are
+* unresolved enablement gates.
 */
 export interface BitVmProofEnvelope {
     schemaVersion: string;
@@ -43,9 +43,10 @@ export interface BitVmProofRequest {
     envelope: BitVmProofEnvelope;
 }
 
-/** Backward-compatible type alias for callers that imported `BitVmProof`. */
-export type BitVmProof = BitVmProofEnvelope;
-
+/**
+* Reserved for verifier-owned output. A caller-constructed object with this
+* shape is never trusted by the current exported APIs.
+*/
 export interface BitVmVerifiedEvidence {
     envelope: BitVmProofEnvelope;
     verifierRevision: string;
@@ -98,25 +99,12 @@ export interface BitVmDisputeRequest {
     vault: string | Uint8Array;
 }
 
-export type BitVmDisputeResult =
-    | {
-        status: 'unsupported' | 'simulated' | 'malformed' | 'invalid';
-        authoritative: false;
-        signerInvoked: false;
-        reason: string;
-    }
-    | {
-        status: 'signer_failed';
-        authoritative: false;
-        signerInvoked: true;
-        reason: string;
-    }
-    | {
-        status: 'signed';
-        authoritative: true;
-        signerInvoked: true;
-        signature: string;
-    };
+export type BitVmDisputeResult = {
+    status: 'unsupported' | 'simulated' | 'malformed' | 'invalid';
+    authoritative: false;
+    signerInvoked: false;
+    reason: string;
+};
 
 export type BitVmSigningResult = BitVmDisputeResult;
 
@@ -139,9 +127,9 @@ const unsupported = (reason: string): Extract<BitVmVerificationResult, { status:
 });
 
 const disputeFailure = (
-    status: Extract<BitVmDisputeResult, { status: 'unsupported' | 'simulated' | 'malformed' | 'invalid' }>['status'],
+    status: BitVmDisputeResult['status'],
     reason: string,
-): Extract<BitVmDisputeResult, { status: 'unsupported' | 'simulated' | 'malformed' | 'invalid' }> => ({
+): BitVmDisputeResult => ({
     status,
     authoritative: false,
     signerInvoked: false,
@@ -181,7 +169,7 @@ const isValidTapIndex = (tapIndex: number, tapCount = NUM_TAPS): boolean => (
     Number.isInteger(tapIndex) && tapIndex >= 0 && tapIndex < tapCount
 );
 
-/** Validate the non-cryptographic shape and bindings of the canonical envelope. */
+/** Validate the non-cryptographic shape and bindings of the quarantine envelope. */
 export const validateBitVmProofEnvelope = (
     input: BitVmProofEnvelope | BitVmProofRequest | unknown,
     expectedNetwork?: Network,
@@ -189,11 +177,11 @@ export const validateBitVmProofEnvelope = (
     const candidate = isRecord(input) && 'envelope' in input ? input.envelope : input;
 
     if (!isRecord(candidate)) {
-        return { valid: false, result: malformed('A canonical BitVM2 proof envelope is required') };
+        return { valid: false, result: malformed('A versioned BitVM2 quarantine envelope is required') };
     }
 
-    if (candidate.schemaVersion !== BITVM_PROOF_SCHEMA_VERSION) {
-        return { valid: false, result: unsupported('The BitVM2 proof schema is not enabled') };
+    if (candidate.schemaVersion !== BITVM_QUARANTINE_SCHEMA_VERSION) {
+        return { valid: false, result: unsupported('The BitVM2 quarantine envelope schema is not enabled') };
     }
 
     const requiredStrings = [
@@ -210,7 +198,7 @@ export const validateBitVmProofEnvelope = (
 
     for (const [name, value] of requiredStrings) {
         if (!isNonEmptyString(value)) {
-            return { valid: false, result: malformed(`Missing canonical BitVM2 field: ${name}`) };
+            return { valid: false, result: malformed(`Missing BitVM2 quarantine envelope field: ${name}`) };
         }
     }
 
@@ -223,7 +211,7 @@ export const validateBitVmProofEnvelope = (
     }
 
     if (!isRecord(candidate.blockContext)) {
-        return { valid: false, result: malformed('Missing canonical BitVM2 block context') };
+        return { valid: false, result: malformed('Missing BitVM2 block context') };
     }
 
     const blockContext = candidate.blockContext;
@@ -231,72 +219,62 @@ export const validateBitVmProofEnvelope = (
         || !Number.isInteger(blockContext.height)
         || blockContext.height < 0
         || !isNonEmptyString(blockContext.hash)) {
-        return { valid: false, result: malformed('Missing canonical BitVM2 block context') };
+        return { valid: false, result: malformed('Missing BitVM2 block context') };
     }
 
     if (!Array.isArray(candidate.publicInputs)
         || candidate.publicInputs.length === 0
         || candidate.publicInputs.some(inputValue => !isNonEmptyString(inputValue))) {
-        return { valid: false, result: malformed('BitVM2 public inputs must be an ordered non-empty string array') };
+        return { valid: false, result: malformed('BitVM2 public inputs must be an ordered, non-empty string array') };
     }
 
-    const canonical = candidate as unknown as BitVmProofEnvelope;
+    const validatedEnvelope = candidate as unknown as BitVmProofEnvelope;
 
-    if (!Number.isInteger(canonical.tapCount) || canonical.tapCount !== NUM_TAPS) {
-        return { valid: false, result: malformed(`BitVM2 tap count must be exactly ${NUM_TAPS}`) };
+    if (!Number.isInteger(validatedEnvelope.tapCount) || validatedEnvelope.tapCount !== NUM_TAPS) {
+        return { valid: false, result: malformed(`BitVM2 quarantine envelope tap count must be exactly ${NUM_TAPS}`) };
     }
 
-    if (!isValidTapIndex(canonical.tapIndex, canonical.tapCount)) {
-        return { valid: false, result: malformed('BitVM2 tap index is outside the canonical tap range') };
+    if (!isValidTapIndex(validatedEnvelope.tapIndex, validatedEnvelope.tapCount)) {
+        return { valid: false, result: malformed('BitVM2 tap index is outside the quarantine envelope tap range') };
     }
 
-    if (!SUPPORTED_BITVM_ENCODINGS.includes(canonical.encoding as BitVmProofEncoding)) {
+    if (!SUPPORTED_BITVM_ENCODINGS.includes(validatedEnvelope.encoding as BitVmProofEncoding)) {
         return { valid: false, result: unsupported('The BitVM2 proof encoding is not supported') };
     }
 
-    if (!isEncodedProof(canonical.proof, canonical.encoding)) {
+    if (!isEncodedProof(validatedEnvelope.proof, validatedEnvelope.encoding)) {
         return { valid: false, result: malformed('BitVM2 proof bytes do not match the declared encoding') };
     }
 
     return {
         valid: true,
         envelope: {
-            schemaVersion: canonical.schemaVersion,
-            proof: canonical.proof,
-            verificationKeyId: canonical.verificationKeyId,
-            verificationKeyDigest: canonical.verificationKeyDigest,
-            publicInputs: [...canonical.publicInputs],
-            curve: canonical.curve,
-            circuitId: canonical.circuitId,
-            encoding: canonical.encoding,
-            network: canonical.network,
+            schemaVersion: validatedEnvelope.schemaVersion,
+            proof: validatedEnvelope.proof,
+            verificationKeyId: validatedEnvelope.verificationKeyId,
+            verificationKeyDigest: validatedEnvelope.verificationKeyDigest,
+            publicInputs: [...validatedEnvelope.publicInputs],
+            curve: validatedEnvelope.curve,
+            circuitId: validatedEnvelope.circuitId,
+            encoding: validatedEnvelope.encoding,
+            network: validatedEnvelope.network,
             blockContext: {
                 height: blockContext.height,
                 hash: blockContext.hash,
             },
-            tapCount: canonical.tapCount,
-            tapIndex: canonical.tapIndex,
-            domainSeparation: canonical.domainSeparation,
-            transactionBinding: canonical.transactionBinding,
-            stateBinding: canonical.stateBinding,
+            tapCount: validatedEnvelope.tapCount,
+            tapIndex: validatedEnvelope.tapIndex,
+            domainSeparation: validatedEnvelope.domainSeparation,
+            transactionBinding: validatedEnvelope.transactionBinding,
+            stateBinding: validatedEnvelope.stateBinding,
         },
     };
 };
 
-const isAuthoritativeVerification = (
-    result: BitVmVerificationResult,
-): result is Extract<BitVmVerificationResult, { status: 'verified' }> => (
-    result.status === 'verified'
-    && result.authoritative === true
-    && isRecord(result.evidence)
-    && isRecord(result.evidence.envelope)
-    && isNonEmptyString(result.evidence.verifierRevision)
-    && isNonEmptyString(result.evidence.verifierDigest)
-);
-
 /**
-* Production BitVM2 entrypoint. No reviewed verifier is integrated, so a
-* structurally valid envelope is explicitly unavailable in every environment.
+* Current BitVM2 entrypoint. No reviewed verifier is integrated, so a
+* structurally valid quarantine envelope is explicitly unavailable in every
+* environment.
 */
 export const verifyBridgeProof = async (
     input: BitVmProofEnvelope | BitVmProofRequest | string,
@@ -305,10 +283,10 @@ export const verifyBridgeProof = async (
     const validation = validateBitVmProofEnvelope(input, network);
     if (!validation.valid) return validation.result;
 
-    return unsupported('No reviewed BitVM2 verifier is integrated; verification is quarantined');
+    return unsupported('No reviewed BitVM2 verifier is integrated; quarantine verification is unsupported');
 };
 
-/** Safe alias retained for existing callers; it no longer returns a boolean. */
+/** Intentionally fail-closed alias; it no longer returns a boolean. */
 export const verifyBitVmProof = verifyBridgeProof;
 
 const legacyDisputeFailure = (reason: string): BitVmDisputeResult => (
@@ -316,8 +294,9 @@ const legacyDisputeFailure = (reason: string): BitVmDisputeResult => (
 );
 
 /**
-* Dispute signing is reachable only from authoritative evidence plus a fully
-* bound canonical PSBT. Current verification never emits that evidence.
+* Current dispute APIs are intentionally breaking and fail closed. They retain
+* structural validation for callers, but no caller-supplied verification result
+* can authorize a signer while the reviewed verifier is unavailable.
 */
 export function initiateDispute(request: BitVmDisputeRequest): Promise<BitVmDisputeResult>;
 export function initiateDispute(tapIndex: number, rawProof: string, network: Network): Promise<BitVmDisputeResult>;
@@ -327,24 +306,31 @@ export async function initiateDispute(
     network?: Network,
 ): Promise<BitVmDisputeResult> {
     if (typeof requestOrTapIndex === 'number') {
-        return legacyDisputeFailure('Legacy BitVM2 dispute requests lack the canonical proof and transaction bindings');
+        void rawProof;
+        void network;
+        return legacyDisputeFailure('Legacy BitVM2 dispute requests lack the quarantine envelope and transaction bindings');
     }
 
     const request = requestOrTapIndex;
+    if (!isRecord(request)) {
+        return disputeFailure('malformed', 'A BitVM2 dispute request object is required');
+    }
+
     const validation = validateBitVmProofEnvelope(request.envelope);
     if (!validation.valid) {
         return disputeFailure(validation.result.status, validation.result.reason);
     }
 
     if (!isValidTapIndex(request.tapIndex) || request.tapIndex !== validation.envelope.tapIndex) {
-        return disputeFailure('malformed', 'BitVM2 dispute tap index is invalid or not bound to the envelope');
+        return disputeFailure('malformed', 'BitVM2 dispute tap index is invalid or not bound to the quarantine envelope');
     }
 
     if (!isNonEmptyString(request.disputePsbt)) {
-        return disputeFailure('malformed', 'A canonical dispute transaction binding is required before signing');
+        return disputeFailure('malformed', 'A dispute transaction binding is required before signing');
     }
 
-    switch (request.verification.status) {
+    const verificationStatus = isRecord(request.verification) ? request.verification.status : undefined;
+    switch (verificationStatus) {
         case 'unsupported':
             return disputeFailure('unsupported', 'Dispute signing requires reviewed BitVM2 verification evidence');
         case 'simulated':
@@ -354,69 +340,18 @@ export async function initiateDispute(
         case 'invalid':
             return disputeFailure('invalid', 'Invalid BitVM2 verification evidence cannot be signed');
         case 'verified':
-            if (!isAuthoritativeVerification(request.verification)) {
-                return disputeFailure('unsupported', 'BitVM2 verification evidence is not authoritative');
-            }
-            {
-                const evidenceValidation = validateBitVmProofEnvelope(request.verification.evidence.envelope);
-                if (!evidenceValidation.valid) {
-                    return disputeFailure(evidenceValidation.result.status, evidenceValidation.result.reason);
-                }
-
-                const requestedEnvelope = validation.envelope;
-                const evidenceEnvelope = evidenceValidation.envelope;
-                const evidenceMatchesRequest = requestedEnvelope.schemaVersion === evidenceEnvelope.schemaVersion
-                    && requestedEnvelope.proof === evidenceEnvelope.proof
-                    && requestedEnvelope.verificationKeyId === evidenceEnvelope.verificationKeyId
-                    && requestedEnvelope.verificationKeyDigest === evidenceEnvelope.verificationKeyDigest
-                    && requestedEnvelope.curve === evidenceEnvelope.curve
-                    && requestedEnvelope.circuitId === evidenceEnvelope.circuitId
-                    && requestedEnvelope.encoding === evidenceEnvelope.encoding
-                    && requestedEnvelope.network === evidenceEnvelope.network
-                    && requestedEnvelope.blockContext.height === evidenceEnvelope.blockContext.height
-                    && requestedEnvelope.blockContext.hash === evidenceEnvelope.blockContext.hash
-                    && requestedEnvelope.tapCount === evidenceEnvelope.tapCount
-                    && requestedEnvelope.tapIndex === evidenceEnvelope.tapIndex
-                    && requestedEnvelope.domainSeparation === evidenceEnvelope.domainSeparation
-                    && requestedEnvelope.transactionBinding === evidenceEnvelope.transactionBinding
-                    && requestedEnvelope.stateBinding === evidenceEnvelope.stateBinding
-                    && requestedEnvelope.publicInputs.length === evidenceEnvelope.publicInputs.length
-                    && requestedEnvelope.publicInputs.every((input, index) => input === evidenceEnvelope.publicInputs[index]);
-
-                if (!evidenceMatchesRequest) {
-                    return disputeFailure('malformed', 'BitVM2 verification evidence is not bound to the requested envelope');
-                }
-            }
-            break;
+            return disputeFailure(
+                'unsupported',
+                'Caller-supplied BitVM2 verification evidence cannot authorize signing; the reviewed verifier is unavailable',
+            );
+        default:
+            return disputeFailure('malformed', 'BitVM2 verification evidence has an unknown status');
     }
 
-    try {
-        const signResult = await requestEnclaveSignature({
-            type: 'psbt',
-            layer: 'BitVM',
-            payload: {
-                psbt: request.disputePsbt,
-                tapIndex: validation.envelope.tapIndex,
-                transactionBinding: validation.envelope.transactionBinding,
-                stateBinding: validation.envelope.stateBinding,
-            },
-            description: 'Sign an authoritative BitVM2 dispute transaction',
-        }, request.vault);
-
-        return {
-            status: 'signed',
-            authoritative: true,
-            signerInvoked: true,
-            signature: signResult.signature,
-        };
-    } catch {
-        return {
-            status: 'signer_failed',
-            authoritative: false,
-            signerInvoked: true,
-            reason: 'The native enclave signer rejected the BitVM2 dispute transaction',
-        };
-    }
+    return disputeFailure(
+        'unsupported',
+        'BitVM2 dispute signing is unsupported until an independently reviewed verifier and signing backend exist',
+    );
 }
 
 export interface BitVmCommitmentSigningRequest extends BitVmDisputeRequest {
@@ -432,24 +367,33 @@ export async function signBitVmCommitment(
     vault?: string,
 ): Promise<BitVmSigningResult> {
     if (typeof requestOrChallengeId === 'string') {
-        return legacyDisputeFailure('Legacy BitVM2 commitment requests lack canonical verification and transaction bindings');
+        void commitment;
+        void vault;
+        return legacyDisputeFailure('Legacy BitVM2 commitment requests lack quarantine verification and transaction bindings');
     }
 
     const request = requestOrChallengeId;
+    if (!isRecord(request)) {
+        return disputeFailure('malformed', 'A BitVM2 commitment request object is required');
+    }
+
     if (!isNonEmptyString(request.challengeId) || !isNonEmptyString(request.commitment)) {
         return disputeFailure('malformed', 'BitVM2 challenge and commitment identifiers are required');
     }
 
-    if (request.commitment !== request.envelope.stateBinding) {
-        return disputeFailure('malformed', 'BitVM2 commitment is not bound to the canonical state commitment');
+    if (!isRecord(request.envelope) || request.commitment !== request.envelope.stateBinding) {
+        return disputeFailure('malformed', 'BitVM2 commitment is not bound to the quarantine envelope state commitment');
     }
 
     return initiateDispute(request);
 }
 
 /** BitVM challenge discovery remains unavailable; no synthetic challenge is returned. */
-export const fetchBitVmChallenges = async (_layer: string): Promise<BitVmChallengeResult> => ({
-    status: 'unsupported',
-    authoritative: false,
-    reason: 'BitVM2 challenge discovery is unavailable until a reviewed protocol backend exists',
-});
+export const fetchBitVmChallenges = async (_layer: string): Promise<BitVmChallengeResult> => {
+    void _layer;
+    return {
+        status: 'unsupported',
+        authoritative: false,
+        reason: 'BitVM2 challenge discovery is unavailable until a reviewed protocol backend exists',
+    };
+};

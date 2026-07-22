@@ -8,15 +8,15 @@ permalink: /whitepaper
 
 ## Abstract
 
-Conxius is the definitive sovereign interface for the entire Bitcoin ecosystem. It bridges the gap between Bitcoin L1 and the burgeoning landscape of Layer 2s, sidechains, and asset protocols. By utilizing an Android-native Secure Enclave model, Conxius provides hardware-level security for BTC, Lightning, Liquid, Stacks, RSK, BOB, RGB, Ordinals, Runes, Ark, BitVM, and State Chains—all within a single, unified mobile application.
+Conxius is the definitive sovereign interface for the entire Bitcoin ecosystem. It bridges the gap between Bitcoin L1 and the burgeoning landscape of Layer 2s, sidechains, and asset protocols. By utilizing an Android-native Secure Enclave model, Conxius provides hardware-level security for supported BTC, Lightning, Liquid, Stacks, RSK, BOB, RGB, Ordinals, Runes, Ark, and State Chain operations—all within a single, unified mobile application. BitVM2 is presented as research/scaffolding only, not as an enabled verifier or dispute-signing integration.
 
 ## 1. The Full Ecosystem Vision
 - **Connectivity Sovereignty**: Remote wallet control via NIP-47 (Nostr Wallet Connect).
 
 Bitcoin is no longer just a store of value; it is a multi-layered programmable ecosystem. Conxius is designed to be the central hub for this "New Bitcoin City," providing:
 - **Security Sovereignty**: Keys are generated and protected by hardware-backed TEE and StrongBox.
-- **Protocol Sovereignty**: Native support for every major Bitcoin-adjacent protocol.
-- **Execution Sovereignty**: On-device signing and verification, minimizing reliance on centralized intermediaries.
+- **Protocol Sovereignty**: Native support for supported Bitcoin-adjacent protocols, with explicit research boundaries where implementations are not yet reviewed.
+- **Execution Sovereignty**: On-device signing for supported operations, minimizing reliance on centralized intermediaries; BitVM2 verification and dispute signing remain quarantined.
 
 ## 2. Cryptographic Architecture
 
@@ -55,11 +55,27 @@ Conxius treats Bitcoin-backed EVM layers as first-class citizens, using standard
 - **Ordinals/Runes**: Native inscription management and balance tracking integrated into the core UTXO manager.
 
 ### 3.5. Ark & State Chains
+
+- **Ark**: Research/scaffolding only in the current wallet. Native V-UTXO
+  derivation, lift, forfeit, and redemption paths fail closed until a reviewed
+  protocol backend and confirmed ASP transaction flow are integrated.
+
 ### 3.6. Babylon Staking & DLCs
 - **Babylon**: Native Bitcoin staking protocol integration enabling yield generation directly from L1 UTXOs while maintaining self-custody.
 - **DLCs**: Discrete Log Contracts for executable agreements on Bitcoin, settled via oracle attestations without intermediary risk.
-- **Ark**: Support for shared UTXOs (VTXOs) via the Ark protocol, enabling instant payments without the liquidity constraints of Lightning.
 - **State Chains**: Sequential derivation for off-chain UTXO transfers, providing high-throughput, low-cost Bitcoin mobility.
+
+### 3.7. BitVM2 Research Boundary
+
+BitVM2 is **RESEARCH / QUARANTINED** in the current wallet. The implementation
+accepts a versioned quarantine/request envelope for non-cryptographic structural
+checks only; verification, challenge discovery, segment generation, and dispute
+signing remain unsupported and non-authoritative in every environment.
+
+The canonical proof, verification-key, public-input, curve, circuit, and encoding
+serialization formats and their registries are unresolved enablement gates. This
+whitepaper does not claim a reviewed BitVM2 verifier, a positive cryptographic
+vector, or a production BitVM2 bridge.
 
 ## 4. Security Hardening
 

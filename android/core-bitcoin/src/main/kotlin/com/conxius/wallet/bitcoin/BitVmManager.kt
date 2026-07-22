@@ -1,10 +1,15 @@
 package com.conxius.wallet.bitcoin
 
 /**
-* Canonical BitVM2 proof envelope metadata shared by the future native
-* verifier boundary. This data class validates structure only; it is not a
-* proof verifier and must not be treated as cryptographic evidence.
+* Versioned BitVM2 quarantine/request envelope shared with TypeScript.
+* This data class validates structure only; it is not the final BitVM2
+* protocol contract or a proof verifier and must not be treated as evidence.
 */
+data class BitVmBlockContext(
+    val height: Long,
+    val hash: String,
+)
+
 data class BitVmProofEnvelope(
     val schemaVersion: String,
     val proof: String,
@@ -15,8 +20,7 @@ data class BitVmProofEnvelope(
     val circuitId: String,
     val encoding: String,
     val network: String,
-    val blockHeight: Long,
-    val blockHash: String,
+    val blockContext: BitVmBlockContext,
     val tapCount: Int,
     val tapIndex: Int,
     val domainSeparation: String,
@@ -72,17 +76,13 @@ sealed interface BitVmDisputeSigningOutcome {
 
     data class Malformed(val reason: String) : BitVmDisputeSigningOutcome
     data class Invalid(val reason: String) : BitVmDisputeSigningOutcome
-    data class SignerFailed(val reason: String) : BitVmDisputeSigningOutcome
-
-    /** Reserved for a reviewed native signer; no current path can construct it. */
-    data class Signed(val signature: ByteArray) : BitVmDisputeSigningOutcome
 }
 
 /**
 * BitVM2 manager quarantine.
 *
 * No reviewed verifier or dispute transaction backend is present in this
-* module. Every canonical production entrypoint therefore returns a typed
+* module. Every production entrypoint therefore returns a typed
 * unsupported outcome in both debug and release builds. Synthetic segments and
 * signatures are intentionally not generated.
 */
@@ -91,7 +91,7 @@ class BitVmManager {
         const val NUM_TAPS = 364
         const val VALIDATING_TAPS = 1
         const val HASHING_TAPS = 363
-        const val PROOF_SCHEMA_VERSION = "conxian.bitvm2.proof.v1"
+        const val QUARANTINE_SCHEMA_VERSION = "conxian.bitvm2.quarantine-envelope.v1"
 
         private val SUPPORTED_ENCODINGS = setOf("hex", "base64", "base64url")
         private val SUPPORTED_NETWORKS = setOf("mainnet", "testnet", "regtest", "devnet")
@@ -99,12 +99,12 @@ class BitVmManager {
         private val BASE64URL_PATTERN = Regex("^(?:[A-Za-z0-9_-]{4})*(?:[A-Za-z0-9_-]{2}(?:==)?|[A-Za-z0-9_-]{3}=?)?$")
     }
 
-    /** Raw proof strings are not a canonical contract and cannot be segmented. */
+    /** Raw proof strings are not the quarantine contract and cannot be segmented. */
     fun generateSegments(rawProof: String): BitVmSegmentGenerationOutcome {
         return if (rawProof.isBlank()) {
-            BitVmSegmentGenerationOutcome.Malformed("A canonical BitVM2 proof envelope is required")
+            BitVmSegmentGenerationOutcome.Malformed("A versioned BitVM2 quarantine envelope is required")
         } else {
-            BitVmSegmentGenerationOutcome.Malformed("Raw BitVM2 proofs cannot be segmented without canonical metadata")
+            BitVmSegmentGenerationOutcome.Malformed("Raw BitVM2 proofs cannot be segmented without quarantine metadata")
         }
     }
 
@@ -123,7 +123,7 @@ class BitVmManager {
     /** A segment cannot be checked without a reviewed verifier. */
     fun verifySegment(tapIndex: Int, segment: String): BitVmVerificationOutcome {
         if (!isValidTapIndex(tapIndex)) {
-            return BitVmVerificationOutcome.Malformed("BitVM2 tap index is outside the canonical tap range")
+            return BitVmVerificationOutcome.Malformed("BitVM2 tap index is outside the quarantine envelope tap range")
         }
         if (segment.isBlank()) {
             return BitVmVerificationOutcome.Malformed("BitVM2 segment cannot be empty")
@@ -137,12 +137,12 @@ class BitVmManager {
         return verifyProof(envelope)
     }
 
-    /** Raw proof inputs fail closed because they omit the canonical envelope. */
+    /** Raw proof inputs fail closed because they omit the quarantine envelope. */
     fun verifyProof(rawProof: String): BitVmVerificationOutcome {
         return if (rawProof.isBlank()) {
-            BitVmVerificationOutcome.Malformed("A canonical BitVM2 proof envelope is required")
+            BitVmVerificationOutcome.Malformed("A versioned BitVM2 quarantine envelope is required")
         } else {
-            BitVmVerificationOutcome.Malformed("Raw BitVM2 proofs cannot be verified without canonical metadata")
+            BitVmVerificationOutcome.Malformed("Raw BitVM2 proofs cannot be verified without quarantine metadata")
         }
     }
 
@@ -150,7 +150,7 @@ class BitVmManager {
     fun verifyProof(envelope: BitVmProofEnvelope): BitVmVerificationOutcome {
         return when (val validation = validateEnvelope(envelope)) {
             is ContractValidation.Valid -> BitVmVerificationOutcome.Unsupported(
-                "No reviewed BitVM2 verifier is integrated; verification is quarantined",
+                "No reviewed BitVM2 verifier is integrated; quarantine verification is unsupported",
             )
 
             is ContractValidation.Malformed -> BitVmVerificationOutcome.Malformed(validation.reason)
@@ -162,14 +162,14 @@ class BitVmManager {
     fun signDispute(tapIndex: Int, commitment: String): BitVmDisputeSigningOutcome {
         if (!isValidTapIndex(tapIndex)) {
             return BitVmDisputeSigningOutcome.Malformed(
-                "BitVM2 dispute tap index is outside the canonical tap range",
+                "BitVM2 dispute tap index is outside the quarantine envelope tap range",
             )
         }
         if (commitment.isBlank()) {
             return BitVmDisputeSigningOutcome.Malformed("BitVM2 state commitment is required")
         }
         return BitVmDisputeSigningOutcome.Unsupported(
-            "BitVM2 dispute signing requires a canonical envelope and reviewed verification evidence",
+            "BitVM2 dispute signing requires a quarantine envelope and reviewed verification evidence",
         )
     }
 
@@ -190,7 +190,7 @@ class BitVmManager {
 
         if (!isValidTapIndex(envelope.tapIndex)) {
             return BitVmDisputeSigningOutcome.Malformed(
-                "BitVM2 dispute tap index is outside the canonical tap range",
+                "BitVM2 dispute tap index is outside the quarantine envelope tap range",
             )
         }
 
@@ -220,8 +220,8 @@ class BitVmManager {
     private fun isValidTapIndex(tapIndex: Int): Boolean = tapIndex in 0 until NUM_TAPS
 
     private fun validateEnvelope(envelope: BitVmProofEnvelope): ContractValidation {
-        if (envelope.schemaVersion != PROOF_SCHEMA_VERSION) {
-            return ContractValidation.Unsupported("The BitVM2 proof schema is not enabled")
+        if (envelope.schemaVersion != QUARANTINE_SCHEMA_VERSION) {
+            return ContractValidation.Unsupported("The BitVM2 quarantine envelope schema is not enabled")
         }
         if (envelope.proof.isBlank()
             || envelope.verificationKeyId.isBlank()
@@ -232,7 +232,7 @@ class BitVmManager {
             || envelope.transactionBinding.isBlank()
             || envelope.stateBinding.isBlank()
         ) {
-            return ContractValidation.Malformed("BitVM2 proof envelope is missing canonical fields")
+            return ContractValidation.Malformed("BitVM2 quarantine envelope is missing required fields")
         }
         if (envelope.publicInputs.isEmpty() || envelope.publicInputs.any { it.isBlank() }) {
             return ContractValidation.Malformed("BitVM2 public inputs must be ordered and non-empty")
@@ -243,11 +243,14 @@ class BitVmManager {
         if (!isEncodedProof(envelope.proof, envelope.encoding)) {
             return ContractValidation.Malformed("BitVM2 proof bytes do not match the declared encoding")
         }
-        if (envelope.network !in SUPPORTED_NETWORKS || envelope.blockHeight < 0L || envelope.blockHash.isBlank()) {
+        if (envelope.network !in SUPPORTED_NETWORKS
+            || envelope.blockContext.height < 0L
+            || envelope.blockContext.hash.isBlank()
+        ) {
             return ContractValidation.Malformed("BitVM2 network or block context is malformed")
         }
         if (envelope.tapCount != NUM_TAPS || !isValidTapIndex(envelope.tapIndex)) {
-            return ContractValidation.Malformed("BitVM2 tap count or index is outside the canonical range")
+            return ContractValidation.Malformed("BitVM2 tap count or index is outside the quarantine envelope range")
         }
         return ContractValidation.Valid
     }

@@ -13,6 +13,7 @@ This document tracks the final launch readiness for ConxianCSF mainnet deploymen
 ### 1. Protocol & Contracts
 - [x] Stacks Bridge (Clarity 4.0) verified for Mainnet.
 - [x] Ark V-UTXO contract (Clarity 4.0) verified for Mainnet.
+- [ ] Ark mobile V-UTXO backend, lift, forfeit, and redemption flow reviewed and enabled.
 - [x] Revenue Automation (1% fee) implemented and tested.
 - [x] DLC Orchestrator implemented for bond lifecycle.
 - [x] Referral Aggregator (5-5-5 logic) implemented and tested.

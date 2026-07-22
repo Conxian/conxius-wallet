@@ -30,12 +30,10 @@ class ProtocolManagerTest {
         assertEquals("pay_invoice", parsed)
     }
 
-    @Test
+    @Test(expected = UnsupportedOperationException::class)
     fun arkLiftConstruction() {
         val manager = ArkManager()
-        val lift = manager.createLiftRequest(listOf("utxo1"), "asp_pk")
-        assertNotNull(lift)
-        assertTrue(lift.contains("ark_lift"))
+        manager.createLiftRequest(100000L, "asp_pk")
     }
 
     @Test

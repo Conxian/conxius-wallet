@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "conxian.bitvm2.quarantine-envelope.v1",
+  "proof": "deadbeef",
+  "verificationKeyId": "bitvm2-research-key",
+  "verificationKeyDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "publicInputs": [
+    "input-0",
+    "input-1"
+  ],
+  "curve": "bn254",
+  "circuitId": "bitvm2-research-circuit",
+  "encoding": "hex",
+  "network": "mainnet",
+  "blockContext": {
+    "height": 840000,
+    "hash": "block-hash-binding"
+  },
+  "tapCount": 364,
+  "tapIndex": 0,
+  "domainSeparation": "conxian.bitvm2.dispute.v1",
+  "transactionBinding": "transaction-binding",
+  "stateBinding": "state-binding"
+}

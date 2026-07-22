@@ -236,7 +236,7 @@ class WalletViewModel(
         viewModelScope.launch {
             try {
                 val txid = arkManager.createLiftRequest(amount, cosignerPk)
-                _error.value = "Ark Lift Signed: $txid"
+                _error.value = "Ark Lift Confirmed: $txid"
             } catch (e: Exception) {
                 _error.value = "Ark failed: ${e.message}"
             }

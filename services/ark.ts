@@ -26,6 +26,27 @@ export interface LiftRequest {
     feeRate?: number;
 }
 
+const isNonEmptyString = (value: unknown): value is string => (
+    typeof value === 'string' && value.trim().length > 0
+);
+
+const isRecord = (value: unknown): value is Record<string, unknown> => (
+    typeof value === 'object' && value !== null
+);
+
+const confirmedTxid = async (response: Response, operation: string): Promise<string> => {
+    if (!response.ok) {
+        throw new Error(`${operation} rejected by the Ark service provider${response.status ? ` (HTTP ${response.status})` : ''}`);
+    }
+
+    const data: unknown = await response.json();
+    if (!isRecord(data) || !isNonEmptyString(data.txid)) {
+        throw new Error(`${operation} response did not include a confirmed transaction id`);
+    }
+
+    return data.txid.trim();
+};
+
 /**
  * Ark Protocol Service (M5 Implementation)
  * Handles off-chain VTXO lifecycle management and Boarding (Lifting).
@@ -38,21 +59,21 @@ export interface LiftRequest {
 export const createLiftPsbt = async (req: LiftRequest): Promise<{ psbtBase64: string, boardingAddress: string }> => {
     try {
         const { ARK_API } = endpointsFor(req.network);
-        
+        if (!ARK_API) throw new Error('Ark lift is unavailable because no service endpoint is configured');
+
         // 1. Fetch ASP Info (Boarding Address & Server Pubkey)
         const response = await fetchWithRetry(`${ARK_API}/v1/info`, {}, 2, 500);
-        let boardingAddress = '';
-        if (response.ok) {
-            const info = await response.json();
-            boardingAddress = info.boardingAddress || info.address;
+        if (!response.ok) {
+            throw new Error(`Ark info request rejected by the service provider${response.status ? ` (HTTP ${response.status})` : ''}`);
         }
-
-        if (!boardingAddress) {
-            // Deterministic Fallback based on ASP ID (Standard Ark Boarding Path)
-            boardingAddress = req.network === 'mainnet'
-                ? 'bc1p8arkaspboardingmainnet'
-                : 'bc1q_ark_asp_prod';
+        const info: unknown = await response.json();
+        const boardingAddressCandidate = isRecord(info)
+            ? (isNonEmptyString(info.boardingAddress) ? info.boardingAddress : info.address)
+            : undefined;
+        if (!isNonEmptyString(boardingAddressCandidate)) {
+            throw new Error('Ark info response did not include a boarding address');
         }
+        const boardingAddress = boardingAddressCandidate;
 
         // 2. Fetch User UTXOs
         const utxos = await fetchUtxos(req.senderAddress, req.network);
@@ -151,54 +172,43 @@ export const syncVtxos = async (address: string, network: Network = 'mainnet'): 
  * This broadcasts a signed forfeit transaction via the ASP.
  */
 export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network: Network, vault?: string): Promise<string> => {
-    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'Ark Transfer', message: `Forfeiting VTXO ${vtxo.txid.slice(0,8)}...` });
-    
-    if (!vtxo.txid || !recipientAddress) throw new Error("Invalid VTXO or Recipient");
+    if (!vtxo || !isNonEmptyString(vtxo.txid) || !isNonEmptyString(recipientAddress)) {
+        throw new Error('Invalid VTXO or recipient');
+    }
 
     try {
         const { ARK_API } = endpointsFor(network);
+        if (!ARK_API) throw new Error('Ark forfeit is unavailable because no service endpoint is configured');
+        if (!isNonEmptyString(vault)) throw new Error('Vault/seed required for Ark forfeit');
 
-        let signature = '';
+        const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(vtxo.txid + recipientAddress))).toString('hex');
+        const signResult = await requestEnclaveSignature({
+            type: 'psbt',
+            layer: 'Ark',
+            payload: {
+                hash: msgHash,
+                vtxoId: vtxo.txid,
+                recipient: recipientAddress,
+            },
+            description: `Forfeit VTXO to ${recipientAddress}`,
+        }, vault);
 
-        if (vault) {
-            const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(vtxo.txid + recipientAddress))).toString("hex");
-            const signResult = await requestEnclaveSignature({
-                type: 'psbt',
-                layer: 'Ark',
-                payload: {
-                    hash: msgHash,
-                    vtxoId: vtxo.txid,
-                    recipient: recipientAddress
-                },
-                description: `Forfeit VTXO to ${recipientAddress}`
-            }, vault);
-            signature = signResult.signature;
-        } else {
-            throw new Error("Vault/Seed required for production Ark forfeit");
-        }
+        const response = await fetchWithRetry(`${ARK_API}/v1/forfeit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                vtxoId: vtxo.txid,
+                recipient: recipientAddress,
+                signature: signResult.signature,
+            }),
+        });
+        const txid = await confirmedTxid(response, 'Ark forfeit');
 
-        if (ARK_API) {
-            const response = await fetchWithRetry(`${ARK_API}/v1/forfeit`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    vtxoId: vtxo.txid,
-                    recipient: recipientAddress,
-                    signature: signature
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return data.txid || "txid_forfeit_confirmed_" + Date.now();
-            }
-        }
-
-        return "forfeit_tx_" + Date.now();
-
-    } catch (e: any) {
-        console.warn('Ark Forfeit failed, falling back to simulation', e);
-        return "forfeit_tx_" + Date.now();
+        notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'Ark Transfer', message: `Forfeited VTXO ${vtxo.txid.slice(0, 8)}...` });
+        return txid;
+    } catch (error) {
+        notificationService.notify({ category: 'TRANSACTION', type: 'error', title: 'Ark Transfer', message: `Forfeit failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+        throw error;
     }
 };
 
@@ -207,9 +217,13 @@ export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network:
  * This creates a transaction that spends the VTXO and broadcasts it to Bitcoin L1.
  */
 export const redeemVtxo = async (vtxo: VTXO, vault: string, network: Network): Promise<string> => {
-    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'Ark Redemption', message: `Initiating Unilateral Exit for ${vtxo.txid.slice(0,8)}...` });
-
     try {
+        if (!vtxo || !isNonEmptyString(vtxo.txid)) throw new Error('Invalid VTXO');
+        if (!isNonEmptyString(vault)) throw new Error('Vault/seed required for Ark redemption');
+
+        const { ARK_API } = endpointsFor(network);
+        if (!ARK_API) throw new Error('Ark redemption is unavailable because no service endpoint is configured');
+
         const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from("redeem:" + vtxo.txid))).toString("hex");
 
         const signResult = await requestEnclaveSignature({
@@ -219,32 +233,28 @@ export const redeemVtxo = async (vtxo: VTXO, vault: string, network: Network): P
             description: `Redeem VTXO ${vtxo.txid.slice(0,8)}`
         }, vault);
 
-        const { ARK_API } = endpointsFor(network);
-        if (ARK_API) {
-             await fetchWithRetry(`${ARK_API}/v1/redeem`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    vtxoId: vtxo.txid,
-                    signature: signResult.signature
-                })
-            });
-        }
+        const response = await fetchWithRetry(`${ARK_API}/v1/redeem`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                vtxoId: vtxo.txid,
+                signature: signResult.signature,
+            }),
+        });
+        const txid = await confirmedTxid(response, 'Ark redemption');
 
-        notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'Ark Redemption', message: 'Unilateral Exit Broadcasted' });
-        return "redemption_tx_" + Date.now();
-
-    } catch (e: any) {
-        notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'Ark Redemption', message: `Redemption failed: ${e.message}` });
-        throw e;
+        notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'Ark Redemption', message: 'Unilateral exit confirmed by the Ark service provider' });
+        return txid;
+    } catch (error) {
+        notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'Ark Redemption', message: `Redemption failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+        throw error;
     }
 };
 
-// Backwards compatibility for existing calls
-export const liftToArk = async (amount: number, address: string, aspId: string): Promise<any> => {
-    return {
-        id: 'vtxo:legacy-shim',
-        amount,
-        status: 'lifting'
-    };
+/** Intentionally fail-closed legacy API; use createLiftPsbt for real requests. */
+export const liftToArk = async (amount: number, address: string, aspId: string): Promise<never> => {
+    void amount;
+    void address;
+    void aspId;
+    throw new Error('Legacy Ark lift API is unsupported; use createLiftPsbt with a confirmed ASP response');
 };

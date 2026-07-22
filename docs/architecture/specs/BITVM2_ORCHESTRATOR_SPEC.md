@@ -10,14 +10,18 @@ This document defines the future enablement gate for a BitVM2 wallet
 integration. It does **not** claim that a 364-tap verifier, proof segmenter,
 challenge source, or dispute transaction builder exists in this repository.
 
-The current TypeScript and Android entrypoints perform only structural contract
-validation and return typed non-authoritative outcomes. No reviewed wallet
-verifier exists, and no current input may produce an authoritative `verified`
-result.
+The current TypeScript and Android entrypoints perform only structural checks on
+a versioned quarantine/request envelope and return typed non-authoritative
+outcomes. No reviewed wallet verifier exists, and no current input may produce
+an authoritative `verified` result.
 
-## 2. Canonical proof envelope
+## 2. Versioned quarantine/request envelope
 
-Every future verifier request MUST use one canonical envelope containing:
+The current quarantine boundary uses the schema ID
+`conxian.bitvm2.quarantine-envelope.v1`. This is a versioned transport/request
+shape for structural gating, **not** the final canonical BitVM2 protocol
+contract. TypeScript and Kotlin intentionally use the same serialized JSON
+shape:
 
 - `schemaVersion`
 - `proof`
@@ -26,24 +30,35 @@ Every future verifier request MUST use one canonical envelope containing:
 - `curve`
 - `circuitId`
 - `encoding`
-- `network` and `blockContext`
+- `network` and nested `blockContext: { height, hash }`
 - `tapCount` and `tapIndex`
 - `domainSeparation`
 - `transactionBinding` and `stateBinding`
 
-The current implementation rejects raw proof strings and malformed/missing
-fields. A structurally complete envelope remains `unsupported` until the
-reviewed backend and its immutable artifact registry are available.
+The shared structural fixture is
+`tests/fixtures/bitvm-quarantine-envelope.json`. It is not a positive
+cryptographic vector and does not establish a proof, verification key, circuit,
+or encoding as valid. The current implementation rejects raw proof strings and
+malformed/missing fields. A structurally complete envelope remains `unsupported`
+until an independently reviewed backend and protocol artifact registries are
+available.
+
+The following enablement details remain unresolved and must not be inferred from
+this envelope: canonical proof serialization, verification-key/public-input
+serialization, curve and circuit identifiers, encoding rules, verifier-key and
+circuit registries, and any cryptographic proof semantics.
 
 ## 3. Quarantined components
 
 ### 3.1 TypeScript service
 
-`services/bitvm.ts` exposes the canonical envelope and discriminated result
-types (`unsupported`, `simulated`, `malformed`, `invalid`, and future
-`verified`). The production verifier always returns `unsupported` after
-structural validation. Challenge discovery is unavailable; no synthetic
-challenge or success log is emitted.
+`services/bitvm.ts` exposes the versioned quarantine envelope and discriminated
+result types (`unsupported`, `simulated`, `malformed`, `invalid`, and a
+type-only future `verified` shape). The current verifier always returns
+`unsupported` after structural validation. `initiateDispute` and
+`signBitVmCommitment` return only non-authoritative outcomes; caller-supplied
+`verified` metadata cannot invoke the signer. Challenge discovery is
+unavailable; no synthetic challenge or success log is emitted.
 
 ### 3.2 Native Android manager
 
@@ -54,17 +69,21 @@ backend must be reviewed and wired before any authoritative outcome is added.
 
 ### 3.3 Signing boundary
 
-Dispute signing MUST require authoritative verification evidence, a valid tap
-index, the complete canonical envelope, and the exact bound dispute transaction.
-Unsupported, malformed, invalid, or simulated outcomes MUST never reach a
-signer. The current implementation therefore has no usable BitVM2 signing
-path.
+If dispute signing is ever enabled, it MUST require verifier-owned authoritative
+evidence, a valid tap index, the complete versioned quarantine/request envelope,
+and the exact bound dispute transaction. Unsupported, malformed, invalid,
+simulated, or caller-fabricated `verified` outcomes MUST never reach a signer.
+The current TypeScript and Android implementations therefore have no usable
+BitVM2 signing path and no executable `signed` success path.
 
 ## 4. Promotion gates
 
-Before enabling `verified`, maintainers MUST provide:
+Before enabling an authoritative verifier result or signing path, maintainers
+MUST provide:
 
-1. An immutable reviewed verifier revision and verification-key/circuit registry.
+1. Canonical, versioned serialization specifications for the proof,
+   verification key, public inputs, curve, circuit, and encoding, plus immutable
+   reviewed verifier and verification-key/circuit registries.
 2. Reproducible positive and negative vectors, including wrong-key, mutated,
    malformed, encoding, network, binding, and tap-index cases.
 3. Independent cryptographic review and reproducible Android/native builds.

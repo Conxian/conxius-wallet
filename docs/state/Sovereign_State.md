@@ -19,12 +19,15 @@ audit documents are evidence records, not a substitute for current validation.
 
 BitVM2 is **RESEARCH / QUARANTINED**. The wallet has no reviewed BitVM2
 verifier, challenge backend, segment generator, or authoritative dispute signer.
-The TypeScript and Android paths validate the canonical envelope fields
+The TypeScript and Android paths validate the versioned quarantine/request
+envelope fields
 (`schemaVersion`, proof, verification-key identifier/digest, ordered public
 inputs, curve, circuit ID, encoding, network/block context, tap count/index,
 domain separation, and transaction/state bindings) and return typed
-non-authoritative outcomes. No input can be treated as `verified`, and
-simulation cannot authorize signing.
+non-authoritative outcomes. This envelope is not the final BitVM2 protocol
+contract: canonical proof/key/public-input/curve/circuit/encoding serialization
+and registries remain unresolved. No input can be treated as `verified`, and
+simulation or caller-fabricated metadata cannot authorize signing.
 
 ## Implementation state note (updated 2026-07-20)
 
