@@ -10,6 +10,11 @@ and status documents remain useful evidence, but their completion checkboxes do
 not override the status recorded here. An item is only marked **Completed** when
 its exit criteria and validation are recorded in the implementation change.
 
+**Current JavaScript toolchain state (2026-07-22):** The supported integrated
+lint path uses TypeScript `6.0.3` with `typescript-eslint` `8.65.0`. The TypeScript
+`7.0.2` dual-toolchain migration remains open in [issue #396](https://github.com/Conxian/conxius-wallet/issues/396)
+and is intentionally not hidden behind lint suppression or broad rule changes.
+
 ## Baseline measurements
 
 | Measure | Baseline evidence | Interpretation |
@@ -107,13 +112,13 @@ its exit criteria and validation are recorded in the implementation change.
 - **Priority:** P1
 - **Status:** Completed
 - **Affected paths:** `package.json`, `pnpm-lock.yaml`, `scripts/ci/verify_local.sh`, `.github/workflows/ci.yml`, `.github/workflows/android-release.yml`, `eslint.config.js`
-- **Impact:** Local, CI, and release environments selected different pnpm versions, while TypeScript `7.0.2` was outside `typescript-eslint` `8.64.0` support and crashed lint.
+- **Impact:** Local, CI, and release environments selected different pnpm versions, while the TypeScript `7.0.2` promotion was outside the current `typescript-eslint` support boundary and crashed lint. The integrated release path therefore remains on the validated TypeScript `6.0.3` bridge until the TypeScript 7 dual-toolchain work in [issue #396](https://github.com/Conxian/conxius-wallet/issues/396) is complete.
 - **Owner:** Unassigned
-- **Exit criteria:** `packageManager` declares pnpm `11.13.0`; CI/release/local verification select it through Corepack or the action; TypeScript is on a supported line; frozen install and lint pass without broad rule weakening.
-- **Validation:** `corepack pnpm --version` reports `11.13.0`; `CI=true corepack pnpm install --frozen-lockfile` passed; `corepack pnpm exec tsc --noEmit` passed; `corepack pnpm run lint` passed with 0 errors and 667 warnings. Repository verify reaches the web build and is separately blocked by environment exit `137`.
+- **Exit criteria:** `packageManager` declares pnpm `11.13.0`; CI/release/local verification select it through Corepack or the action; TypeScript `6.0.3` remains the explicit supported bridge for the current `typescript-eslint` line; frozen install and lint pass without broad rule weakening.
+- **Validation:** `CI=true corepack pnpm install --frozen-lockfile` passed; `corepack pnpm exec tsc --noEmit` passed on TypeScript `6.0.3`; `corepack pnpm run lint` passed with 0 errors and the repository's existing warnings. The TypeScript 7 dual-toolchain migration and its editor, Vite, native, rollback, and approval gates remain tracked in [issue #396](https://github.com/Conxian/conxius-wallet/issues/396).
 - **Target milestone:** M16 release baseline
 - **Metrics baseline:** Local `10.28.1`, CI `11.13.0`, release `10.30.3`; lint exit `2` with the `Cjs` crash.
-- **Evidence:** [`CONTRIBUTING.md`](../../CONTRIBUTING.md); [`Sovereign_State.md`](../state/Sovereign_State.md); `eslint.config.js`
+- **Evidence:** [`CONTRIBUTING.md`](../../CONTRIBUTING.md); [`Sovereign_State.md`](../state/Sovereign_State.md); `eslint.config.js`; [issue #396](https://github.com/Conxian/conxius-wallet/issues/396)
 
 ### TD-P1-006 — E2E and Android CI coverage
 
