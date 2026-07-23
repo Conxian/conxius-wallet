@@ -1,5 +1,5 @@
-name: Conxian Baseline Review
-description: Review this repository and complete the next highest-value improvement.
+name: Conxian Baseline Review Form
+description: Structured issue form for selecting and documenting one high-value repository improvement.
 title: "[CON-XXX] Baseline Review: [Repository Name]"
 labels: ["Hygiene", "Governance"]
 body:
