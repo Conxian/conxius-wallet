@@ -1,0 +1,64 @@
+name: Conxian Baseline Review Form
+description: Structured issue form for selecting and documenting one high-value repository improvement.
+title: "[CON-XXX] Baseline Review: [Repository Name]"
+labels: ["Hygiene", "Governance"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Objective
+        Review this repository and complete the next highest-value improvement using the Conxian GitHub review baseline.
+  - type: dropdown
+    id: repo_focus
+    attributes:
+      label: Repo Focus
+      description: Choose the targeted repository in the Conxian Ecosystem.
+      options:
+        - conxius-wallet
+        - lib-conxian-core
+        - conxian-gateway
+        - conxius-platform
+        - conxian-nexus
+    validations:
+      required: true
+  - type: checkboxes
+    id: baseline_concerns
+    attributes:
+      label: Baseline Review Concerns & Preconditions
+      description: Select any concerns identified during initial scanning.
+      options:
+        - label: "Public/Private boundary or separation risk"
+        - label: "Possible sensitive configuration exposure (e.g., .env)"
+        - label: "Tracked runtime/generated artifacts (node_modules, test-results, dist, public/assets)"
+        - label: "Inconsistent governance (missing README, LICENSE, SECURITY.md, CODEOWNERS)"
+        - label: "Weak release/versioning discipline or version mismatch"
+  - type: textarea
+    id: selected_task
+    attributes:
+      label: Selected Task & Priority
+      description: Describe the single high-value, self-contained task chosen for remediation.
+      placeholder: |
+        Priority chosen (1-6): [e.g., Priority 3 - CI Hygiene and Action Pinning]
+        Description: [Details of the chosen improvement]
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence Found
+      description: List files, lines, or logs proving the existence of the concern.
+      placeholder: |
+        - File: .github/workflows/ci.yml
+        - Line 12: Uses unpinned checkout action.
+    validations:
+      required: true
+  - type: textarea
+    id: implementation_details
+    attributes:
+      label: Implementation & Verification Steps
+      description: Outline the changes made and the validation suite used to confirm correctness.
+      placeholder: |
+        - Changes: [Files edited]
+        - Tests: [Tests run, e.g., pnpm run verify]
+    validations:
+      required: true
