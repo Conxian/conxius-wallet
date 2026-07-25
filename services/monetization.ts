@@ -1,5 +1,10 @@
 import { Network, AppState } from '../types';
-import { requestEnclaveSignature } from './signer';
+import {
+    createUnverifiedValueOperationRequest,
+    createValueOperationNonce,
+    executeValueOperation,
+    requireValueOperationSignature,
+} from './value-operation';
 
 /**
  * Monetization Service (v1.9.5)
@@ -35,13 +40,16 @@ export const signB2bInvoice = async (
     currency: string,
     vault: string
 ): Promise<string> => {
-    const payload = { invoiceId, amount, currency, timestamp: Date.now() };
-    const signResult = await requestEnclaveSignature({
-        type: 'message',
-        layer: 'Mainnet',
-        payload,
-        description: `Authorize B2B Payment: ${amount} ${currency}`
-    }, vault);
+    const payload = { invoiceId, amount, currency };
+    const signResult = requireValueOperationSignature(await executeValueOperation(
+        createUnverifiedValueOperationRequest({
+            operationType: 'sign', chainLayer: 'Mainnet', payload, network: 'mainnet',
+            purpose: 'b2b.invoice-value-authorization', nonce: createValueOperationNonce(),
+            audience: 'conxian-gateway', keyIdentity: 'wallet.bitcoin.account-0',
+            algorithm: 'secp256k1-ecdsa', signingType: 'message',
+            description: `Authorize B2B Payment: ${amount} ${currency}`,
+        }), vault, { userConfirmed: true },
+    ));
 
     return signResult.signature;
 };

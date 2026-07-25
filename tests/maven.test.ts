@@ -57,13 +57,14 @@ describe('Maven Service', () => {
         expect(assets).toEqual([]);
     });
 
-    it('should create and broadcast Maven transfer', async () => {
+    it('quarantines Maven transfer before signing or sequencer broadcast', async () => {
         mockFetch.mockResolvedValueOnce({
             ok: true,
             json: () => Promise.resolve({ txid: 'mav_txid_123' })
         });
 
-        const txid = await createMavenTransfer('asset_id', 10, 'recipient_addr', 'mock_vault');
-        expect(txid).toBe('mav_txid_123');
+        await expect(createMavenTransfer('asset_id', 10, 'recipient_addr', 'mock_vault'))
+            .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        expect(mockFetch).not.toHaveBeenCalled();
     });
 });

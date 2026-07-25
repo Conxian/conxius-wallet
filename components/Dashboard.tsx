@@ -24,9 +24,17 @@ import {
 } from 'lucide-react';
 import { AppContext } from '../context';
 import { Asset, BitcoinLayer } from '../types';
-import { SignRequest } from '../services/signer';
 import { getTranslation } from '../services/i18n';
 import { generateRandomString } from '../services/random';
+import { broadcastTransaction, fetchUtxos } from '../services/protocol';
+import { buildPsbt } from '../services/psbt';
+import { getRecommendedFees } from '../services/fees';
+import { endpointsFor } from '../services/network';
+import {
+  createUnverifiedValueOperationRequest,
+  createValueOperationNonce,
+  valueOperationOutcomeMessage,
+} from '../services/value-operation';
 import AssetDetailModal from './AssetDetailModal';
 import UTXOManager from './UTXOManager';
 import SilentPayments from './SilentPayments';
@@ -62,10 +70,6 @@ const Dashboard: React.FC = () => {
   const network = state.network;
 
   const handleQrError = () => setQrError(true);
-
-  const broadcastBtcTx = async (hex: string, net: string) => {
-    return "txid_" + generateRandomString(12);
-  };
 
   return (
     <div className="p-6 md:p-8 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -242,15 +246,33 @@ const Dashboard: React.FC = () => {
                           </div>
                       </div>
                       <button
-                        onClick={() => {
-                          const psbt = "dGhpcyBpcyBhIG1vY2sgcHlidA==";
-                          setPsbtBase64(psbt);
-                          setSendStep('sign');
+                        onClick={async () => {
+                          setIsSigning(true);
+                          try {
+                            const fromAddress = state.walletConfig?.masterAddress || '';
+                            if (!fromAddress) throw new Error('Wallet address unavailable');
+                            const utxos = await fetchUtxos(fromAddress, network);
+                            const feeRate = (await getRecommendedFees(endpointsFor(network, state).BTC_API)).fastestFee;
+                            const psbt = await buildPsbt({
+                              utxos,
+                              toAddress: sendAddress,
+                              amountSats: Number(sendAmount),
+                              changeAddress: fromAddress,
+                              feeRate,
+                              network,
+                            });
+                            setPsbtBase64(psbt);
+                            setSendStep('sign');
+                          } catch (error) {
+                            appContext.notify('error', error instanceof Error ? error.message : 'PSBT construction failed');
+                          } finally {
+                            setIsSigning(false);
+                          }
                         }}
-                        disabled={!sendAddress || !sendAmount}
+                        disabled={!sendAddress || !sendAmount || isSigning}
                         className="w-full bg-brand-deep text-white font-black py-5 rounded-2xl uppercase tracking-widest hover:bg-ivory transition-all disabled:opacity-50 shadow-lg"
                       >
-                        Construct PSBT
+                        {isSigning ? 'Constructing PSBT...' : 'Construct PSBT'}
                       </button>
                   </div>
               )}
@@ -271,14 +293,34 @@ const Dashboard: React.FC = () => {
                         onClick={async () => {
                             setIsSigning(true);
                             try {
-                                const signReq: SignRequest = {
-                                    type: 'psbt',
-                                    layer: 'Mainnet',
-                                    payload: { psbt: psbtBase64, network },
-                                    description: `Sign PSBT`
-                                };
-                                const result = await appContext.authorizeSignature(signReq);
-                                setSignedHex(result.broadcastReadyHex || 'mock_hex_abc123');
+                                const result = await appContext.authorizeValueOperation(
+                                  createUnverifiedValueOperationRequest({
+                                    operationType: 'send',
+                                    chainLayer: 'Mainnet',
+                                    payload: {
+                                      psbt: psbtBase64,
+                                      destination: sendAddress,
+                                      amountSats: Number(sendAmount),
+                                    },
+                                    network,
+                                    purpose: 'wallet.send.bitcoin',
+                                    nonce: createValueOperationNonce(),
+                                    audience: 'conxius-wallet',
+                                    keyIdentity: 'wallet.bitcoin.account-0',
+                                    algorithm: 'secp256k1-ecdsa',
+                                    signingType: 'psbt',
+                                    description: `Send ${sendAmount} sats to ${sendAddress}`,
+                                  }),
+                                );
+                                if (result.status !== 'allowed') {
+                                  appContext.notify('error', valueOperationOutcomeMessage(result), 'Signing Quarantined');
+                                  return;
+                                }
+                                if (!result.signature?.broadcastReadyHex) {
+                                  appContext.notify('error', 'Native signer returned no broadcast-ready transaction.', 'Signing Failed');
+                                  return;
+                                }
+                                setSignedHex(result.signature.broadcastReadyHex);
                                 setSendStep('broadcast');
                             } catch (e) {
                                 appContext?.notify('error', 'Signing Failed');
@@ -307,7 +349,7 @@ const Dashboard: React.FC = () => {
                         onClick={async () => {
                             setIsBroadcasting(true);
                             try {
-                                const txid = await broadcastBtcTx(signedHex, network);
+                                const txid = await broadcastTransaction(signedHex, 'Mainnet', network);
                                 setBroadcastResult(txid);
                                 appContext?.notify('success', 'Transaction Broadcasted!');
                                 setTimeout(() => { setShowSend(false); setSendStep('form'); }, 2000);

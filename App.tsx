@@ -49,7 +49,12 @@ import { AppContext, initialAppState } from './context';
 import { getEnclaveBlob, persistState, removeEnclaveBlob, STORAGE_KEY } from './services/enclave-storage';
 import { getTranslation } from './services/i18n';
 import { AppState, WalletConfig, AppMode, Asset, SilentPaymentScanOptions, SilentPaymentScanState, SilentPaymentUtxo } from './types';
-import { SignRequest } from './services/signer';
+import {
+  evaluateValueOperation,
+  executeValueOperation,
+  ValueOperationOutcome,
+  ValueOperationRequest,
+} from './services/value-operation';
 import { cancelSilentPaymentScan, dedupeSilentPaymentUtxos, getSilentPaymentScanStatus, scanForSilentPayments } from './services/silent-payments';
 
 const BOOT_SEQUENCE = [
@@ -102,7 +107,10 @@ const App: React.FC = () => {
   const [bootStep, setBootStep] = useState(0);
   const [enclaveExists, setEnclaveExists] = useState(false);
   const [toasts, setToasts] = useState<any[]>([]);
-  const [pendingSignRequest, setPendingSignRequest] = useState<{ request: SignRequest, resolve: (val: any) => void } | null>(null);
+  const [pendingValueOperation, setPendingValueOperation] = useState<{
+    request: ValueOperationRequest;
+    resolve: (outcome: ValueOperationOutcome) => void;
+  } | null>(null);
 
   const currentPinRef = useRef<string | null>(null);
 
@@ -253,10 +261,21 @@ const App: React.FC = () => {
 
   const removeToast = (id: string) => setToasts((prev: any) => prev.filter((t: any) => t.id !== id));
 
-  const authorizeSignature = async (request: SignRequest) => {
-    return new Promise<any>((resolve) => {
-      setPendingSignRequest({ request, resolve });
+  const authorizeValueOperation = async (request: ValueOperationRequest): Promise<ValueOperationOutcome> => {
+    return new Promise<ValueOperationOutcome>((resolve) => {
+      setPendingValueOperation({ request, resolve });
     });
+  };
+
+  const completeValueOperation = async (userConfirmed: boolean) => {
+    const pending = pendingValueOperation;
+    if (!pending) return;
+    setPendingValueOperation(null);
+
+    const outcome = userConfirmed
+      ? await executeValueOperation(pending.request, STORAGE_KEY, { userConfirmed: true })
+      : evaluateValueOperation(pending.request, { userConfirmed: false });
+    pending.resolve(outcome);
   };
 
   const setWalletConfig = async (config: WalletConfig, pin?: string) => {
@@ -303,12 +322,6 @@ const App: React.FC = () => {
   };
 
   const t = (key: string) => getTranslation(state.language, key);
-
-  const getPayloadMessage = (payload: unknown): string => {
-    if (typeof payload === 'string') return payload;
-    if (payload && typeof (payload as { message?: string }).message === 'string') return (payload as { message: string }).message;
-    return JSON.stringify(payload);
-  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -372,7 +385,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <AppContext.Provider value={{ state: state as any, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify: notifyUser, authorizeSignature, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, scanSilentPayments, cancelSilentPaymentScan: cancelAppSilentPaymentScan, getWormholeSigner }}>
+    <AppContext.Provider value={{ state: state as any, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify: notifyUser, authorizeValueOperation, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, scanSilentPayments, cancelSilentPaymentScan: cancelAppSilentPaymentScan, getWormholeSigner }}>
       <div className={`flex bg-ivory text-brand-deep min-h-screen selection:bg-accent-earth/30 overflow-hidden`}>
         <div className="hidden md:block">
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -421,11 +434,11 @@ const App: React.FC = () => {
           </div>
           {activeTab !== 'menu' && <SatoshiAIChat />}
 
-          {pendingSignRequest && (
+          {pendingValueOperation && (
             <SignLoginMessageModal
-                message={getPayloadMessage(pendingSignRequest.request.payload)}
-                onConfirm={() => pendingSignRequest.resolve(true)}
-                onCancel={() => pendingSignRequest.resolve(false)}
+                message={pendingValueOperation.request.description}
+                onConfirm={() => void completeValueOperation(true)}
+                onCancel={() => void completeValueOperation(false)}
             />
           )}
           <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />

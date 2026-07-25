@@ -11,20 +11,12 @@ vi.mock("../services/signer", () => ({
 }));
 
 describe("B2B Gateway Integration", () => {
-    it("should sign a corporate invoice via enclave", async () => {
+    it("quarantines value-bearing invoice authorization without authoritative evidence", async () => {
         const id = "inv_corporate_001";
         const amount = 1000000;
 
-        // Mocking the behavior since we didn't add signB2bInvoice to monetization.ts yet
-        // or we use the existing ones. Actually, let's verify if we should add it.
-        const result = await requestEnclaveSignature({
-            type: 'message',
-            layer: 'B2B',
-            payload: { id, amount },
-            description: 'Sign B2B Invoice'
-        }, 'corporate_vault');
-
-        expect(result.signature).toBe("b2b_sig_enclave_hex");
-        expect(requestEnclaveSignature).toHaveBeenCalled();
+        await expect(signB2bInvoice(id, amount, 'BTC', 'corporate_vault'))
+            .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        expect(requestEnclaveSignature).not.toHaveBeenCalled();
     });
 });

@@ -1,8 +1,7 @@
 import { AppState } from "../types";
 import { notificationService } from './notifications';
 import { Network } from '../types';
-import { endpointsFor, fetchWithRetry, sanitizeError } from './network';
-import { requestEnclaveSignature } from './signer';
+import { fetchWithRetry, sanitizeError } from './network';
 import { generateRandomString } from './random';
 import { calculateEffectiveFeeRate } from './monetization';
 
@@ -128,9 +127,8 @@ export const fetch1inchQuote = async (
     }
 };
 
-export const executeBoltzSwap = async (invoice: string, refundAddress: string, network: Network): Promise<string> => {
-    notificationService.notifyTransaction('Boltz Swap', 'Initiating Submarine Swap...', true);
-    return 'boltz_tx_' + Date.now();
+export const executeBoltzSwap = async (_invoice: string, _refundAddress: string, _network: Network): Promise<string> => {
+    throw new Error('BOLTZ_SWAP_UNSUPPORTED: authoritative execution and settlement receipt adapter unavailable');
 };
 
 export const buildThorchainMemo = (action: 'SWAP' | 'ADD', asset: string, destAddr: string, limit?: number): string => `${action}:${asset}:${destAddr}${limit ? ':' + limit : ''}`;
@@ -169,7 +167,6 @@ export const createChangellyTransaction = async (quote: SwapQuote, destAddress: 
     }
 };
 
-export const executeGasSwap = async (amount: number, network: Network): Promise<string> => {
-    notificationService.notifyTransaction('Gas Abstraction', 'Swapping for native gas...', true);
-    return 'gas_swap_tx_' + Date.now();
+export const executeGasSwap = async (_amount: number, _network: Network): Promise<string> => {
+    throw new Error('GAS_SWAP_UNSUPPORTED: authoritative execution and settlement receipt adapter unavailable');
 };

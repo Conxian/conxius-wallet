@@ -44,8 +44,8 @@ verification, and deeper reorg recovery remain outside this merged slice.
 ## 🛡️ Security Architecture
 - **CXN Guardian**: Local privacy filtering active for all AI/Network egress.
 - **The Conclave**: Android Keystore-backed mnemonic protection, requesting StrongBox where supported with an explicit TEE fallback for existing AES storage; universal StrongBox backing and device qualification are not claimed.
-- **KeyMint / Play Integrity boundary**: The dedicated P-256 authorization evidence and Play Integrity `1.6.0` opaque-token client seams are implemented; backend verification, real-device qualification, durable replay/freshness policy, and value-operation enforcement remain open. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md).
-- **Fail-Closed**: `ProductionRuntimeGuard.failClosed()` enforces release-build safety across native managers; the TypeScript signer must also reject native enclave failures without software fallback.
+- **KeyMint / Play Integrity boundary**: The dedicated P-256 authorization evidence and Play Integrity `1.6.0` opaque-token client seams are implemented. The wallet-owned value-operation gate now enforces typed request/evidence binding, local replay checks, and native-only production value signing; backend verification, real-device/provider/protocol qualification, durable replay, and release acceptance remain open. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md) and [CON-1546 boundary report](../reports/CON_1546_VALUE_OPERATION_BOUNDARY.md).
+- **Fail-Closed**: `ProductionRuntimeGuard.failClosed()` enforces release-build safety across native managers. `services/value-operation.ts` prevents missing/stale/non-authoritative evidence and web/worker signing from authorizing value operations; native rejection never falls through to software signing.
 - **Secret Scanning**: A checksum-verified, tokenless Gitleaks CLI plus optional
   GitGuardian are integrated in CI. `.gitleaks.toml` is narrow and
   `.gitleaksignore` is intentionally empty.

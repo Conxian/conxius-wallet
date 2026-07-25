@@ -1,4 +1,3 @@
-import { requestEnclaveSignature } from './signer';
 import * as bitcoin from 'bitcoinjs-lib';
 import { notificationService } from './notifications';
 import { endpointsFor, fetchWithRetry } from './network';
@@ -6,6 +5,12 @@ import { fetchUtxos } from './protocol';
 import { fetchBtcPrice } from './prices';
 import { Network, UTXO } from '../types';
 import { estimateVbytes } from './psbt';
+import {
+    createUnverifiedValueOperationRequest,
+    createValueOperationNonce,
+    executeValueOperation,
+    requireValueOperationSignature,
+} from './value-operation';
 
 export interface VTXO {
     txid: string;
@@ -151,54 +156,40 @@ export const syncVtxos = async (address: string, network: Network = 'mainnet'): 
  * This broadcasts a signed forfeit transaction via the ASP.
  */
 export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network: Network, vault?: string): Promise<string> => {
-    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'Ark Transfer', message: `Forfeiting VTXO ${vtxo.txid.slice(0,8)}...` });
+    notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'Ark Transfer', message: `Preparing VTXO ${vtxo.txid.slice(0,8)} forfeit...` });
     
     if (!vtxo.txid || !recipientAddress) throw new Error("Invalid VTXO or Recipient");
 
     try {
         const { ARK_API } = endpointsFor(network);
 
-        let signature = '';
+        if (!vault) throw new Error("Vault required for production Ark forfeit");
+        if (!ARK_API) throw new Error('ARK_BROADCAST_UNSUPPORTED: authoritative ASP endpoint unavailable');
 
-        if (vault) {
-            const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(vtxo.txid + recipientAddress))).toString("hex");
-            const signResult = await requestEnclaveSignature({
-                type: 'psbt',
-                layer: 'Ark',
-                payload: {
-                    hash: msgHash,
-                    vtxoId: vtxo.txid,
-                    recipient: recipientAddress
-                },
-                description: `Forfeit VTXO to ${recipientAddress}`
-            }, vault);
-            signature = signResult.signature;
-        } else {
-            throw new Error("Vault/Seed required for production Ark forfeit");
-        }
+        const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(vtxo.txid + recipientAddress))).toString("hex");
+        const signResult = requireValueOperationSignature(await executeValueOperation(
+            createUnverifiedValueOperationRequest({
+                operationType: 'transfer', chainLayer: 'Ark',
+                payload: { hash: msgHash, vtxoId: vtxo.txid, recipient: recipientAddress },
+                network, purpose: 'ark.forfeit-vtxo', nonce: createValueOperationNonce(),
+                audience: 'conxius-wallet', keyIdentity: 'wallet.ark.account-0',
+                algorithm: 'secp256k1-schnorr', signingType: 'psbt',
+                description: `Forfeit VTXO to ${recipientAddress}`,
+            }), vault, { userConfirmed: true },
+        ));
 
-        if (ARK_API) {
-            const response = await fetchWithRetry(`${ARK_API}/v1/forfeit`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    vtxoId: vtxo.txid,
-                    recipient: recipientAddress,
-                    signature: signature
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return data.txid || "txid_forfeit_confirmed_" + Date.now();
-            }
-        }
-
-        return "forfeit_tx_" + Date.now();
+        const response = await fetchWithRetry(`${ARK_API}/v1/forfeit`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ vtxoId: vtxo.txid, recipient: recipientAddress, signature: signResult.signature })
+        });
+        if (!response.ok) throw new Error('Ark ASP rejected forfeit');
+        const data = await response.json();
+        if (typeof data.txid !== 'string' || !data.txid) throw new Error('Ark ASP returned no authoritative transaction ID');
+        return data.txid;
 
     } catch (e: any) {
-        console.warn('Ark Forfeit failed, falling back to simulation', e);
-        return "forfeit_tx_" + Date.now();
+        notificationService.notify({ category: 'TRANSACTION', type: 'error', title: 'Ark Transfer', message: `Forfeit failed: ${e.message}` });
+        throw e;
     }
 };
 
@@ -207,32 +198,33 @@ export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network:
  * This creates a transaction that spends the VTXO and broadcasts it to Bitcoin L1.
  */
 export const redeemVtxo = async (vtxo: VTXO, vault: string, network: Network): Promise<string> => {
-    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'Ark Redemption', message: `Initiating Unilateral Exit for ${vtxo.txid.slice(0,8)}...` });
+    notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'Ark Redemption', message: `Preparing unilateral exit for ${vtxo.txid.slice(0,8)}...` });
 
     try {
         const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from("redeem:" + vtxo.txid))).toString("hex");
 
-        const signResult = await requestEnclaveSignature({
-            type: 'message',
-            layer: 'Ark',
-            payload: { hash: msgHash },
-            description: `Redeem VTXO ${vtxo.txid.slice(0,8)}`
-        }, vault);
-
         const { ARK_API } = endpointsFor(network);
-        if (ARK_API) {
-             await fetchWithRetry(`${ARK_API}/v1/redeem`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    vtxoId: vtxo.txid,
-                    signature: signResult.signature
-                })
-            });
-        }
+        if (!ARK_API) throw new Error('ARK_REDEMPTION_UNSUPPORTED: authoritative ASP endpoint unavailable');
+        const signResult = requireValueOperationSignature(await executeValueOperation(
+            createUnverifiedValueOperationRequest({
+                operationType: 'withdraw', chainLayer: 'Ark', payload: { hash: msgHash, vtxoId: vtxo.txid },
+                network, purpose: 'ark.redeem-vtxo', nonce: createValueOperationNonce(),
+                audience: 'conxius-wallet', keyIdentity: 'wallet.ark.account-0',
+                algorithm: 'secp256k1-schnorr', signingType: 'message',
+                description: `Redeem VTXO ${vtxo.txid.slice(0,8)}`,
+            }), vault, { userConfirmed: true },
+        ));
+
+        const response = await fetchWithRetry(`${ARK_API}/v1/redeem`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ vtxoId: vtxo.txid, signature: signResult.signature })
+        });
+        if (!response.ok) throw new Error('Ark ASP rejected redemption');
+        const data = await response.json();
+        if (typeof data.txid !== 'string' || !data.txid) throw new Error('Ark ASP returned no authoritative redemption transaction ID');
 
         notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'Ark Redemption', message: 'Unilateral Exit Broadcasted' });
-        return "redemption_tx_" + Date.now();
+        return data.txid;
 
     } catch (e: any) {
         notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'Ark Redemption', message: `Redemption failed: ${e.message}` });

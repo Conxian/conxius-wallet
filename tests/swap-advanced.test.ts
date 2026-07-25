@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fetchLifiQuote } from '../services/swap';
+import { executeBoltzSwap, executeGasSwap, fetchLifiQuote } from '../services/swap';
 
 describe('Advanced Swap Service (LI.FI Integration)', () => {
     it('should fetch a LI.FI quote (Mocked)', async () => {
@@ -24,5 +24,15 @@ describe('Advanced Swap Service (LI.FI Integration)', () => {
         expect(quote.provider).toBe('LI.FI');
         expect(quote.toAmount).toBe(0.095);
         expect(quote.transactionRequest).toBeDefined();
+    });
+
+    it('quarantines Boltz execution instead of returning a synthetic transaction ID', async () => {
+        await expect(executeBoltzSwap('lnbc1invoice', 'bc1qrefund', 'mainnet'))
+            .rejects.toThrow('BOLTZ_SWAP_UNSUPPORTED');
+    });
+
+    it('quarantines gas swap execution instead of returning a synthetic transaction ID', async () => {
+        await expect(executeGasSwap(1000, 'mainnet'))
+            .rejects.toThrow('GAS_SWAP_UNSUPPORTED');
     });
 });

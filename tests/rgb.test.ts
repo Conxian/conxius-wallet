@@ -55,9 +55,8 @@ describe('RGB Service', () => {
     expect(isValid).toBe(false);
   });
 
-  it('should create an RGB transfer consignment', async () => {
-    const consignment = await createRgbTransfer('rgb:asset1', 100, 'blindedutxo1', 'mockvault');
-    expect(consignment.assetId).toBe('rgb:asset1');
-    expect(consignment.witness).toBe('mock_signature_hex');
+  it('quarantines RGB transfer instead of returning a pending synthetic anchor', async () => {
+    await expect(createRgbTransfer('rgb:asset1', 100, 'blindedutxo1', 'mockvault'))
+      .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
   });
 });

@@ -31,8 +31,10 @@ Those seams are **not** a hardware qualification, a backend attestation
 verifier, a production authorization decision, or proof that protocol signing
 keys are StrongBox-backed. The P0 exit gate stays open until real-device
 evidence, server verification, durable freshness/replay policy, centralized
-value-operation enforcement, privacy-minimized telemetry, staged rollout and
-rollback procedures, and independent review are complete.
+authoritative provider evidence integration, durable replay, privacy-minimized
+telemetry, staged rollout and rollback procedures, and independent review are
+complete. The wallet-side gate is now documented separately in the
+[CON-1546 boundary report](CON_1546_VALUE_OPERATION_BOUNDARY.md).
 
 ## Boundary model
 
@@ -41,7 +43,7 @@ rollback procedures, and independent review are complete.
 | **Collection** | Creates or inspects a separate non-exportable P-256 authorization key; returns public key, certificate-chain bytes, key identity, package/signing identity, and local `KeyInfo` evidence. Requests an opaque Standard API Play Integrity token. | Capture signed evidence from a real-device matrix, preserve provenance, and define retention/redaction rules. |
 | **Request binding** | Versioned, length-prefixed SHA-256 binding covers operation digest, nonce, KeyMint challenge, key identity, package name, signing-certificate identity, and policy. A URL-safe unpadded Base64 transport form is available. | Recompute the exact same canonical bytes/hash on the backend and reject mismatches, missing fields, altered package identity, stale timestamps, or challenge/operation correlation failures. |
 | **Backend verification** | None. Play Integrity tokens remain opaque on-device. | Verify Android Key Attestation chains, trust roots, revocation, challenge, app identity, security level, boot state, patch state, and policy. Decrypt/verify the Play Integrity token on a trusted server and validate its request details and verdicts. |
-| **Authorization enforcement** | Local policy evaluation rejects software, unknown, unavailable, unsupported, or non-StrongBox evidence under the applicable policy. This is evidence classification, not a wallet value-operation gate. | A centralized server-backed gate must make the allow/quarantine/reject decision for value operations, fail closed on missing or stale evidence, and prevent bypass through alternate protocol entry points. See [CON-1546](https://linear.app/conxian-labs/issue/CON-1546/p0-add-centralized-wallet-value-operation-gate-and-quarantine). |
+| **Authorization enforcement** | Local KeyMint policy evaluates evidence classification. Separately, the wallet-owned CON-1546 gate now binds value-operation requests/evidence, returns typed allow/reject/quarantine/simulated/unsupported outcomes, and permits only `allowed` outcomes to reach native signing. Current callers remain quarantined without authoritative external evidence. | A trusted backend must verify provider evidence, issue the exact request-bound authoritative result consumed by the wallet, and enforce durable one-time replay/idempotency. Alternate protocol entry points and production rollout still require qualification. See the [CON-1546 boundary report](CON_1546_VALUE_OPERATION_BOUNDARY.md). |
 | **Protocol-key custody** | The new P-256 key is separate from existing AES seed/database storage and has no signing method in this slice. | Independently prove custody and authorization for each protocol signing path. Do not infer Bitcoin/Stacks/secp256k1/Schnorr hardware qualification from this P-256 evidence. |
 
 ## Implemented evidence
@@ -107,8 +109,8 @@ authorization decision from a Play Integrity token or a web fallback; the
 token remains opaque until a trusted backend verifies it.
 
 These implementation details do not close the qualification blockers, backend
-verification checklist, centralized value-operation gate, or P0 exit gate
-documented below.
+verification checklist, authoritative evidence integration, durable replay, or
+P0 exit gate documented below.
 
 ### Implementation references
 
@@ -144,7 +146,9 @@ evidence, subject to future backend and release policy.
 ### Protocol signing is not hardware-qualified by this work
 
 The P-256 authorization key is not wired into wallet unlock, Bitcoin or Stacks
-signing, secp256k1/Schnorr operations, or a production value-operation gate.
+signing, or secp256k1/Schnorr operations. The wallet-side value-operation gate
+does not change that custody boundary and currently quarantines callers without
+authoritative external evidence.
 The presence of an Android Keystore certificate chain or a Play Integrity token
 does not prove that any protocol signing key is hardware-backed, authorized for
 the requested operation, or safe to use in production.

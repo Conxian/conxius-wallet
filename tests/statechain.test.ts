@@ -31,37 +31,32 @@ describe('StateChain Service', () => {
         mockFetch.mockReset();
     });
 
-    it('should transfer a StateChain UTXO using Enclave', async () => {
+    it('quarantines transfer before coordinator broadcast without authoritative evidence', async () => {
         mockFetch.mockResolvedValueOnce({
             ok: true,
             json: () => Promise.resolve({ txid: 'statechain_txid_123' })
         });
 
-        const result = await transferStateChainUtxo(
+        await expect(transferStateChainUtxo(
             'sc:utxo-1', 
             '03newowner',
             0,
             'mock-vault-data'
-        );
-        
-        expect(result.nextIndex).toBe(1);
-        expect(result.signature).toBe('mock_schnorr_signature_hex');
-        expect(result.txid).toBe('statechain_txid_123');
+        )).rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it('should withdraw a StateChain UTXO to L1', async () => {
+    it('quarantines withdrawal instead of fabricating a transaction ID', async () => {
         mockFetch.mockResolvedValueOnce({
             ok: true,
             json: () => Promise.resolve({ txid: 'withdrawal_txid_456' })
         });
 
-        const txid = await withdrawStateChainUtxo(
+        await expect(withdrawStateChainUtxo(
             'sc:utxo-1',
             'bc1q_dest',
             'mock-vault-data'
-        );
-
-        expect(txid).toBeDefined();
-        expect(txid).toContain('txid_withdrawal_');
+        )).rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        expect(mockFetch).not.toHaveBeenCalled();
     });
 });
