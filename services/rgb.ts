@@ -5,8 +5,8 @@ import { getTransactionStatus } from './protocol';
 import {
     createUnverifiedValueOperationRequest,
     createValueOperationNonce,
-    executeValueOperation,
-    requireValueOperationSignature,
+    ValueOperationAuthorizer,
+    authorizeValueOperationSignature,
 } from './value-operation';
 
 export type RgbSchema = 'RGB20' | 'RGB21' | 'RGB25' | 'NIA';
@@ -148,7 +148,7 @@ export const createRgbTransfer = async (
     assetId: string,
     amount: number,
     beneficiary: string,
-    vault: string
+    authorizeValueOperation: ValueOperationAuthorizer
 ): Promise<Consignment> => {
     notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'RGB Transfer', message: `Preparing consignment for ${amount} ${assetId.slice(0,8)}...` });
 
@@ -157,16 +157,15 @@ export const createRgbTransfer = async (
         const transitionHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(assetId + amount + beneficiary))).toString("hex");
 
         // 2. Request Enclave Signature (Taproot Tweak)
-        requireValueOperationSignature(await executeValueOperation(
-            createUnverifiedValueOperationRequest({
+        const request = createUnverifiedValueOperationRequest({
                 operationType: 'transfer', chainLayer: 'RGB',
                 payload: { hash: transitionHash, assetId, amount, beneficiary },
                 network: 'mainnet', purpose: 'rgb.transfer', nonce: createValueOperationNonce(),
                 audience: 'conxius-wallet', keyIdentity: 'wallet.rgb.account-0',
                 algorithm: 'secp256k1-schnorr', signingType: 'message',
                 description: `Transfer ${amount} RGB units to ${beneficiary.slice(0,12)}...`,
-            }), vault, { userConfirmed: true },
-        ));
+            });
+        await authorizeValueOperationSignature(authorizeValueOperation, request);
 
         throw new Error('RGB_SETTLEMENT_UNSUPPORTED: no authoritative anchor transaction or consignment transport receipt is available');
 

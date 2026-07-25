@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { transferStateChainUtxo, withdrawStateChainUtxo } from '../services/statechain';
+import { createWalletValueOperationGate, ValueOperationAuthorizer } from '../services/value-operation';
+
+const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
+    createWalletValueOperationGate('test-vault').reject(request);
 
 // Mock dependencies
 vi.mock('../services/notifications', () => ({
@@ -41,8 +45,8 @@ describe('StateChain Service', () => {
             'sc:utxo-1', 
             '03newowner',
             0,
-            'mock-vault-data'
-        )).rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+            rejectAuthorization
+        )).rejects.toThrow('USER_REJECTED');
         expect(mockFetch).not.toHaveBeenCalled();
     });
 
@@ -55,8 +59,24 @@ describe('StateChain Service', () => {
         await expect(withdrawStateChainUtxo(
             'sc:utxo-1',
             'bc1q_dest',
-            'mock-vault-data'
-        )).rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+            rejectAuthorization
+        )).rejects.toThrow('USER_REJECTED');
+        expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('rejects a service-supplied fabricated success before coordinator submission', async () => {
+        const fabricatedAuthorization = vi.fn(async () => ({
+            status: 'allowed' as const,
+            authorization: { kind: 'value-operation-authorization' as const } as never,
+            signature: { signature: 'fabricated', pubkey: 'fabricated', timestamp: 0 }
+        }));
+
+        await expect(transferStateChainUtxo(
+            'sc:utxo-1',
+            '03newowner',
+            0,
+            fabricatedAuthorization
+        )).rejects.toThrow('not issued by the wallet gate');
         expect(mockFetch).not.toHaveBeenCalled();
     });
 });

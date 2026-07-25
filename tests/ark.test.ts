@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { liftToArk, forfeitVtxo, syncVtxos, VTXO } from '../services/ark';
+import { createWalletValueOperationGate, ValueOperationAuthorizer } from '../services/value-operation';
+
+const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
+    createWalletValueOperationGate('test-vault').reject(request);
 
 // Mock signer
 vi.mock('../services/signer', () => ({
@@ -41,8 +45,8 @@ describe('Ark Service', () => {
             json: () => Promise.resolve({ txid: 'txid_real_network_123' })
         });
 
-        await expect(forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', 'mock_vault'))
-            .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        await expect(forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', rejectAuthorization))
+            .rejects.toThrow('USER_REJECTED');
         expect(mockFetch).not.toHaveBeenCalled();
     });
 
@@ -61,8 +65,8 @@ describe('Ark Service', () => {
         // Mock persistent failure for all retries
         mockFetch.mockRejectedValue(new Error('Network Error'));
 
-        await expect(forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', 'mock_vault'))
-            .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        await expect(forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', rejectAuthorization))
+            .rejects.toThrow('USER_REJECTED');
         expect(mockFetch).not.toHaveBeenCalled();
     });
 
@@ -112,8 +116,8 @@ describe('Ark Redemption', () => {
         });
 
         const { redeemVtxo } = await import('../services/ark');
-        await expect(redeemVtxo(mockVtxo, 'mock_vault', 'mainnet'))
-            .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        await expect(redeemVtxo(mockVtxo, rejectAuthorization, 'mainnet'))
+            .rejects.toThrow('USER_REJECTED');
         expect(mockFetch).not.toHaveBeenCalled();
     });
 });

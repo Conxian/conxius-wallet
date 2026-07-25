@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fetchMavenAssets, createMavenTransfer } from '../services/maven';
+import { createWalletValueOperationGate, ValueOperationAuthorizer } from '../services/value-operation';
+
+const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
+    createWalletValueOperationGate('test-vault').reject(request);
 
 // Mock dependencies
 const mockFetch = vi.fn();
@@ -63,8 +67,8 @@ describe('Maven Service', () => {
             json: () => Promise.resolve({ txid: 'mav_txid_123' })
         });
 
-        await expect(createMavenTransfer('asset_id', 10, 'recipient_addr', 'mock_vault'))
-            .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        await expect(createMavenTransfer('asset_id', 10, 'recipient_addr', rejectAuthorization))
+            .rejects.toThrow('USER_REJECTED');
         expect(mockFetch).not.toHaveBeenCalled();
     });
 });

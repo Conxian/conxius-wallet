@@ -3,8 +3,8 @@ import { notificationService } from './notifications';
 import {
     createUnverifiedValueOperationRequest,
     createValueOperationNonce,
-    executeValueOperation,
-    requireValueOperationSignature,
+    ValueOperationAuthorizer,
+    authorizeValueOperationSignature,
 } from './value-operation';
 
 /**
@@ -50,7 +50,7 @@ export async function discoverTaprootAssets(): Promise<TaprootAsset[]> {
  */
 export async function transferTaprootAsset(
     transfer: TaprootTransfer,
-    vault: string
+    authorizeValueOperation: ValueOperationAuthorizer
 ): Promise<string> {
     notificationService.notify({
         category: 'TRANSACTION',
@@ -69,15 +69,14 @@ export async function transferTaprootAsset(
         const virtualHash = Buffer.from(JSON.stringify(payload)).toString('hex');
 
         // 2. Request Enclave Signature (Taproot Tweak)
-        requireValueOperationSignature(await executeValueOperation(
-            createUnverifiedValueOperationRequest({
+        const request = createUnverifiedValueOperationRequest({
                 operationType: 'transfer', chainLayer: 'TaprootAssets', payload: { hash: virtualHash, ...payload },
                 network: 'mainnet', purpose: 'taproot-assets.transfer', nonce: createValueOperationNonce(),
                 audience: 'conxius-wallet', keyIdentity: 'wallet.taproot-assets.account-0',
                 algorithm: 'secp256k1-schnorr', signingType: 'message',
                 description: `Transfer ${transfer.amount} Taproot Assets to ${transfer.recipientAddr.slice(0,10)}...`,
-            }), vault, { userConfirmed: true },
-        ));
+            });
+        await authorizeValueOperationSignature(authorizeValueOperation, request);
 
         throw new Error('TAPROOT_ASSETS_BROADCAST_UNSUPPORTED: no authoritative tapd transfer receipt adapter is configured');
 

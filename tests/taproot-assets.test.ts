@@ -1,6 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { discoverTaprootAssets, transferTaprootAsset } from "../services/taproot-assets";
 import { requestEnclaveSignature } from "../services/signer";
+import { createWalletValueOperationGate, ValueOperationAuthorizer } from '../services/value-operation';
+
+const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
+    createWalletValueOperationGate('test-vault').reject(request);
 
 vi.mock("../services/signer", () => ({
     requestEnclaveSignature: vi.fn().mockResolvedValue({
@@ -23,8 +27,8 @@ describe("Taproot Assets Service", () => {
             amount: 100n,
             recipientAddr: "taproot_addr_abc"
         };
-        await expect(transferTaprootAsset(transfer, "test_vault"))
-            .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        await expect(transferTaprootAsset(transfer, rejectAuthorization))
+            .rejects.toThrow('USER_REJECTED');
         expect(requestEnclaveSignature).not.toHaveBeenCalled();
     });
 });

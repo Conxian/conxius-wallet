@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { issueRgbAsset, validateConsignment, createRgbTransfer, Consignment } from '../services/rgb';
+import { createWalletValueOperationGate, ValueOperationAuthorizer } from '../services/value-operation';
+
+const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
+  createWalletValueOperationGate('test-vault').reject(request);
 
 // Mock dependencies
 vi.mock('../services/notifications', () => ({
@@ -56,7 +60,7 @@ describe('RGB Service', () => {
   });
 
   it('quarantines RGB transfer instead of returning a pending synthetic anchor', async () => {
-    await expect(createRgbTransfer('rgb:asset1', 100, 'blindedutxo1', 'mockvault'))
-      .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+    await expect(createRgbTransfer('rgb:asset1', 100, 'blindedutxo1', rejectAuthorization))
+      .rejects.toThrow('USER_REJECTED');
   });
 });
