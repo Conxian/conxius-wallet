@@ -3,6 +3,10 @@ import { bech32 } from 'bech32';
 import bolt11 from 'light-bolt11-decoder';
 import { Buffer } from 'buffer';
 import { fetchWithRetry } from './network';
+import {
+  consumeValueOperationSettlementAuthorization,
+  ValueOperationSettlementAuthorization,
+} from './value-operation';
 
 /**
  * Lightning Service
@@ -69,7 +73,18 @@ export function decodeBolt11(invoice: string) {
 /**
  * Native Bridge: Breez SDK Interaction
  */
-export async function payLightningInvoice(invoice: string): Promise<string> {
+export async function payLightningInvoice(
+    invoice: string,
+    authorization: ValueOperationSettlementAuthorization,
+    network: string,
+): Promise<string> {
+    consumeValueOperationSettlementAuthorization({
+      authorization,
+      layer: 'Lightning',
+      provider: 'native-breez-manager',
+      network,
+      intent: { kind: 'bolt11', invoice },
+    });
     // @ts-ignore: Android bridge call
     if (Capacitor && Capacitor.Plugins.BreezManager) {
         // @ts-ignore
@@ -81,7 +96,19 @@ export async function payLightningInvoice(invoice: string): Promise<string> {
     throw new Error('LIGHTNING_PAYMENT_UNSUPPORTED: native Breez provider unavailable');
 }
 
-export async function payLnurl(params: LnurlPayParams | LnurlWithdrawParams, amount: number): Promise<string> {
+export async function payLnurl(
+    params: LnurlPayParams | LnurlWithdrawParams,
+    amountSats: number,
+    authorization: ValueOperationSettlementAuthorization,
+    network: string,
+): Promise<string> {
+    consumeValueOperationSettlementAuthorization({
+      authorization,
+      layer: 'Lightning',
+      provider: 'native-breez-manager',
+      network,
+      intent: { kind: 'lnurl-pay', params, amountSats },
+    });
     throw new Error('LNURL_PAYMENT_UNSUPPORTED: authoritative LNURL payment adapter unavailable');
 }
 

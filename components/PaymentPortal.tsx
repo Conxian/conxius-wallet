@@ -27,6 +27,7 @@ import { fetchUtxos, broadcastAuthorizedTransaction } from '../services/protocol
 import {
   createUnverifiedValueOperationRequest,
   createValueOperationNonce,
+  requireValueOperationSettlementAuthorization,
   valueOperationOutcomeMessage,
 } from '../services/value-operation';
 import { buildPsbt } from '../services/psbt';
@@ -104,13 +105,14 @@ const PaymentPortal: React.FC = () => {
     try {
         let txid = '';
         if (method === 'lightning') {
-             const lightningOutcome = await context.authorizeValueOperation(
-               createUnverifiedValueOperationRequest({
+             const amountSats = Math.round(parseFloat(amount) * 100_000_000);
+             const settlementIntent = lnDetail?.type === 'lnurl'
+               ? { kind: 'lnurl-pay', params: lnDetail.params, amountSats }
+               : { kind: 'bolt11', invoice: recipient };
+             const lightningRequest = createUnverifiedValueOperationRequest({
                  operationType: 'settle',
                  chainLayer: 'Lightning',
-                 payload: lnDetail?.type === 'lnurl'
-                   ? { kind: 'lnurl-pay', params: lnDetail.params, amount: parseFloat(amount) }
-                   : { kind: 'bolt11', invoice: recipient },
+                 payload: { provider: 'native-breez-manager', intent: settlementIntent },
                  network,
                  purpose: 'payment-portal.lightning-payment',
                  nonce: createValueOperationNonce(),
@@ -119,15 +121,13 @@ const PaymentPortal: React.FC = () => {
                  algorithm: 'secp256k1-ecdsa',
                  signingType: 'message',
                  description: `Authorize Lightning payment of ${amount} BTC`,
-               }),
-             );
-             if (lightningOutcome.status !== 'allowed') {
-               throw new Error(valueOperationOutcomeMessage(lightningOutcome));
-             }
+               });
+             const lightningOutcome = await context.authorizeValueOperation(lightningRequest);
+             const settlementAuthorization = requireValueOperationSettlementAuthorization(lightningOutcome, lightningRequest);
              if (lnDetail?.type === 'lnurl') {
-                 txid = await payLnurl(lnDetail.params, parseFloat(amount));
+                 txid = await payLnurl(lnDetail.params, amountSats, settlementAuthorization, network);
              } else {
-                 txid = await payLightningInvoice(recipient);
+                 txid = await payLightningInvoice(recipient, settlementAuthorization, network);
              }
         } else {
              const fromAddress = context.state.walletConfig?.masterAddress || '';

@@ -13,7 +13,16 @@ and [GitHub #444](https://github.com/Conxian/conxius-wallet/issues/444).
 
 ## Enforced wallet boundary
 
-`services/value-operation.ts` owns the TypeScript value-operation contract.
+`services/value-operation.ts` owns the feature-facing TypeScript
+value-operation contract. It exposes request builders, data types, and opaque
+capability consumers, but no production confirmer or constructible gate.
+Production confirmation lives in
+`services/app-private/value-operation-authority.ts`; `App.tsx` is its only
+allowed production importer. A repository architecture test enumerates
+production TypeScript modules and fails if a component, service, or core module
+imports that authority or its capability-issuer registry. Tests may import the
+private authority to exercise the boundary.
+
 Its versioned, provider-neutral envelope binds the operation type, chain/layer,
 canonical payload digest, network, purpose, nonce, audience, key identity,
 algorithm, provider/evidence status, evidence digests, and bounded validity
@@ -42,13 +51,15 @@ exposes a generic caller-classified signing escape hatch.
 
 ## Quarantined callers
 
-The React authorization queue now owns a `WalletValueOperationGate` instance,
+The React authorization queue now owns the App-private authority instance,
 accepts a typed `ValueOperationRequest`, and invokes the gate's confirm or
 reject path after the application modal resolves. Feature services receive an
 authorizer callback rather than a vault plus caller-supplied confirmation
 boolean. A plain object or raw `true` value cannot become a registered
 authorization, and fabricated `allowed` results are rejected before their
-signature can be consumed.
+signature or settlement capability can be consumed. A genuine outcome returned
+for a different request is also rejected through exact envelope/request and
+capability-registry binding.
 
 For PSBT operations, successful native signing additionally creates an opaque
 module-registered broadcast authorization bound to the exact signed hex,
@@ -58,6 +69,20 @@ once even if submission fails, and rejects fabricated, mismatched, stale, or
 replayed capabilities. Dashboard send, Payment Portal, and native-peg bridge
 carry the capability from signing to this hardened submission boundary; the
 former raw public broadcast function is no longer exported.
+
+Lightning settlement uses a separate opaque, module-registered authorization.
+It is bound to the exact canonical payment intent, Lightning layer, provider
+context, network, and a validity window no longer than 60 seconds. Invoice,
+LNURL, and Breez on-chain intents include their exact invoice/callback/request
+and amount fields where applicable. The authorization is consumed before any
+native plugin or LND HTTP request, and fabricated, wrong-intent, wrong-amount,
+wrong-invoice, wrong-provider/network, stale, replayed, denied, quarantined, or
+wrong-request callback outcomes fail before settlement I/O. Payment Portal now
+carries this capability from its queue outcome into the final native Breez
+submission instead of discarding the queue result. Direct native Breez, Breez
+plugin, and LND methods require the capability; legacy Breez backend settlement
+and LNURL methods are explicitly quarantined until a reviewed adapter can own
+the capability consumption.
 
 Dashboard send, Payment Portal on-chain/Lightning send, native-peg bridge, and
 Wormhole signing use this boundary. Current callers intentionally construct
@@ -108,8 +133,9 @@ This change does **not** claim:
 - StrongBox, KeyMint, Play Integrity, device, provider, protocol-key, or release
   qualification;
 - backend token/attestation verification or trust-root/revocation handling;
-- durable replay protection across processes/devices (the delivered signing
-  nonce and broadcast-capability stores are local and process-scoped);
+- durable replay protection across processes/devices (the delivered signing,
+  broadcast-capability, and settlement-capability stores are local and
+  process-scoped);
 - authoritative Ark/RGB/StateChain/Maven/Taproot Assets/Wormhole provider
   behavior; or
 - successful production broadcast or settlement without a real provider
@@ -125,8 +151,10 @@ staged rollout/rollback controls, and COO review for this P0 change.
 ## Regression evidence
 
 Focused tests cover deterministic canonicalization, mutation binding, stale and
-non-authoritative evidence, request/evidence mismatch, app-owned confirmation,
-native-only execution, fabricated authorization rejection, and exact-hex,
-context, expiry, and single-use broadcast checks before network I/O. Protocol
-callers cannot sign, broadcast, settle, or return synthetic success when the
-central queue rejects or evidence is unqualified.
+non-authoritative evidence, request/evidence mismatch, App-private import
+enforcement, native-only execution, fabricated and wrong-request authorization
+rejection, exact-hex broadcast binding, and exact-intent Lightning/Breez/LND
+provider/network/expiry/single-use checks. Mock native plugin and HTTP calls
+verify zero settlement I/O on rejection. Protocol callers cannot sign,
+broadcast, settle, or return synthetic success when the central queue rejects
+or evidence is unqualified.

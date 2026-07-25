@@ -2,13 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   consumeValueOperationBroadcastAuthorization,
   createValueOperationRequest,
-  createWalletValueOperationGate,
   digestValueOperationEnvelope,
   requireValueOperationSignature,
   resetValueOperationReplayCacheForTests,
   ValueOperationEvidenceDecision,
   ValueOperationEvidenceRequest,
 } from '../services/value-operation';
+import {
+  createAppPrivateValueOperationAuthority,
+  resetAppPrivateValueOperationReplayCacheForTests,
+} from '../services/app-private/value-operation-authority';
+
+const createWalletValueOperationGate = createAppPrivateValueOperationAuthority;
 
 const mocks = vi.hoisted(() => ({
   isNativePlatform: vi.fn(() => true),
@@ -54,6 +59,7 @@ describe('value-operation gate', () => {
     vi.useFakeTimers();
     vi.setSystemTime(now);
     resetValueOperationReplayCacheForTests();
+    resetAppPrivateValueOperationReplayCacheForTests();
     mocks.isNativePlatform.mockReturnValue(true);
     mocks.getWalletEvidenceAdapter.mockReturnValue(null);
     mocks.requestEnclaveSignature.mockResolvedValue({

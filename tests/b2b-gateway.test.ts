@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { signB2bInvoice } from "../services/monetization";
 import { requestEnclaveSignature } from "../services/signer";
-import { createWalletValueOperationGate, ValueOperationAuthorizer } from '../services/value-operation';
+import { ValueOperationAuthorizer } from '../services/value-operation';
+import { createAppPrivateValueOperationAuthority } from '../services/app-private/value-operation-authority';
 
 const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
-    createWalletValueOperationGate('test-vault').reject(request);
+    createAppPrivateValueOperationAuthority('test-vault').reject(request);
 
 vi.mock("../services/signer", () => ({
     requestEnclaveSignature: vi.fn().mockResolvedValue({

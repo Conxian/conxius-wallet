@@ -2,7 +2,7 @@
 import React, { useState, useContext } from 'react';
 import { ShoppingBag, Wifi, Gift, Zap, Globe, Smartphone, Search, Filter, Loader2, CheckCircle2, ShieldCheck, Ticket, Plane, Copy, QrCode, Tag, Lock } from 'lucide-react';
 import { AppContext } from '../context';
-import { Breez } from '../services/breez';
+import { getBreezInfo } from '../services/breez';
 
 type Category = 'Airtime' | 'Data' | 'Vouchers' | 'eSIM';
 
@@ -79,7 +79,7 @@ const Marketplace: React.FC = () => {
         // In a real scenario, we would fetch a real invoice from the provider here.
         // For now, since we don't have the Marketplace API keys, we still simulate
         // but we verify the Breez node is at least capable of paying.
-        const info = await Breez.nodeInfo();
+        const info = await getBreezInfo();
         if (info.maxPayableMsat < (selectedProduct?.priceSats || 0) * 1000) {
            appContext.notify('error', 'Insufficient Lightning Balance');
            setIsProcessing(false);
