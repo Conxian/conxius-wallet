@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { ArrowRight, Info, TrendingUp, ShieldCheck, Zap, Globe, Target, Cpu, Activity } from 'lucide-react';
+import { ArrowRight, TrendingUp, ShieldCheck, Zap, Globe, Target, Cpu, Activity } from 'lucide-react';
 import { AppContext } from '../context';
 import { NttService, getRecommendedBridgeProtocol } from '../services/ntt';
 import { fetchUtxos, fetchNativePegAddress } from '../services/protocol';

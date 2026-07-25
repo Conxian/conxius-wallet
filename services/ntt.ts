@@ -5,7 +5,6 @@ import { EvmPlatform } from '@wormhole-foundation/sdk-evm';
 import type { AppState, Network } from '../types';
 import { calculateNttFee } from './monetization';
 import { endpointsFor } from './network';
-import { fetchBtcPrice } from './protocol';
 import { BridgeSystem, TrustTier, validateRouteTrust } from './trust-policy';
 import type { CanonicalObject } from './value-operation-gate';
 import { knownUnsupportedValueOperation, type AuthorizedValueOperationExecution, type ValueOperationExecutionOutcome } from './value-operation-result';
@@ -54,7 +53,7 @@ export class NttManager { static async getOutboundLimit(chain: string): Promise<
 export class NttService {
   static async estimateFees(amount: string, source: string, target: string, network: Network): Promise<FeeEstimation> {
     void source; void target; void network;
-    try { const integratorFee = calculateNttFee(Number.parseFloat(amount) || 0, await fetchBtcPrice()); return { wormholeBridgeFee: 0.00001, destinationNetworkFee: 0.00005, integratorFee, totalFee: 0.00006 + integratorFee }; }
+    try { const integratorFee = calculateNttFee(Number.parseFloat(amount) || 0); return { wormholeBridgeFee: 0.00001, destinationNetworkFee: 0.00005, integratorFee, totalFee: 0.00006 + integratorFee }; }
     catch { return { wormholeBridgeFee: 0.0001, destinationNetworkFee: 0.00005, integratorFee: 0, totalFee: 0.00015 }; }
   }
   /** Source submission is unsupported; this is not VAA, redemption, or settlement evidence. */
