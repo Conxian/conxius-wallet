@@ -17,14 +17,14 @@ interface Product {
 }
 
 const MOCK_PRODUCTS: Product[] = [
-  { id: '1', name: 'Global Ghost eSIM', description: '1GB Data, 30 Days. Works in 140 countries. No KYC.', priceSats: 25000, category: 'eSIM', icon: Plane, provider: 'Silent.Link', region: 'Global' },
-  { id: '2', name: 'Takealot R500', description: 'South African shopping voucher. Instant delivery.', priceSats: 35000, category: 'Vouchers', icon: Gift, provider: 'Bitrefill', region: 'ZA' },
-  { id: '3', name: 'MTN R200 Data', description: 'Prepaid data for SA MTN users.', priceSats: 14500, category: 'Airtime', icon: Smartphone, provider: 'Bitrefill', region: 'ZA' },
-  { id: '4', name: 'Mullvad VPN (6 Months)', description: 'Ultimate anonymity. No account required.', priceSats: 72000, category: 'Data', icon: ShieldCheck, provider: 'Mullvad', region: 'Global' },
-  { id: '5', name: 'Nostr Relay Premium', description: 'High-bandwidth relay access for 1 year.', priceSats: 5000, category: 'Data', icon: Globe, provider: 'Nostr.Watch', region: 'Global' },
-  { id: '6', name: 'Sovereign Node Setup', description: 'Guided remote setup for Umbrel/RaspiBlitz.', priceSats: 100000, category: 'Data', icon: Lock, provider: 'Conxian Labs', region: 'Global' },
-  { id: '7', name: 'Private Mail (1 Year)', description: 'End-to-end encrypted email with custom domain.', priceSats: 45000, category: 'Data', icon: ShieldCheck, provider: 'Proton', region: 'Global' },
-  { id: '8', name: 'BitBox02 Bitcoin-only', description: 'Swiss hardware wallet. 12% affiliate cashback.', priceSats: 1200000, category: 'Vouchers', icon: Lock, provider: 'Shift Crypto', region: 'Global' },
+  { id: '1', name: 'Global Ghost eSIM', description: 'Preview listing for a 1GB, 30-day global eSIM.', priceSats: 25000, category: 'eSIM', icon: Plane, provider: 'Silent.Link', region: 'Global' },
+  { id: '2', name: 'Takealot R500', description: 'Preview listing for a South African shopping voucher.', priceSats: 35000, category: 'Vouchers', icon: Gift, provider: 'Bitrefill', region: 'ZA' },
+  { id: '3', name: 'MTN R200 Data', description: 'Preview listing for prepaid MTN data in South Africa.', priceSats: 14500, category: 'Airtime', icon: Smartphone, provider: 'Bitrefill', region: 'ZA' },
+  { id: '4', name: 'Mullvad VPN (6 Months)', description: 'Preview listing for a six-month VPN plan.', priceSats: 72000, category: 'Data', icon: ShieldCheck, provider: 'Mullvad', region: 'Global' },
+  { id: '5', name: 'Nostr Relay Premium', description: 'Preview listing for one year of relay access.', priceSats: 5000, category: 'Data', icon: Globe, provider: 'Nostr.Watch', region: 'Global' },
+  { id: '6', name: 'Sovereign Node Setup', description: 'Preview listing for an Umbrel/RaspiBlitz setup service.', priceSats: 100000, category: 'Data', icon: Lock, provider: 'Conxian Labs', region: 'Global' },
+  { id: '7', name: 'Private Mail (1 Year)', description: 'Preview listing for a one-year encrypted email plan.', priceSats: 45000, category: 'Data', icon: ShieldCheck, provider: 'Proton', region: 'Global' },
+  { id: '8', name: 'BitBox02 Bitcoin-only', description: 'Preview listing for a Swiss Bitcoin-only hardware wallet.', priceSats: 1200000, category: 'Vouchers', icon: Lock, provider: 'Shift Crypto', region: 'Global' },
 ];
 
 const Marketplace: React.FC = () => {
@@ -64,11 +64,11 @@ const Marketplace: React.FC = () => {
     return matchesCategory && matchesRegion && matchesProvider && matchesSearch && matchesPrice;
   });
 
-  const handleBuy = (product: Product) => {
+  const openPreview = (product: Product) => {
     setSelectedProduct(product);
   };
 
-  const closePurchase = () => {
+  const closePreview = () => {
     setSelectedProduct(null);
   };
 
@@ -89,9 +89,9 @@ const Marketplace: React.FC = () => {
                  <ShieldCheck size={24} />
               </div>
               <div>
-                 <p className="text-[10px] font-black uppercase text-brand-earth">Privacy Status</p>
+                 <p className="text-[10px] font-black uppercase text-brand-earth">Catalog Status</p>
                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-brand-deep">No-KYC / Accountless</p>
+                    <p className="text-sm font-bold text-brand-deep">Preview only / No transactions</p>
                  </div>
               </div>
            </div>
@@ -213,8 +213,8 @@ const Marketplace: React.FC = () => {
             {mode === 'sovereign' ? (
                 <div className="flex flex-col items-center justify-center h-96 opacity-70 space-y-4 border border-border rounded-[2.5rem] bg-off-white/20">
                     <Lock size={48} className="text-brand-earth" />
-                    <p className="text-sm font-bold text-brand-earth uppercase tracking-widest">Marketplace Offline</p>
-                    <p className="text-xs text-brand-earth italic">Sovereign P2P Bazaar connection requires active tor circuit.</p>
+                    <p className="text-sm font-bold text-brand-earth uppercase tracking-widest">Catalog Preview Unavailable</p>
+                    <p className="text-xs text-brand-earth italic">No live marketplace connection, checkout, or fulfillment is available.</p>
                 </div>
             ) : filteredProducts.length === 0 ? (
                <div className="flex flex-col items-center justify-center h-96 opacity-50 space-y-4">
@@ -239,7 +239,7 @@ const Marketplace: React.FC = () => {
                   {filteredProducts.map((product) => (
                      <button 
                         key={product.id}
-                        onClick={() => handleBuy(product)}
+                        onClick={() => openPreview(product)}
                         aria-label={`Preview ${product.name}`}
                         className="bg-off-white/20 border border-border rounded-[2.5rem] p-6 text-left hover:bg-off-white/40 hover:border-orange-500/30 transition-all group flex flex-col h-full"
                         type="button"
@@ -271,7 +271,7 @@ const Marketplace: React.FC = () => {
          </div>
       </div>
 
-      {/* Purchase Modal */}
+      {/* Catalog preview modal */}
       {selectedProduct && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-deep/80 backdrop-blur-md animate-in fade-in duration-300">
             <div className="w-full max-w-md bg-white border border-border rounded-[3rem] p-8 space-y-6 relative shadow-2xl overflow-hidden">
@@ -288,7 +288,7 @@ const Marketplace: React.FC = () => {
                      <p className="text-[9px] font-black uppercase text-brand-earth">Reference price</p>
                      <p className="text-lg font-mono font-bold text-accent-earth">{selectedProduct.priceSats.toLocaleString()} sats</p>
                   </div>
-                  <button onClick={closePurchase} className="w-full py-4 bg-brand-deep text-white font-black rounded-2xl text-[10px] uppercase tracking-widest" type="button">
+                  <button onClick={closePreview} className="w-full py-4 bg-brand-deep text-white font-black rounded-2xl text-[10px] uppercase tracking-widest" type="button">
                      Close preview
                   </button>
                </div>
