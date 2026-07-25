@@ -4,7 +4,7 @@ import { EnclaveKeyManager } from '../services/web5';
 // Mock enclave-storage
 vi.mock('../services/enclave-storage', () => ({
     getDerivedSecretNative: vi.fn().mockResolvedValue({ pubkey: '02' + 'a'.repeat(64) }),
-    signNative: vi.fn().mockResolvedValue({ signature: 'b'.repeat(128) }),
+    signNonValueMessageNative: vi.fn().mockResolvedValue({ signature: 'b'.repeat(128) }),
     getEnclaveBlob: vi.fn().mockResolvedValue('test-vault')
 }));
 

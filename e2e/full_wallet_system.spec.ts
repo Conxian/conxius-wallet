@@ -35,7 +35,7 @@ test.describe('Full Wallet System Integration', () => {
     await waitForWalletShell(page);
   });
 
-  test('should traverse the current wallet surfaces and require signature approval', async ({ page }) => {
+  test('should traverse the current wallet surfaces and fail closed after transfer review', async ({ page }) => {
     test.setTimeout(60_000);
 
     await expect(page.getByRole('heading', { name: 'Protocol Sovereignty', exact: true })).toBeVisible();
@@ -68,14 +68,15 @@ test.describe('Full Wallet System Integration', () => {
     await page.getByRole('button', { name: 'Send payment', exact: true }).click();
     await page.getByPlaceholder('Enter Bitcoin Address', { exact: true }).fill('bc1qtestrecipient');
     await page.getByPlaceholder('0.00', { exact: true }).fill('10000');
-    await page.getByRole('button', { name: 'Construct PSBT', exact: true }).click();
+    await page.getByRole('button', { name: 'Review Transfer', exact: true }).click();
+    await expect(page.getByText('10,000 sats', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Sign Transaction', exact: true }).click();
+    await expect(page.getByText(/Value operation (cancelled|unavailable pending authoritative evidence)\./, { exact: true })).toBeVisible();
 
-    // The signing request must be explicitly reviewed before the wallet
-    // exposes the broadcast action.
-    await expect(page.getByRole('heading', { name: 'Signature Request', exact: true })).toBeVisible();
-    await expect(page.getByText('Full Message Payload (WYSIWYS)', { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Confirm Sign', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Broadcast to Mempool', exact: true })).toBeVisible();
+    await expect(page.getByText(/mock_hex|mock PSBT/i)).toHaveCount(0);
+    await expect(page.getByText(/transaction id|txid/i)).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Signature Request', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Broadcast to Mempool/i })).toHaveCount(0);
+    await expect(page.getByText(/Signed & Ready|Transfer (Initiated|Completed)|Transaction successful/i)).toHaveCount(0);
   });
 });

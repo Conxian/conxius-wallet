@@ -1,7 +1,6 @@
 import { Network, BitcoinLayer, Asset, UTXO } from '../types';
 import { fetchWithRetry, endpointsFor } from './network';
-import { generateRandomString } from './random';
-import * as bitcoin from 'bitcoinjs-lib';
+import { digestCanonicalPayload } from './value-operation-gate';
 
 // Re-export for backward compatibility
 export { endpointsFor, fetchWithRetry };
@@ -45,27 +44,6 @@ export const fetchUtxos = async (address: string, network: Network = 'mainnet'):
 
 export { fetchUtxos as fetchBtcUtxos };
 
-export const broadcastTransaction = async (hex: string, layer: BitcoinLayer, network: Network = 'mainnet'): Promise<string> => {
-    const endpoints = endpointsFor(network) as any;
-    let url = '';
-    if (layer === 'Mainnet') url = `${endpoints.BTC_API}/tx`;
-    else if (layer === 'Stacks') url = `${endpoints.STX_API}/v2/transactions`;
-    else throw new Error(`Broadcast not implemented for layer: ${layer}`);
-
-    const response = await fetchWithRetry(url, {
-        method: 'POST',
-        body: hex,
-        headers: { 'Content-Type': 'text/plain' }
-    });
-
-    if (!response.ok) {
-        const err = await response.text();
-        throw new Error(err || `Broadcast failed with status ${response.status}`);
-    }
-
-    return layer === 'Stacks' ? (await response.json()).txid : await response.text();
-};
-
 export const getTransactionStatus = async (txid: string, layer: BitcoinLayer, network: Network = 'mainnet'): Promise<{ status: string }> => {
     const endpoints = endpointsFor(network) as any;
     try {
@@ -101,13 +79,19 @@ export const fetchGlobalReserveMetrics = async (network: Network = 'mainnet') =>
     }
 };
 
-export const fetchSbtcWalletAddress = async (network: Network = 'mainnet'): Promise<string> => {
-    return network === 'mainnet' ? 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sbtc-token' : 'ST3FBR...';
-};
+export type ProtocolVerificationOutcome =
+    | Readonly<{ kind: 'unsupported'; reason: 'qualified_verifier_unavailable'; subjectDigest: string }>
+    | Readonly<{ kind: 'rejected'; reason: 'invalid_verification_subject' }>;
 
-export const monitorSbtcPegIn = async (txid: string, network: Network = 'mainnet'): Promise<boolean> => {
-    await new Promise(r => setTimeout(r, 2000));
-    return true;
+export const monitorSbtcPegIn = async (txid: string, network: Network = 'mainnet'): Promise<ProtocolVerificationOutcome> => {
+    const normalized = txid.trim().toLowerCase();
+    if (!/^[0-9a-f]{64}$/.test(normalized)) {
+        return Object.freeze({ kind: 'rejected', reason: 'invalid_verification_subject' });
+    }
+    return Object.freeze({
+        kind: 'unsupported', reason: 'qualified_verifier_unavailable',
+        subjectDigest: digestCanonicalPayload(Object.freeze({ kind: 'conxius.wallet.sbtc-peg-in-status.v1', txid: normalized, network })),
+    });
 };
 
 // Simplified EVM Balance fetcher
@@ -154,10 +138,21 @@ export async function fetchRunesBalances(address: string): Promise<Asset[]> { re
 export async function fetchRgbAssets(address: string): Promise<Asset[]> { return []; }
 export async function fetchArkBalances(address: string): Promise<Asset[]> { return []; }
 
-export const fetchNativePegAddress = async (layer: BitcoinLayer, network: Network = 'mainnet'): Promise<string> => {
-    if (layer === 'Stacks') return fetchSbtcWalletAddress(network);
-    return 'bc1q_production_gateway';
-};
+export type NativePegAddressOutcome =
+    | Readonly<{ kind: 'available'; address: string; source: 'qualified-provider' }>
+    | Readonly<{
+        kind: 'unsupported';
+        reason: 'qualified_peg_address_provider_unavailable';
+        layer: BitcoinLayer;
+        network: Network;
+    }>;
+
+export const fetchNativePegAddress = async (
+    layer: BitcoinLayer,
+    network: Network = 'mainnet',
+): Promise<NativePegAddressOutcome> => Object.freeze({
+    kind: 'unsupported', reason: 'qualified_peg_address_provider_unavailable', layer, network,
+});
 
 export const getUnifiedBitcoinBalance = (assets: Asset[]): number => {
     return assets
@@ -166,6 +161,23 @@ export const getUnifiedBitcoinBalance = (assets: Asset[]): number => {
 };
 
 export class LightClient {
-    public async syncHeaders(network: Network): Promise<number> { return 840000; }
-    public async verifyTransaction(txid: string, merkleProof: string): Promise<boolean> { return true; }
+    public async syncHeaders(network: Network): Promise<Readonly<{
+        kind: 'unsupported'; reason: 'qualified_header_source_unavailable'; network: Network;
+    }>> {
+        return Object.freeze({ kind: 'unsupported', reason: 'qualified_header_source_unavailable', network });
+    }
+    public async verifyTransaction(txid: string, merkleProof: string): Promise<ProtocolVerificationOutcome> {
+        const normalizedTxid = txid.trim().toLowerCase();
+        const normalizedProof = merkleProof.trim().toLowerCase();
+        if (!/^[0-9a-f]{64}$/.test(normalizedTxid) || !/^[0-9a-f]+$/.test(normalizedProof)) {
+            return Object.freeze({ kind: 'rejected', reason: 'invalid_verification_subject' });
+        }
+        return Object.freeze({
+            kind: 'unsupported', reason: 'qualified_verifier_unavailable',
+            subjectDigest: digestCanonicalPayload(Object.freeze({
+                kind: 'conxius.wallet.bitcoin-merkle-verification.v1', txid: normalizedTxid,
+                merkleProofDigest: digestCanonicalPayload(Object.freeze({ kind: 'bitcoin-merkle-proof', value: normalizedProof })),
+            })),
+        });
+    }
 }

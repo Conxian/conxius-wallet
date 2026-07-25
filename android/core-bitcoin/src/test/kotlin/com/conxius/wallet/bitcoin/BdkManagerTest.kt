@@ -1,6 +1,7 @@
 package com.conxius.wallet.bitcoin
 
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.bitcoindevkit.Network
@@ -34,6 +35,12 @@ class BdkManagerTest {
         } catch (e: Exception) {
             handleBdkException(e)
         }
+    }
+
+    @Test
+    fun rawPsbtSigningIsNotExposedByBdkManager() {
+        val publicMethods = BdkManager::class.java.methods.map { it.name }
+        assertFalse(publicMethods.contains("signPsbt"))
     }
 
     private fun handleBdkException(e: Exception) {

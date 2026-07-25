@@ -1,11 +1,11 @@
-import { requestEnclaveSignature } from './signer';
-import * as bitcoin from 'bitcoinjs-lib';
-import { notificationService } from './notifications';
 import { endpointsFor, fetchWithRetry } from './network';
-import { fetchUtxos } from './protocol';
-import { fetchBtcPrice } from './prices';
-import { Network, UTXO } from '../types';
-import { estimateVbytes } from './psbt';
+import { Network } from '../types';
+import { digestCanonicalPayload, type CanonicalObject } from './value-operation-gate';
+import {
+    knownUnsupportedValueOperation,
+    type AuthorizedValueOperationExecution,
+    type ValueOperationExecutionOutcome,
+} from './value-operation-result';
 
 export interface VTXO {
     txid: string;
@@ -26,6 +26,86 @@ export interface LiftRequest {
     feeRate?: number;
 }
 
+export type ArkLiftOutcome =
+    | Readonly<{ kind: 'rejected'; reason: 'malformed_lift_request' }>
+    | Readonly<{ kind: 'unsupported'; reason: 'qualified_asp_boarding_data_unavailable' }>;
+
+export interface ArkForfeitArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.ark-forfeit.v1';
+    readonly chain: 'bitcoin';
+    readonly layer: 'ark';
+    readonly operation: 'forfeit-vtxo';
+    readonly network: Network;
+    readonly recipient: string;
+    readonly amountSats: string;
+    readonly vtxoTxid: string;
+    readonly vtxoVout: string;
+    readonly ownerPubkey: string;
+    readonly serverPubkey: string;
+    readonly roundTxid: string;
+    readonly expiryHeight: string;
+    readonly currentStatus: VTXO['status'];
+    readonly aspConfigurationDigest: string;
+}
+
+export interface ArkRedeemArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.ark-redeem.v1';
+    readonly chain: 'bitcoin';
+    readonly layer: 'ark';
+    readonly operation: 'unilateral-exit';
+    readonly network: Network;
+    readonly destination: 'bitcoin-l1-unilateral-exit';
+    readonly amountSats: string;
+    readonly vtxoTxid: string;
+    readonly vtxoVout: string;
+    readonly ownerPubkey: string;
+    readonly serverPubkey: string;
+    readonly roundTxid: string;
+    readonly expiryHeight: string;
+    readonly currentStatus: VTXO['status'];
+    readonly aspConfigurationDigest: string;
+}
+
+export type ArkForfeitRequest = AuthorizedValueOperationExecution<ArkForfeitArtifact>;
+export type ArkRedeemRequest = AuthorizedValueOperationExecution<ArkRedeemArtifact>;
+
+const ARK_ASP_CONFIGURATION_DIGEST = digestCanonicalPayload(Object.freeze({
+    kind: 'conxius.wallet.unqualified-ark-asp.v1',
+}));
+
+function canonicalInteger(value: number, field: string): string {
+    if (!Number.isSafeInteger(value) || value < 0) throw new Error(`Invalid ${field}.`);
+    return String(value);
+}
+
+export function createArkForfeitArtifact(
+    vtxo: VTXO,
+    recipient: string,
+    network: Network,
+): ArkForfeitArtifact {
+    if (!vtxo.txid || !recipient.trim()) throw new Error('Invalid Ark forfeit request.');
+    return Object.freeze({
+        kind: 'conxius.wallet.ark-forfeit.v1', chain: 'bitcoin', layer: 'ark', operation: 'forfeit-vtxo',
+        network, recipient: recipient.trim(), amountSats: canonicalInteger(vtxo.amount, 'VTXO amount'),
+        vtxoTxid: vtxo.txid, vtxoVout: canonicalInteger(vtxo.vout, 'VTXO output'), ownerPubkey: vtxo.ownerPubkey,
+        serverPubkey: vtxo.serverPubkey, roundTxid: vtxo.roundTxid,
+        expiryHeight: canonicalInteger(vtxo.expiryHeight, 'VTXO expiry height'), currentStatus: vtxo.status,
+        aspConfigurationDigest: ARK_ASP_CONFIGURATION_DIGEST,
+    });
+}
+
+export function createArkRedeemArtifact(vtxo: VTXO, network: Network): ArkRedeemArtifact {
+    if (!vtxo.txid) throw new Error('Invalid Ark redeem request.');
+    return Object.freeze({
+        kind: 'conxius.wallet.ark-redeem.v1', chain: 'bitcoin', layer: 'ark', operation: 'unilateral-exit',
+        network, destination: 'bitcoin-l1-unilateral-exit', amountSats: canonicalInteger(vtxo.amount, 'VTXO amount'),
+        vtxoTxid: vtxo.txid, vtxoVout: canonicalInteger(vtxo.vout, 'VTXO output'), ownerPubkey: vtxo.ownerPubkey,
+        serverPubkey: vtxo.serverPubkey, roundTxid: vtxo.roundTxid,
+        expiryHeight: canonicalInteger(vtxo.expiryHeight, 'VTXO expiry height'), currentStatus: vtxo.status,
+        aspConfigurationDigest: ARK_ASP_CONFIGURATION_DIGEST,
+    });
+}
+
 /**
  * Ark Protocol Service (M5 Implementation)
  * Handles off-chain VTXO lifecycle management and Boarding (Lifting).
@@ -35,83 +115,21 @@ export interface LiftRequest {
  * Creates a Boarding (Lift) Transaction PSBT.
  * Moves L1 BTC -> Ark Boarding Address.
  */
-export const createLiftPsbt = async (req: LiftRequest): Promise<{ psbtBase64: string, boardingAddress: string }> => {
-    try {
-        const { ARK_API } = endpointsFor(req.network);
-        
-        // 1. Fetch ASP Info (Boarding Address & Server Pubkey)
-        const response = await fetchWithRetry(`${ARK_API}/v1/info`, {}, 2, 500);
-        let boardingAddress = '';
-        if (response.ok) {
-            const info = await response.json();
-            boardingAddress = info.boardingAddress || info.address;
-        }
-
-        if (!boardingAddress) {
-            // Deterministic Fallback based on ASP ID (Standard Ark Boarding Path)
-            boardingAddress = req.network === 'mainnet'
-                ? 'bc1p8arkaspboardingmainnet'
-                : 'bc1q_ark_asp_prod';
-        }
-
-        // 2. Fetch User UTXOs
-        const utxos = await fetchUtxos(req.senderAddress, req.network);
-        if (utxos.length === 0) throw new Error('No UTXOs available for lifting');
-
-        // 3. Build PSBT
-        const net = req.network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
-        const psbt = new bitcoin.Psbt({ network: net });
-        let totalIn = 0;
-        const feeRate = req.feeRate || 5; // sats/vbyte
-
-        // Coin Selection (Simple)
-        const selectedUtxos: UTXO[] = [];
-        for (const utxo of utxos) {
-            selectedUtxos.push(utxo);
-            totalIn += utxo.amount;
-            if (totalIn >= req.amountSats + 500) break; // Buffer for fees
-        }
-
-        if (totalIn < req.amountSats) throw new Error(`Insufficient funds: Have ${totalIn}, Need ${req.amountSats}`);
-
-        // Add Inputs
-        for (const utxo of selectedUtxos) {
-            psbt.addInput({
-                hash: utxo.txid,
-                index: utxo.vout,
-                witnessUtxo: {
-                    script: bitcoin.payments.p2wpkh({ address: req.senderAddress, network: net })!.output!,
-                    value: BigInt(utxo.amount)
-                }
-            });
-        }
-
-        // Output 1: Boarding Address (The Lift)
-        psbt.addOutput({ address: boardingAddress, value: BigInt(req.amountSats) });
-
-        // Calculate Change
-        const vbytes = estimateVbytes(selectedUtxos.length, 2);
-        const fee = Math.ceil(vbytes * feeRate);
-        const change = totalIn - req.amountSats - fee;
-
-        if (change > 546) { // Dust limit
-            psbt.addOutput({ address: req.senderAddress, value: BigInt(change) });
-        }
-
-        return {
-            psbtBase64: psbt.toBase64(),
-            boardingAddress
-        };
-
-    } catch (e: any) {
-        notificationService.notify({
-            type: 'error',
-            title: 'Ark Lifting Failed',
-            message: e.message || 'Unknown error',
-            category: 'SYSTEM'
-        });
-        throw e;
+export const createLiftPsbt = async (req: LiftRequest): Promise<ArkLiftOutcome> => {
+    if (
+        typeof req !== 'object'
+        || req === null
+        || !Number.isSafeInteger(req.amountSats)
+        || req.amountSats <= 0
+        || typeof req.senderAddress !== 'string'
+        || !req.senderAddress.trim()
+        || typeof req.senderPubkey !== 'string'
+        || !req.senderPubkey.trim()
+        || (req.feeRate !== undefined && (!Number.isFinite(req.feeRate) || req.feeRate <= 0))
+    ) {
+        return Object.freeze({ kind: 'rejected', reason: 'malformed_lift_request' });
     }
+    return Object.freeze({ kind: 'unsupported', reason: 'qualified_asp_boarding_data_unavailable' });
 };
 
 /**
@@ -150,101 +168,16 @@ export const syncVtxos = async (address: string, network: Network = 'mainnet'): 
  * Forfeits a VTXO back to L1 or to another user (Off-chain Transfer).
  * This broadcasts a signed forfeit transaction via the ASP.
  */
-export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network: Network, vault?: string): Promise<string> => {
-    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'Ark Transfer', message: `Forfeiting VTXO ${vtxo.txid.slice(0,8)}...` });
-    
-    if (!vtxo.txid || !recipientAddress) throw new Error("Invalid VTXO or Recipient");
-
-    try {
-        const { ARK_API } = endpointsFor(network);
-
-        let signature = '';
-
-        if (vault) {
-            const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(vtxo.txid + recipientAddress))).toString("hex");
-            const signResult = await requestEnclaveSignature({
-                type: 'psbt',
-                layer: 'Ark',
-                payload: {
-                    hash: msgHash,
-                    vtxoId: vtxo.txid,
-                    recipient: recipientAddress
-                },
-                description: `Forfeit VTXO to ${recipientAddress}`
-            }, vault);
-            signature = signResult.signature;
-        } else {
-            throw new Error("Vault/Seed required for production Ark forfeit");
-        }
-
-        if (ARK_API) {
-            const response = await fetchWithRetry(`${ARK_API}/v1/forfeit`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    vtxoId: vtxo.txid,
-                    recipient: recipientAddress,
-                    signature: signature
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return data.txid || "txid_forfeit_confirmed_" + Date.now();
-            }
-        }
-
-        return "forfeit_tx_" + Date.now();
-
-    } catch (e: any) {
-        console.warn('Ark Forfeit failed, falling back to simulation', e);
-        return "forfeit_tx_" + Date.now();
-    }
-};
+export const forfeitVtxo = async (request: ArkForfeitRequest): Promise<ValueOperationExecutionOutcome> =>
+    knownUnsupportedValueOperation(request, {
+        artifactKind: 'conxius.wallet.ark-forfeit.v1', operationType: 'forfeit-vtxo', layer: 'ark', chain: 'bitcoin',
+    });
 
 /**
  * Redeems a VTXO (Unilateral Exit).
  * This creates a transaction that spends the VTXO and broadcasts it to Bitcoin L1.
  */
-export const redeemVtxo = async (vtxo: VTXO, vault: string, network: Network): Promise<string> => {
-    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'Ark Redemption', message: `Initiating Unilateral Exit for ${vtxo.txid.slice(0,8)}...` });
-
-    try {
-        const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from("redeem:" + vtxo.txid))).toString("hex");
-
-        const signResult = await requestEnclaveSignature({
-            type: 'message',
-            layer: 'Ark',
-            payload: { hash: msgHash },
-            description: `Redeem VTXO ${vtxo.txid.slice(0,8)}`
-        }, vault);
-
-        const { ARK_API } = endpointsFor(network);
-        if (ARK_API) {
-             await fetchWithRetry(`${ARK_API}/v1/redeem`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    vtxoId: vtxo.txid,
-                    signature: signResult.signature
-                })
-            });
-        }
-
-        notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'Ark Redemption', message: 'Unilateral Exit Broadcasted' });
-        return "redemption_tx_" + Date.now();
-
-    } catch (e: any) {
-        notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'Ark Redemption', message: `Redemption failed: ${e.message}` });
-        throw e;
-    }
-};
-
-// Backwards compatibility for existing calls
-export const liftToArk = async (amount: number, address: string, aspId: string): Promise<any> => {
-    return {
-        id: 'vtxo:legacy-shim',
-        amount,
-        status: 'lifting'
-    };
-};
+export const redeemVtxo = async (request: ArkRedeemRequest): Promise<ValueOperationExecutionOutcome> =>
+    knownUnsupportedValueOperation(request, {
+        artifactKind: 'conxius.wallet.ark-redeem.v1', operationType: 'unilateral-exit', layer: 'ark', chain: 'bitcoin',
+    });

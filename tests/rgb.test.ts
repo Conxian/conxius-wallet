@@ -1,63 +1,47 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { issueRgbAsset, validateConsignment, createRgbTransfer, Consignment } from '../services/rgb';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { authorizeAdapterArtifact, forgedAuthorization } from './value-operation-adapter-test-helpers';
+import {
+    createRgbIssuanceArtifact,
+    createRgbTransfer,
+    createRgbTransferArtifact,
+    issueRgbAsset,
+    validateConsignment,
+    verifyRgbProofWasm,
+} from '../services/rgb';
 
-// Mock dependencies
-vi.mock('../services/notifications', () => ({
-  notificationService: {
-    notify: vi.fn(),
-    notifyTransaction: vi.fn()
-  }
-}));
+const fetchMock = vi.fn();
+vi.stubGlobal('fetch', fetchMock);
+beforeEach(() => { fetchMock.mockReset(); vi.clearAllMocks(); });
 
-vi.mock('../services/protocol', () => ({
-  checkBtcTxStatus: vi.fn().mockResolvedValue({ confirmed: true, blockHeight: 100 })
-}));
+describe('RGB gate-bound production adapters', () => {
+    it('returns unsupported for exact issuance and transfer artifacts', async () => {
+        const issuance = createRgbIssuanceArtifact({
+            name: 'Test Token', symbol: 'TST', totalSupply: '1000', precision: 8, schema: 'RGB20', initialSeal: `${'aa'.repeat(32)}:0`,
+        });
+        const transfer = createRgbTransferArtifact({
+            assetId: 'rgb:asset', amount: '100', beneficiary: 'blind:recipient', transitionCommitment: 'transition-commitment',
+        });
+        await expect(issueRgbAsset({ authorization: await authorizeAdapterArtifact(issuance), artifact: issuance }))
+            .resolves.toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        const outcome = await createRgbTransfer({ authorization: await authorizeAdapterArtifact(transfer), artifact: transfer });
+        expect(outcome).toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        expect(JSON.stringify(outcome)).not.toContain('transition-commitment');
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
 
-vi.mock('../services/signer', () => ({
-  requestEnclaveSignature: vi.fn().mockResolvedValue({
-    signature: 'mock_signature_hex',
-    pubkey: 'mock_pubkey',
-    timestamp: Date.now()
-  })
-}));
+    it('rejects mismatched and forged transfer requests', async () => {
+        const artifact = createRgbTransferArtifact({ assetId: 'rgb:asset', amount: '100', beneficiary: 'blind:a', transitionCommitment: 'commitment' });
+        const authorization = await authorizeAdapterArtifact(artifact);
+        await expect(createRgbTransfer({ authorization, artifact: { ...artifact, amount: '101' } }))
+            .resolves.toMatchObject({ kind: 'rejected', reason: 'artifact_digest_mismatch' });
+        await expect(createRgbTransfer({ authorization: forgedAuthorization(), artifact }))
+            .resolves.toMatchObject({ kind: 'rejected' });
+    });
 
-describe('RGB Service', () => {
-  it('should issue an RGB asset correctly', async () => {
-    const mockTxid = 'a'.repeat(64);
-    const asset = await issueRgbAsset('Test Token', 'TST', 1000, 8, 'RGB20', `${mockTxid}:0`);
-    expect(asset.symbol).toBe('TST');
-    expect(asset.totalSupply).toBe(1000);
-  });
-
-  it('should validate a consignment (CSV)', async () => {
-    const consignment: Consignment = {
-      id: 'cons:1',
-      assetId: 'rgb:123',
-      vouts: [0],
-      witness: 'valid_witness_hex_64_chars_long_at_least_so_it_passes_structural_check',
-      endpoints: ['https://storm.node']
-    };
-
-    const isValid = await validateConsignment(consignment);
-    expect(isValid).toBe(true);
-  });
-
-  it('should fail validation for invalid asset ID', async () => {
-    const consignment: Consignment = {
-      id: 'cons:2',
-      assetId: 'invalid:123',
-      vouts: [0],
-      witness: 'some_witness',
-      endpoints: []
-    };
-
-    const isValid = await validateConsignment(consignment);
-    expect(isValid).toBe(false);
-  });
-
-  it('should create an RGB transfer consignment', async () => {
-    const consignment = await createRgbTransfer('rgb:asset1', 100, 'blindedutxo1', 'mockvault');
-    expect(consignment.assetId).toBe('rgb:asset1');
-    expect(consignment.witness).toBe('mock_signature_hex');
-  });
+    it('fails closed when authoritative WASM validation is unavailable', async () => {
+        expect(await verifyRgbProofWasm('aa'.repeat(64))).toBe(false);
+        expect(await validateConsignment({ id: 'cons:1', assetId: 'rgb:asset', vouts: [0], witness: 'aa'.repeat(64), endpoints: [] }))
+            .toBe(false);
+        expect(await validateConsignment(null as never)).toBe(false);
+    });
 });

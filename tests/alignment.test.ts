@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { fetchGlobalReserveMetrics } from '../services/protocol';
 
 vi.mock('../services/signer', () => ({
-    requestEnclaveSignature: vi.fn().mockResolvedValue('mock-signature'),
+    requestNonValueMessageSignature: vi.fn().mockResolvedValue('mock-signature'),
     derivePath: vi.fn().mockResolvedValue({
         publicKey: '02' + '0'.repeat(64),
         privateKey: '01'.repeat(32)

@@ -1,244 +1,85 @@
-// @ts-nocheck
-import { Buffer } from 'buffer';
-import {
-    Chain,
-    TokenId,
-    Wormhole,
-    amount as wormholeAmount,
-    Signer,
-    TokenTransfer,
-    wormhole
-} from '@wormhole-foundation/sdk';
-import { EvmPlatform } from '@wormhole-foundation/sdk-evm';
-import { Network, AppState } from '../types';
-import { sanitizeError, endpointsFor } from './network';
-import { calculateNttFee } from './monetization';
-import { fetchBtcPrice } from './protocol';
+// @ts-nocheck -- Wormhole SDK read-only status APIs expose incompatible multi-version declarations.
 import { sha256 } from '@noble/hashes/sha2.js';
-import { TrustTier, BridgeSystem, validateRouteTrust } from './trust-policy';
+import { TokenTransfer, wormhole } from '@wormhole-foundation/sdk';
+import { EvmPlatform } from '@wormhole-foundation/sdk-evm';
+import type { AppState, Network } from '../types';
+import { calculateNttFee } from './monetization';
+import { endpointsFor } from './network';
+import { BridgeSystem, TrustTier, validateRouteTrust } from './trust-policy';
+import type { CanonicalObject } from './value-operation-gate';
+import { knownUnsupportedValueOperation, type AuthorizedValueOperationExecution, type ValueOperationExecutionOutcome } from './value-operation-result';
 
-/**
- * NTT Configuration for public sBTC and other supported assets.
- * These addresses are aligned with public deployments on Base, Arbitrum, and Ethereum.
- */
 export const NTT_CONFIGS = {
-    sBTC: {
-        symbol: 'sBTC',
-        decimals: 8,
-        tokenIds: {
-            Bitcoin: 'native',
-            Stacks: 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sbtc-token',
-            Ethereum: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270', // Public sBTC NTT Manager (EVM)
-            Base: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
-            Arbitrum: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270'
-        }
-    },
-    W: {
-        symbol: 'W',
-        decimals: 18,
-        tokenIds: {
-            Solana: '85VBFQZC9TZkfAd9S1UZ6WqZBBH6YXM3u2v5n88ZpLp3',
-            Ethereum: '0xB66E0F928829C1F82f06b6E8B6D1B2A10D597A2E',
-            Base: '0xB66E0F928829C1F82f06b6E8B6D1B2A10D597A2E'
-        }
-    }
-};
+  sBTC: { symbol: 'sBTC', decimals: 8, tokenIds: { Bitcoin: 'native', Stacks: 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sbtc-token', Ethereum: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270', Base: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270', Arbitrum: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270' } },
+  W: { symbol: 'W', decimals: 18, tokenIds: { Solana: '85VBFQZC9TZkfAd9S1UZ6WqZBBH6YXM3u2v5n88ZpLp3', Ethereum: '0xB66E0F928829C1F82f06b6E8B6D1B2A10D597A2E', Base: '0xB66E0F928829C1F82f06b6E8B6D1B2A10D597A2E' } },
+} as const;
+export interface FeeEstimation { wormholeBridgeFee: number; destinationNetworkFee: number; integratorFee: number; totalFee: number; }
+export interface NttTransferArtifact extends CanonicalObject {
+  readonly kind: 'conxius.wallet.ntt-transfer.v1'; readonly operation: 'initiate-ntt-transfer'; readonly chain: 'wormhole'; readonly layer: 'ntt'; readonly network: Network;
+  readonly sourceChain: string; readonly destinationChain: string; readonly asset: string; readonly amountBaseUnits: string; readonly recipient: string;
+  readonly signerIdentity: string; readonly route: string; readonly trustTier: TrustTier; readonly hardenedRoute: boolean;
+  readonly providerConfigurationDigest: string; readonly quoteDigest: string; readonly expiry: string; readonly maxFeeBaseUnits: string; readonly idempotencyDigest: string;
+}
+export type NttTransferRequest = AuthorizedValueOperationExecution<NttTransferArtifact>;
+const HEX_DIGEST = /^[0-9a-f]{64}$/;
+function required(value: string, field: string): string { const normalized = value.trim(); if (!normalized) throw new Error(`Invalid NTT ${field}.`); return normalized; }
+function canonicalUnsigned(value: string, field: string): string { if (!/^(0|[1-9][0-9]*)$/.test(value)) throw new Error(`Invalid NTT ${field}.`); return value; }
+function digest(value: string, field: string): string { const normalized = value.toLowerCase(); if (!HEX_DIGEST.test(normalized)) throw new Error(`Invalid NTT ${field} digest.`); return normalized; }
 
-export interface FeeEstimation {
-    wormholeBridgeFee: number;
-    destinationNetworkFee: number;
-    integratorFee: number;
-    totalFee: number;
+export function createNttTransferArtifact(fields: {
+  network: Network; sourceChain: string; destinationChain: string; asset: string; amountBaseUnits: string; recipient: string; signerIdentity: string;
+  route: string; trustTier?: TrustTier; hardenedRoute?: boolean; providerConfigurationDigest: string; quoteDigest: string; expiry: string;
+  maxFeeBaseUnits: string; idempotencyDigest: string;
+}): NttTransferArtifact {
+  const trustTier = fields.trustTier ?? TrustTier.T3; const hardenedRoute = fields.hardenedRoute ?? false;
+  const sourceChain = required(fields.sourceChain, 'source chain'); const destinationChain = required(fields.destinationChain, 'destination chain');
+  const validation = validateRouteTrust({ system: BridgeSystem.WORMHOLE_NTT, sourceChain, targetChain: destinationChain, trustTier, isHardened: hardenedRoute });
+  if (!validation.allowed) throw new Error(`Guard: ${validation.reason}`);
+  return Object.freeze({
+    kind: 'conxius.wallet.ntt-transfer.v1', operation: 'initiate-ntt-transfer', chain: 'wormhole', layer: 'ntt', network: fields.network,
+    sourceChain, destinationChain, asset: required(fields.asset, 'asset'), amountBaseUnits: canonicalUnsigned(fields.amountBaseUnits, 'amount'),
+    recipient: required(fields.recipient, 'recipient'), signerIdentity: required(fields.signerIdentity, 'signer identity'), route: required(fields.route, 'route'),
+    trustTier, hardenedRoute, providerConfigurationDigest: digest(fields.providerConfigurationDigest, 'provider configuration'), quoteDigest: digest(fields.quoteDigest, 'quote'),
+    expiry: canonicalUnsigned(fields.expiry, 'expiry'), maxFeeBaseUnits: canonicalUnsigned(fields.maxFeeBaseUnits, 'maximum fee'), idempotencyDigest: digest(fields.idempotencyDigest, 'idempotency'),
+  });
 }
 
-/**
- * Helper to get an initialized Wormhole instance aligned with Sovereign RPC choices.
- */
 const getWormholeContext = async (network: Network, appState?: AppState) => {
-    const rpcs = appState ? endpointsFor(network, appState) : null;
-    const config: any = { chains: {} };
-
-    if (rpcs) {
-        // Map sovereign endpoints to Wormhole config
-        if (rpcs.BTC_API) config.chains.Bitcoin = { rpc: rpcs.BTC_API };
-        if (rpcs.STX_API) config.chains.Stacks = { rpc: rpcs.STX_API };
-        // Add more mapping for EVM chains if they are in sovereign node list
-    }
-
-    return await wormhole(network === 'mainnet' ? 'Mainnet' : 'Testnet', [EvmPlatform], config);
+  const rpcs = appState ? endpointsFor(network, appState) : null; const config: { chains: Record<string, { rpc: string }> } = { chains: {} };
+  if (rpcs?.BTC_API) config.chains.Bitcoin = { rpc: rpcs.BTC_API }; if (rpcs?.STX_API) config.chains.Stacks = { rpc: rpcs.STX_API };
+  return wormhole(network === 'mainnet' ? 'Mainnet' : 'Testnet', [EvmPlatform], config);
 };
-
-export class NttManager {
-    static async getOutboundLimit(chain: string): Promise<bigint> { return 1000000000n; }
-
-    /**
-     * Stacks Principal Hashing for Wormhole Compatibility.
-     * Wormhole expects 32-byte addresses; Stacks principals are hashed to fit.
-     */
-    static hashStacksPrincipal(principal: string): Uint8Array {
-        return sha256(new TextEncoder().encode(principal));
-    }
-}
-
+export class NttManager { static async getOutboundLimit(chain: string): Promise<bigint> { void chain; return 1000000000n; } static hashStacksPrincipal(principal: string): Uint8Array { return sha256(new TextEncoder().encode(principal)); } }
 export class NttService {
-    /**
-     * Estimates fees for an NTT transfer using the public Wormhole Guardian network.
-     */
-    static async estimateFees(amount: string, source: string, target: string, network: Network): Promise<FeeEstimation> {
-        try {
-            const btcPrice = await fetchBtcPrice();
-            const integratorFee = calculateNttFee(parseFloat(amount) || 0, btcPrice);
-
-            const wormholeBridgeFee = 0.00001;
-            const destinationNetworkFee = 0.00005;
-
-            return {
-                wormholeBridgeFee,
-                destinationNetworkFee,
-                integratorFee,
-                totalFee: wormholeBridgeFee + destinationNetworkFee + integratorFee
-            };
-        } catch (error) {
-            return { wormholeBridgeFee: 0.0001, destinationNetworkFee: 0.00005, integratorFee: 0, totalFee: 0.00015 };
-        }
-    }
-
-    /**
-     * Executes a Native Token Transfer (NTT) via public Wormhole.
-     */
-    static async executeNtt(
-        amountStr: string,
-        sourceLayer: string,
-        targetLayer: string,
-        signer: Signer,
-        network: Network,
-        appState?: AppState,
-        trustTier: TrustTier = TrustTier.T3,
-        isHardened: boolean = false
-    ): Promise<string | null> {
-        try {
-            // Enforce Trust Policy
-            const validation = validateRouteTrust({
-                system: BridgeSystem.WORMHOLE_NTT,
-                sourceChain: sourceLayer,
-                targetChain: targetLayer,
-                trustTier,
-                isHardened
-            });
-
-            if (!validation.allowed) {
-                // Return clear error without triggering sanitizeError redaction if possible
-                // but executeNtt is caught by try-catch below.
-                throw new Error(`Guard: ${validation.reason}`);
-            }
-
-            const wh = await getWormholeContext(network, appState);
-
-            const srcChain = wh.getChain(sourceLayer as Chain);
-            const dstChain = wh.getChain(targetLayer as Chain);
-
-            const config = Object.values(NTT_CONFIGS).find(c => (c.tokenIds as any)[sourceLayer]);
-            if (!config) throw new Error(`No NTT configuration found for ${sourceLayer}`);
-
-            const tokenAddr = (config.tokenIds as any)[sourceLayer];
-            const token = Wormhole.tokenId(srcChain.chain, tokenAddr === 'native' ? 'native' : tokenAddr);
-            const transferAmount = wormholeAmount.units(wormholeAmount.parse(amountStr, config.decimals));
-
-            const xfer = await wh.tokenTransfer(
-                token,
-                transferAmount,
-                Wormhole.chainAddress(srcChain.chain, signer.address()),
-                Wormhole.chainAddress(dstChain.chain, signer.address()),
-                false
-            );
-
-            const quote = await TokenTransfer.quoteTransfer(wh, srcChain, dstChain, xfer.transfer);
-            const srcTxids = await xfer.initiateTransfer(signer);
-            return srcTxids[0];
-
-        } catch (error) {
-            console.error('Sovereign NTT Initiation Failed:', error);
-            // Guard errors are internally generated and never contain secrets.
-            // Re-throw directly to preserve the exact message for tests/consumers.
-            const msg = error instanceof Error ? error.message : String(error);
-            if (msg.startsWith('Guard: ')) throw error;
-            throw new Error(sanitizeError(error), { cause: error });
-        }
-    }
-
-    /**
-     * Tracks the progress of a public NTT transfer.
-     */
-    static async trackProgress(txHash: string, network: Network, appState?: AppState): Promise<{ status: string; signatures: number }> {
-        try {
-            const wh = await getWormholeContext(network, appState);
-            const status = await wh.getTransactionStatus(txHash);
-
-            return {
-                status: status.state || 'Pending',
-                signatures: (status as any).vaa?.signatures?.length || 0
-            };
-        } catch (error) {
-            return { status: 'Unknown', signatures: 0 };
-        }
-    }
-
-    /**
-     * Fetches the VAA for redemption on the destination chain.
-     */
-    static async fetchVaa(txHash: string, network: Network, appState?: AppState): Promise<Uint8Array | null> {
-        try {
-            const wh = await getWormholeContext(network, appState);
-            const xfer = await TokenTransfer.from(wh, txHash);
-            const attestations = await xfer.fetchAttestation(60000);
-            return (attestations[0] as any).vaa;
-        } catch {
-            return null;
-        }
-    }
-
-    /**
-     * Dynamically discovers NTT-capable tokens from public registries.
-     */
-    static async discoverPublicNttTokens(network: Network): Promise<any[]> {
-        const baseUrl = network === 'mainnet' ? 'https://api.wormholescan.io' : 'https://api.testnet.wormholescan.io';
-        try {
-            const response = await fetch(`${baseUrl}/api/v1/ntt/tokens`);
-            if (!response.ok) return [];
-            return await response.json();
-        } catch {
-            return [];
-        }
-    }
+  static async estimateFees(amount: string, source: string, target: string, network: Network): Promise<FeeEstimation> {
+    void source; void target; void network;
+    try { const integratorFee = calculateNttFee(Number.parseFloat(amount) || 0); return { wormholeBridgeFee: 0.00001, destinationNetworkFee: 0.00005, integratorFee, totalFee: 0.00006 + integratorFee }; }
+    catch { return { wormholeBridgeFee: 0.0001, destinationNetworkFee: 0.00005, integratorFee: 0, totalFee: 0.00015 }; }
+  }
+  /** Source submission is unsupported; this is not VAA, redemption, or settlement evidence. */
+  static async executeNtt(request: NttTransferRequest): Promise<ValueOperationExecutionOutcome> {
+    return knownUnsupportedValueOperation(request, { artifactKind: 'conxius.wallet.ntt-transfer.v1', operationType: 'initiate-ntt-transfer', layer: 'ntt', chain: 'wormhole' });
+  }
+  /** Read-only observation. A status is not settlement evidence. */
+  static async trackProgress(txHash: string, network: Network, appState?: AppState): Promise<{ status: string; signatures: number }> {
+    try { const status = await (await getWormholeContext(network, appState)).getTransactionStatus(txHash); return { status: status.state || 'Pending', signatures: (status as { vaa?: { signatures?: unknown[] } }).vaa?.signatures?.length || 0 }; }
+    catch { return { status: 'Unknown', signatures: 0 }; }
+  }
+  /** Read-only attestation retrieval. A VAA is neither destination redemption nor settlement. */
+  static async fetchVaa(txHash: string, network: Network, appState?: AppState): Promise<Uint8Array | null> {
+    try { const xfer = await TokenTransfer.from(await getWormholeContext(network, appState), txHash); const attestations = await xfer.fetchAttestation(60000); return (attestations[0] as { vaa: Uint8Array }).vaa; }
+    catch { return null; }
+  }
+  static async discoverPublicNttTokens(network: Network): Promise<unknown[]> { const baseUrl = network === 'mainnet' ? 'https://api.wormholescan.io' : 'https://api.testnet.wormholescan.io'; try { const response = await fetch(`${baseUrl}/api/v1/ntt/tokens`); return response.ok ? response.json() : []; } catch { return []; } }
 }
-
 export const BRIDGE_STAGES = [
-  { id: 'CONFIRMATION', text: 'Source Confirmation', userMessage: 'Patience, Sovereign. BTC is etching...' },
-  { id: 'VAA', text: 'Wormhole VAA', userMessage: 'Guardians are witnessing...' },
-  { id: 'REDEMPTION', text: 'Redemption', userMessage: 'Arriving on destination...' },
+  { id: 'CONFIRMATION', text: 'Source Confirmation', userMessage: 'Awaiting source-chain evidence...' },
+  { id: 'VAA', text: 'Wormhole VAA', userMessage: 'Awaiting an attestation...' },
+  { id: 'REDEMPTION', text: 'Redemption', userMessage: 'Awaiting destination redemption evidence...' },
 ];
-
-export const getRecommendedBridgeProtocol = (
-    source: string,
-    target: string,
-    requiredTier: TrustTier = TrustTier.T3
-): 'Native' | 'NTT' | 'Swap' | 'None' => {
-    const bitcoinEcosystem = ['Stacks', 'Liquid', 'Rootstock', 'BOB', 'B2', 'Botanix', 'Mezo', 'RGB', 'Ark', 'StateChain', 'Lightning'];
-
-    // Native and Swap are trust-minimized or atomic (T1/T2 equivalent)
-    if (source === 'Mainnet' && bitcoinEcosystem.includes(target)) return 'Native';
-    if ((source === 'Mainnet' && (target === 'Lightning' || target === 'Liquid')) || (source === 'Liquid' && target === 'Mainnet')) return 'Swap';
-
-    // For others, check if NTT (Wormhole) meets the required tier
-    const validation = validateRouteTrust({
-        system: BridgeSystem.WORMHOLE_NTT,
-        sourceChain: source,
-        targetChain: target,
-        trustTier: requiredTier,
-        isHardened: false // Default recommendation assumes standard config
-    });
-
-    if (!validation.allowed) return 'None';
-
-    return 'NTT';
+export const getRecommendedBridgeProtocol = (source: string, target: string, requiredTier: TrustTier = TrustTier.T3): 'Native' | 'NTT' | 'Swap' | 'None' => {
+  const bitcoinEcosystem = ['Stacks', 'Liquid', 'Rootstock', 'BOB', 'B2', 'Botanix', 'Mezo', 'RGB', 'Ark', 'StateChain', 'Lightning'];
+  if (source === 'Mainnet' && bitcoinEcosystem.includes(target)) return 'Native';
+  if ((source === 'Mainnet' && (target === 'Lightning' || target === 'Liquid')) || (source === 'Liquid' && target === 'Mainnet')) return 'Swap';
+  return validateRouteTrust({ system: BridgeSystem.WORMHOLE_NTT, sourceChain: source, targetChain: target, trustTier: requiredTier, isHardened: false }).allowed ? 'NTT' : 'None';
 };

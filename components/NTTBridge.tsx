@@ -1,10 +1,20 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { BitcoinLayer } from '../types';
-import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp, ShieldCheck, Zap, Globe, Search, RefreshCw, ExternalLink, Target, Cpu, Download, Activity } from 'lucide-react';
+import { ArrowRight, TrendingUp, ShieldCheck, Zap, Globe, Target, Cpu, Activity } from 'lucide-react';
 import { AppContext } from '../context';
-import { NttService, BRIDGE_STAGES, getRecommendedBridgeProtocol, NTT_CONFIGS } from '../services/ntt';
-import { fetchUtxos, broadcastTransaction, fetchSbtcWalletAddress, monitorSbtcPegIn, fetchNativePegAddress } from '../services/protocol';
+import { NttService, getRecommendedBridgeProtocol } from '../services/ntt';
+import { fetchUtxos, fetchNativePegAddress } from '../services/protocol';
 import { buildSbtcPegInPsbt, buildNativePegPsbt } from '../services/psbt';
+import { STORAGE_KEY } from '../services/enclave-storage';
+import { signAuthorizedValueOperationNative } from '../services/value-signer';
+import { broadcastAuthorizedBitcoinTransaction, createBitcoinBroadcastArtifact } from '../services/bitcoin-broadcast';
+import { formatSatoshisAsBtc, parseBtcToSatoshis, toSafeSatoshiNumber } from '../services/bitcoin-amount';
+import {
+  createBitcoinPsbtOperationPayload,
+  createDeterministicValueOperationIntent,
+  redactValueOperationIdentifier,
+  unavailableValueOperationEvidence,
+  valueOperationOutcomeMessage,
+} from '../services/value-operations';
 
 const NTTBridge: React.FC = () => {
   const context = useContext(AppContext);
@@ -15,18 +25,15 @@ const NTTBridge: React.FC = () => {
   const [amount, setAmount] = useState('');
   const [isBridgeInProgress, setIsBridgeInProgress] = useState(false);
   const [bridgeStatus, setBridgeStatus] = useState<string>('IDLE');
-  const [txHash, setTxHash] = useState('');
   const [feeEstimation, setFeeEstimation] = useState<any>(null);
   const [isEstimatingFees, setIsEstimatingFees] = useState(false);
 
   useEffect(() => {
-    const savedTx = localStorage.getItem('PENDING_NTT_TX');
-    const savedLayer = localStorage.getItem('PENDING_NTT_TARGET');
-    if (savedTx) {
-      setTimeout(() => setTxHash(savedTx), 0);
-      setTimeout(() => setIsBridgeInProgress(true), 0);
-      setTimeout(() => setStep(4), 0);
-      if (savedLayer) setTimeout(() => setTargetLayer(savedLayer), 0);
+    try {
+      localStorage.removeItem('PENDING_NTT_TX');
+      localStorage.removeItem('PENDING_NTT_TARGET');
+    } catch {
+      // Legacy unbound settlement identifiers are ignored even if storage is unavailable.
     }
   }, []);
 
@@ -51,19 +58,35 @@ const NTTBridge: React.FC = () => {
     }
   }, [step, sourceLayer, targetLayer, amount, context?.state.network]);
 
+  const parsedAmountSats = (() => {
+    try {
+      return parseBtcToSatoshis(amount);
+    } catch {
+      return null;
+    }
+  })();
+
   const handleNativeBridge = async () => {
       if (!context) return;
       setIsBridgeInProgress(true);
       setBridgeStatus('INITIATING');
       try {
           const utxos = await fetchUtxos(context.state.walletConfig?.masterAddress || '', context.state.network);
-          const pegInAddress = await fetchNativePegAddress(targetLayer as any, context.state.network);
-          const amountSats = Math.floor(parseFloat(amount) * 100000000);
+          const pegAddress = await fetchNativePegAddress(targetLayer as any, context.state.network);
+          if (pegAddress.kind === 'unsupported') {
+              context.notify('error', 'Native peg-in unavailable: no qualified peg address provider is configured.');
+              setBridgeStatus('FAILED');
+              return;
+          }
+          const pegInAddress = pegAddress.address;
+          const amountSats = parseBtcToSatoshis(amount);
+          const amountSatsString = amountSats.toString();
+          const amountSatsNumber = toSafeSatoshiNumber(amountSats);
 
           let psbtHex = '';
           if (targetLayer === 'Stacks') {
               psbtHex = await buildSbtcPegInPsbt({
-                  amountSats,
+                  amountSats: amountSatsNumber,
                   utxos,
                   stacksAddress: context.state.walletConfig?.stacksAddress || '',
                   changeAddress: context.state.walletConfig?.masterAddress || '',
@@ -73,7 +96,7 @@ const NTTBridge: React.FC = () => {
               });
           } else {
               psbtHex = await buildNativePegPsbt({
-                  amountSats,
+                  amountSats: amountSatsNumber,
                   utxos,
                   changeAddress: context.state.walletConfig?.masterAddress || '',
                   feeRate: 2,
@@ -82,47 +105,72 @@ const NTTBridge: React.FC = () => {
               });
           }
 
-          const signed = await context.authorizeSignature({
-              type: 'psbt',
-              layer: 'Mainnet',
-              payload: { psbt: psbtHex },
-              description: `Bridge ${amount} BTC to ${targetLayer}`
+          const intent = createDeterministicValueOperationIntent({
+              operationType: 'bitcoin-native-peg-in',
+              chain: 'bitcoin',
+              layer: 'l1',
+              payload: createBitcoinPsbtOperationPayload(psbtHex),
+              network: context.state.network,
+              purpose: 'native-peg-in',
+              domain: 'conxius.wallet',
+              audience: `native-peg:${targetLayer}`,
           });
-
-          if (signed.broadcastReadyHex) {
-              setBridgeStatus('BROADCASTING');
-              const txid = await broadcastTransaction(signed.broadcastReadyHex, 'Mainnet', context.state.network);
-              setTxHash(txid);
-              setStep(4);
-              localStorage.setItem('PENDING_NTT_TX', txid);
-              localStorage.setItem('PENDING_NTT_TARGET', targetLayer);
-
-              setBridgeStatus('VERIFYING');
-              await monitorSbtcPegIn(txid, context.state.network);
-              setBridgeStatus('COMPLETED');
+          const authorization = await context.requestValueOperationAuthorization({
+              intent,
+              summary: {
+                  title: 'Authorize Native Peg-In',
+                  action: `Bridge Bitcoin to ${targetLayer}`,
+                  amount: `${amountSatsString} sats`,
+                  destination: redactValueOperationIdentifier(pegInAddress),
+                  network: context.state.network,
+                  purpose: 'Native peg-in',
+              },
+              custody: {
+                  boundary: 'wallet-native-enclave',
+                  protocolKeyIdentity: 'bitcoin-account-0',
+                  algorithm: 'secp256k1-ecdsa',
+              },
+              evidence: unavailableValueOperationEvidence('native-peg-provider'),
+          });
+          if (authorization.kind !== 'authorized') {
+              setBridgeStatus('UNAVAILABLE');
+              context.notify('error', valueOperationOutcomeMessage(authorization));
+              return;
           }
-      } catch (e: any) {
-          context.notify('error', e.message, 'Bridge Failed');
+          const signed = await signAuthorizedValueOperationNative({
+              authorization,
+              psbt: psbtHex,
+              network: context.state.network,
+              vault: STORAGE_KEY,
+          });
+          if (signed.kind !== 'signed') {
+              setBridgeStatus('UNAVAILABLE');
+              context.notify('error', 'Native value signing unavailable.');
+              return;
+          }
+          const broadcast = await broadcastAuthorizedBitcoinTransaction(
+              createBitcoinBroadcastArtifact(signed.broadcastReadyHex),
+          );
+          setBridgeStatus('UNAVAILABLE');
+          context.notify(
+              'error',
+              broadcast.kind === 'unsupported'
+                  ? 'Native peg-in broadcast unavailable: no qualified provider receipt is configured.'
+                  : 'Native peg-in broadcast artifact was rejected before submission.',
+          );
+      } catch {
+          setBridgeStatus('UNAVAILABLE');
+          context.notify('error', 'Native peg-in unavailable.', 'Bridge Failed');
+      } finally {
           setIsBridgeInProgress(false);
       }
   };
 
   const handleNttBridge = async () => {
     if (!context) return;
-    setIsBridgeInProgress(true);
-    setBridgeStatus('INITIATING');
-
-    try {
-       // NTT logic would use NttService.executeNtt (simulation)
-       setTimeout(() => {
-           setTxHash('0x' + Math.random().toString(16).substring(2, 66));
-           setStep(4);
-           setBridgeStatus('COMPLETED');
-       }, 3000);
-    } catch (e: any) {
-        context.notify('error', e.message, 'NTT Failed');
-        setIsBridgeInProgress(false);
-    }
+    setIsBridgeInProgress(false);
+    setBridgeStatus('UNSUPPORTED');
+    context.notify('error', 'NTT transfer unavailable: no authoritative execution provider is configured.');
   };
 
   return (
@@ -137,7 +185,7 @@ const NTTBridge: React.FC = () => {
              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-earth">Cross-Layer Settlement</span>
           </div>
           <h1 className="text-5xl font-black tracking-tighter text-brand-deep">Sovereign Bridge</h1>
-          <p className="text-brand-earth mt-2 max-w-md italic">Transfer assets across the Bitcoin ecosystem with hardware-enforced privacy.</p>
+          <p className="text-brand-earth mt-2 max-w-md italic">Transfer assets across supported Bitcoin layers through fail-closed authorization.</p>
         </div>
 
         <div className="flex bg-off-white/50 p-1.5 rounded-2xl border border-border">
@@ -217,7 +265,7 @@ const NTTBridge: React.FC = () => {
 
                     <button
                       onClick={() => setStep(2)}
-                      disabled={!amount || parseFloat(amount) <= 0}
+                      disabled={parsedAmountSats === null}
                       className="w-full py-6 bg-accent-earth hover:bg-accent-earth/90 disabled:opacity-50 text-white font-black rounded-[2rem] text-sm uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 active:scale-[0.98] flex items-center justify-center gap-3"
                     >
                       Next: Review Bridge <ArrowRight size={18} />
@@ -247,7 +295,7 @@ const NTTBridge: React.FC = () => {
                         <div className="pt-6 border-t border-border/50 space-y-4">
                            <div className="flex justify-between text-xs">
                               <span className="text-brand-earth">Transfer Amount</span>
-                              <span className="font-bold text-brand-deep">{amount} BTC</span>
+                              <span className="font-bold text-brand-deep">{parsedAmountSats === null ? 'Invalid' : formatSatoshisAsBtc(parsedAmountSats)} BTC</span>
                            </div>
                            <div className="flex justify-between text-xs">
                               <span className="text-brand-earth">Bridge Fee</span>
@@ -255,7 +303,7 @@ const NTTBridge: React.FC = () => {
                            </div>
                            <div className="flex justify-between text-sm pt-4 font-black">
                               <span className="text-brand-deep uppercase tracking-widest">Total cost</span>
-                              <span className="text-accent-earth font-mono">{(parseFloat(amount) + 0.0001).toFixed(4)} BTC</span>
+                              <span className="text-accent-earth font-mono">{parsedAmountSats === null ? 'Unavailable' : formatSatoshisAsBtc(parsedAmountSats + 10_000n)} BTC</span>
                            </div>
                         </div>
                      </div>
@@ -277,34 +325,6 @@ const NTTBridge: React.FC = () => {
                   </div>
                 )}
 
-                {step === 4 && (
-                   <div className="py-12 flex flex-col items-center justify-center text-center space-y-8 animate-in zoom-in-95 duration-500">
-                      <div className="relative">
-                         <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                         <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center relative z-10 shadow-2xl shadow-green-500/40">
-                            <CheckCircle2 size={48} className="text-white" />
-                         </div>
-                      </div>
-
-                      <div>
-                         <h2 className="text-3xl font-black text-brand-deep tracking-tighter">Transfer Initiated</h2>
-                         <p className="text-brand-earth mt-2 italic">Monitoring settlement on {targetLayer}...</p>
-                      </div>
-
-                      <div className="w-full bg-off-white border border-border rounded-3xl p-6 font-mono text-[10px] break-all text-brand-earth flex items-center gap-3">
-                         <span className="opacity-50">TX:</span>
-                         <span className="flex-1 text-left">{txHash}</span>
-                         <button className="p-2 hover:bg-white rounded-lg transition-all"><Link size={14} /></button>
-                      </div>
-
-                      <button
-                        onClick={() => { setStep(1); setAmount(''); setIsBridgeInProgress(false); localStorage.removeItem('PENDING_NTT_TX'); }}
-                        className="w-full py-5 border-2 border-brand-deep text-brand-deep font-black rounded-[2rem] text-[10px] uppercase tracking-widest hover:bg-brand-deep hover:text-white transition-all"
-                      >
-                         Dismiss & Return to Assets
-                      </button>
-                   </div>
-                )}
               </div>
            </div>
 
@@ -315,7 +335,7 @@ const NTTBridge: React.FC = () => {
               </div>
               <div className="space-y-1">
                  <h4 className="text-xs font-black uppercase text-brand-deep tracking-widest">Enclave Verification Active</h4>
-                 <p className="text-[10px] text-brand-earth leading-relaxed">All bridge operations require local signature verification within the hardware-isolated StrongBox environment. Your private keys never leave the device.</p>
+                 <p className="text-[10px] text-brand-earth leading-relaxed">Value-bearing bridge operations require the native enclave path and authoritative evidence. Unsupported paths remain unavailable.</p>
               </div>
            </div>
         </div>

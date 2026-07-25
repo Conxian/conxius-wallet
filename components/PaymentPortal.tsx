@@ -1,38 +1,34 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
-  ArrowRight,
   Send,
   Scan,
   Zap,
   ShieldCheck,
-  Info,
-  AlertCircle,
-  CheckCircle2,
   Clock,
-  Link,
-  History,
-  Search,
   TrendingUp,
-  ChevronRight,
-  Globe,
-  User,
   Fingerprint,
-  X,
   Loader2,
-  Camera,
-  CreditCard
+  Camera
 } from 'lucide-react';
 import { AppContext } from '../context';
-import { fetchUtxos, broadcastTransaction } from '../services/protocol';
+import { fetchUtxos } from '../services/protocol';
 import { buildPsbt } from '../services/psbt';
 import { getRecommendedFees } from '../services/fees';
 import { endpointsFor } from '../services/network';
 import { BrowserMultiFormatReader } from '@zxing/library';
-import { decodeBolt11, isLnurl, decodeLnurl, fetchLnurlParams, payLightningInvoice, payLnurl } from '../services/lightning';
-import * as bitcoin from 'bitcoinjs-lib';
-import { payjoin } from 'payjoin-client';
-import { IdentityService } from '../services/identity';
-import { signB2bInvoice } from '../services/monetization';
+import { decodeBolt11, isLnurl, decodeLnurl, fetchLnurlParams } from '../services/lightning';
+import { STORAGE_KEY } from '../services/enclave-storage';
+import { signAuthorizedValueOperationNative } from '../services/value-signer';
+import { broadcastAuthorizedBitcoinTransaction, createBitcoinBroadcastArtifact } from '../services/bitcoin-broadcast';
+import { parseBtcToSatoshis, parseSatoshiAmount, toSafeSatoshiNumber } from '../services/bitcoin-amount';
+import { digestCanonicalPayload } from '../services/value-operation-gate';
+import {
+  createBitcoinPsbtOperationPayload,
+  createDeterministicValueOperationIntent,
+  redactValueOperationIdentifier,
+  unavailableValueOperationEvidence,
+  valueOperationOutcomeMessage,
+} from '../services/value-operations';
 
 const PaymentPortal: React.FC = () => {
   const context = useContext(AppContext);
@@ -43,8 +39,6 @@ const PaymentPortal: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [onchainTxid, setOnchainTxid] = useState('');
   const [lnDetail, setLnDetail] = useState<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -97,44 +91,116 @@ const PaymentPortal: React.FC = () => {
     const network = context.state.network;
 
     try {
-        let txid = '';
         if (method === 'lightning') {
-             if (lnDetail?.type === 'lnurl') {
-                 txid = await payLnurl(lnDetail.params, parseFloat(amount));
-             } else {
-                 txid = await payLightningInvoice(recipient);
+             const normalizedRequest = recipient.trim();
+             const requestKind = lnDetail?.type === 'lnurl' ? 'lnurl' : 'bolt11';
+             const amountSats = amount ? parseSatoshiAmount(amount).toString() : null;
+             const requestDigest = digestCanonicalPayload({
+                 kind: 'lightning-payment-request',
+                 request: normalizedRequest,
+             });
+             const intent = createDeterministicValueOperationIntent({
+                 operationType: 'lightning-payment',
+                 chain: 'bitcoin',
+                 layer: 'lightning',
+                 payload: amountSats === null
+                     ? { kind: 'lightning-payment', requestKind, requestDigest }
+                     : { kind: 'lightning-payment', requestKind, requestDigest, amountSats },
+                 network,
+                 purpose: 'payment-portal-lightning',
+                 domain: 'conxius.wallet',
+                 audience: 'qualified-lightning-adapter',
+             });
+             const authorization = await context.requestValueOperationAuthorization({
+                 intent,
+                 summary: {
+                     title: 'Authorize Lightning Payment',
+                     action: 'Review Lightning payment',
+                     amount: amountSats === null ? 'Invoice-defined amount' : `${amountSats} sats`,
+                     destination: redactValueOperationIdentifier(normalizedRequest),
+                     network,
+                     purpose: 'Citadel Pay Lightning',
+                 },
+                 custody: {
+                     boundary: 'wallet-native-enclave',
+                     protocolKeyIdentity: 'lightning-wallet',
+                     algorithm: 'lightning-wallet-adapter',
+                 },
+                 evidence: unavailableValueOperationEvidence('payment-portal-lightning-provider'),
+             });
+             if (authorization.kind !== 'authorized') {
+                 context.notify('error', valueOperationOutcomeMessage(authorization));
+                 return;
              }
+             context.notify('error', 'Lightning execution unavailable: no qualified wallet adapter or authoritative receipt is configured.');
+             return;
         } else {
              const fromAddress = context.state.walletConfig?.masterAddress || '';
              const utxos = await fetchUtxos(fromAddress, network);
-             const amountSats = Math.floor(parseFloat(amount) * 100000000);
+             const amountSats = parseBtcToSatoshis(amount);
+             const amountSatsString = amountSats.toString();
              const feeRate = (await getRecommendedFees(endpointsFor(network, context.state).BTC_API)).fastestFee;
 
              const psbtHex = await buildPsbt({
                  utxos,
                  toAddress: recipient,
-                 amountSats,
+                 amountSats: toSafeSatoshiNumber(amountSats),
                  changeAddress: fromAddress,
                  feeRate,
                  network
              });
 
-             const signed = await context.authorizeSignature({
-                 type: 'psbt',
-                 layer: 'Mainnet',
-                 payload: { psbt: psbtHex },
-                 description: `Send ${amount} BTC to ${recipient}`
+             const intent = createDeterministicValueOperationIntent({
+                 operationType: 'bitcoin-transfer',
+                 chain: 'bitcoin',
+                 layer: 'l1',
+                 payload: createBitcoinPsbtOperationPayload(psbtHex),
+                 network,
+                 purpose: 'payment-portal-onchain',
+                 domain: 'conxius.wallet',
+                 audience: 'native-value-signer',
              });
-
-             if (signed.broadcastReadyHex) {
-                 txid = await broadcastTransaction(signed.broadcastReadyHex, 'Mainnet', network);
+             const authorization = await context.requestValueOperationAuthorization({
+                 intent,
+                 summary: {
+                     title: 'Authorize Bitcoin Payment',
+                     action: 'Send Bitcoin on-chain',
+                     amount: `${amountSatsString} sats`,
+                     destination: redactValueOperationIdentifier(recipient),
+                     network,
+                     purpose: 'Citadel Pay',
+                 },
+                 custody: {
+                     boundary: 'wallet-native-enclave',
+                     protocolKeyIdentity: 'bitcoin-account-0',
+                     algorithm: 'secp256k1-ecdsa',
+                 },
+                 evidence: unavailableValueOperationEvidence('payment-portal-psbt-provider'),
+             });
+             if (authorization.kind !== 'authorized') {
+                 context.notify('error', valueOperationOutcomeMessage(authorization));
+                 return;
              }
-        }
 
-        if (txid) {
-            setOnchainTxid(txid);
-            setShowSuccess(true);
-            context.notify('success', `Payment Sent: ${txid.substring(0, 12)}...`);
+             const signed = await signAuthorizedValueOperationNative({
+                 authorization,
+                 psbt: psbtHex,
+                 network,
+                 vault: STORAGE_KEY,
+             });
+             if (signed.kind !== 'signed') {
+                 context.notify('error', 'Native value signing unavailable.');
+                 return;
+             }
+
+             const broadcast = await broadcastAuthorizedBitcoinTransaction(
+                 createBitcoinBroadcastArtifact(signed.broadcastReadyHex),
+             );
+             if (broadcast.kind === 'unsupported') {
+                 context.notify('error', 'Bitcoin broadcast unavailable: no qualified provider receipt is configured.');
+                 return;
+             }
+             context.notify('error', 'Bitcoin broadcast artifact was rejected before submission.');
         }
     } catch (e: any) {
         context.notify('error', e.message, 'Payment Failed');
@@ -189,35 +255,7 @@ const PaymentPortal: React.FC = () => {
                 <ShieldCheck size={240} />
               </div>
 
-              {showSuccess ? (
-                 <div className="py-12 flex flex-col items-center justify-center text-center space-y-8 animate-in zoom-in-95 duration-500">
-                    <div className="relative">
-                       <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                       <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center relative z-10 shadow-2xl shadow-green-500/40">
-                          <CheckCircle2 size={48} className="text-white" />
-                       </div>
-                    </div>
-
-                    <div>
-                       <h2 className="text-3xl font-black text-brand-deep tracking-tighter">Payment Sent</h2>
-                       <p className="text-brand-earth mt-2 italic">Computational integrity verified by Enclave.</p>
-                    </div>
-
-                    <div className="w-full bg-off-white border border-border rounded-3xl p-6 font-mono text-[10px] break-all text-brand-earth flex items-center gap-3">
-                       <span className="opacity-50">TX:</span>
-                       <span className="flex-1 text-left">{onchainTxid}</span>
-                       <button className="p-2 hover:bg-white rounded-lg transition-all"><Link size={14} /></button>
-                    </div>
-
-                    <button
-                      onClick={() => { setShowSuccess(false); setRecipient(''); setAmount(''); setLnDetail(null); }}
-                      className="w-full py-5 border-2 border-brand-deep text-brand-deep font-black rounded-[2rem] text-[10px] uppercase tracking-widest hover:bg-brand-deep hover:text-white transition-all"
-                    >
-                       New Payment
-                    </button>
-                 </div>
-              ) : (
-                <div className="relative z-10 space-y-10">
+              <div className="relative z-10 space-y-10">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between px-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-brand-earth">Recipient {method === 'lightning' ? 'Invoice' : 'Address'}</label>
@@ -289,10 +327,9 @@ const PaymentPortal: React.FC = () => {
                       className="w-full py-7 bg-accent-earth hover:bg-accent-earth/90 disabled:opacity-50 text-white font-black rounded-[2.5rem] text-sm uppercase tracking-[0.2em] transition-all shadow-2xl shadow-orange-600/20 active:scale-[0.98] flex items-center justify-center gap-4"
                     >
                       {isSending ? <Loader2 className="animate-spin" size={20} /> : <Zap size={20} className="fill-current" />}
-                      Authorize Enclave Sign
+                      Review Payment Authorization
                     </button>
                 </div>
-              )}
            </div>
 
            <div className="bg-ivory border border-border rounded-3xl p-8 flex gap-6 items-start">
@@ -342,7 +379,7 @@ const PaymentPortal: React.FC = () => {
                     </div>
                     <div>
                        <p className="text-[10px] font-bold text-brand-deep">Hardware Key Ready</p>
-                       <p className="text-[9px] text-brand-earth">StrongBox Attested</p>
+                       <p className="text-[9px] text-brand-earth">Native key path configured</p>
                     </div>
                  </div>
               </div>
