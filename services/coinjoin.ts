@@ -1,107 +1,134 @@
-import { UTXO, Network } from '../types';
-import { notificationService } from './notifications';
-import { generateRandomString } from './random';
+import type { Network, UTXO } from '../types';
+import { digestCanonicalPayload, type CanonicalObject } from './value-operation-gate';
+import {
+    knownUnsupportedValueOperation,
+    type AuthorizedValueOperationExecution,
+    type ValueOperationExecutionOutcome,
+} from './value-operation-result';
 
 export interface CoinJoinRound {
+    readonly roundId: string;
+    readonly phase: 'InputRegistration' | 'ConnectionConfirmation' | 'OutputRegistration' | 'Signing' | 'Ended';
+    readonly inputVbytes: number;
+    readonly outputVbytes: number;
+    readonly miningFeeRate: number;
+    readonly coordinatorFeeRate: number;
+    readonly minInputCount: number;
+    readonly maxInputCount: number;
+}
+
+export type CoinJoinRoundDiscoveryResult = Readonly<{
+    kind: 'unsupported';
+    reason: 'qualified_coordinator_unavailable';
+    rounds: readonly CoinJoinRound[];
+}>;
+
+export interface CoinJoinInputRegistrationArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.coinjoin-input-registration.v1';
+    readonly operation: 'register-coinjoin-inputs';
+    readonly chain: 'bitcoin';
+    readonly layer: 'coinjoin';
+    readonly network: Network;
+    readonly roundId: string;
+    readonly inputSetDigest: string;
+    readonly changeAddress: string;
+    readonly coordinatorConfigurationDigest: string;
+}
+
+export interface CoinJoinOutputRegistrationArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.coinjoin-output-registration.v1';
+    readonly operation: 'register-coinjoin-output';
+    readonly chain: 'bitcoin';
+    readonly layer: 'coinjoin';
+    readonly network: Network;
+    readonly roundId: string;
+    readonly registrationTokenDigest: string;
+    readonly outputAddress: string;
+    readonly credentialSetDigest: string;
+    readonly coordinatorConfigurationDigest: string;
+}
+
+export type CoinJoinInputRegistrationRequest = AuthorizedValueOperationExecution<CoinJoinInputRegistrationArtifact>;
+export type CoinJoinOutputRegistrationRequest = AuthorizedValueOperationExecution<CoinJoinOutputRegistrationArtifact>;
+
+const DIGEST = /^[0-9a-f]{64}$/;
+
+function required(value: string, field: string): string {
+    const normalized = value.trim();
+    if (!normalized) throw new Error(`Invalid CoinJoin ${field}.`);
+    return normalized;
+}
+
+function exactDigest(value: string, field: string): string {
+    const normalized = value.trim().toLowerCase();
+    if (!DIGEST.test(normalized)) throw new Error(`Invalid CoinJoin ${field} digest.`);
+    return normalized;
+}
+
+function canonicalInteger(value: number, field: string): string {
+    if (!Number.isSafeInteger(value) || value < 0) throw new Error(`Invalid CoinJoin ${field}.`);
+    return String(value);
+}
+
+export function createCoinJoinInputRegistrationArtifact(fields: {
     roundId: string;
-    phase: 'InputRegistration' | 'ConnectionConfirmation' | 'OutputRegistration' | 'Signing' | 'Ended';
-    inputVbytes: number;
-    outputVbytes: number;
-    miningFeeRate: number;
-    coordinatorFeeRate: number;
-    minInputCount: number;
-    maxInputCount: number;
+    utxos: readonly UTXO[];
+    changeAddress: string;
+    network: Network;
+    coordinatorConfigurationDigest: string;
+}): CoinJoinInputRegistrationArtifact {
+    if (fields.utxos.length === 0) throw new Error('Invalid CoinJoin input set.');
+    const inputs = Object.freeze(fields.utxos.map((utxo) => Object.freeze({
+        txid: required(utxo.txid, 'input txid'), vout: canonicalInteger(utxo.vout, 'input output'),
+        amountSats: canonicalInteger(utxo.amount, 'input amount'), address: required(utxo.address, 'input address'),
+        script: utxo.script ?? '', status: utxo.status, frozen: utxo.isFrozen,
+    })));
+    return Object.freeze({
+        kind: 'conxius.wallet.coinjoin-input-registration.v1', operation: 'register-coinjoin-inputs',
+        chain: 'bitcoin', layer: 'coinjoin', network: fields.network, roundId: required(fields.roundId, 'round'),
+        inputSetDigest: digestCanonicalPayload(inputs), changeAddress: required(fields.changeAddress, 'change address'),
+        coordinatorConfigurationDigest: exactDigest(fields.coordinatorConfigurationDigest, 'coordinator configuration'),
+    });
 }
 
-export interface WabiSabiCredential {
-    amount: number;
-    weight: number;
-    presentation: string; // Blinded presentation
+export function createCoinJoinOutputRegistrationArtifact(fields: {
+    roundId: string;
+    registrationToken: string;
+    outputAddress: string;
+    credentialCommitments: readonly string[];
+    network: Network;
+    coordinatorConfigurationDigest: string;
+}): CoinJoinOutputRegistrationArtifact {
+    if (fields.credentialCommitments.length === 0) throw new Error('Invalid CoinJoin credential set.');
+    return Object.freeze({
+        kind: 'conxius.wallet.coinjoin-output-registration.v1', operation: 'register-coinjoin-output',
+        chain: 'bitcoin', layer: 'coinjoin', network: fields.network, roundId: required(fields.roundId, 'round'),
+        registrationTokenDigest: digestCanonicalPayload(Object.freeze({
+            kind: 'conxius.wallet.coinjoin-registration-token.v1', value: required(fields.registrationToken, 'registration token'),
+        })),
+        outputAddress: required(fields.outputAddress, 'output address'),
+        credentialSetDigest: digestCanonicalPayload(Object.freeze(fields.credentialCommitments.map((commitment) =>
+            exactDigest(commitment, 'credential commitment')))),
+        coordinatorConfigurationDigest: exactDigest(fields.coordinatorConfigurationDigest, 'coordinator configuration'),
+    });
 }
 
-/**
- * CoinJoin Service (M7 Implementation)
- * Provides logic for participating in privacy-preserving collaborative transactions.
- */
+/** No coordinator rounds are represented without a qualified, validated provider. */
+export async function fetchActiveRounds(_network: Network): Promise<CoinJoinRoundDiscoveryResult> {
+    void _network;
+    return Object.freeze({ kind: 'unsupported', reason: 'qualified_coordinator_unavailable', rounds: Object.freeze([]) });
+}
 
-export const fetchActiveRounds = async (_network: Network): Promise<CoinJoinRound[]> => {
-    // Enhanced simulation of real coordinator rounds
-    const now = Date.now();
-    const roundNumber = Math.floor(now / 120000); // New round every 2 minutes
-    const phaseIndex = Math.floor((now % 120000) / 30000); // 30s per phase
-    const phases: CoinJoinRound['phase'][] = ['InputRegistration', 'ConnectionConfirmation', 'OutputRegistration', 'Signing'];
-
-    return [{
-        roundId: `round_${roundNumber}`,
-        phase: phases[phaseIndex] || 'Ended',
-        inputVbytes: 68,
-        outputVbytes: 31,
-        miningFeeRate: 10,
-        coordinatorFeeRate: 0.003,
-        minInputCount: 10,
-        maxInputCount: 100
-    }];
-};
-
-export const registerInputs = async (
-    roundId: string,
-    utxos: UTXO[],
-    _changeAddress: string,
-    _network: Network
-): Promise<{ token: string; credentials: WabiSabiCredential[] }> => {
-    if (utxos.length === 0) throw new Error("No UTXOs selected for CoinJoin");
-
-    notificationService.notify({
-        category: 'SYSTEM',
-        type: 'info',
-        title: 'CoinJoin',
-        message: `Registering ${utxos.length} inputs for round ${roundId.slice(0,8)}...`
+export async function registerInputs(request: CoinJoinInputRegistrationRequest): Promise<ValueOperationExecutionOutcome> {
+    return knownUnsupportedValueOperation(request, {
+        artifactKind: 'conxius.wallet.coinjoin-input-registration.v1', operationType: 'register-coinjoin-inputs',
+        layer: 'coinjoin', chain: 'bitcoin',
     });
+}
 
-    // Simulate WabiSabi Zero-Knowledge credential issuance
-    const credentials = utxos.map(utxo => ({
-        amount: utxo.amount,
-        weight: 68,
-        presentation: 'blinded_' + generateRandomString(32)
-    }));
-
-    notificationService.notify({
-        category: 'SYSTEM',
-        type: 'success',
-        title: 'CoinJoin Registration',
-        message: 'Input registration successful. Credentials received.'
+export async function registerOutput(request: CoinJoinOutputRegistrationRequest): Promise<ValueOperationExecutionOutcome> {
+    return knownUnsupportedValueOperation(request, {
+        artifactKind: 'conxius.wallet.coinjoin-output-registration.v1', operationType: 'register-coinjoin-output',
+        layer: 'coinjoin', chain: 'bitcoin',
     });
-
-    return {
-        token: 'registration_token_' + generateRandomString(12),
-        credentials
-    };
-};
-
-export const registerOutput = async (
-    roundId: string,
-    registrationToken: string,
-    outputAddress: string,
-    credentials: WabiSabiCredential[]
-): Promise<boolean> => {
-    if (!registrationToken || credentials.length === 0) return false;
-
-    notificationService.notify({
-        category: 'SYSTEM',
-        type: 'info',
-        title: 'CoinJoin',
-        message: `Registering output ${outputAddress.slice(0,8)}... using blinded credentials`
-    });
-
-    // In WabiSabi, outputs are registered via blinded signatures of the credentials
-    // This allows the coordinator to verify we have "value" without knowing which inputs it came from
-
-    notificationService.notify({
-        category: 'SYSTEM',
-        type: 'success',
-        title: 'CoinJoin Output',
-        message: `Output registered for round ${roundId.slice(0,8)}`
-    });
-
-    return true;
-};
+}
