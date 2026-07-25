@@ -49,6 +49,16 @@ Conxius Wallet is a sovereign-first mobile wallet leveraging a Bridged Sovereign
   status, or synthetic data cannot authorize a value operation. Reviewed
   sign/broadcast/settlement paths return typed rejected, unsupported, or
   quarantined outcomes before side effects.
+- The narrow Bitcoin follow-up binds successful native PSBT finalization to a
+  genuine signer-issued, identity-registered broadcast artifact. It preserves
+  the exact authorization/capability, envelope digest, source PSBT digest,
+  finalized transaction digest, transaction-hex digest, and explicit authorized
+  transition digest as distinct lineage fields. Missing authorization,
+  lookalikes, cross-authorization pairing, and
+  transaction substitution fail before any provider seam.
+- Bitcoin broadcast remains `qualified_provider_unavailable`, performs no I/O,
+  and does not consume the `broadcast` stage. Future qualified submission must
+  consume that stage immediately before its irreversible provider call.
 - Stage consumption is client-process-local containment only. Authoritative
   provider verification, trusted time, durable distributed replay prevention,
   provider receipts/finality, hardware/provider qualification, rollout, and

@@ -10,7 +10,7 @@ permalink: /docs/implementation-registry
 
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
-| **Bitcoin L1 value execution** | 🛑 CONTAINED / UNAVAILABLE | Construction and native custody surfaces exist, but issue #444 requires exact gate-bound authorization and the qualified broadcast provider/receipt is unavailable. No production submission is supported. |
+| **Bitcoin L1 value execution** | 🛑 CONTAINED / UNAVAILABLE | Construction and native custody surfaces exist. Successful native PSBT finalization issues identity-registered provenance binding the exact authorization/capability, envelope, authorized PSBT digest, finalized transaction digest, transaction-hex digest, and a distinct authorized-transition digest. Broadcast rejects forged, cross-authorization, mutated, or substituted inputs, but the qualified provider/receipt remains unavailable and no production submission is supported. |
 | **BIP-110 client-side fee alignment** | 🟡 IN PROGRESS | `services/bitcoin-fee-oracle.ts` samples bounded confirmed blocks, excludes narrowly detected inscription envelopes, and falls back to the existing fee endpoint. This is client-side policy, not consensus compliance; see [BIP-110 alignment](../operations/BIP110_COMPLIANCE.md). |
 | **BIP-352 Silent Payments** | 🟡 IN PROGRESS | Merged PR #390 implements bounded Rust/JNI scanning, Kotlin Esplora ingestion with cursor/persistence and shallow reorg fail-closed checks, plus a public-only Compose scan card. Pending release validation, mobile evidence, compact-filter discovery, spending/tweak recovery, native address encoding, authoritative spentness, and raw/merkle proof coverage. |
 | **Lightning payments** | 🛑 CONTAINED / UNAVAILABLE | Reviewed Breez/TS/backend payment paths return typed unsupported outcomes before payment; no synthetic preimage or txid can satisfy success. |
@@ -75,6 +75,11 @@ or return unsupported/quarantined outcomes before side effects. No bare txid,
 preimage, boolean, local completion flag, confirmation, native selection, debug
 status, or synthetic artifact is authoritative evidence or a provider receipt.
 Stage consumption is process-local only and is not durable replay protection.
+For Bitcoin, the signer records an explicit authorized PSBT→final-transaction
+transition; the source PSBT digest and finalized transaction digest are distinct.
+The unsupported broadcaster performs no I/O and intentionally leaves the
+`broadcast` stage unconsumed. A future qualified provider must consume it
+immediately before irreversible submission.
 
 See the [issue #444 evidence record](../reports/ISSUE_444_VALUE_OPERATION_GATE_CONTAINMENT.md)
 for migration and negative-regression inventory.

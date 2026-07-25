@@ -16,6 +16,13 @@ now require exact typed authorization/artifact requests or return typed
 rejected, unsupported, or quarantined outcomes before side effects. The
 production evidence verifier always returns `unsupported_provider`.
 
+Bitcoin broadcast containment additionally requires genuine signer-issued
+PSBT→final-transaction provenance paired with the exact authorization. This is
+an in-process anti-forgery boundary, not provider qualification or proof of
+submission. The broadcaster remains unsupported, performs no network I/O, and
+does not consume a broadcast stage until a future qualified provider is ready
+to make an irreversible call.
+
 This is client-process-local containment, not a sellable production capability.
 Real-device and provider qualification, backend verification, roots/collateral/
 revocation, trusted time, durable distributed replay, provider receipts and
