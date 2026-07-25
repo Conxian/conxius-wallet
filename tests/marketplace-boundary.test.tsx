@@ -19,6 +19,8 @@ describe('Marketplace preview containment', () => {
     );
 
     expect(screen.getByText(/Catalog preview only/i)).toBeInTheDocument();
+    expect(screen.getByText(/Checkout and fulfillment are unavailable/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Instant delivery/i)).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /Preview Global Ghost eSIM/i }));
     expect(screen.getByText(/Checkout, payment, and code fulfillment are unavailable/i)).toBeInTheDocument();
     expect(screen.queryByText(/Purchase successful|Payment Verified|Redemption Code|Code delivered/i)).not.toBeInTheDocument();
