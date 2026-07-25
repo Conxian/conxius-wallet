@@ -107,7 +107,7 @@ const PaymentPortal: React.FC = () => {
         if (method === 'lightning') {
              const bolt11Settlement = lnDetail?.type === 'lnurl'
                ? null
-               : requireBolt11Settlement(recipient, network);
+               : requireBolt11Settlement(recipient, Number(lnDetail?.info?.amountMsat) / 1000, network);
              const amountSats = bolt11Settlement?.amountSats ?? Math.round(parseFloat(amount));
              if (!Number.isSafeInteger(amountSats) || amountSats <= 0) {
                throw new Error('Lightning amount must be a positive whole-satoshi value.');

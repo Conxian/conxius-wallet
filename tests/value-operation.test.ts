@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: mocks.isNativePlatform } }));
-vi.mock('../services/signer', () => ({ requestEnclaveSignature: mocks.requestEnclaveSignature }));
+vi.mock('../services/app-private/value-operation-signer', () => ({ signAuthorizedValueOperation: mocks.requestEnclaveSignature }));
 vi.mock('../services/value-operation-evidence', () => ({
   getWalletEvidenceAdapter: mocks.getWalletEvidenceAdapter,
 }));

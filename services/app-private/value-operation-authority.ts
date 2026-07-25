@@ -6,7 +6,7 @@
 * queue requester callback and cannot construct a confirmer.
 */
 import { Capacitor } from '@capacitor/core';
-import { requestEnclaveSignature } from '../signer';
+import { signAuthorizedValueOperation } from './value-operation-signer';
 import { getWalletEvidenceAdapter } from '../value-operation-evidence';
 import {
   createDeniedValueOperationOutcome,
@@ -115,7 +115,7 @@ async function confirmValueOperation(
   consumedAuthorizations.add(replayKey);
 
   try {
-    const signature = await requestEnclaveSignature({
+    const signature = await signAuthorizedValueOperation({
       type: request.signingType,
       layer: request.chainLayer,
       payload: request.payload,
@@ -126,9 +126,11 @@ async function confirmValueOperation(
     }
 
     const capabilityExpiresAt = Math.min(Date.parse(request.expiresAt), Date.now() + 60_000);
-    const settlementAuthorization = issueSettlementAuthorization(request, capabilityExpiresAt);
+    const settlementAuthorization = issueSettlementAuthorization(outcome.authorization, request, capabilityExpiresAt);
     const broadcastAuthorization = signature.broadcastReadyHex
       ? issueBroadcastAuthorization({
+          authorization: outcome.authorization,
+          request,
           signedHex: signature.broadcastReadyHex,
           layer: request.chainLayer,
           network: request.network,

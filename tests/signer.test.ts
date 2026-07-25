@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { 
   deriveSovereignRoots, 
-  requestEnclaveSignature,
   parseBip322Message,
   SignRequest 
 } from '../services/signer';
+import { signAuthorizedValueOperation as requestEnclaveSignature } from '../services/app-private/value-operation-signer';
 import { Capacitor } from '@capacitor/core';
-import { signNative } from '../services/enclave-storage';
+import { signNativeValue } from '../services/app-private/native-value-signing';
 
 // Mock Capacitor
 vi.mock('@capacitor/core', () => ({ registerPlugin: vi.fn(),
@@ -17,10 +17,9 @@ vi.mock('@capacitor/core', () => ({ registerPlugin: vi.fn(),
 }));
 
 // Mock enclave-storage
-vi.mock('../services/enclave-storage', () => ({
-  signNative: vi.fn(),
-  signBatchNative: vi.fn(),
-  getWalletInfoNative: vi.fn()
+vi.mock('../services/app-private/native-value-signing', () => ({
+  signNativeValue: vi.fn(),
+  signNativeValueBatch: vi.fn(),
 }));
 
 vi.mock('../services/app-private/native-psbt', () => ({
@@ -36,6 +35,7 @@ describe('signer service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
+    vi.mocked(signNativeValue).mockRejectedValue(new Error('NATIVE_VALUE_SIGNER_REQUIRED'));
   });
 
   describe('deriveSovereignRoots', () => {
@@ -137,7 +137,7 @@ describe('signer service', () => {
   describe('requestEnclaveSignature', () => {
     it('rejects native signing failures without falling back to the TypeScript worker', async () => {
       vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
-      vi.mocked(signNative).mockRejectedValueOnce(new Error('Native signer unavailable'));
+      vi.mocked(signNativeValue).mockRejectedValueOnce(new Error('Native signer unavailable'));
 
       const request: SignRequest = {
         type: 'message',
@@ -225,7 +225,6 @@ describe('signer service', () => {
 
 describe('Enclave Layer Signing (Native)', () => {
     it('should call signNative with correct network for RGB', async () => {
-      const { signNative } = await import('../services/enclave-storage');
       const request: SignRequest = {
         type: 'psbt',
         layer: 'RGB',
@@ -238,19 +237,17 @@ describe('Enclave Layer Signing (Native)', () => {
       (Capacitor.isNativePlatform as any).mockReturnValue(true);
       (Capacitor as any).SecureEnclave = { isAvailable: vi.fn().mockResolvedValue({ available: true }), signTransaction: vi.fn().mockResolvedValue({ signature: 'sig', pubkey: 'pub' }) };
 
-      // Mock signNative to return success
-      (signNative as any).mockResolvedValue({ signature: 'sig', pubkey: 'pub' });
+      vi.mocked(signNativeValue).mockResolvedValue({ signature: 'sig', pubkey: 'pub' });
 
       await requestEnclaveSignature(request, 'vault');
 
-      expect(signNative).toHaveBeenCalledWith(expect.objectContaining({
+      expect(signNativeValue).toHaveBeenCalledWith(expect.objectContaining({
         network: 'rgb',
         path: "m/86'/0'/0'/0/0"
       }));
     });
 
     it('should call signNative with sequential path for StateChain', async () => {
-      const { signNative } = await import('../services/enclave-storage');
       const request: SignRequest = {
         type: 'psbt',
         layer: 'StateChain',
@@ -260,11 +257,11 @@ describe('Enclave Layer Signing (Native)', () => {
 
       const { Capacitor } = await import('@capacitor/core');
       (Capacitor.isNativePlatform as any).mockReturnValue(true);
-      (signNative as any).mockResolvedValue({ signature: 'sig', pubkey: 'pub' });
+      vi.mocked(signNativeValue).mockResolvedValue({ signature: 'sig', pubkey: 'pub' });
 
       await requestEnclaveSignature(request, 'vault');
 
-      expect(signNative).toHaveBeenCalledWith(expect.objectContaining({
+      expect(signNativeValue).toHaveBeenCalledWith(expect.objectContaining({
         network: 'statechain',
         path: "m/84'/0'/0'/2/5"
       }));

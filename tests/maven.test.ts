@@ -19,8 +19,8 @@ vi.mock('../services/prices', () => ({
     fetchBtcPrice: vi.fn().mockResolvedValue(100000)
 }));
 
-vi.mock('../services/signer', () => ({
-    requestEnclaveSignature: vi.fn().mockResolvedValue({
+vi.mock('../services/app-private/value-operation-signer', () => ({
+    signAuthorizedValueOperation: vi.fn().mockResolvedValue({
         signature: 'mock_signature',
         pubkey: 'mock_pubkey'
     })

@@ -1,15 +1,16 @@
-import { LnBackendConfig } from '../types';
+import { LnBackendConfig, Network } from '../types';
 import { LightningPaymentState } from './lightning';
 import { createLnInvoice } from "./breez";
 import {
   consumeValueOperationSettlementAuthorization,
   ValueOperationSettlementAuthorization,
 } from './value-operation';
+import { requireBolt11Settlement } from './bolt11-settlement';
 
 export interface LightningBackend {
   configured: boolean;
   createInvoice(amountSats: number, memo?: string): Promise<{ invoice: string }>;
-  payInvoice(invoice: string, authorization: ValueOperationSettlementAuthorization, network: string, idempotencyKey?: string, fingerprint?: string): Promise<{ preimage?: string, state?: LightningPaymentState }>;
+  payInvoice(invoice: string, amountSats: number, authorization: ValueOperationSettlementAuthorization, network: Network, idempotencyKey?: string, fingerprint?: string): Promise<{ preimage?: string, state?: LightningPaymentState }>;
   lnurlPay(callback: string, amountMsat: number, authorization: ValueOperationSettlementAuthorization, network: string, comment?: string): Promise<{ status: string }>;
   lnurlWithdraw(callback: string, k1: string, invoice: string, authorization: ValueOperationSettlementAuthorization, network: string): Promise<{ status: string }>;
 }
@@ -21,8 +22,9 @@ class NoneBackend implements LightningBackend {
     void _memo;
     throw new Error('Lightning backend not configured');
   }
-  async payInvoice(_invoice: string, _authorization: ValueOperationSettlementAuthorization, _network: string): Promise<{ preimage?: string }> {
+  async payInvoice(_invoice: string, _amountSats: number, _authorization: ValueOperationSettlementAuthorization, _network: Network): Promise<{ preimage?: string }> {
     void _invoice;
+    void _amountSats;
     void _authorization;
     void _network;
     throw new Error('Lightning backend not configured');
@@ -82,32 +84,24 @@ class LndBackend implements LightningBackend {
     const data = await res.json();
     return { preimage: data.payment_preimage };
   }
-  async payInvoice(invoice: string, authorization: ValueOperationSettlementAuthorization, network: string) {
+  async payInvoice(invoice: string, amountSats: number, authorization: ValueOperationSettlementAuthorization, network: Network) {
+    requireBolt11Settlement(invoice, amountSats, network);
     consumeValueOperationSettlementAuthorization({
       authorization,
       layer: 'Lightning',
       provider: 'lnd-rest',
       network,
-      intent: { kind: 'bolt11', invoice },
+      intent: { kind: 'bolt11', invoice, amountSats },
     });
     return this.payInvoiceAfterAuthorization(invoice);
   }
-  async lnurlPay(callback: string, amountMsat: number, authorization: ValueOperationSettlementAuthorization, network: string, comment?: string) {
-    consumeValueOperationSettlementAuthorization({
-      authorization,
-      layer: 'Lightning',
-      provider: 'lnd-rest',
-      network,
-      intent: { kind: 'lnurl-pay', callback, amountMsat, ...(comment ? { comment } : {}) },
-    });
-    const cb = new URL(callback);
-    cb.searchParams.set('amount', `${amountMsat}`);
-    if (comment) cb.searchParams.set('comment', comment);
-    const res = await fetch(cb.toString());
-    const data = await res.json();
-    if (!data.pr) throw new Error('LNURL callback missing invoice');
-    await this.payInvoiceAfterAuthorization(data.pr);
-    return { status: 'paid' };
+  async lnurlPay(callback: string, amountMsat: number, authorization: ValueOperationSettlementAuthorization, network: string, comment?: string): Promise<{ status: string }> {
+    void callback;
+    void amountMsat;
+    void authorization;
+    void network;
+    void comment;
+    throw new Error('LND_LNURL_PAY_QUARANTINED: provider-returned BOLT11 cannot be pre-bound to an exact settlement capability');
   }
   async lnurlWithdraw(callback: string, k1: string, invoice: string, authorization: ValueOperationSettlementAuthorization, network: string) {
     consumeValueOperationSettlementAuthorization({
@@ -139,12 +133,14 @@ class BreezBackend implements LightningBackend {
 
   async payInvoice(
     _invoice: string,
+    _amountSats: number,
     _authorization: ValueOperationSettlementAuthorization,
-    _network: string,
+    _network: Network,
     _idempotencyKey?: string,
     _fingerprint?: string,
   ): Promise<{ preimage?: string, state?: LightningPaymentState }> {
     void _invoice;
+    void _amountSats;
     void _authorization;
     void _network;
     void _idempotencyKey;

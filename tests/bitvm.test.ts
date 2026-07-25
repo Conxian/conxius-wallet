@@ -10,13 +10,13 @@ import {
     validateBitVmProofEnvelope,
     verifyBitVmProof,
 } from '../services/bitvm';
-import { requestEnclaveSignature } from '../services/signer';
+import { signAuthorizedValueOperation } from '../services/app-private/value-operation-signer';
 
-vi.mock('../services/signer', () => ({
-    requestEnclaveSignature: vi.fn(),
+vi.mock('../services/app-private/value-operation-signer', () => ({
+    signAuthorizedValueOperation: vi.fn(),
 }));
 
-const signer = vi.mocked(requestEnclaveSignature);
+const signer = vi.mocked(signAuthorizedValueOperation);
 
 const canonicalEnvelope: BitVmProofEnvelope = {
     schemaVersion: BITVM_PROOF_SCHEMA_VERSION,

@@ -18,8 +18,8 @@ vi.mock('../services/protocol', () => ({
   checkBtcTxStatus: vi.fn().mockResolvedValue({ confirmed: true, blockHeight: 100 })
 }));
 
-vi.mock('../services/signer', () => ({
-  requestEnclaveSignature: vi.fn().mockResolvedValue({
+vi.mock('../services/app-private/value-operation-signer', () => ({
+  signAuthorizedValueOperation: vi.fn().mockResolvedValue({
     signature: 'mock_signature_hex',
     pubkey: 'mock_pubkey',
     timestamp: Date.now()

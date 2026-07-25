@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { discoverTaprootAssets, transferTaprootAsset } from "../services/taproot-assets";
-import { requestEnclaveSignature } from "../services/signer";
+import { signAuthorizedValueOperation } from "../services/app-private/value-operation-signer";
 import { ValueOperationAuthorizer } from '../services/value-operation';
 import { createAppPrivateValueOperationAuthority } from '../services/app-private/value-operation-authority';
 
 const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
     createAppPrivateValueOperationAuthority('test-vault').reject(request);
 
-vi.mock("../services/signer", () => ({
-    requestEnclaveSignature: vi.fn().mockResolvedValue({
+vi.mock("../services/app-private/value-operation-signer", () => ({
+    signAuthorizedValueOperation: vi.fn().mockResolvedValue({
         signature: "taproot_sig_1234567890abcdef",
         pubkey: "02abcdef",
         timestamp: Date.now()
@@ -30,6 +30,6 @@ describe("Taproot Assets Service", () => {
         };
         await expect(transferTaprootAsset(transfer, rejectAuthorization))
             .rejects.toThrow('USER_REJECTED');
-        expect(requestEnclaveSignature).not.toHaveBeenCalled();
+        expect(signAuthorizedValueOperation).not.toHaveBeenCalled();
     });
 });

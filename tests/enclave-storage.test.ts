@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
-  SecureEnclave,
   hasEnclaveBlob,
   getEnclaveBlob,
   setEnclaveBlob,
   removeEnclaveBlob,
   clearEnclaveBiometricSession,
-  signNative,
   getPublicKeyNative,
   getDerivedSecretNative,
   getWalletInfoNative
@@ -225,16 +223,6 @@ describe('enclave-storage service', () => {
   });
 
   describe('Native signing operations', () => {
-    it('signNative should require native platform', async () => {
-      mockIsNativePlatform.mockReturnValue(false);
-      
-      await expect(signNative({
-        vault: 'test-vault',
-        path: "m/84'/0'/0'/0/0",
-        messageHash: 'test-hash'
-      })).rejects.toThrow('Native Enclave not available');
-    });
-
     it('getPublicKeyNative should require native platform', async () => {
       mockIsNativePlatform.mockReturnValue(false);
       

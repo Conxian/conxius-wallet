@@ -44,12 +44,40 @@ export function consumeSignatureAuthorization(authorization: ValueOperationAutho
   consumedSignatureAuthorizations.add(authorization);
 }
 
+function assertRegisteredAuthorizationMatchesRequest(
+  authorization: ValueOperationAuthorization,
+  request: ValueOperationRequest,
+): void {
+  if (!issuedAuthorizations.has(authorization)) {
+    throw new Error('CAPABILITY_ISSUER_AUTHORIZATION_INVALID: outcome was not registered by the App-private authority');
+  }
+  const envelope = authorization.envelope;
+  if (envelope.operationType !== request.operationType
+    || envelope.chainLayer !== request.chainLayer
+    || envelope.signingType !== request.signingType
+    || envelope.payloadDigest !== request.payloadDigest
+    || envelope.descriptionDigest !== request.descriptionDigest
+    || envelope.network !== request.network
+    || envelope.purpose !== request.purpose
+    || envelope.nonce !== request.nonce
+    || envelope.audience !== request.audience
+    || envelope.keyIdentity !== request.keyIdentity
+    || envelope.algorithm !== request.algorithm
+    || envelope.issuedAt !== request.issuedAt
+    || envelope.expiresAt !== request.expiresAt) {
+    throw new Error('CAPABILITY_ISSUER_REQUEST_MISMATCH: registered outcome does not match the exact request');
+  }
+}
+
 export function issueBroadcastAuthorization(input: {
+  authorization: ValueOperationAuthorization;
+  request: ValueOperationRequest;
   signedHex: string;
   layer: string;
   network: string;
   expiresAt: number;
 }): ValueOperationBroadcastAuthorization {
+  assertRegisteredAuthorizationMatchesRequest(input.authorization, input.request);
   const authorization = Object.freeze({ kind: 'value-operation-broadcast-authorization' as const });
   broadcastAuthorizations.set(authorization, {
     signedHex: input.signedHex,
@@ -89,9 +117,11 @@ function settlementPayload(request: ValueOperationRequest): { provider: string; 
 }
 
 export function issueSettlementAuthorization(
+  gateAuthorization: ValueOperationAuthorization,
   request: ValueOperationRequest,
   expiresAt: number,
 ): ValueOperationSettlementAuthorization | null {
+  assertRegisteredAuthorizationMatchesRequest(gateAuthorization, request);
   if (request.operationType !== 'settle') return null;
   const payload = settlementPayload(request);
   if (!payload) return null;

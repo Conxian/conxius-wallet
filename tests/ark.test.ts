@@ -7,8 +7,8 @@ const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
     createAppPrivateValueOperationAuthority('test-vault').reject(request);
 
 // Mock signer
-vi.mock('../services/signer', () => ({
-    requestEnclaveSignature: vi.fn().mockResolvedValue({ signature: 'mock_sig', pubkey: 'mock_pub' })
+vi.mock('../services/app-private/value-operation-signer', () => ({
+    signAuthorizedValueOperation: vi.fn().mockResolvedValue({ signature: 'mock_sig', pubkey: 'mock_pub' })
 }));
 
 // Mock fetch globally
