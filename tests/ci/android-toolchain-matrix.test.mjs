@@ -99,7 +99,84 @@ describe('Android toolchain matrix contract', () => {
   it('rejects Java versions other than 21', () => {
     const ciWorkflow = workflowFixture(job('android-lint', { java: '17' }));
 
-    expect(diagnostics({ ciWorkflow })).toMatch(/job android-lint must use Java 21 exactly once; found 17/);
+    expect(diagnostics({ ciWorkflow })).toMatch(
+      /job android-lint actions\/setup-java with\.java-version must be the literal value 21; found "17"/,
+    );
+  });
+
+  it('does not allow an unrelated action to mask setup-java missing java-version', () => {
+    const ciWorkflow = workflowFixture(
+      job('android-lint')
+        .replace("          java-version: '21'\n", '')
+        .replace(
+          '      - run: sdkmanager',
+          "      - uses: example/unrelated-action@fixture\n        with:\n          java-version: '21'\n      - run: sdkmanager",
+        ),
+    );
+
+    expect(diagnostics({ ciWorkflow })).toMatch(
+      /job android-lint actions\/setup-java must declare with\.java-version exactly once; found 0/,
+    );
+  });
+
+  it('rejects multiple setup-java steps', () => {
+    const ciWorkflow = workflowFixture(
+      job('android-lint').replace(
+        '      - run: sdkmanager',
+        "      - uses: actions/setup-java@second-fixture\n        with:\n          java-version: '21'\n      - run: sdkmanager",
+      ),
+    );
+
+    expect(diagnostics({ ciWorkflow })).toMatch(
+      /job android-lint must contain exactly one actions\/setup-java step; found 2/,
+    );
+  });
+
+  it('rejects a relevant Android job without setup-java', () => {
+    const ciWorkflow = workflowFixture(
+      job('android-lint').replace(
+        "      - uses: actions/setup-java@fixture\n        with:\n          java-version: '21'\n",
+        '',
+      ),
+    );
+
+    expect(diagnostics({ ciWorkflow })).toMatch(
+      /job android-lint must contain exactly one actions\/setup-java step; found 0/,
+    );
+  });
+
+  it('rejects a nonliteral setup-java version expression', () => {
+    const ciWorkflow = workflowFixture(job('android-lint', { java: '${{ matrix.java }}' }));
+
+    expect(diagnostics({ ciWorkflow })).toMatch(
+      /job android-lint actions\/setup-java with\.java-version must be the literal value 21; found nonliteral value/,
+    );
+  });
+
+  it('does not allow an unrelated Java 21 value to mask noncompliant setup-java', () => {
+    const ciWorkflow = workflowFixture(
+      job('android-lint', { java: '17' }).replace(
+        '      - run: sdkmanager',
+        "      - uses: example/unrelated-action@fixture\n        with:\n          java-version: '21'\n      - run: sdkmanager",
+      ),
+    );
+
+    expect(diagnostics({ ciWorkflow })).toMatch(
+      /job android-lint actions\/setup-java with\.java-version must be the literal value 21; found "17"/,
+    );
+  });
+
+  it('rejects duplicate java-version keys inside setup-java', () => {
+    const ciWorkflow = workflowFixture(
+      job('android-lint').replace(
+        "          java-version: '21'",
+        "          java-version: '21'\n          java-version: '21'",
+      ),
+    );
+
+    expect(diagnostics({ ciWorkflow })).toMatch(
+      /job android-lint actions\/setup-java must declare with\.java-version exactly once; found 2/,
+    );
   });
 
   it('rejects duplicate or missing catalog declarations', () => {
