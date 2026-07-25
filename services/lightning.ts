@@ -2,10 +2,8 @@ import { Capacitor } from "@capacitor/core";
 import { bech32 } from 'bech32';
 import { Buffer } from 'buffer';
 import { fetchWithRetry } from './network';
-import {
-  consumeValueOperationSettlementAuthorization,
-  ValueOperationSettlementAuthorization,
-} from './value-operation';
+import { ValueOperationSettlementAuthorization } from './value-operation';
+import type { ValueOperationCapabilityConsumer } from './value-operation-capability-consumer';
 import type { Network } from '../types';
 import { requireBolt11Settlement } from './bolt11-settlement';
 
@@ -60,9 +58,10 @@ export async function payLightningInvoice(
     amountSats: number,
     authorization: ValueOperationSettlementAuthorization,
     network: Network,
+    consumer: ValueOperationCapabilityConsumer,
 ): Promise<string> {
     requireBolt11Settlement(invoice, amountSats, network);
-    consumeValueOperationSettlementAuthorization({
+    consumer.consumeSettlementAuthorization({
       authorization,
       layer: 'Lightning',
       provider: 'native-breez-manager',
@@ -85,8 +84,9 @@ export async function payLnurl(
     amountSats: number,
     authorization: ValueOperationSettlementAuthorization,
     network: string,
+    consumer: ValueOperationCapabilityConsumer,
 ): Promise<string> {
-    consumeValueOperationSettlementAuthorization({
+    consumer.consumeSettlementAuthorization({
       authorization,
       layer: 'Lightning',
       provider: 'native-breez-manager',

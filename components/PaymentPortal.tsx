@@ -129,11 +129,13 @@ const PaymentPortal: React.FC = () => {
                  description: `Authorize Lightning payment of ${amountSats} sats`,
                });
              const lightningOutcome = await context.authorizeValueOperation(lightningRequest);
-             const settlementAuthorization = requireValueOperationSettlementAuthorization(lightningOutcome, lightningRequest);
+             const consumer = context.authorizeValueOperation.consumer;
+             if (!consumer) throw new Error('App-private capability consumer unavailable');
+             const settlementAuthorization = requireValueOperationSettlementAuthorization(consumer, lightningOutcome, lightningRequest);
              if (lnDetail?.type === 'lnurl') {
-                 txid = await payLnurl(lnDetail.params, amountSats, settlementAuthorization, network);
+                 txid = await payLnurl(lnDetail.params, amountSats, settlementAuthorization, network, consumer);
              } else {
-                 txid = await payLightningInvoice(recipient, amountSats, settlementAuthorization, network);
+                 txid = await payLightningInvoice(recipient, amountSats, settlementAuthorization, network, consumer);
              }
         } else {
              const fromAddress = context.state.walletConfig?.masterAddress || '';
@@ -176,6 +178,7 @@ const PaymentPortal: React.FC = () => {
                outcome.broadcastAuthorization,
                'Mainnet',
                network,
+               context.authorizeValueOperation.consumer!,
              );
         }
 

@@ -66,9 +66,11 @@ describe('NttService Public Integration', () => {
         chain: 'Ethereum'
     };
 
-    it('should execute NTT and return a transaction ID', async () => {
-        const result = await NttService.executeNtt('1.0', 'Ethereum', 'Base', mockSigner, 'mainnet');
-        expect(result).toBe('0xmocktxid');
+    it('quarantines NTT before invoking the public signer or provider transfer', async () => {
+        const address = vi.spyOn(mockSigner, 'address');
+        await expect(NttService.executeNtt('1.0', 'Ethereum', 'Base', mockSigner, 'mainnet'))
+            .rejects.toThrow('NTT_EXECUTION_QUARANTINED');
+        expect(address).not.toHaveBeenCalled();
     });
 
     it('should estimate fees correctly', async () => {

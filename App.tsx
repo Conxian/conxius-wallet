@@ -52,6 +52,7 @@ import { AppState, WalletConfig, AppMode, Asset, SilentPaymentScanOptions, Silen
 import {
   ValueOperationOutcome,
   ValueOperationRequest,
+  ValueOperationAuthorizer,
 } from './services/value-operation';
 import { createAppPrivateValueOperationAuthority } from './services/app-private/value-operation-authority';
 import { cancelSilentPaymentScan, dedupeSilentPaymentUtxos, getSilentPaymentScanStatus, scanForSilentPayments } from './services/silent-payments';
@@ -112,7 +113,7 @@ const App: React.FC = () => {
   } | null>(null);
 
   const currentPinRef = useRef<string | null>(null);
-  const valueOperationGateRef = useRef(createAppPrivateValueOperationAuthority(STORAGE_KEY));
+  const [valueOperationAuthority] = useState(() => createAppPrivateValueOperationAuthority(STORAGE_KEY));
 
   useEffect(() => {
     async function checkEnclave() {
@@ -261,11 +262,12 @@ const App: React.FC = () => {
 
   const removeToast = (id: string) => setToasts((prev: any) => prev.filter((t: any) => t.id !== id));
 
-  const authorizeValueOperation = async (request: ValueOperationRequest): Promise<ValueOperationOutcome> => {
-    return new Promise<ValueOperationOutcome>((resolve) => {
+  const authorizeValueOperation: ValueOperationAuthorizer = Object.assign(
+    async (request: ValueOperationRequest): Promise<ValueOperationOutcome> => new Promise<ValueOperationOutcome>((resolve) => {
       setPendingValueOperation({ request, resolve });
-    });
-  };
+    }),
+    { consumer: valueOperationAuthority.consumer },
+  );
 
   const completeValueOperation = async (userConfirmed: boolean) => {
     const pending = pendingValueOperation;
@@ -273,8 +275,8 @@ const App: React.FC = () => {
     setPendingValueOperation(null);
 
     const outcome = userConfirmed
-      ? await valueOperationGateRef.current.confirm(pending.request)
-      : valueOperationGateRef.current.reject(pending.request);
+      ? await valueOperationAuthority.confirm(pending.request)
+      : valueOperationAuthority.reject(pending.request);
     pending.resolve(outcome);
   };
 

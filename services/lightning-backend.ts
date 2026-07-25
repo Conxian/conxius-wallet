@@ -1,18 +1,16 @@
 import { LnBackendConfig, Network } from '../types';
 import { LightningPaymentState } from './lightning';
 import { createLnInvoice } from "./breez";
-import {
-  consumeValueOperationSettlementAuthorization,
-  ValueOperationSettlementAuthorization,
-} from './value-operation';
+import { ValueOperationSettlementAuthorization } from './value-operation';
+import type { ValueOperationCapabilityConsumer } from './value-operation-capability-consumer';
 import { requireBolt11Settlement } from './bolt11-settlement';
 
 export interface LightningBackend {
   configured: boolean;
   createInvoice(amountSats: number, memo?: string): Promise<{ invoice: string }>;
-  payInvoice(invoice: string, amountSats: number, authorization: ValueOperationSettlementAuthorization, network: Network, idempotencyKey?: string, fingerprint?: string): Promise<{ preimage?: string, state?: LightningPaymentState }>;
+  payInvoice(invoice: string, amountSats: number, authorization: ValueOperationSettlementAuthorization, network: Network, consumer: ValueOperationCapabilityConsumer, idempotencyKey?: string, fingerprint?: string): Promise<{ preimage?: string, state?: LightningPaymentState }>;
   lnurlPay(callback: string, amountMsat: number, authorization: ValueOperationSettlementAuthorization, network: string, comment?: string): Promise<{ status: string }>;
-  lnurlWithdraw(callback: string, k1: string, invoice: string, authorization: ValueOperationSettlementAuthorization, network: string): Promise<{ status: string }>;
+  lnurlWithdraw(callback: string, k1: string, invoice: string, authorization: ValueOperationSettlementAuthorization, network: string, consumer: ValueOperationCapabilityConsumer): Promise<{ status: string }>;
 }
 
 class NoneBackend implements LightningBackend {
@@ -22,11 +20,12 @@ class NoneBackend implements LightningBackend {
     void _memo;
     throw new Error('Lightning backend not configured');
   }
-  async payInvoice(_invoice: string, _amountSats: number, _authorization: ValueOperationSettlementAuthorization, _network: Network): Promise<{ preimage?: string }> {
+  async payInvoice(_invoice: string, _amountSats: number, _authorization: ValueOperationSettlementAuthorization, _network: Network, _consumer: ValueOperationCapabilityConsumer): Promise<{ preimage?: string }> {
     void _invoice;
     void _amountSats;
     void _authorization;
     void _network;
+    void _consumer;
     throw new Error('Lightning backend not configured');
   }
   async lnurlPay(_callback: string, _amountMsat: number, _authorization: ValueOperationSettlementAuthorization, _network: string, _comment?: string): Promise<{ status: string }> {
@@ -37,12 +36,13 @@ class NoneBackend implements LightningBackend {
     void _comment;
     throw new Error('Lightning backend not configured');
   }
-  async lnurlWithdraw(_callback: string, _k1: string, _invoice: string, _authorization: ValueOperationSettlementAuthorization, _network: string): Promise<{ status: string }> {
+  async lnurlWithdraw(_callback: string, _k1: string, _invoice: string, _authorization: ValueOperationSettlementAuthorization, _network: string, _consumer: ValueOperationCapabilityConsumer): Promise<{ status: string }> {
     void _callback;
     void _k1;
     void _invoice;
     void _authorization;
     void _network;
+    void _consumer;
     throw new Error('Lightning backend not configured');
   }
 }
@@ -84,9 +84,9 @@ class LndBackend implements LightningBackend {
     const data = await res.json();
     return { preimage: data.payment_preimage };
   }
-  async payInvoice(invoice: string, amountSats: number, authorization: ValueOperationSettlementAuthorization, network: Network) {
+  async payInvoice(invoice: string, amountSats: number, authorization: ValueOperationSettlementAuthorization, network: Network, consumer: ValueOperationCapabilityConsumer) {
     requireBolt11Settlement(invoice, amountSats, network);
-    consumeValueOperationSettlementAuthorization({
+    consumer.consumeSettlementAuthorization({
       authorization,
       layer: 'Lightning',
       provider: 'lnd-rest',
@@ -103,20 +103,14 @@ class LndBackend implements LightningBackend {
     void comment;
     throw new Error('LND_LNURL_PAY_QUARANTINED: provider-returned BOLT11 cannot be pre-bound to an exact settlement capability');
   }
-  async lnurlWithdraw(callback: string, k1: string, invoice: string, authorization: ValueOperationSettlementAuthorization, network: string) {
-    consumeValueOperationSettlementAuthorization({
-      authorization,
-      layer: 'Lightning',
-      provider: 'lnd-rest',
-      network,
-      intent: { kind: 'lnurl-withdraw', callback, k1, invoice },
-    });
-    const url = new URL(callback);
-    url.searchParams.set('k1', k1);
-    url.searchParams.set('pr', invoice);
-    const res = await fetch(url.toString());
-    const data = await res.json();
-    return { status: data.status || 'ok' };
+  async lnurlWithdraw(callback: string, k1: string, invoice: string, authorization: ValueOperationSettlementAuthorization, network: string, consumer: ValueOperationCapabilityConsumer): Promise<never> {
+    void callback;
+    void k1;
+    void invoice;
+    void authorization;
+    void network;
+    void consumer;
+    throw new Error('LND_LNURL_WITHDRAW_QUARANTINED: withdrawal amount and provider invoice cannot be bound to exact authority');
   }
 }
 
@@ -136,6 +130,7 @@ class BreezBackend implements LightningBackend {
     _amountSats: number,
     _authorization: ValueOperationSettlementAuthorization,
     _network: Network,
+    _consumer: ValueOperationCapabilityConsumer,
     _idempotencyKey?: string,
     _fingerprint?: string,
   ): Promise<{ preimage?: string, state?: LightningPaymentState }> {
@@ -143,6 +138,7 @@ class BreezBackend implements LightningBackend {
     void _amountSats;
     void _authorization;
     void _network;
+    void _consumer;
     void _idempotencyKey;
     void _fingerprint;
     throw new Error('BREEZ_BACKEND_SETTLEMENT_QUARANTINED: use the App-authorized Breez settlement boundary');
@@ -157,12 +153,13 @@ class BreezBackend implements LightningBackend {
     throw new Error('BREEZ_BACKEND_LNURL_QUARANTINED: authoritative settlement adapter unavailable');
   }
 
-  async lnurlWithdraw(_callback: string, _k1: string, _invoice: string, _authorization: ValueOperationSettlementAuthorization, _network: string): Promise<{ status: string }> {
+  async lnurlWithdraw(_callback: string, _k1: string, _invoice: string, _authorization: ValueOperationSettlementAuthorization, _network: string, _consumer: ValueOperationCapabilityConsumer): Promise<{ status: string }> {
     void _callback;
     void _k1;
     void _invoice;
     void _authorization;
     void _network;
+    void _consumer;
     throw new Error('BREEZ_BACKEND_LNURL_QUARANTINED: authoritative settlement adapter unavailable');
   }
 }

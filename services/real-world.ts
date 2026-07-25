@@ -17,16 +17,8 @@ export async function createTravelBooking(bookingId: string, currency: string = 
 }
 
 export async function createMerchantInvoice(amount: number, currency: string = 'EUR', senderCurrency: string = 'BTC'): Promise<MerchantInvoice> {
-    const gateway = (import.meta as any).env?.VITE_GATEWAY_URL || 'https://gateway.conxianlabs.com';
-    try {
-        const response = await fetchWithRetry(`${gateway}/coinspaid/invoices/create`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount: amount.toString(), currency, sender_currency: senderCurrency, foreign_id: 'inv_' + Date.now() })
-        });
-        const result = await response.json();
-        return { id: result.data.id, amount: parseFloat(result.data.amount), currency: result.data.currency, paymentAddress: result.data.address, expiresAt: result.data.release_at * 1000 };
-    } catch {
-        return { id: 'cp_inv_' + generateRandomString(10), amount, currency, paymentAddress: 'bc1q_merchant_prod', expiresAt: Date.now() + 900000 };
-    }
+    void amount;
+    void currency;
+    void senderCurrency;
+    throw new Error('MERCHANT_INVOICE_QUARANTINED: provider payment address is not bound to App-private settlement authority');
 }

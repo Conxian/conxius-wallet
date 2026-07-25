@@ -1,8 +1,6 @@
 import { registerPlugin } from '@capacitor/core';
-import {
-  consumeValueOperationSettlementAuthorization,
-  ValueOperationSettlementAuthorization,
-} from './value-operation';
+import { ValueOperationSettlementAuthorization } from './value-operation';
+import type { ValueOperationCapabilityConsumer } from './value-operation-capability-consumer';
 import { requireBolt11Settlement } from './bolt11-settlement';
 import type { Network } from '../types';
 
@@ -64,9 +62,10 @@ export async function payLnInvoice(
   amountSats: number,
   authorization: ValueOperationSettlementAuthorization,
   network: Network,
+  consumer: ValueOperationCapabilityConsumer,
 ) {
   requireBolt11Settlement(bolt11, amountSats, network);
-  consumeValueOperationSettlementAuthorization({
+  consumer.consumeSettlementAuthorization({
     authorization,
     layer: 'Lightning',
     provider: 'breez-plugin',
@@ -90,8 +89,9 @@ export async function sendBreezOnchain(
   feeRateSatsPerVbyte: number,
   authorization: ValueOperationSettlementAuthorization,
   network: string,
+  consumer: ValueOperationCapabilityConsumer,
 ) {
-  consumeValueOperationSettlementAuthorization({
+  consumer.consumeSettlementAuthorization({
     authorization,
     layer: 'Lightning',
     provider: 'breez-plugin',

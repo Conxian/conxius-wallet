@@ -115,6 +115,7 @@ const NTTBridge: React.FC = () => {
                 outcome.broadcastAuthorization,
                 'Mainnet',
                 context.state.network,
+                context.authorizeValueOperation.consumer!,
               );
               setTxHash(txid);
               setStep(4);

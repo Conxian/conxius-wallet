@@ -26,6 +26,7 @@ vi.mock('../services/value-operation-evidence', () => ({
 }));
 
 const baseTime = new Date('2026-07-25T04:00:00.000Z');
+let authority: ReturnType<typeof createAppPrivateValueOperationAuthority>;
 
 async function authorize(nonce: string) {
   const request = createValueOperationRequest({
@@ -36,7 +37,7 @@ async function authorize(nonce: string) {
     issuedAt: '2026-07-25T03:59:00.000Z', expiresAt: '2026-07-25T04:05:00.000Z',
     signingType: 'psbt', description: 'Send bitcoin',
   });
-  const outcome = await createWalletValueOperationGate('vault').confirm(request);
+  const outcome = await authority.confirm(request);
   if (outcome.status !== 'allowed' || !outcome.signature?.broadcastReadyHex || !outcome.broadcastAuthorization) {
     throw new Error(`Expected broadcast-ready outcome, received ${outcome.status}`);
   }
@@ -52,6 +53,7 @@ describe('authorized broadcast boundary', () => {
     vi.useFakeTimers();
     vi.setSystemTime(baseTime);
     resetValueOperationReplayCacheForTests();
+    authority = createWalletValueOperationGate('vault');
     mocks.getWalletEvidenceAdapter.mockReturnValue({
       verify: vi.fn(async (value) => ({
         status: 'verified', provider: 'test-wallet-adapter', providerStatus: 'authoritative',
@@ -73,13 +75,14 @@ describe('authorized broadcast boundary', () => {
       { kind: 'value-operation-broadcast-authorization' } as ValueOperationBroadcastAuthorization,
       'Mainnet',
       'mainnet',
+      authority.consumer,
     )).rejects.toThrow('BROADCAST_AUTHORIZATION_INVALID');
     expect(mocks.fetchWithRetry).not.toHaveBeenCalled();
   });
 
   it('rejects a mismatched transaction before network I/O', async () => {
     const { authorization } = await authorize('mismatch');
-    await expect(broadcastAuthorizedTransaction('deadbeef', authorization, 'Mainnet', 'mainnet'))
+    await expect(broadcastAuthorizedTransaction('deadbeef', authorization, 'Mainnet', 'mainnet', authority.consumer))
       .rejects.toThrow('TRANSACTION_MISMATCH');
     expect(mocks.fetchWithRetry).not.toHaveBeenCalled();
   });
@@ -87,23 +90,23 @@ describe('authorized broadcast boundary', () => {
   it('rejects stale authorization before network I/O', async () => {
     const { hex, authorization } = await authorize('stale');
     vi.setSystemTime(new Date(baseTime.getTime() + 61_000));
-    await expect(broadcastAuthorizedTransaction(hex, authorization, 'Mainnet', 'mainnet'))
+    await expect(broadcastAuthorizedTransaction(hex, authorization, 'Mainnet', 'mainnet', authority.consumer))
       .rejects.toThrow('BROADCAST_AUTHORIZATION_STALE');
     expect(mocks.fetchWithRetry).not.toHaveBeenCalled();
   });
 
   it('rejects layer or network substitution before network I/O', async () => {
     const { hex, authorization } = await authorize('context-mismatch');
-    await expect(broadcastAuthorizedTransaction(hex, authorization, 'Stacks', 'mainnet'))
+    await expect(broadcastAuthorizedTransaction(hex, authorization, 'Stacks', 'mainnet', authority.consumer))
       .rejects.toThrow('CONTEXT_MISMATCH');
     expect(mocks.fetchWithRetry).not.toHaveBeenCalled();
   });
 
   it('rejects replay and performs network I/O only once', async () => {
     const { hex, authorization } = await authorize('replay');
-    await expect(broadcastAuthorizedTransaction(hex, authorization, 'Mainnet', 'mainnet'))
+    await expect(broadcastAuthorizedTransaction(hex, authorization, 'Mainnet', 'mainnet', authority.consumer))
       .resolves.toBe('authoritative-txid');
-    await expect(broadcastAuthorizedTransaction(hex, authorization, 'Mainnet', 'mainnet'))
+    await expect(broadcastAuthorizedTransaction(hex, authorization, 'Mainnet', 'mainnet', authority.consumer))
       .rejects.toThrow('BROADCAST_AUTHORIZATION_REPLAYED');
     expect(mocks.fetchWithRetry).toHaveBeenCalledTimes(1);
   });
@@ -114,13 +117,14 @@ describe('authorized broadcast boundary', () => {
       undefined as unknown as ValueOperationBroadcastAuthorization,
       'Mainnet',
       'mainnet',
+      authority.consumer,
     )).rejects.toThrow('BROADCAST_AUTHORIZATION_INVALID');
     expect(mocks.fetchWithRetry).not.toHaveBeenCalled();
   });
 
   it('submits the exact bound transaction for a valid capability', async () => {
     const { hex, authorization } = await authorize('positive');
-    await expect(broadcastAuthorizedTransaction(hex, authorization, 'Mainnet', 'mainnet'))
+    await expect(broadcastAuthorizedTransaction(hex, authorization, 'Mainnet', 'mainnet', authority.consumer))
       .resolves.toBe('authoritative-txid');
     expect(mocks.fetchWithRetry).toHaveBeenCalledWith('https://bitcoin.example/tx', {
       method: 'POST', body: hex, headers: { 'Content-Type': 'text/plain' },

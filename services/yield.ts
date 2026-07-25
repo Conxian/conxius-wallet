@@ -50,20 +50,9 @@ export async function createYieldTransaction(
     state: AppState,
     network: Network = 'mainnet'
 ): Promise<YieldAction> {
-    const rate = calculateEffectiveFeeRate(state);
-    const feeAmount = parseFloat(amount) * rate;
-    try {
-        const response = await fetchWithRetry(`${YIELD_API_BASE}/actions/enter`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ yieldId, amount, affiliate: 'conxius', feeRate: rate })
-        });
-        const data = await response.json();
-        return { transactionData: data.transaction, feeAmount };
-    } catch {
-        return {
-            transactionData: { to: '0xYieldContractAddress', data: '0xEnterActionPayload', value: amount, chainId: network === 'mainnet' ? 1 : 11155111 },
-            feeAmount
-        };
-    }
+    void yieldId;
+    void amount;
+    void state;
+    void network;
+    throw new Error('YIELD_TRANSACTION_QUARANTINED: provider transaction construction is not bound to App-private authority');
 }

@@ -1,63 +1,13 @@
-import { Capacitor, registerPlugin } from '@capacitor/core';
-
-type SecureEnclavePlugin = {
-  isAvailable(): Promise<{ available: boolean }>;
-  hasItem(options: { key: string }): Promise<{ exists: boolean }>;
-  getItem(options: {
-    key: string;
-    requireBiometric?: boolean;
-  }): Promise<{ value: string | null }>;
-  setItem(options: {
-    key: string;
-    value: string;
-    requireBiometric?: boolean;
-  }): Promise<void>;
-  removeItem(options: {
-    key: string;
-    requireBiometric?: boolean;
-  }): Promise<void>;
-  authenticate(options?: {
-    durationSeconds?: number;
-  }): Promise<{ authenticated: boolean; validUntilMs?: number }>;
-  clearBiometricSession(): Promise<void>;
-  unlockSession(options: {
-    vault: string;
-    pin: string;
-  }): Promise<{ unlocked: boolean }>;
-  getPublicKey(options: {
-    vault: string;
-    pin?: string;
-    path: string;
-    network?: string;
-  }): Promise<{ pubkey: string }>;
-  getDerivedSecret(options: {
-    vault: string;
-    pin?: string;
-    path: string;
-  }): Promise<{ secret: string; pubkey: string }>;
-  getWalletInfo(options: {
-    vault: string;
-    pin?: string;
-  }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }>;
-  getSecurityLevel(): Promise<{ level: string; isStrongBox: boolean }>;
-};
-
-const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
-
-async function hasNativeSecureEnclave() {
-  if (!Capacitor.isNativePlatform()) return false;
-  try {
-    const res = await SecureEnclave.isAvailable();
-    return !!res.available;
-  } catch {
-    return false;
-  }
-}
+import {
+  hasNativeSecureEnclave,
+  secureEnclavePublicDerivation,
+  secureEnclaveStorage,
+} from './app-private/secure-enclave-non-signing';
 
 export async function hasEnclaveBlob(key: string): Promise<boolean> {
   if (await hasNativeSecureEnclave()) {
     try {
-      const res = await SecureEnclave.hasItem({ key });
+      const res = await secureEnclaveStorage.hasItem({ key });
       return !!res.exists;
     } catch {
       return false;
@@ -69,7 +19,7 @@ export async function hasEnclaveBlob(key: string): Promise<boolean> {
 export async function getEnclaveBlob(key: string, opts?: { requireBiometric?: boolean }): Promise<string | null> {
   if (await hasNativeSecureEnclave()) {
     try {
-      const native = await SecureEnclave.getItem({ key, requireBiometric: opts?.requireBiometric ?? false });
+      const native = await secureEnclaveStorage.getItem({ key, requireBiometric: opts?.requireBiometric ?? false });
       if (native.value != null) return native.value;
     } catch (e: any) {
       const msg = typeof e?.message === 'string' ? e.message : '';
@@ -91,7 +41,7 @@ export async function getEnclaveBlob(key: string, opts?: { requireBiometric?: bo
 export async function setEnclaveBlob(key: string, value: string, opts?: { requireBiometric?: boolean }): Promise<void> {
   if (await hasNativeSecureEnclave()) {
     try {
-      await SecureEnclave.setItem({ key, value, requireBiometric: opts?.requireBiometric ?? false });
+      await secureEnclaveStorage.setItem({ key, value, requireBiometric: opts?.requireBiometric ?? false });
       // Clean up web storage if we successfully saved to native
       localStorage.removeItem(key);
       sessionStorage.removeItem(key);
@@ -111,7 +61,7 @@ export async function setEnclaveBlob(key: string, value: string, opts?: { requir
 export async function removeEnclaveBlob(key: string, opts?: { requireBiometric?: boolean }): Promise<void> {
   if (await hasNativeSecureEnclave()) {
     try {
-      await SecureEnclave.removeItem({ key, requireBiometric: opts?.requireBiometric ?? false });
+      await secureEnclaveStorage.removeItem({ key, requireBiometric: opts?.requireBiometric ?? false });
     } catch (e: any) {
       const msg = typeof e?.message === 'string' ? e.message : '';
       if ((opts?.requireBiometric ?? false) && msg.toLowerCase().includes('auth required')) {
@@ -126,7 +76,7 @@ export async function removeEnclaveBlob(key: string, opts?: { requireBiometric?:
 export async function clearEnclaveBiometricSession(): Promise<void> {
   if (await hasNativeSecureEnclave()) {
     try {
-      await SecureEnclave.clearBiometricSession();
+      await secureEnclaveStorage.clearBiometricSession();
     } catch {
     }
   }
@@ -134,7 +84,7 @@ export async function clearEnclaveBiometricSession(): Promise<void> {
 
 export async function authenticateEnclaveBiometric(durationSeconds = 300): Promise<boolean> {
   if (await hasNativeSecureEnclave()) {
-    return !!(await SecureEnclave.authenticate({ durationSeconds })).authenticated;
+    return !!(await secureEnclaveStorage.authenticate({ durationSeconds })).authenticated;
   }
   return false;
 }
@@ -146,7 +96,7 @@ export async function getPublicKeyNative(options: {
   network?: string;
 }): Promise<{ pubkey: string }> {
   if (await hasNativeSecureEnclave()) {
-    return await SecureEnclave.getPublicKey(options);
+    return await secureEnclavePublicDerivation.getPublicKey(options);
   }
   throw new Error("Native Enclave not available");
 }
@@ -157,7 +107,7 @@ export async function getDerivedSecretNative(options: {
   path: string;
 }): Promise<{ secret: string; pubkey: string }> {
   if (await hasNativeSecureEnclave()) {
-    return await SecureEnclave.getDerivedSecret(options);
+    return await secureEnclavePublicDerivation.getDerivedSecret(options);
   }
   throw new Error("Native Enclave not available");
 }
@@ -167,14 +117,14 @@ export async function getWalletInfoNative(options: {
   pin?: string;
 }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }> {
   if (await hasNativeSecureEnclave()) {
-    return await SecureEnclave.getWalletInfo(options);
+    return await secureEnclavePublicDerivation.getWalletInfo(options);
   }
   throw new Error("Native Enclave not available");
 }
 
 export async function getSecurityLevelNative(): Promise<{ level: string; isStrongBox: boolean }> {
   if (await hasNativeSecureEnclave()) {
-    return await SecureEnclave.getSecurityLevel();
+    return await secureEnclavePublicDerivation.getSecurityLevel();
   }
   return { level: 'WEB', isStrongBox: false };
 }

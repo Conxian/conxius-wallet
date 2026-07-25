@@ -52,28 +52,12 @@ export async function createBabylonStakeTransaction(
     durationBlocks: number = 150,
     network: Network = 'mainnet'
 ): Promise<any> {
-    const net = network === 'mainnet' ? 'mainnet' : 'testnet';
-    const response = await fetchWithRetry(`${BABYLON_API_BASE}/${net}/staking/stake`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            stakerPublicKey,
-            stakerAddress,
-            stakeAmount: amountSats,
-            stakingDuration: durationBlocks
-        })
-    });
-
-    if (!response.ok) {
-        throw new Error('Failed to construct Babylon staking transaction');
-    }
-
-    const data = await response.json();
-    return {
-        unsignedTxHex: data.result.stakeTransactionHex,
-        feeSats: data.result.fee,
-        finalityProviderPk: data.result.finallyProviderPublicKey
-    };
+    void stakerAddress;
+    void stakerPublicKey;
+    void amountSats;
+    void durationBlocks;
+    void network;
+    throw new Error('BABYLON_STAKE_QUARANTINED: provider transaction construction is not bound to App-private authority');
 }
 
 /**
@@ -86,24 +70,10 @@ export async function createUnbondingTransaction(
     amountSats: number,
     network: Network = 'mainnet'
 ): Promise<any> {
-    const net = network === 'mainnet' ? 'mainnet' : 'testnet';
-    const response = await fetchWithRetry(`${BABYLON_API_BASE}/${net}/staking/withdraw`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            stakerAddress,
-            amount: amountSats.toString(),
-            extra: {
-                stakerPublicKey,
-                stakeTransactionHash: stakingTxHash
-            }
-        })
-    });
-
-    if (!response.ok) throw new Error('Unbonding construction failed');
-    const data = await response.json();
-    return {
-        unsignedTxHex: data.result.extraData.withdrawalTransactionHex,
-        feeSats: data.result.extraData.fee
-    };
+    void stakerAddress;
+    void stakerPublicKey;
+    void stakingTxHash;
+    void amountSats;
+    void network;
+    throw new Error('BABYLON_UNBONDING_QUARANTINED: provider transaction construction is not bound to App-private authority');
 }

@@ -2,11 +2,6 @@
 
 import { Network } from '../types';
 import { fetchWithRetry } from './protocol';
-import * as bitcoin from 'bitcoinjs-lib';
-import { ECPairFactory } from 'ecpair';
-import * as ecc from 'tiny-secp256k1';
-
-const ECPair = ECPairFactory(ecc);
 
 export interface BoltzPair {
     limits: {
@@ -84,31 +79,11 @@ export class BoltzService {
         amountSats: number,
         toAddress: string,
         network: Network
-    ) {
-        // Implementation for Reverse Swap
-        // 1. Create Preimage
-        // 2. Call /swap/reverse
-        // 3. Return Invoice + Claim Script
-        
-        const preimage = // @ts-ignore
-        // @ts-ignore
-        globalThis.crypto.getRandomValues(new Uint8Array(32));
-        const preimageHash = bitcoin.crypto.sha256(Buffer.from(preimage));
-        
-        const response = await fetchWithRetry(`${this.getApiUrl(network)}/swap/reverse`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                from: 'BTC',
-                to: 'BTC', // For Lightning to On-Chain, it's often treated as pair
-                preimageHash: Buffer.from(preimageHash).toString('hex'),
-                invoiceAmount: amountSats,
-                claimAddress: toAddress
-            })
-        });
-
-        if (!response.ok) throw new Error('Failed to create reverse swap');
-        return await response.json();
+    ): Promise<never> {
+        void amountSats;
+        void toAddress;
+        void network;
+        throw new Error('BOLTZ_SWAP_INITIATION_QUARANTINED: native request-bound claim/refund key authority is unavailable');
     }
 
     /**
@@ -120,57 +95,25 @@ export class BoltzService {
         toLayer: 'Liquid' | 'Lightning',
         destination: string, // Invoice for LN, Address for Liquid
         network: Network
-    ) {
-        const pairId = toLayer === 'Liquid' ? 'BTC/L-BTC' : 'BTC/BTC';
-        
-        // Generate a refund key pair for the user (so they can claw back funds if Boltz fails)
-        // @ts-ignore
-        const refundKey = ECPair.makeRandom();
-        const refundPublicKey = refundKey.publicKey.toString('hex');
-
-        const body: any = {
-            from: 'BTC',
-            to: toLayer === 'Liquid' ? 'L-BTC' : 'BTC',
-            pairId,
-            referralId: 'conxius',
-            refundPublicKey
-        };
-
-        if (toLayer === 'Lightning') {
-            void destination;
-            throw new Error('BOLTZ_LIGHTNING_SETTLEMENT_QUARANTINED: exact BOLT11 capability binding is unavailable');
-        } else {
-            body.toAddress = destination;
-            body.expectedAmount = amountSats; // For Liquid, we specify amount
-        }
-
-        const response = await fetchWithRetry(`${this.getApiUrl(network)}/swap/submarine`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error || 'Swap creation failed');
-        }
-
-        const data: BoltzSwapResponse = await response.json();
-        
-        return {
-            ...data,
-            refundPrivateKey: refundKey.toWIF(), // Store this securely!
-        };
+    ): Promise<never> {
+        void amountSats;
+        void toLayer;
+        void destination;
+        void network;
+        throw new Error('BOLTZ_SWAP_INITIATION_QUARANTINED: native request-bound refund key authority is unavailable');
     }
 
     /**
      * Estimates fees for a Boltz swap
      */
     static async estimateFees(amountSats: number, network: Network) {
+        void network;
         // Mocking fee estimation for now based on public docs (~0.5% + miner fee)
         return {
             boltzFee: Math.floor(amountSats * 0.005),
-            minerFee: 5000 // Average lockup tx fee
+            minerFee: 5000,
+            authoritative: false as const,
+            kind: 'estimate' as const,
         };
     }
 }

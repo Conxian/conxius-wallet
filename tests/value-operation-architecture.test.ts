@@ -12,6 +12,12 @@ const excludedDirectories = new Set([
 const excludedRootFiles = /(?:^|\/)(?:playwright|vite|eslint|postcss|tailwind)\.config\.[cm]?[jt]s$/;
 
 type Edge = { from: string; to: string; kind: 'import' | 'dynamic-import' | 'require' | 're-export' | 'unsafe-loader' };
+type RawPluginViolation = { path: string; kind: 'secure-enclave-access' | 'raw-signing-method' };
+
+const rawSecureEnclaveAllowlist = new Set([
+  'services/app-private/native-value-signing.ts',
+  'services/app-private/secure-enclave-non-signing.ts',
+]);
 
 function normalized(path: string, base = root): string {
   return relative(base, path).replaceAll('\\', '/');
@@ -121,6 +127,50 @@ function boundaryViolations(target: string, allowedImporters: string[], edges: E
   return { importers: [...new Set(importers)], publicReExports };
 }
 
+function rawSecureEnclaveViolations(base: string, files: string[]): RawPluginViolation[] {
+  const violations: RawPluginViolation[] = [];
+  for (const path of files) {
+    if (rawSecureEnclaveAllowlist.has(path)) continue;
+    const source = ts.createSourceFile(path, readFileSync(join(base, path), 'utf8'), ts.ScriptTarget.Latest, true);
+    const kinds = new Set<RawPluginViolation['kind']>();
+    const visit = (node: ts.Node) => {
+      if ((ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) && node.text === 'SecureEnclave') {
+        kinds.add('secure-enclave-access');
+      }
+      if ((ts.isPropertyAccessExpression(node) || ts.isPropertyAccessChain(node))
+        && node.name.text === 'SecureEnclave') {
+        kinds.add('secure-enclave-access');
+      }
+      if ((ts.isElementAccessExpression(node) || ts.isElementAccessChain(node))
+        && node.argumentExpression
+        && (ts.isStringLiteral(node.argumentExpression) || ts.isNoSubstitutionTemplateLiteral(node.argumentExpression))
+        && node.argumentExpression.text === 'SecureEnclave') {
+        kinds.add('secure-enclave-access');
+      }
+      if ((ts.isPropertyAccessExpression(node) || ts.isPropertyAccessChain(node))
+        && ['signTransaction', 'signBatch'].includes(node.name.text)) {
+        kinds.add('raw-signing-method');
+      }
+      if ((ts.isElementAccessExpression(node) || ts.isElementAccessChain(node))
+        && node.argumentExpression
+        && (ts.isStringLiteral(node.argumentExpression) || ts.isNoSubstitutionTemplateLiteral(node.argumentExpression))
+        && ['signTransaction', 'signBatch'].includes(node.argumentExpression.text)) {
+        kinds.add('raw-signing-method');
+      }
+      if (ts.isBindingElement(node)) {
+        const name = (node.propertyName ?? node.name);
+        if (ts.isIdentifier(name) && ['signTransaction', 'signBatch'].includes(name.text)) {
+          kinds.add('raw-signing-method');
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    kinds.forEach((kind) => violations.push({ path, kind }));
+  }
+  return violations.sort((a, b) => `${a.path}:${a.kind}`.localeCompare(`${b.path}:${b.kind}`));
+}
+
 const compilerOptions: ts.CompilerOptions = {
   moduleResolution: ts.ModuleResolutionKind.Bundler,
   module: ts.ModuleKind.ESNext,
@@ -148,11 +198,6 @@ describe('App-private value-operation authority architecture', () => {
       edges,
     )).toEqual({ importers: [], publicReExports: [] });
     expect(boundaryViolations(
-      'services/app-private/value-operation-capability-registry.ts',
-      ['services/app-private/value-operation-authority.ts', 'services/value-operation.ts'],
-      edges,
-    )).toEqual({ importers: [], publicReExports: [] });
-    expect(boundaryViolations(
       'services/app-private/value-operation-signer.ts',
       ['services/app-private/value-operation-authority.ts'],
       edges,
@@ -160,6 +205,11 @@ describe('App-private value-operation authority architecture', () => {
     expect(boundaryViolations(
       'services/app-private/native-value-signing.ts',
       ['services/app-private/value-operation-signer.ts'],
+      edges,
+    )).toEqual({ importers: [], publicReExports: [] });
+    expect(boundaryViolations(
+      'services/app-private/secure-enclave-non-signing.ts',
+      ['services/enclave-storage.ts'],
       edges,
     )).toEqual({ importers: [], publicReExports: [] });
     expect(boundaryViolations(
@@ -174,10 +224,9 @@ describe('App-private value-operation authority architecture', () => {
     temporaryDirectories.push(base);
     const fixtures: Record<string, string> = {
       'services/app-private/value-operation-authority.ts': 'export const createAuthority = () => null;',
-      'services/app-private/value-operation-capability-registry.ts': 'export const issue = () => null;',
+      'services/value-operation-capability-consumer.ts': 'export interface Consumer { consume(): void }',
       'services/barrel.ts': "export * from '@/services/app-private/value-operation-authority';",
       'components/alias-bypass.ts': "import { createAuthority } from '@/services/app-private/value-operation-authority'; void createAuthority;",
-      'components/normalized-bypass.ts': "import { issue } from '../services/other/../app-private/value-operation-capability-registry'; void issue;",
       'root-bypass.ts': "import { createAuthority } from './services/barrel'; void createAuthority;",
       'components/dynamic-bypass.ts': "export async function bypass() { return import('@/services/app-private/value-operation-authority'); }",
       'components/require-bypass.ts': "const authority = require('../services/app-private/value-operation-authority'); void authority;",
@@ -194,10 +243,49 @@ describe('App-private value-operation authority architecture', () => {
       importers: ['components/alias-bypass.ts', 'components/dynamic-bypass.ts', 'components/require-bypass.ts', 'components/runtime-wrapper.ts', 'root-bypass.ts'],
       publicReExports: ['components/runtime-wrapper.ts', 'services/barrel.ts'],
     });
-    expect(boundaryViolations('services/app-private/value-operation-capability-registry.ts', [], edges)).toEqual({
-      importers: ['components/normalized-bypass.ts'],
-      publicReExports: [],
-    });
+  });
+
+  it('rejects raw SecureEnclave registration, aliases, plugin access, signing methods, and re-exports', () => {
+    const base = mkdtempSync(join(tmpdir(), 'conxius-raw-plugin-'));
+    temporaryDirectories.push(base);
+    const fixtures: Record<string, string> = {
+      'services/app-private/native-value-signing.ts': "import { registerPlugin } from '@capacitor/core'; export const sign = registerPlugin('SecureEnclave');",
+      'services/app-private/secure-enclave-non-signing.ts': "import { registerPlugin } from '@capacitor/core'; export const storage = registerPlugin('SecureEnclave');",
+      'components/direct.ts': "import { registerPlugin } from '@capacitor/core'; registerPlugin('SecureEnclave');",
+      'components/imported-alias.ts': "import { registerPlugin as raw } from '@capacitor/core'; raw('SecureEnclave');",
+      'components/dynamic-destructured.ts': "export async function load() { const { registerPlugin: raw } = await import('@capacitor/core'); return raw('SecureEnclave'); }",
+      'components/capacitor-property.ts': "import { Capacitor as C } from '@capacitor/core'; void C.Plugins.SecureEnclave;",
+      'components/capacitor-element.ts': "import * as core from '@capacitor/core'; void core.Capacitor['Plugins']['SecureEnclave'];",
+      'components/method-call.ts': 'export const call = (plugin: any) => plugin.signTransaction({});',
+      'components/method-extraction.ts': 'export const take = (plugin: any) => { const { signBatch: batch } = plugin; return batch; };',
+      'services/raw-barrel.ts': "export * from './app-private/native-value-signing';",
+    };
+    for (const [path, contents] of Object.entries(fixtures)) {
+      mkdirSync(dirname(join(base, path)), { recursive: true });
+      writeFileSync(join(base, path), contents);
+    }
+    const files = Object.keys(fixtures).sort();
+    expect(rawSecureEnclaveViolations(base, files)).toEqual([
+      { path: 'components/capacitor-element.ts', kind: 'secure-enclave-access' },
+      { path: 'components/capacitor-property.ts', kind: 'secure-enclave-access' },
+      { path: 'components/direct.ts', kind: 'secure-enclave-access' },
+      { path: 'components/dynamic-destructured.ts', kind: 'secure-enclave-access' },
+      { path: 'components/imported-alias.ts', kind: 'secure-enclave-access' },
+      { path: 'components/method-call.ts', kind: 'raw-signing-method' },
+      { path: 'components/method-extraction.ts', kind: 'raw-signing-method' },
+    ]);
+    const edges = buildEdges(base, files, { ...compilerOptions, baseUrl: base });
+    expect(boundaryViolations('services/app-private/native-value-signing.ts', [], edges).publicReExports)
+      .toEqual(['services/raw-barrel.ts']);
+  });
+
+  it('keeps all raw SecureEnclave production access inside the two private adapters', () => {
+    expect(rawSecureEnclaveViolations(root, productionFiles())).toEqual([]);
+  });
+
+  it('exports no runtime registration, issuer, factory, or minting surface from the consume-side module', async () => {
+    const consumerModule = await import('../services/value-operation-capability-consumer');
+    expect(Object.keys(consumerModule)).toEqual([]);
   });
 
   it('does not expose a constructible confirmer from the shared feature API', () => {
@@ -237,15 +325,15 @@ describe('App-private value-operation authority architecture', () => {
   it('carries the exact BOLT11 amount and queue-issued capability into PaymentPortal submission', () => {
     const portal = readFileSync(join(root, 'components/PaymentPortal.tsx'), 'utf8');
     expect(portal).toContain("{ kind: 'bolt11', invoice: recipient, amountSats }");
-    expect(portal).toContain('requireValueOperationSettlementAuthorization(lightningOutcome, lightningRequest)');
-    expect(portal).toContain('payLightningInvoice(recipient, amountSats, settlementAuthorization, network)');
-    expect(portal).toContain('payLnurl(lnDetail.params, amountSats, settlementAuthorization, network)');
+    expect(portal).toContain('requireValueOperationSettlementAuthorization(consumer, lightningOutcome, lightningRequest)');
+    expect(portal).toContain('payLightningInvoice(recipient, amountSats, settlementAuthorization, network, consumer)');
+    expect(portal).toContain('payLnurl(lnDetail.params, amountSats, settlementAuthorization, network, consumer)');
   });
 
   it('keeps signing and PSBT finalization off shared production APIs', () => {
     const signer = readFileSync(join(root, 'services/signer.ts'), 'utf8');
     const enclave = readFileSync(join(root, 'services/enclave-storage.ts'), 'utf8');
     expect(signer).not.toMatch(/requestEnclaveSignature|signNative|finalizeNativePsbt/);
-    expect(enclave).not.toMatch(/export\s+\{\s*SecureEnclave|export\s+(?:async\s+)?function\s+sign/);
+    expect(enclave).not.toMatch(/registerPlugin|['"]SecureEnclave['"]|export\s+(?:async\s+)?function\s+sign/);
   });
 });

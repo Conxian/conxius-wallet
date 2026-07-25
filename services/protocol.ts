@@ -3,9 +3,9 @@ import { fetchWithRetry, endpointsFor } from './network';
 import { generateRandomString } from './random';
 import * as bitcoin from 'bitcoinjs-lib';
 import {
-    consumeValueOperationBroadcastAuthorization,
     ValueOperationBroadcastAuthorization,
 } from './value-operation';
+import type { ValueOperationCapabilityConsumer } from './value-operation-capability-consumer';
 
 // Re-export for backward compatibility
 export { endpointsFor, fetchWithRetry };
@@ -53,9 +53,10 @@ export const broadcastAuthorizedTransaction = async (
     hex: string,
     authorization: ValueOperationBroadcastAuthorization,
     layer: BitcoinLayer,
-    network: Network = 'mainnet'
+    network: Network,
+    consumer: ValueOperationCapabilityConsumer,
 ): Promise<string> => {
-    consumeValueOperationBroadcastAuthorization(authorization, { signedHex: hex, layer, network });
+    consumer.consumeBroadcastAuthorization(authorization, { signedHex: hex, layer, network });
     const endpoints = endpointsFor(network) as any;
     let url = '';
     if (layer === 'Mainnet') url = `${endpoints.BTC_API}/tx`;

@@ -66,18 +66,19 @@ describe('StateChain Service', () => {
     });
 
     it('rejects a service-supplied fabricated success before coordinator submission', async () => {
-        const fabricatedAuthorization = vi.fn(async () => ({
+        const gate = createAppPrivateValueOperationAuthority('test-vault');
+        const fabricatedAuthorization = Object.assign(vi.fn(async () => ({
             status: 'allowed' as const,
             authorization: { kind: 'value-operation-authorization' as const } as never,
             signature: { signature: 'fabricated', pubkey: 'fabricated', timestamp: 0 }
-        }));
+        })), { consumer: gate.consumer });
 
         await expect(transferStateChainUtxo(
             'sc:utxo-1',
             '03newowner',
             0,
             fabricatedAuthorization
-        )).rejects.toThrow('not issued by the wallet gate');
+        )).rejects.toThrow('not issued by this App-private authority');
         expect(mockFetch).not.toHaveBeenCalled();
     });
 });
