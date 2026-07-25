@@ -1,70 +1,54 @@
+import type { Chain, UnsignedTransaction } from '@wormhole-foundation/sdk';
+import { digestCanonicalPayload, type CanonicalObject } from './value-operation-gate';
+import { knownUnsupportedValueOperation, type AuthorizedValueOperationExecution, type ValueOperationExecutionOutcome } from './value-operation-result';
 
-import { Signer, UnsignedTransaction, Chain, Network, ChainContext } from '@wormhole-foundation/sdk';
-import { SignRequest, SignResult } from './signer';
-import { BitcoinLayer } from '../types';
+export interface WormholeUnsignedTransactionDescriptor extends CanonicalObject {
+  readonly transactionDigest: string; readonly chainId: string; readonly nonce: string; readonly route: string;
+}
+export interface WormholeBatchSigningArtifact extends CanonicalObject {
+  readonly kind: 'conxius.wallet.wormhole-batch-signing.v1'; readonly operation: 'sign-wormhole-batch';
+  readonly chain: 'wormhole'; readonly layer: 'wormhole'; readonly network: 'mainnet' | 'testnet';
+  readonly sourceChain: string; readonly destinationChain: string; readonly signerIdentity: string;
+  readonly providerConfigurationDigest: string; readonly batchDigest: string;
+  readonly transactions: readonly WormholeUnsignedTransactionDescriptor[];
+}
+export type WormholeBatchSigningRequest = AuthorizedValueOperationExecution<WormholeBatchSigningArtifact>;
+const HEX_DIGEST = /^[0-9a-f]{64}$/;
+function required(value: string, field: string): string { const normalized = value.trim(); if (!normalized) throw new Error(`Invalid Wormhole ${field}.`); return normalized; }
+function digest(value: string, field: string): string { const normalized = value.toLowerCase(); if (!HEX_DIGEST.test(normalized)) throw new Error(`Invalid Wormhole ${field} digest.`); return normalized; }
 
-/**
- * ConxiusWormholeSigner
- * Adapts the Conxius Secure Enclave (signer.ts) to the Wormhole SDK Signer interface.
- * 
- * This allows the Wormhole SDK to request signatures for transactions
- * which are then securely signed by the device's TEE/StrongBox via the App's authorization flow.
- */
+export function createWormholeBatchSigningArtifact(fields: {
+  network: 'mainnet' | 'testnet'; sourceChain: string; destinationChain: string; signerIdentity: string;
+  providerConfigurationDigest: string; transactions: readonly { transactionDigest: string; chainId: string; nonce: string; route: string }[];
+}): WormholeBatchSigningArtifact {
+  if (fields.transactions.length === 0) throw new Error('Wormhole batch must contain a transaction.');
+  const transactions = Object.freeze(fields.transactions.map((transaction) => Object.freeze({
+    transactionDigest: digest(transaction.transactionDigest, 'transaction'), chainId: required(transaction.chainId, 'chain ID'),
+    nonce: required(transaction.nonce, 'nonce'), route: required(transaction.route, 'route'),
+  })));
+  return Object.freeze({
+    kind: 'conxius.wallet.wormhole-batch-signing.v1', operation: 'sign-wormhole-batch', chain: 'wormhole', layer: 'wormhole',
+    network: fields.network, sourceChain: required(fields.sourceChain, 'source chain'), destinationChain: required(fields.destinationChain, 'destination chain'),
+    signerIdentity: required(fields.signerIdentity, 'signer identity'), providerConfigurationDigest: digest(fields.providerConfigurationDigest, 'provider configuration'),
+    batchDigest: digestCanonicalPayload(transactions), transactions,
+  });
+}
+
+export async function executeWormholeBatchSigning(request: WormholeBatchSigningRequest): Promise<ValueOperationExecutionOutcome> {
+  return knownUnsupportedValueOperation(request, {
+    artifactKind: 'conxius.wallet.wormhole-batch-signing.v1', operationType: 'sign-wormhole-batch', layer: 'wormhole', chain: 'wormhole',
+  });
+}
+
+export class WormholeSigningUnavailableError extends Error {
+  readonly code = 'qualified_wormhole_signer_unavailable';
+  constructor() { super('A qualified gate-bound Wormhole signer is unavailable.'); this.name = 'WormholeSigningUnavailableError'; }
+}
+
+/** Identity-only adapter: no opaque authorization callback and no SDK signing implementation. */
 export class ConxiusWormholeSigner {
-  private _chain: Chain;
-  private _address: string;
-  private _authCallback: (req: SignRequest) => Promise<SignResult>;
-
-  constructor(chain: Chain, address: string, authCallback: (req: SignRequest) => Promise<SignResult>) {
-    this._chain = chain;
-    this._address = address;
-    this._authCallback = authCallback;
-  }
-
-  chain(): Chain {
-    return this._chain;
-  }
-
-  address(): string {
-    return this._address;
-  }
-
-  /**
-   * Sign an array of unsigned transactions.
-   * Note: The Conclave usually handles one at a time, so we iterate.
-   */
-  async sign(txs: UnsignedTransaction[]): Promise<any[]> {
-    const signed = [];
-    for (const tx of txs) {
-      const { description, transaction } = tx;
-      
-      // Determine layer based on chain
-      let layer: BitcoinLayer | 'Rootstock' | 'Ethereum' = 'Rootstock'; // Default/Fallback
-      const chainName = this._chain as string;
-      
-      if (chainName === 'Bitcoin') layer = 'Mainnet';
-      else if (chainName === 'Ethereum') layer = 'Ethereum';
-      // Add other chain mappings as needed
-
-      // Request signature via AppContext authorization flow
-      // This ensures biometrics/PIN are handled correctly by the central Enclave manager
-      const result = await this._authCallback({
-          type: 'psbt',
-          layer: layer as any, // Cast to match signer types
-          payload: transaction,
-          description: description || `Sign ${this._chain} Transaction`
-      });
-
-      // The SDK expects the signed transaction (often the signature or the signed RLP)
-      // If result.broadcastReadyHex is present, that's usually the full signed tx.
-      if (result.broadcastReadyHex) {
-        signed.push(result.broadcastReadyHex);
-      } else {
-        // If we only got a signature, we might need to combine it.
-        // For now, assume broadcastReadyHex is what we want if available.
-        signed.push(result.signature);
-      }
-    }
-    return signed;
-  }
+  constructor(private readonly signerChain: Chain, private readonly signerAddress: string) {}
+  chain(): Chain { return this.signerChain; }
+  address(): string { return this.signerAddress; }
+  async sign(transactions: UnsignedTransaction[]): Promise<never> { void transactions; throw new WormholeSigningUnavailableError(); }
 }

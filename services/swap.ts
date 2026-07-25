@@ -1,10 +1,10 @@
 import { AppState } from "../types";
-import { notificationService } from './notifications';
 import { Network } from '../types';
-import { endpointsFor, fetchWithRetry, sanitizeError } from './network';
-import { requestEnclaveSignature } from './signer';
+import { fetchWithRetry, sanitizeError } from './network';
 import { generateRandomString } from './random';
 import { calculateEffectiveFeeRate } from './monetization';
+import { digestCanonicalPayload, type CanonicalObject } from './value-operation-gate';
+import { knownUnsupportedValueOperation, type AuthorizedValueOperationExecution, type ValueOperationExecutionOutcome } from './value-operation-result';
 
 export const SWAP_EXPERIMENTAL = true;
 
@@ -27,6 +27,7 @@ export const isChangellyReady = (): boolean => !!(import.meta as any).env?.VITE_
  * Changelly Quote: Integrated B2B Swap Provider.
  */
 export const fetchChangellyQuote = async (from: string, to: string, amount: number, state: AppState, network: Network = 'mainnet'): Promise<SwapQuote> => {
+    void network;
     try {
         const proxyUrl = (import.meta as any).env?.VITE_CHANGELLY_PROXY_URL;
         if (!proxyUrl) throw new Error('Changelly proxy missing');
@@ -128,48 +129,97 @@ export const fetch1inchQuote = async (
     }
 };
 
-export const executeBoltzSwap = async (invoice: string, refundAddress: string, network: Network): Promise<string> => {
-    notificationService.notifyTransaction('Boltz Swap', 'Initiating Submarine Swap...', true);
-    return 'boltz_tx_' + Date.now();
-};
+export interface BoltzSwapArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.boltz-swap.v1'; readonly operation: 'execute-boltz-swap'; readonly chain: 'bitcoin'; readonly layer: 'swap'; readonly network: Network;
+    readonly quoteDigest: string; readonly providerIdentity: 'Boltz'; readonly providerConfigurationDigest: string; readonly sourceAsset: string; readonly targetAsset: string;
+    readonly sourceNetwork: string; readonly targetNetwork: string; readonly amountBaseUnits: string; readonly invoiceDigest: string; readonly refundAddress: string;
+    readonly destinationAddress: string; readonly expiry: string; readonly route: string; readonly htlcArtifactDigest: string; readonly maxFeeBaseUnits: string;
+    readonly maxSlippageBps: string; readonly idempotencyDigest: string;
+}
+export interface GasSwapArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.gas-swap.v1'; readonly operation: 'execute-gas-swap'; readonly chain: 'cross-chain'; readonly layer: 'swap'; readonly network: Network;
+    readonly quoteDigest: string; readonly providerIdentity: string; readonly providerConfigurationDigest: string; readonly sourceAsset: string; readonly targetAsset: string;
+    readonly sourceNetwork: string; readonly targetNetwork: string; readonly amountBaseUnits: string; readonly depositAddress: string; readonly destinationAddress: string;
+    readonly expiry: string; readonly route: string; readonly unsignedTransactionDigest: string; readonly maxFeeBaseUnits: string; readonly maxSlippageBps: string; readonly idempotencyDigest: string;
+}
+export interface ChangellyPaymentInstructionArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.changelly-payment-instruction.v1'; readonly operation: 'request-changelly-payment-instruction'; readonly chain: 'cross-chain'; readonly layer: 'swap'; readonly network: Network;
+    readonly quoteDigest: string; readonly providerIdentity: 'Changelly'; readonly providerConfigurationDigest: string; readonly sourceAsset: string; readonly targetAsset: string;
+    readonly sourceNetwork: string; readonly targetNetwork: string; readonly amountBaseUnits: string; readonly destinationAddress: string; readonly refundAddress: string;
+    readonly expiry: string; readonly route: string; readonly maxFeeBaseUnits: string; readonly maxSlippageBps: string; readonly idempotencyDigest: string;
+}
+export type BoltzSwapRequest = AuthorizedValueOperationExecution<BoltzSwapArtifact>;
+export type GasSwapRequest = AuthorizedValueOperationExecution<GasSwapArtifact>;
+export type ChangellyPaymentInstructionRequest = AuthorizedValueOperationExecution<ChangellyPaymentInstructionArtifact>;
+const HEX_DIGEST = /^[0-9a-f]{64}$/;
+const required = (value: string, field: string): string => { const normalized = value.trim(); if (!normalized) throw new Error(`Invalid swap ${field}.`); return normalized; };
+const canonicalUnsigned = (value: string, field: string): string => { if (!/^(0|[1-9][0-9]*)$/.test(value)) throw new Error(`Invalid swap ${field}.`); return value; };
+const digest = (value: string, field: string): string => { const normalized = value.toLowerCase(); if (!HEX_DIGEST.test(normalized)) throw new Error(`Invalid swap ${field} digest.`); return normalized; };
+const digestText = (kind: string, value: string): string => digestCanonicalPayload(Object.freeze({ kind, value }));
+
+export function createBoltzSwapArtifact(fields: {
+    network: Network; quoteDigest: string; providerConfigurationDigest: string; sourceAsset: string; targetAsset: string; sourceNetwork: string; targetNetwork: string;
+    amountBaseUnits: string; invoice: string; refundAddress: string; destinationAddress: string; expiry: string; route: string; htlcArtifactDigest: string;
+    maxFeeBaseUnits: string; maxSlippageBps: string; idempotencyDigest: string;
+}): BoltzSwapArtifact {
+    return Object.freeze({
+        kind: 'conxius.wallet.boltz-swap.v1', operation: 'execute-boltz-swap', chain: 'bitcoin', layer: 'swap', network: fields.network,
+        quoteDigest: digest(fields.quoteDigest, 'quote'), providerIdentity: 'Boltz', providerConfigurationDigest: digest(fields.providerConfigurationDigest, 'provider configuration'),
+        sourceAsset: required(fields.sourceAsset, 'source asset'), targetAsset: required(fields.targetAsset, 'target asset'), sourceNetwork: required(fields.sourceNetwork, 'source network'),
+        targetNetwork: required(fields.targetNetwork, 'target network'), amountBaseUnits: canonicalUnsigned(fields.amountBaseUnits, 'amount'),
+        invoiceDigest: digestText('conxius.wallet.swap-invoice.v1', required(fields.invoice, 'invoice')), refundAddress: required(fields.refundAddress, 'refund address'),
+        destinationAddress: required(fields.destinationAddress, 'destination address'), expiry: canonicalUnsigned(fields.expiry, 'expiry'), route: required(fields.route, 'route'),
+        htlcArtifactDigest: digest(fields.htlcArtifactDigest, 'HTLC artifact'), maxFeeBaseUnits: canonicalUnsigned(fields.maxFeeBaseUnits, 'maximum fee'),
+        maxSlippageBps: canonicalUnsigned(fields.maxSlippageBps, 'maximum slippage'), idempotencyDigest: digest(fields.idempotencyDigest, 'idempotency'),
+    });
+}
+
+export function createGasSwapArtifact(fields: {
+    network: Network; quoteDigest: string; providerIdentity: string; providerConfigurationDigest: string; sourceAsset: string; targetAsset: string; sourceNetwork: string;
+    targetNetwork: string; amountBaseUnits: string; depositAddress: string; destinationAddress: string; expiry: string; route: string; unsignedTransactionDigest: string;
+    maxFeeBaseUnits: string; maxSlippageBps: string; idempotencyDigest: string;
+}): GasSwapArtifact {
+    return Object.freeze({
+        kind: 'conxius.wallet.gas-swap.v1', operation: 'execute-gas-swap', chain: 'cross-chain', layer: 'swap', network: fields.network,
+        quoteDigest: digest(fields.quoteDigest, 'quote'), providerIdentity: required(fields.providerIdentity, 'provider identity'),
+        providerConfigurationDigest: digest(fields.providerConfigurationDigest, 'provider configuration'), sourceAsset: required(fields.sourceAsset, 'source asset'),
+        targetAsset: required(fields.targetAsset, 'target asset'), sourceNetwork: required(fields.sourceNetwork, 'source network'), targetNetwork: required(fields.targetNetwork, 'target network'),
+        amountBaseUnits: canonicalUnsigned(fields.amountBaseUnits, 'amount'), depositAddress: required(fields.depositAddress, 'deposit address'),
+        destinationAddress: required(fields.destinationAddress, 'destination address'), expiry: canonicalUnsigned(fields.expiry, 'expiry'), route: required(fields.route, 'route'),
+        unsignedTransactionDigest: digest(fields.unsignedTransactionDigest, 'unsigned transaction'), maxFeeBaseUnits: canonicalUnsigned(fields.maxFeeBaseUnits, 'maximum fee'),
+        maxSlippageBps: canonicalUnsigned(fields.maxSlippageBps, 'maximum slippage'), idempotencyDigest: digest(fields.idempotencyDigest, 'idempotency'),
+    });
+}
+
+export function createChangellyPaymentInstructionArtifact(fields: {
+    quote: SwapQuote; network: Network; providerConfigurationDigest: string; sourceNetwork: string; targetNetwork: string; amountBaseUnits: string;
+    destinationAddress: string; refundAddress: string; expiry: string; route: string; maxFeeBaseUnits: string; maxSlippageBps: string; idempotencyDigest: string;
+}): ChangellyPaymentInstructionArtifact {
+    if (fields.quote.provider !== 'Changelly') throw new Error('Invalid Changelly quote provider.');
+    const quoteDigest = digestCanonicalPayload(Object.freeze({
+        kind: 'conxius.wallet.changelly-quote.v1', provider: fields.quote.provider, quoteId: required(fields.quote.id, 'quote ID'),
+        sourceAsset: required(fields.quote.fromAsset, 'source asset'), targetAsset: required(fields.quote.toAsset, 'target asset'),
+        fromAmount: String(fields.quote.fromAmount), toAmount: String(fields.quote.toAmount), fee: String(fields.quote.fee), effectiveFeeRate: String(fields.quote.effectiveFeeRate),
+    }));
+    return Object.freeze({
+        kind: 'conxius.wallet.changelly-payment-instruction.v1', operation: 'request-changelly-payment-instruction', chain: 'cross-chain', layer: 'swap', network: fields.network,
+        quoteDigest, providerIdentity: 'Changelly', providerConfigurationDigest: digest(fields.providerConfigurationDigest, 'provider configuration'),
+        sourceAsset: required(fields.quote.fromAsset, 'source asset'), targetAsset: required(fields.quote.toAsset, 'target asset'), sourceNetwork: required(fields.sourceNetwork, 'source network'),
+        targetNetwork: required(fields.targetNetwork, 'target network'), amountBaseUnits: canonicalUnsigned(fields.amountBaseUnits, 'amount'),
+        destinationAddress: required(fields.destinationAddress, 'destination address'), refundAddress: required(fields.refundAddress, 'refund address'),
+        expiry: canonicalUnsigned(fields.expiry, 'expiry'), route: required(fields.route, 'route'), maxFeeBaseUnits: canonicalUnsigned(fields.maxFeeBaseUnits, 'maximum fee'),
+        maxSlippageBps: canonicalUnsigned(fields.maxSlippageBps, 'maximum slippage'), idempotencyDigest: digest(fields.idempotencyDigest, 'idempotency'),
+    });
+}
+
+export const executeBoltzSwap = async (request: BoltzSwapRequest): Promise<ValueOperationExecutionOutcome> =>
+    knownUnsupportedValueOperation(request, { artifactKind: 'conxius.wallet.boltz-swap.v1', operationType: 'execute-boltz-swap', layer: 'swap', chain: 'bitcoin' });
 
 export const buildThorchainMemo = (action: 'SWAP' | 'ADD', asset: string, destAddr: string, limit?: number): string => `${action}:${asset}:${destAddr}${limit ? ':' + limit : ''}`;
 
-/**
- * Finalizes a Changelly Transaction with Sovereign Guarding.
- */
-export const createChangellyTransaction = async (quote: SwapQuote, destAddress: string, network: Network) => {
-    try {
-        const proxyUrl = (import.meta as any).env?.VITE_CHANGELLY_PROXY_URL;
-        if (!proxyUrl) throw new Error('Changelly proxy missing');
-        const response = await fetchWithRetry(proxyUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 'tx_' + Date.now(),
-                method: 'createTransaction',
-                params: {
-                    from: quote.fromAsset,
-                    to: quote.toAsset,
-                    address: destAddress,
-                    amountFrom: quote.fromAmount.toString(),
-                    extraFee: (quote.effectiveFeeRate * 100).toFixed(2),
-                    affiliate: "conxius"
-                }
-            })
-        });
-        if (!response.ok) throw new Error('Failed to create transaction');
-        const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
-        notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'Swap Initialized', message: `Swap for ${quote.toAmount} ${quote.toAsset} initialized.` });
-        return { payinAddress: data.result.payinAddress, id: data.result.id };
-    } catch (e) {
-        throw new Error(sanitizeError(e, 'Swap initialization failed'), { cause: e });
-    }
-};
+/** Provider payment instructions are not source submission or settlement. Provider issuance is unsupported. */
+export const createChangellyPaymentInstruction = async (request: ChangellyPaymentInstructionRequest): Promise<ValueOperationExecutionOutcome> =>
+    knownUnsupportedValueOperation(request, { artifactKind: 'conxius.wallet.changelly-payment-instruction.v1', operationType: 'request-changelly-payment-instruction', layer: 'swap', chain: 'cross-chain' });
 
-export const executeGasSwap = async (amount: number, network: Network): Promise<string> => {
-    notificationService.notifyTransaction('Gas Abstraction', 'Swapping for native gas...', true);
-    return 'gas_swap_tx_' + Date.now();
-};
+export const executeGasSwap = async (request: GasSwapRequest): Promise<ValueOperationExecutionOutcome> =>
+    knownUnsupportedValueOperation(request, { artifactKind: 'conxius.wallet.gas-swap.v1', operationType: 'execute-gas-swap', layer: 'swap', chain: 'cross-chain' });
