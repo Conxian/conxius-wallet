@@ -155,9 +155,8 @@ export const redeemVtxo = async (vtxo: VTXO, authorizeValueOperation: ValueOpera
 
 // Backwards compatibility for existing calls
 export const liftToArk = async (amount: number, address: string, aspId: string): Promise<any> => {
-    return {
-        id: 'vtxo:legacy-shim',
-        amount,
-        status: 'lifting'
-    };
+    void amount;
+    void address;
+    void aspId;
+    throw new Error('ARK_LIFT_QUARANTINED: authoritative request-bound Ark lift authority and provider evidence are unavailable');
 };

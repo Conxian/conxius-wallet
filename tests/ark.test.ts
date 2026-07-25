@@ -24,11 +24,10 @@ beforeEach(() => {
 });
 
 describe('Ark Service', () => {
-    it('should lift amount to Ark VTXO (Legacy Shim)', async () => {
-        const vtxo = await liftToArk(100000, 'bc1qtest', 'asp:main');
-        expect(vtxo.id).toContain('vtxo:');
-        expect(vtxo.amount).toBe(100000);
-        expect(vtxo.status).toBe('lifting');
+    it('quarantines the legacy lift wrapper without synthetic success or provider I/O', async () => {
+        await expect(liftToArk(100000, 'bc1qtest', 'asp:main'))
+            .rejects.toThrow('ARK_LIFT_QUARANTINED');
+        expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it('quarantines lift PSBT construction before provider or UTXO I/O', async () => {
