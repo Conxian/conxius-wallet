@@ -111,10 +111,10 @@ current candidate results.
 - **Impact:** AGP `9.3.0` rejects the redundant `org.jetbrains.kotlin.android` plugin; Jetifier is deprecated and adds needless build work.
 - **Owner:** Unassigned
 - **Exit criteria:** Root and module Kotlin plugin declarations are removed, Jetifier is disabled, and Android configuration plus requested unit tests pass without speculative version changes.
-- **Validation:** `./gradlew --no-daemon :app:tasks --all` passed after removing the redundant Kotlin plugin, migrating `kotlinOptions` to `compilerOptions`, and applying the required Compose compiler plugin. PR #390's Compose scan card is source-integrated, but `./gradlew --no-daemon :app:testDebugUnitTest :core-bitcoin:test` and Android compilation remain blocked by the missing Android SDK.
+- **Validation:** `./gradlew --no-daemon :app:tasks --all` passed after removing the redundant Kotlin plugin, migrating `kotlinOptions` to `compilerOptions`, and applying the required Compose compiler plugin. `pnpm run check:android-toolchain` guards catalog, compile SDK, hosted SDK/NDK, and Java while parsing and reporting the Gradle wrapper as matrix evidence without asserting a compatibility rule. PR #390's Compose scan card is source-integrated, but `./gradlew --no-daemon :app:testDebugUnitTest :core-bitcoin:test` and Android compilation remain blocked by the missing Android SDK.
 - **Target milestone:** M16 release baseline
 - **Metrics baseline:** Configuration failed before task discovery; AGP emitted an `android.enableJetifier=true` deprecation warning.
-- **Evidence:** AGP configuration error captured during #357 investigation; `android/gradle/libs.versions.toml`; [`ANDROID_SDK_REVIEW.md`](../reports/ANDROID_SDK_REVIEW.md)
+- **Evidence:** AGP configuration error captured during #357 investigation; `scripts/ci/check_android_toolchain_matrix.mjs`; `android/gradle/libs.versions.toml`; [`ANDROID_SDK_REVIEW.md`](../reports/ANDROID_SDK_REVIEW.md)
 
 ### TD-P0-013 — Android KeyMint / StrongBox and Play Integrity qualification
 
