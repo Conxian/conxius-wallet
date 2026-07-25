@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  consumeValueOperationBroadcastAuthorization,
   createValueOperationRequest,
   digestValueOperationEnvelope,
   requireValueOperationSignature,
@@ -130,32 +129,49 @@ describe('value-operation gate', () => {
   });
 
   it('rejects a fabricated allowed result that was not issued by the gate', () => {
-    expect(() => requireValueOperationSignature({
+    const gate = createWalletValueOperationGate('vault');
+    expect(() => requireValueOperationSignature(gate.consumer, {
       status: 'allowed',
       authorization: { kind: 'value-operation-authorization' } as never,
       signature: { signature: 'fake', pubkey: 'fake', timestamp: 0 },
-    })).toThrow('not issued by the wallet gate');
+    })).toThrow('not issued by this App-private authority');
   });
 
   it('binds the exact signed transaction to an expiring one-time capability', async () => {
     enableEvidence();
-    const outcome = await createWalletValueOperationGate('vault').confirm(request());
+    const gate = createWalletValueOperationGate('vault');
+    const outcome = await gate.confirm(request());
     expect(outcome.status).toBe('allowed');
     if (outcome.status !== 'allowed' || !outcome.signature?.broadcastReadyHex || !outcome.broadcastAuthorization) return;
 
     const broadcastAuthorization = outcome.broadcastAuthorization;
     const signedHex = outcome.signature.broadcastReadyHex;
-    expect(() => consumeValueOperationBroadcastAuthorization(
+    expect(() => gate.consumer.consumeBroadcastAuthorization(
       broadcastAuthorization,
       { signedHex: 'deadbeef', layer: 'Mainnet', network: 'mainnet' },
     )).toThrow('TRANSACTION_MISMATCH');
-    expect(() => consumeValueOperationBroadcastAuthorization(
+    expect(() => gate.consumer.consumeBroadcastAuthorization(
       broadcastAuthorization,
       { signedHex, layer: 'Mainnet', network: 'mainnet' },
     )).not.toThrow();
-    expect(() => consumeValueOperationBroadcastAuthorization(
+    expect(() => gate.consumer.consumeBroadcastAuthorization(
       broadcastAuthorization,
       { signedHex, layer: 'Mainnet', network: 'mainnet' },
     )).toThrow('REPLAYED');
+  });
+
+  it('does not accept capabilities or allowed outcomes across separately instantiated authorities', async () => {
+    enableEvidence();
+    const first = createWalletValueOperationGate('vault');
+    const second = createWalletValueOperationGate('vault');
+    const exactRequest = request();
+    const outcome = await first.confirm(exactRequest);
+    expect(outcome.status).toBe('allowed');
+    if (outcome.status !== 'allowed' || !outcome.broadcastAuthorization || !outcome.signature?.broadcastReadyHex) return;
+
+    expect(() => second.consumer.requireSignature(outcome, exactRequest)).toThrow('not issued by this App-private authority');
+    expect(() => second.consumer.consumeBroadcastAuthorization(outcome.broadcastAuthorization!, {
+      signedHex: outcome.signature!.broadcastReadyHex!, layer: 'Mainnet', network: 'mainnet',
+    })).toThrow('BROADCAST_AUTHORIZATION_INVALID');
   });
 });

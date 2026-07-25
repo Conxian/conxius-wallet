@@ -8,7 +8,7 @@ describe('Real-World Service Integrations', () => {
         expect(offers[0].region).toBe('Global');
     });
 
-    it('should generate a merchant invoice via CoinsPaid (Mocked)', async () => {
+    it('quarantines merchant invoice creation before provider I/O or synthetic address fallback', async () => {
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({
@@ -22,8 +22,8 @@ describe('Real-World Service Integrations', () => {
             })
         });
 
-        const invoice = await createMerchantInvoice(50, 'EUR', 'BTC');
-        expect(invoice.id).toBe(123);
-        expect(invoice.paymentAddress).toBe('bc1q_merchant_address_placeholder');
+        await expect(createMerchantInvoice(50, 'EUR', 'BTC'))
+            .rejects.toThrow('MERCHANT_INVOICE_QUARANTINED');
+        expect(global.fetch).not.toHaveBeenCalled();
     });
 });

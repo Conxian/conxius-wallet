@@ -10,7 +10,7 @@ describe('Babylon Staking Service', () => {
         global.fetch = undefined as any;
     });
 
-    it('should construct a Babylon stake transaction payload (Mocked)', async () => {
+    it('quarantines Babylon stake transaction construction before provider I/O', async () => {
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({
@@ -22,11 +22,9 @@ describe('Babylon Staking Service', () => {
             })
         });
 
-        const result = await createBabylonStakeTransaction(
+        await expect(createBabylonStakeTransaction(
             'tb1p...', '03...', 100000
-        );
-
-        expect(result.unsignedTxHex).toBeDefined();
-        expect(result.feeSats).toBe(1000);
+        )).rejects.toThrow('BABYLON_STAKE_QUARANTINED');
+        expect(global.fetch).not.toHaveBeenCalled();
     });
 });

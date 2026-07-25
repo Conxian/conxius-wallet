@@ -1,5 +1,4 @@
 import { AppState } from "../types";
-import { notificationService } from './notifications';
 import { Network } from '../types';
 import { fetchWithRetry, sanitizeError } from './network';
 import { generateRandomString } from './random';
@@ -137,34 +136,10 @@ export const buildThorchainMemo = (action: 'SWAP' | 'ADD', asset: string, destAd
  * Finalizes a Changelly Transaction with Sovereign Guarding.
  */
 export const createChangellyTransaction = async (quote: SwapQuote, destAddress: string, network: Network) => {
-    try {
-        const proxyUrl = (import.meta as any).env?.VITE_CHANGELLY_PROXY_URL;
-        if (!proxyUrl) throw new Error('Changelly proxy missing');
-        const response = await fetchWithRetry(proxyUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 'tx_' + Date.now(),
-                method: 'createTransaction',
-                params: {
-                    from: quote.fromAsset,
-                    to: quote.toAsset,
-                    address: destAddress,
-                    amountFrom: quote.fromAmount.toString(),
-                    extraFee: (quote.effectiveFeeRate * 100).toFixed(2),
-                    affiliate: "conxius"
-                }
-            })
-        });
-        if (!response.ok) throw new Error('Failed to create transaction');
-        const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
-        notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'Swap Initialized', message: `Swap for ${quote.toAmount} ${quote.toAsset} initialized.` });
-        return { payinAddress: data.result.payinAddress, id: data.result.id };
-    } catch (e) {
-        throw new Error(sanitizeError(e, 'Swap initialization failed'), { cause: e });
-    }
+    void quote;
+    void destAddress;
+    void network;
+    throw new Error('CHANGELLY_SWAP_INITIATION_QUARANTINED: provider pay-in request is not bound to App-private authority');
 };
 
 export const executeGasSwap = async (_amount: number, _network: Network): Promise<string> => {

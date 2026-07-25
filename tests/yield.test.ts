@@ -18,7 +18,7 @@ describe('Yield Service (Yield.xyz Integration)', () => {
         expect(yields[0]).toHaveProperty('apy', 3.8);
     });
 
-    it('should construct a yield transaction payload', async () => {
+    it('quarantines yield transaction construction before provider I/O', async () => {
         const state: any = { rpcStrategy: 'Sovereign-First', version: '1.9.5' };
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -27,9 +27,8 @@ describe('Yield Service (Yield.xyz Integration)', () => {
             })
         });
 
-        const result = await createYieldTransaction('y1', '1.0', state);
-        expect(result).toHaveProperty('transactionData');
-        expect(result.transactionData).toHaveProperty('to');
-        expect(result.feeAmount).toBeGreaterThan(0);
+        await expect(createYieldTransaction('y1', '1.0', state))
+            .rejects.toThrow('YIELD_TRANSACTION_QUARANTINED');
+        expect(global.fetch).not.toHaveBeenCalled();
     });
 });

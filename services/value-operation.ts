@@ -1,13 +1,7 @@
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
 import { SignRequest, SignResult } from './signer';
-import {
-  assertSettlementAuthorizationMatchesRequest,
-  consumeBroadcastAuthorization,
-  consumeSettlementAuthorization,
-  consumeSignatureAuthorization,
-  isRegisteredValueOperationAuthorization,
-} from './app-private/value-operation-capability-registry';
+import type { ValueOperationCapabilityConsumer } from './value-operation-capability-consumer';
 
 export const VALUE_OPERATION_VERSION = 'conxius.value-operation.v1' as const;
 
@@ -308,17 +302,7 @@ export function validateValueOperationRequestIntegrity(request: ValueOperationRe
 
 export interface ValueOperationAuthorizer {
   (request: ValueOperationRequest): Promise<ValueOperationOutcome>;
-}
-
-export function consumeValueOperationBroadcastAuthorization(
-  authorization: ValueOperationBroadcastAuthorization,
-  submission: { signedHex: string; layer: string; network: string; now?: Date },
-): void {
-  consumeBroadcastAuthorization(authorization, submission);
-}
-
-export function consumeValueOperationSettlementAuthorization(submission: ValueOperationSettlementSubmission): void {
-  consumeSettlementAuthorization(submission.authorization, submission);
+  readonly consumer?: ValueOperationCapabilityConsumer;
 }
 
 export function valueOperationOutcomeMessage(outcome: ValueOperationOutcome): string {
@@ -335,64 +319,41 @@ export class ValueOperationDeniedError extends Error {
 }
 
 export function requireValueOperationSignature(
+  consumer: ValueOperationCapabilityConsumer,
   outcome: ValueOperationOutcome,
   request?: ValueOperationRequest,
 ): SignResult {
   if (outcome.status !== 'allowed') throw new ValueOperationDeniedError(outcome);
-  if (!isRegisteredValueOperationAuthorization(outcome.authorization)) {
-    throw new Error('Allowed value operation authorization was not issued by the wallet gate.');
-  }
-  if (request) {
-    const envelope = outcome.authorization.envelope;
-    if (!validateValueOperationRequestIntegrity(request)
-      || envelope.operationType !== request.operationType
-      || envelope.chainLayer !== request.chainLayer
-      || envelope.signingType !== request.signingType
-      || envelope.payloadDigest !== request.payloadDigest
-      || envelope.descriptionDigest !== request.descriptionDigest
-      || envelope.network !== request.network
-      || envelope.purpose !== request.purpose
-      || envelope.nonce !== request.nonce
-      || envelope.audience !== request.audience
-      || envelope.keyIdentity !== request.keyIdentity
-      || envelope.algorithm !== request.algorithm
-      || envelope.issuedAt !== request.issuedAt
-      || envelope.expiresAt !== request.expiresAt) {
-      throw new Error('Allowed value operation authorization does not match the service request.');
-    }
-  }
-  if (!outcome.signature) throw new Error('Allowed value operation is missing its native signature result.');
-  consumeSignatureAuthorization(outcome.authorization);
-  return outcome.signature;
+  return consumer.requireSignature(outcome, request);
 }
 
 export function requireValueOperationSettlementAuthorization(
+  consumer: ValueOperationCapabilityConsumer,
   outcome: ValueOperationOutcome,
   request: ValueOperationRequest,
 ): ValueOperationSettlementAuthorization {
   if (outcome.status !== 'allowed') throw new ValueOperationDeniedError(outcome);
-  if (!isRegisteredValueOperationAuthorization(outcome.authorization)) {
-    throw new Error('Allowed value operation authorization was not issued by the App-private gate.');
-  }
-  if (!outcome.settlementAuthorization) {
-    throw new Error('Allowed value operation is missing its settlement authorization.');
-  }
-  assertSettlementAuthorizationMatchesRequest(outcome.settlementAuthorization, request);
-  return outcome.settlementAuthorization;
+  return consumer.requireSettlementAuthorization(outcome, request);
 }
 
 export async function authorizeValueOperationSettlement(
   authorize: ValueOperationAuthorizer,
   request: ValueOperationRequest,
 ): Promise<ValueOperationSettlementAuthorization> {
-  return requireValueOperationSettlementAuthorization(await authorize(request), request);
+  const outcome = await authorize(request);
+  if (outcome.status !== 'allowed') throw new ValueOperationDeniedError(outcome);
+  if (!authorize.consumer) throw new Error('Value operation authorizer has no App-private capability consumer.');
+  return requireValueOperationSettlementAuthorization(authorize.consumer, outcome, request);
 }
 
 export async function authorizeValueOperationSignature(
   authorize: ValueOperationAuthorizer,
   request: ValueOperationRequest,
 ): Promise<SignResult> {
-  return requireValueOperationSignature(await authorize(request), request);
+  const outcome = await authorize(request);
+  if (outcome.status !== 'allowed') throw new ValueOperationDeniedError(outcome);
+  if (!authorize.consumer) throw new Error('Value operation authorizer has no App-private capability consumer.');
+  return requireValueOperationSignature(authorize.consumer, outcome, request);
 }
 
 export function resetValueOperationReplayCacheForTests(): void {

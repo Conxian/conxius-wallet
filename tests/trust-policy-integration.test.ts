@@ -14,7 +14,7 @@ describe('Trust Policy Integration', () => {
                 'mainnet',
                 undefined,
                 TrustTier.T1
-            )).rejects.toThrow('Guard: T1 (Sovereign) requires IBC light-client paths');
+            )).rejects.toThrow('NTT_EXECUTION_QUARANTINED');
         });
 
         it('should reject non-hardened T2 routes', async () => {
@@ -28,7 +28,7 @@ describe('Trust Policy Integration', () => {
                 undefined,
                 TrustTier.T2,
                 false // not hardened
-            )).rejects.toThrow('Guard: T2 (Hybrid) requires hardened configuration');
+            )).rejects.toThrow('NTT_EXECUTION_QUARANTINED');
         });
     });
 

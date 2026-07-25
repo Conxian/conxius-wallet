@@ -63,6 +63,7 @@ describe('Lightning Resilience SRL-1 & SRL-2', () => {
        1,
        { kind: 'value-operation-settlement-authorization' } as ValueOperationSettlementAuthorization,
        'mainnet',
+       {} as never,
        key,
        fingerprint,
      )).rejects.toThrow('BREEZ_BACKEND_SETTLEMENT_QUARANTINED');

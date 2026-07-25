@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { executeBoltzSwap, executeGasSwap, fetchLifiQuote } from '../services/swap';
+import { createChangellyTransaction, executeBoltzSwap, executeGasSwap, fetchLifiQuote } from '../services/swap';
 
 describe('Advanced Swap Service (LI.FI Integration)', () => {
     it('should fetch a LI.FI quote (Mocked)', async () => {
@@ -34,5 +34,14 @@ describe('Advanced Swap Service (LI.FI Integration)', () => {
     it('quarantines gas swap execution instead of returning a synthetic transaction ID', async () => {
         await expect(executeGasSwap(1000, 'mainnet'))
             .rejects.toThrow('GAS_SWAP_UNSUPPORTED');
+    });
+
+    it('quarantines Changelly initiation before provider I/O', async () => {
+        global.fetch = vi.fn();
+        await expect(createChangellyTransaction({
+            id: 'quote', fromAsset: 'BTC', toAsset: 'ETH', fromAmount: 1, toAmount: 10,
+            fee: 0.01, effectiveFeeRate: 0.01, provider: 'Changelly', estimatedTime: 15,
+        }, '0xrecipient', 'mainnet')).rejects.toThrow('CHANGELLY_SWAP_INITIATION_QUARANTINED');
+        expect(global.fetch).not.toHaveBeenCalled();
     });
 });

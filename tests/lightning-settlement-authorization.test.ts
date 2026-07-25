@@ -38,6 +38,7 @@ vi.mock('../services/app-private/value-operation-signer', () => ({ signAuthorize
 vi.mock('../services/value-operation-evidence', () => ({ getWalletEvidenceAdapter: mocks.getWalletEvidenceAdapter }));
 
 const now = new Date('2026-07-25T04:00:00.000Z');
+let authority: ReturnType<typeof createAppPrivateValueOperationAuthority>;
 const BOLT11_MAINNET = 'lnbc20u1p3y0x3hpp5743k2g0fsqqxj7n8qzuhns5gmkk4djeejk3wkp64ppevgekvc0jsdqcve5kzar2v9nr5gpqd4hkuetesp5ez2g297jduwc20t6lmqlsg3man0vf2jfd8ar9fh8fhn2g8yttfkqxqy9gcqcqzys9qrsgqrzjqtx3k77yrrav9hye7zar2rtqlfkytl094dsp0ms5majzth6gt7ca6uhdkxl983uywgqqqqlgqqqvx5qqjqrzjqd98kxkpyw0l9tyy8r8q57k7zpy9zjmh6sez752wj6gcumqnj3yxzhdsmg6qq56utgqqqqqqqqqqqeqqjq7jd56882gtxhrjm03c93aacyfy306m4fq0tskf83c0nmet8zc2lxyyg3saz8x6vwcp26xnrlagf9semau3qm2glysp7sv95693fphvsp54l567';
 
 function invoiceWithHrp(hrp: string): string {
@@ -64,8 +65,8 @@ function verified(value: ValueOperationEvidenceRequest) {
 }
 
 async function authorize(value: ValueOperationRequest): Promise<ValueOperationSettlementAuthorization> {
-  const outcome = await createAppPrivateValueOperationAuthority('vault').confirm(value);
-  return requireValueOperationSettlementAuthorization(outcome, value);
+  const outcome = await authority.confirm(value);
+  return requireValueOperationSettlementAuthorization(authority.consumer, outcome, value);
 }
 
 describe('Lightning settlement authorization', () => {
@@ -74,6 +75,7 @@ describe('Lightning settlement authorization', () => {
     vi.useFakeTimers();
     vi.setSystemTime(now);
     resetAppPrivateValueOperationReplayCacheForTests();
+    authority = createAppPrivateValueOperationAuthority('vault');
     global.fetch = mocks.fetch;
     mocks.getWalletEvidenceAdapter.mockReturnValue({ verify: vi.fn(async (value) => verified(value)) });
     mocks.requestEnclaveSignature.mockResolvedValue({ signature: 'native-signature', pubkey: 'native-pubkey', timestamp: now.getTime() });
@@ -87,8 +89,8 @@ describe('Lightning settlement authorization', () => {
     const invoice = BOLT11_MAINNET;
     const amountSats = 2000;
     const authorization = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice, amountSats }));
-    await expect(payLightningInvoice(invoice, amountSats, authorization, 'mainnet')).resolves.toBe('authoritative-payment-hash');
-    await expect(payLightningInvoice(invoice, amountSats, authorization, 'mainnet')).rejects.toThrow('REPLAYED');
+    await expect(payLightningInvoice(invoice, amountSats, authorization, 'mainnet', authority.consumer)).resolves.toBe('authoritative-payment-hash');
+    await expect(payLightningInvoice(invoice, amountSats, authorization, 'mainnet', authority.consumer)).rejects.toThrow('REPLAYED');
     expect(mocks.nativePayInvoice).toHaveBeenCalledTimes(1);
   });
 
@@ -100,7 +102,7 @@ describe('Lightning settlement authorization', () => {
   ])('rejects %s before native I/O', async (_name, makeAuthorization, invoice, amountSats, network, code) => {
     const genuine = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice: BOLT11_MAINNET, amountSats: 2000 }));
     const authorization = makeAuthorization ? makeAuthorization() : genuine;
-    await expect(payLightningInvoice(invoice, amountSats, authorization, network as 'mainnet' | 'testnet')).rejects.toThrow(code);
+    await expect(payLightningInvoice(invoice, amountSats, authorization, network as 'mainnet' | 'testnet', authority.consumer)).rejects.toThrow(code);
     expect(mocks.nativePayInvoice).not.toHaveBeenCalled();
   });
 
@@ -109,7 +111,7 @@ describe('Lightning settlement authorization', () => {
     const authorization = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice: amountless, amountSats: 2000 }));
 
     expect(() => requireBolt11Settlement(amountless, 2000, 'mainnet')).toThrow('BOLT11_AMOUNT_REQUIRED');
-    await expect(payLightningInvoice(amountless, 2000, authorization, 'mainnet')).rejects.toThrow('BOLT11_AMOUNT_REQUIRED');
+    await expect(payLightningInvoice(amountless, 2000, authorization, 'mainnet', authority.consumer)).rejects.toThrow('BOLT11_AMOUNT_REQUIRED');
     expect(mocks.nativePayInvoice).not.toHaveBeenCalled();
   });
 
@@ -117,51 +119,51 @@ describe('Lightning settlement authorization', () => {
     const invoice = BOLT11_MAINNET;
     const authorization = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice, amountSats: 2000 }));
     vi.setSystemTime(new Date(now.getTime() + 61_000));
-    await expect(payLightningInvoice(invoice, 2000, authorization, 'mainnet')).rejects.toThrow('STALE');
+    await expect(payLightningInvoice(invoice, 2000, authorization, 'mainnet', authority.consumer)).rejects.toThrow('STALE');
     expect(mocks.nativePayInvoice).not.toHaveBeenCalled();
   });
 
   it('rejects provider substitution before native I/O', async () => {
     const invoice = BOLT11_MAINNET;
     const authorization = await authorize(request('lnd-rest', { kind: 'bolt11', invoice, amountSats: 2000 }));
-    await expect(payLightningInvoice(invoice, 2000, authorization, 'mainnet')).rejects.toThrow('CONTEXT_MISMATCH');
+    await expect(payLightningInvoice(invoice, 2000, authorization, 'mainnet', authority.consumer)).rejects.toThrow('CONTEXT_MISMATCH');
     expect(mocks.nativePayInvoice).not.toHaveBeenCalled();
   });
 
   it('consumes exact LNURL intent before the intentionally unsupported adapter boundary', async () => {
     const params = { callback: 'https://lnurl.example/pay', minSendable: 1000, maxSendable: 5000, metadata: '[]' };
     const authorization = await authorize(request('native-breez-manager', { kind: 'lnurl-pay', params, amountSats: 2 }));
-    await expect(payLnurl(params, 3, authorization, 'mainnet')).rejects.toThrow('INTENT_MISMATCH');
-    await expect(payLnurl(params, 2, authorization, 'mainnet')).rejects.toThrow('LNURL_PAYMENT_UNSUPPORTED');
-    await expect(payLnurl(params, 2, authorization, 'mainnet')).rejects.toThrow('REPLAYED');
+    await expect(payLnurl(params, 3, authorization, 'mainnet', authority.consumer)).rejects.toThrow('INTENT_MISMATCH');
+    await expect(payLnurl(params, 2, authorization, 'mainnet', authority.consumer)).rejects.toThrow('LNURL_PAYMENT_UNSUPPORTED');
+    await expect(payLnurl(params, 2, authorization, 'mainnet', authority.consumer)).rejects.toThrow('REPLAYED');
     expect(mocks.nativePayInvoice).not.toHaveBeenCalled();
   });
 
   it('rejects denied, quarantined, plain-object, and wrong-request callback outcomes', async () => {
     const exact = request('native-breez-manager', { kind: 'bolt11', invoice: 'lnbc1exact' }, 'exact');
     const wrong = request('native-breez-manager', { kind: 'bolt11', invoice: 'lnbc1wrong' }, 'wrong');
-    const wrongOutcome = await createAppPrivateValueOperationAuthority('vault').confirm(wrong);
+    const wrongOutcome = await authority.confirm(wrong);
 
-    await expect(authorizeValueOperationSettlement(async () => wrongOutcome, exact)).rejects.toThrow('REQUEST_MISMATCH');
+    await expect(authorizeValueOperationSettlement(Object.assign(async () => wrongOutcome, { consumer: authority.consumer }), exact)).rejects.toThrow('does not match the service request');
     await expect(authorizeValueOperationSettlement(async () => ({ status: 'rejected', code: 'NO', reason: 'no' }), exact)).rejects.toThrow('NO');
     await expect(authorizeValueOperationSettlement(async () => ({ status: 'quarantined', code: 'NO_EVIDENCE', reason: 'no' }), exact)).rejects.toThrow('NO_EVIDENCE');
-    await expect(authorizeValueOperationSettlement(async () => ({
+    await expect(authorizeValueOperationSettlement(Object.assign(async () => ({
       status: 'allowed', authorization: { kind: 'value-operation-authorization' },
       settlementAuthorization: { kind: 'value-operation-settlement-authorization' },
-    } as ValueOperationOutcome), exact)).rejects.toThrow('not issued');
+    } as ValueOperationOutcome), { consumer: authority.consumer }), exact)).rejects.toThrow('not issued');
     expect(mocks.nativePayInvoice).not.toHaveBeenCalled();
   });
 
   it('binds Breez plugin invoice and on-chain settlement before plugin I/O', async () => {
     const invoice = BOLT11_MAINNET;
     const invoiceAuthorization = await authorize(request('breez-plugin', { kind: 'bolt11', invoice, amountSats: 2000 }));
-    await expect(payLnInvoice(invoice, 2000, invoiceAuthorization, 'mainnet')).resolves.toMatchObject({ paymentHash: 'breez-payment-hash' });
+    await expect(payLnInvoice(invoice, 2000, invoiceAuthorization, 'mainnet', authority.consumer)).resolves.toMatchObject({ paymentHash: 'breez-payment-hash' });
 
     const onchainIntent = { kind: 'breez-onchain', address: 'bc1qexact', amountSats: 50_000, feeRateSatsPerVbyte: 3 };
     const onchainAuthorization = await authorize(request('breez-plugin', onchainIntent));
-    await expect(sendBreezOnchain('bc1qwrong', 50_000, 3, onchainAuthorization, 'mainnet')).rejects.toThrow('INTENT_MISMATCH');
-    await expect(sendBreezOnchain('bc1qexact', 50_000, 3, onchainAuthorization, 'mainnet')).resolves.toEqual({ reverseSwapId: 'authoritative-swap-id' });
-    await expect(sendBreezOnchain('bc1qexact', 50_000, 3, onchainAuthorization, 'mainnet')).rejects.toThrow('REPLAYED');
+    await expect(sendBreezOnchain('bc1qwrong', 50_000, 3, onchainAuthorization, 'mainnet', authority.consumer)).rejects.toThrow('INTENT_MISMATCH');
+    await expect(sendBreezOnchain('bc1qexact', 50_000, 3, onchainAuthorization, 'mainnet', authority.consumer)).resolves.toEqual({ reverseSwapId: 'authoritative-swap-id' });
+    await expect(sendBreezOnchain('bc1qexact', 50_000, 3, onchainAuthorization, 'mainnet', authority.consumer)).rejects.toThrow('REPLAYED');
     expect(mocks.breezPay).toHaveBeenCalledTimes(1);
     expect(mocks.breezSendOnchain).toHaveBeenCalledTimes(1);
   });
@@ -171,9 +173,9 @@ describe('Lightning settlement authorization', () => {
     const amountless = invoiceWithHrp('lnbc');
     const authorization = await authorize(request('breez-plugin', { kind: 'bolt11', invoice, amountSats: 2000 }));
 
-    await expect(payLnInvoice(amountless, 2000, authorization, 'mainnet')).rejects.toThrow('BOLT11_AMOUNT_REQUIRED');
+    await expect(payLnInvoice(amountless, 2000, authorization, 'mainnet', authority.consumer)).rejects.toThrow('BOLT11_AMOUNT_REQUIRED');
     expect(mocks.breezPay).not.toHaveBeenCalled();
-    await expect(payLnInvoice(invoice, 2000, authorization, 'mainnet')).resolves.toMatchObject({ paymentHash: 'breez-payment-hash' });
+    await expect(payLnInvoice(invoice, 2000, authorization, 'mainnet', authority.consumer)).resolves.toMatchObject({ paymentHash: 'breez-payment-hash' });
     expect(mocks.breezPay).toHaveBeenCalledTimes(1);
   });
 
@@ -181,11 +183,11 @@ describe('Lightning settlement authorization', () => {
     const invoice = BOLT11_MAINNET;
     const backend = getLightningBackend({ type: 'LND', endpoint: 'https://lnd.example', apiKey: 'test-macaroon' });
     const authorization = await authorize(request('lnd-rest', { kind: 'bolt11', invoice, amountSats: 2000 }));
-    await expect(backend.payInvoice(invoice, 2000, authorization, 'mainnet')).resolves.toEqual({ preimage: 'lnd-preimage' });
+    await expect(backend.payInvoice(invoice, 2000, authorization, 'mainnet', authority.consumer)).resolves.toEqual({ preimage: 'lnd-preimage' });
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
 
     const wrongAuthorization = await authorize(request('lnd-rest', { kind: 'bolt11', invoice, amountSats: 2000 }));
-    await expect(backend.payInvoice(invoiceWithHrp('lnbc30u'), 3000, wrongAuthorization, 'mainnet')).rejects.toThrow('INTENT_MISMATCH');
+    await expect(backend.payInvoice(invoiceWithHrp('lnbc30u'), 3000, wrongAuthorization, 'mainnet', authority.consumer)).rejects.toThrow('INTENT_MISMATCH');
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
 
@@ -195,9 +197,9 @@ describe('Lightning settlement authorization', () => {
     const backend = getLightningBackend({ type: 'LND', endpoint: 'https://lnd.example', apiKey: 'test-macaroon' });
     const authorization = await authorize(request('lnd-rest', { kind: 'bolt11', invoice, amountSats: 2000 }));
 
-    await expect(backend.payInvoice(amountless, 2000, authorization, 'mainnet')).rejects.toThrow('BOLT11_AMOUNT_REQUIRED');
+    await expect(backend.payInvoice(amountless, 2000, authorization, 'mainnet', authority.consumer)).rejects.toThrow('BOLT11_AMOUNT_REQUIRED');
     expect(mocks.fetch).not.toHaveBeenCalled();
-    await expect(backend.payInvoice(invoice, 2000, authorization, 'mainnet')).resolves.toEqual({ preimage: 'lnd-preimage' });
+    await expect(backend.payInvoice(invoice, 2000, authorization, 'mainnet', authority.consumer)).resolves.toEqual({ preimage: 'lnd-preimage' });
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
 
@@ -213,26 +215,29 @@ describe('Lightning settlement authorization', () => {
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
-  it('binds LND LNURL withdrawal callback, k1, and invoice before HTTP I/O', async () => {
+  it('quarantines LND LNURL withdrawal before capability consumption or HTTP I/O', async () => {
     const callback = 'https://lnurl.example/withdraw';
     const invoice = 'lnbc1withdraw';
     const backend = getLightningBackend({ type: 'LND', endpoint: 'https://lnd.example', apiKey: 'test-macaroon' });
     const authorization = await authorize(request('lnd-rest', { kind: 'lnurl-withdraw', callback, k1: 'exact-k1', invoice }));
 
-    await expect(backend.lnurlWithdraw(callback, 'wrong-k1', invoice, authorization, 'mainnet')).rejects.toThrow('INTENT_MISMATCH');
+    await expect(backend.lnurlWithdraw(callback, 'wrong-k1', invoice, authorization, 'mainnet', authority.consumer)).rejects.toThrow('LND_LNURL_WITHDRAW_QUARANTINED');
     expect(mocks.fetch).not.toHaveBeenCalled();
 
-    mocks.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'OK' }) });
-    await expect(backend.lnurlWithdraw(callback, 'exact-k1', invoice, authorization, 'mainnet')).resolves.toEqual({ status: 'OK' });
-    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+    await expect(backend.lnurlWithdraw(callback, 'exact-k1', invoice, authorization, 'mainnet', authority.consumer)).rejects.toThrow('LND_LNURL_WITHDRAW_QUARANTINED');
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(() => authority.consumer.consumeSettlementAuthorization({
+      authorization, layer: 'Lightning', provider: 'lnd-rest', network: 'mainnet',
+      intent: { kind: 'lnurl-withdraw', callback, k1: 'exact-k1', invoice },
+    })).not.toThrow();
   });
 
   it('keeps legacy Breez backend invoice and LNURL settlement explicitly quarantined with zero I/O', async () => {
     const backend = getLightningBackend({ type: 'Breez' });
     const fabricated = { kind: 'value-operation-settlement-authorization' } as ValueOperationSettlementAuthorization;
-    await expect(backend.payInvoice('lnbc1legacy', 1, fabricated, 'mainnet')).rejects.toThrow('BREEZ_BACKEND_SETTLEMENT_QUARANTINED');
+    await expect(backend.payInvoice('lnbc1legacy', 1, fabricated, 'mainnet', authority.consumer)).rejects.toThrow('BREEZ_BACKEND_SETTLEMENT_QUARANTINED');
     await expect(backend.lnurlPay('https://lnurl.example/pay', 1000, fabricated, 'mainnet')).rejects.toThrow('BREEZ_BACKEND_LNURL_QUARANTINED');
-    await expect(backend.lnurlWithdraw('https://lnurl.example/withdraw', 'k1', 'lnbc1legacy', fabricated, 'mainnet')).rejects.toThrow('BREEZ_BACKEND_LNURL_QUARANTINED');
+    await expect(backend.lnurlWithdraw('https://lnurl.example/withdraw', 'k1', 'lnbc1legacy', fabricated, 'mainnet', authority.consumer)).rejects.toThrow('BREEZ_BACKEND_LNURL_QUARANTINED');
     expect(mocks.breezPay).not.toHaveBeenCalled();
     expect(mocks.fetch).not.toHaveBeenCalled();
   });

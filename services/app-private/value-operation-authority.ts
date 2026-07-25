@@ -19,17 +19,206 @@ import {
   type ValueOperationRequest,
   validateValueOperationRequestIntegrity,
 } from '../value-operation';
-import {
-  issueBroadcastAuthorization,
-  issueSettlementAuthorization,
-  registerValueOperationAuthorization,
-} from './value-operation-capability-registry';
+import { digestValueOperationValue } from '../value-operation';
+import type { ValueOperationCapabilityConsumer } from '../value-operation-capability-consumer';
 
-const consumedAuthorizations = new Set<string>();
+const replayCaches = new Set<Set<string>>();
+
+function authorizationMatchesRequest(
+  authorization: ValueOperationAuthorization,
+  request: ValueOperationRequest,
+): boolean {
+  const envelope = authorization.envelope;
+  return validateValueOperationRequestIntegrity(request)
+    && envelope.operationType === request.operationType
+    && envelope.chainLayer === request.chainLayer
+    && envelope.signingType === request.signingType
+    && envelope.payloadDigest === request.payloadDigest
+    && envelope.descriptionDigest === request.descriptionDigest
+    && envelope.network === request.network
+    && envelope.purpose === request.purpose
+    && envelope.nonce === request.nonce
+    && envelope.audience === request.audience
+    && envelope.keyIdentity === request.keyIdentity
+    && envelope.algorithm === request.algorithm
+    && envelope.issuedAt === request.issuedAt
+    && envelope.expiresAt === request.expiresAt;
+}
+
+function settlementPayload(request: ValueOperationRequest): { provider: string; intent: unknown } | null {
+  if (!request.payload || typeof request.payload !== 'object' || Array.isArray(request.payload)) return null;
+  const payload = request.payload as Record<string, unknown>;
+  if (typeof payload.provider !== 'string' || !payload.provider || !('intent' in payload)) return null;
+  return { provider: payload.provider, intent: payload.intent };
+}
+
+function createAuthorityState() {
+  const issuedAuthorizations = new WeakSet<object>();
+  const consumedSignatureAuthorizations = new WeakSet<object>();
+  const consumedAuthorizations = new Set<string>();
+  const broadcastAuthorizations = new WeakMap<object, {
+    signedHex: string;
+    signedHexDigest: string;
+    layer: string;
+    network: string;
+    expiresAt: number;
+    consumed: boolean;
+  }>();
+  const settlementAuthorizations = new WeakMap<object, {
+    requestIntentDigest: string;
+    settlementIntentDigest: string;
+    layer: string;
+    provider: string;
+    network: string;
+    expiresAt: number;
+    consumed: boolean;
+  }>();
+  replayCaches.add(consumedAuthorizations);
+
+  const assertIssuedAuthorizationMatchesRequest = (
+    authorization: ValueOperationAuthorization,
+    request: ValueOperationRequest,
+  ) => {
+    if (!issuedAuthorizations.has(authorization)) {
+      throw new Error('CAPABILITY_ISSUER_AUTHORIZATION_INVALID: outcome was not registered by this App-private authority');
+    }
+    if (!authorizationMatchesRequest(authorization, request)) {
+      throw new Error('CAPABILITY_ISSUER_REQUEST_MISMATCH: registered outcome does not match the exact request');
+    }
+  };
+
+  const issueBroadcastAuthorization = (input: {
+    authorization: ValueOperationAuthorization;
+    request: ValueOperationRequest;
+    signedHex: string;
+    layer: string;
+    network: string;
+    expiresAt: number;
+  }) => {
+    assertIssuedAuthorizationMatchesRequest(input.authorization, input.request);
+    const authorization = Object.freeze({ kind: 'value-operation-broadcast-authorization' as const });
+    broadcastAuthorizations.set(authorization, {
+      signedHex: input.signedHex,
+      signedHexDigest: digestValueOperationValue(input.signedHex),
+      layer: input.layer,
+      network: input.network,
+      expiresAt: input.expiresAt,
+      consumed: false,
+    });
+    return authorization;
+  };
+
+  const issueSettlementAuthorization = (
+    gateAuthorization: ValueOperationAuthorization,
+    request: ValueOperationRequest,
+    expiresAt: number,
+  ) => {
+    assertIssuedAuthorizationMatchesRequest(gateAuthorization, request);
+    if (request.operationType !== 'settle') return null;
+    const payload = settlementPayload(request);
+    if (!payload) return null;
+    const authorization = Object.freeze({ kind: 'value-operation-settlement-authorization' as const });
+    settlementAuthorizations.set(authorization, {
+      requestIntentDigest: request.intentDigest,
+      settlementIntentDigest: digestValueOperationValue({ provider: payload.provider, intent: payload.intent }),
+      layer: request.chainLayer,
+      provider: payload.provider,
+      network: request.network,
+      expiresAt,
+      consumed: false,
+    });
+    return authorization;
+  };
+
+  const consumer: ValueOperationCapabilityConsumer = {
+    isIssuedAuthorization: (authorization) => issuedAuthorizations.has(authorization),
+    requireSignature: (outcome, request) => {
+      if (outcome.status !== 'allowed') {
+        throw Object.assign(new Error(`${outcome.code}: ${outcome.reason}`), { outcome });
+      }
+      if (!issuedAuthorizations.has(outcome.authorization)) {
+        throw new Error('Allowed value operation authorization was not issued by this App-private authority.');
+      }
+      if (request && !authorizationMatchesRequest(outcome.authorization, request)) {
+        throw new Error('Allowed value operation authorization does not match the service request.');
+      }
+      if (!outcome.signature) throw new Error('Allowed value operation is missing its native signature result.');
+      if (consumedSignatureAuthorizations.has(outcome.authorization)) {
+        throw new Error('Allowed value operation authorization was already consumed.');
+      }
+      consumedSignatureAuthorizations.add(outcome.authorization);
+      return outcome.signature;
+    },
+    requireSettlementAuthorization: (outcome, request) => {
+      if (outcome.status !== 'allowed') {
+        throw Object.assign(new Error(`${outcome.code}: ${outcome.reason}`), { outcome });
+      }
+      if (!issuedAuthorizations.has(outcome.authorization)) {
+        throw new Error('Allowed value operation authorization was not issued by this App-private authority.');
+      }
+      if (!authorizationMatchesRequest(outcome.authorization, request)) {
+        throw new Error('Allowed value operation authorization does not match the service request.');
+      }
+      if (!outcome.settlementAuthorization) {
+        throw new Error('Allowed value operation is missing its settlement authorization.');
+      }
+      const record = settlementAuthorizations.get(outcome.settlementAuthorization);
+      const payload = settlementPayload(request);
+      if (!record || !payload
+        || record.requestIntentDigest !== request.intentDigest
+        || record.layer !== request.chainLayer
+        || record.network !== request.network
+        || record.provider !== payload.provider
+        || record.settlementIntentDigest !== digestValueOperationValue({ provider: payload.provider, intent: payload.intent })) {
+        throw new Error('SETTLEMENT_AUTHORIZATION_REQUEST_MISMATCH: authorization does not match the requested settlement');
+      }
+      return outcome.settlementAuthorization;
+    },
+    consumeBroadcastAuthorization: (authorization, submission) => {
+      const record = broadcastAuthorizations.get(authorization);
+      if (!record) throw new Error('BROADCAST_AUTHORIZATION_INVALID: authorization was not issued by this App-private authority');
+      const now = submission.now ?? new Date();
+      if (record.consumed) throw new Error('BROADCAST_AUTHORIZATION_REPLAYED: authorization is one-time');
+      if (now.getTime() >= record.expiresAt) throw new Error('BROADCAST_AUTHORIZATION_STALE: authorization expired');
+      if (submission.layer !== record.layer || submission.network !== record.network) {
+        throw new Error('BROADCAST_AUTHORIZATION_CONTEXT_MISMATCH: layer or network differs from authorization');
+      }
+      if (submission.signedHex !== record.signedHex
+        || digestValueOperationValue(submission.signedHex) !== record.signedHexDigest) {
+        throw new Error('BROADCAST_AUTHORIZATION_TRANSACTION_MISMATCH: signed transaction differs from authorization');
+      }
+      record.consumed = true;
+    },
+    consumeSettlementAuthorization: (submission) => {
+      const record = settlementAuthorizations.get(submission.authorization);
+      if (!record) throw new Error('SETTLEMENT_AUTHORIZATION_INVALID: authorization was not issued by this App-private authority');
+      const now = submission.now ?? new Date();
+      if (record.consumed) throw new Error('SETTLEMENT_AUTHORIZATION_REPLAYED: authorization is one-time');
+      if (now.getTime() >= record.expiresAt) throw new Error('SETTLEMENT_AUTHORIZATION_STALE: authorization expired');
+      if (submission.layer !== record.layer || submission.network !== record.network || submission.provider !== record.provider) {
+        throw new Error('SETTLEMENT_AUTHORIZATION_CONTEXT_MISMATCH: layer, provider, or network differs from authorization');
+      }
+      if (digestValueOperationValue({ provider: submission.provider, intent: submission.intent }) !== record.settlementIntentDigest) {
+        throw new Error('SETTLEMENT_AUTHORIZATION_INTENT_MISMATCH: payment intent differs from authorization');
+      }
+      record.consumed = true;
+    },
+  };
+  Object.freeze(consumer);
+
+  return {
+    consumedAuthorizations,
+    consumer,
+    issueBroadcastAuthorization,
+    issueSettlementAuthorization,
+    registerAuthorization: (authorization: ValueOperationAuthorization) => issuedAuthorizations.add(authorization),
+  };
+}
 
 function evaluateConfirmedValueOperation(
   request: ValueOperationRequest,
   options: { now?: Date; evidenceDecision?: ValueOperationEvidenceDecision },
+  registerAuthorization: (authorization: ValueOperationAuthorization) => void,
 ): ValueOperationOutcome {
   const now = options.now ?? new Date();
   const envelope = createValueOperationEnvelope(request, options.evidenceDecision);
@@ -80,16 +269,17 @@ function evaluateConfirmedValueOperation(
     nonce: request.nonce, audience: request.audience,
     authorizedAt: now.toISOString(), expiresAt: request.expiresAt,
   });
-  registerValueOperationAuthorization(authorization);
+  registerAuthorization(authorization);
   return { status: 'allowed', authorization };
 }
 
 async function confirmValueOperation(
   request: ValueOperationRequest,
   vault: string,
+  state: ReturnType<typeof createAuthorityState>,
   options: { now?: Date } = {},
 ): Promise<ValueOperationOutcome> {
-  const preflight = evaluateConfirmedValueOperation(request, { now: options.now });
+  const preflight = evaluateConfirmedValueOperation(request, { now: options.now }, state.registerAuthorization);
   if (preflight.status !== 'quarantined' || preflight.code !== 'MISSING_AUTHORITATIVE_EVIDENCE') return preflight;
 
   const evidenceAdapter = getWalletEvidenceAdapter();
@@ -102,17 +292,17 @@ async function confirmValueOperation(
     return createDeniedValueOperationOutcome('quarantined', 'EVIDENCE_ADAPTER_FAILED', 'Authoritative evidence verification was unavailable.');
   }
 
-  const outcome = evaluateConfirmedValueOperation(request, { ...options, evidenceDecision });
+  const outcome = evaluateConfirmedValueOperation(request, { ...options, evidenceDecision }, state.registerAuthorization);
   if (outcome.status !== 'allowed') return outcome;
   if (!Capacitor.isNativePlatform()) {
     return createDeniedValueOperationOutcome('unsupported', 'NATIVE_VALUE_SIGNER_REQUIRED', 'Production value operations require the native signer.', outcome.authorization.envelopeDigest);
   }
 
   const replayKey = `${outcome.authorization.audience}:${outcome.authorization.nonce}`;
-  if (consumedAuthorizations.has(replayKey)) {
+  if (state.consumedAuthorizations.has(replayKey)) {
     return createDeniedValueOperationOutcome('rejected', 'REPLAY_DETECTED', 'This value-operation authorization was already consumed.', outcome.authorization.envelopeDigest);
   }
-  consumedAuthorizations.add(replayKey);
+  state.consumedAuthorizations.add(replayKey);
 
   try {
     const signature = await signAuthorizedValueOperation({
@@ -126,9 +316,9 @@ async function confirmValueOperation(
     }
 
     const capabilityExpiresAt = Math.min(Date.parse(request.expiresAt), Date.now() + 60_000);
-    const settlementAuthorization = issueSettlementAuthorization(outcome.authorization, request, capabilityExpiresAt);
+    const settlementAuthorization = state.issueSettlementAuthorization(outcome.authorization, request, capabilityExpiresAt);
     const broadcastAuthorization = signature.broadcastReadyHex
-      ? issueBroadcastAuthorization({
+      ? state.issueBroadcastAuthorization({
           authorization: outcome.authorization,
           request,
           signedHex: signature.broadcastReadyHex,
@@ -146,20 +336,23 @@ async function confirmValueOperation(
 export interface AppPrivateValueOperationAuthority {
   confirm(request: ValueOperationRequest): Promise<ValueOperationOutcome>;
   reject(request: ValueOperationRequest): ValueOperationOutcome;
+  readonly consumer: ValueOperationCapabilityConsumer;
 }
 
 export function createAppPrivateValueOperationAuthority(vault: string): AppPrivateValueOperationAuthority {
+  const state = createAuthorityState();
   return Object.freeze({
-    confirm: (request: ValueOperationRequest) => confirmValueOperation(request, vault),
+    confirm: (request: ValueOperationRequest) => confirmValueOperation(request, vault, state),
     reject: (request: ValueOperationRequest) => createDeniedValueOperationOutcome(
       'rejected',
       'USER_REJECTED',
       'The user did not confirm the value operation.',
       digestValueOperationEnvelope(createValueOperationEnvelope(request)),
     ),
+    consumer: state.consumer,
   });
 }
 
 export function resetAppPrivateValueOperationReplayCacheForTests(): void {
-  consumedAuthorizations.clear();
+  replayCaches.forEach((cache) => cache.clear());
 }

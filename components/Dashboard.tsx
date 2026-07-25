@@ -353,7 +353,9 @@ const Dashboard: React.FC = () => {
                             setIsBroadcasting(true);
                             try {
                                 if (!broadcastAuthorization) throw new Error('Broadcast authorization unavailable');
-                                const txid = await broadcastAuthorizedTransaction(signedHex, broadcastAuthorization, 'Mainnet', network);
+                                const consumer = appContext.authorizeValueOperation.consumer;
+                                if (!consumer) throw new Error('App-private capability consumer unavailable');
+                                const txid = await broadcastAuthorizedTransaction(signedHex, broadcastAuthorization, 'Mainnet', network, consumer);
                                 setBroadcastResult(txid);
                                 appContext?.notify('success', 'Transaction Broadcasted!');
                                 setTimeout(() => { setShowSend(false); setSendStep('form'); }, 2000);

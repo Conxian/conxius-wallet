@@ -115,55 +115,16 @@ export class NttService {
         appState?: AppState,
         trustTier: TrustTier = TrustTier.T3,
         isHardened: boolean = false
-    ): Promise<string | null> {
-        try {
-            // Enforce Trust Policy
-            const validation = validateRouteTrust({
-                system: BridgeSystem.WORMHOLE_NTT,
-                sourceChain: sourceLayer,
-                targetChain: targetLayer,
-                trustTier,
-                isHardened
-            });
-
-            if (!validation.allowed) {
-                // Return clear error without triggering sanitizeError redaction if possible
-                // but executeNtt is caught by try-catch below.
-                throw new Error(`Guard: ${validation.reason}`);
-            }
-
-            const wh = await getWormholeContext(network, appState);
-
-            const srcChain = wh.getChain(sourceLayer as Chain);
-            const dstChain = wh.getChain(targetLayer as Chain);
-
-            const config = Object.values(NTT_CONFIGS).find(c => (c.tokenIds as any)[sourceLayer]);
-            if (!config) throw new Error(`No NTT configuration found for ${sourceLayer}`);
-
-            const tokenAddr = (config.tokenIds as any)[sourceLayer];
-            const token = Wormhole.tokenId(srcChain.chain, tokenAddr === 'native' ? 'native' : tokenAddr);
-            const transferAmount = wormholeAmount.units(wormholeAmount.parse(amountStr, config.decimals));
-
-            const xfer = await wh.tokenTransfer(
-                token,
-                transferAmount,
-                Wormhole.chainAddress(srcChain.chain, signer.address()),
-                Wormhole.chainAddress(dstChain.chain, signer.address()),
-                false
-            );
-
-            const quote = await TokenTransfer.quoteTransfer(wh, srcChain, dstChain, xfer.transfer);
-            const srcTxids = await xfer.initiateTransfer(signer);
-            return srcTxids[0];
-
-        } catch (error) {
-            console.error('Sovereign NTT Initiation Failed:', error);
-            // Guard errors are internally generated and never contain secrets.
-            // Re-throw directly to preserve the exact message for tests/consumers.
-            const msg = error instanceof Error ? error.message : String(error);
-            if (msg.startsWith('Guard: ')) throw error;
-            throw new Error(sanitizeError(error), { cause: error });
-        }
+    ): Promise<never> {
+        void amountStr;
+        void sourceLayer;
+        void targetLayer;
+        void signer;
+        void network;
+        void appState;
+        void trustTier;
+        void isHardened;
+        throw new Error('NTT_EXECUTION_QUARANTINED: public signer callback and provider transfer are not bound to App-private authority');
     }
 
     /**
