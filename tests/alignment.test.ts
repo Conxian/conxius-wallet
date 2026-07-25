@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fetchGlobalReserveMetrics } from '../services/protocol';
 
-vi.mock('../services/app-private/value-operation-signer', () => ({
-    signAuthorizedValueOperation: vi.fn().mockResolvedValue('mock-signature'),
+vi.mock('../services/signer', () => ({
+    requestNonValueMessageSignature: vi.fn().mockResolvedValue('mock-signature'),
     derivePath: vi.fn().mockResolvedValue({
         publicKey: '02' + '0'.repeat(64),
         privateKey: '01'.repeat(32)

@@ -1,28 +1,66 @@
-import { describe, it, expect } from 'vitest';
-import { acceptDLCOffer, createDLCOffer, settleDLC, type DLCContract } from '../services/dlc';
+import { describe, expect, it, vi } from 'vitest';
+import { authorizeAdapterArtifact, forgedAuthorization } from './value-operation-adapter-test-helpers';
+import {
+    acceptDLCOffer,
+    createDLCAcceptanceArtifact,
+    createDLCOffer,
+    createDLCSettlementArtifact,
+    settleDLC,
+} from '../services/dlc';
+import { consumeAuthorizedValueOperationStage } from '../services/value-operations';
 
-describe('DLC Service', () => {
-    it('should create a valid DLC offer', () => {
-        const outcomes = [
-            { label: 'Winner A', payoutSats: 200000 },
-            { label: 'Winner B', payoutSats: 0 }
-        ];
-        const offer = createDLCOffer('oracle_pk', 'event_desc', 100000, outcomes);
+function offer() {
+    return createDLCOffer({
+        oraclePubkey: 'oracle-pubkey', eventDescriptor: 'btc-usd-2027', collateralSats: '100000',
+        counterpartyCollateralSats: '100000', expiryUnixSeconds: '1900000000', network: 'testnet',
+        outcomes: [{ label: 'above', payoutSats: '200000' }, { label: 'below', payoutSats: '0' }],
+    });
+}
 
-        expect(offer.id).toContain('dlc_off_');
-        expect(offer.collateralSats).toBe(100000);
-        expect(offer.outcomes.length).toBe(2);
+describe('DLC value-operation containment', () => {
+    it('creates only a deterministic unsigned proposal', () => {
+        const first = offer();
+        expect(first).toEqual(offer());
+        expect(first).toMatchObject({ status: 'unsigned-proposal', kind: 'conxius.wallet.dlc-offer-proposal.v1' });
+        expect(first.proposalId).toMatch(/^dlc-proposal:[0-9a-f]{64}$/);
+        expect(JSON.stringify(first)).not.toMatch(/Accepted|Signed|Broadcasted|Settled|sig1|sig2/);
     });
 
-    it('quarantines settlement instead of fabricating a CET transaction ID', async () => {
-        const offer = createDLCOffer('oracle_pk', 'event_desc', 100000, []);
-        const contract: DLCContract = { id: 'contract', status: 'Signed', offer };
-
-        await expect(settleDLC(contract, 'oracle-attestation')).rejects.toThrow('DLC_SETTLEMENT_QUARANTINED');
+    it('binds exact offer/CET inputs and returns unsupported without fetch or stage consumption', async () => {
+        const artifact = createDLCAcceptanceArtifact({
+            offer: offer(), fundingTransactionDigest: '11'.repeat(32),
+            cetTemplates: [{ outcome: 'above', transactionDigest: '22'.repeat(32) }],
+        });
+        const authorization = await authorizeAdapterArtifact(artifact);
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        await expect(acceptDLCOffer({ authorization, artifact }))
+            .resolves.toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(consumeAuthorizedValueOperationStage(authorization, 'sign', authorization.envelopeDigest))
+            .toMatchObject({ kind: 'consumed' });
     });
 
-    it('quarantines offer acceptance before mock signatures or contract success', async () => {
-        const offer = createDLCOffer('oracle_pk', 'event_desc', 100000, []);
-        await expect(acceptDLCOffer(offer, {} as never)).rejects.toThrow('DLC_ACCEPT_QUARANTINED');
+    it('rejects forged and swapped DLC acceptance artifacts', async () => {
+        const artifact = createDLCAcceptanceArtifact({
+            offer: offer(), fundingTransactionDigest: '11'.repeat(32),
+            cetTemplates: [{ outcome: 'above', transactionDigest: '22'.repeat(32) }],
+        });
+        const authorization = await authorizeAdapterArtifact(artifact);
+        await expect(acceptDLCOffer({ authorization: forgedAuthorization(), artifact })).resolves.toMatchObject({ kind: 'rejected' });
+        await expect(acceptDLCOffer({ authorization, artifact: { ...artifact, cetSetDigest: '33'.repeat(32) } }))
+            .resolves.toMatchObject({ kind: 'rejected', reason: 'artifact_digest_mismatch' });
+    });
+
+    it('binds exact contract/oracle/outcome/CET settlement and never returns a txid', async () => {
+        const artifact = createDLCSettlementArtifact({
+            contract: { contractId: 'contract-1', offerDigest: '44'.repeat(32) }, offer: offer(),
+            oracleAttestation: 'oracle-attestation', outcome: 'above', cetTransactionDigest: '55'.repeat(32),
+        });
+        const authorization = await authorizeAdapterArtifact(artifact);
+        const outcome = await settleDLC({ authorization, artifact });
+        expect(outcome).toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        expect(JSON.stringify(outcome)).not.toContain('txid');
+        expect(consumeAuthorizedValueOperationStage(authorization, 'settle', authorization.envelopeDigest))
+            .toMatchObject({ kind: 'consumed' });
     });
 });

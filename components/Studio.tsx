@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { useContext } from 'react';
 import { AppContext } from '../context';
-import { issueRgbAsset } from '../services/rgb';
 import { sanitizeError } from '../services/network';
 
 const Studio: React.FC = () => {
@@ -51,20 +50,8 @@ const Studio: React.FC = () => {
     }
     setIsProcessing(true);
     try {
-        await issueRgbAsset(
-            rgbName,
-            rgbSymbol,
-            parseInt(rgbSupply),
-            rgbPrecision,
-            rgbSchema,
-            rgbSeal
-        );
-        appContext!.notify('success', `RGB Asset ${rgbSymbol} Issued!`);
-        // Reset form
-        setRgbName('');
-        setRgbSymbol('');
-        setRgbSeal('');
-    } catch (e: any) {
+        appContext!.notify('error', 'RGB issuance is unavailable pending a qualified production adapter.');
+    } catch (e: unknown) {
         appContext!.notify('error', sanitizeError(e, 'RGB Issuance Failed'));
     } finally {
         setIsProcessing(false);

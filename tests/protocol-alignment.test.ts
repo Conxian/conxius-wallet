@@ -1,14 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import * as protocol from '../services/protocol';
 import * as fs from 'fs';
 import * as path from 'path';
 
 describe('Protocol and Signer Alignment', () => {
-  const supportedLayers = [
-    'Mainnet', 'Stacks', 'Rootstock', 'Ethereum', 'Lightning', 'Liquid', 'Runes', 'Ordinals', 'BOB', 'RGB', 'Ark', 'BitVM', 'StateChain', 'Maven', 'B2', 'Botanix', 'Mezo',
-    'Alpen', 'Zulu', 'Bison', 'Hemi', 'Nubit', 'Lorenzo', 'Citrea', 'Babylon', 'Merlin', 'Bitlayer', 'TaprootAssets', 'Silent'
-  ];
-
   it('should have fetchers for all supported layers', () => {
     const protocolContent = fs.readFileSync(path.join(process.cwd(), 'services/protocol.ts'), 'utf8');
 
@@ -24,16 +18,14 @@ describe('Protocol and Signer Alignment', () => {
     });
   });
 
-  it('should have signer logic for all supported layers', () => {
-    const signerContent = fs.readFileSync(path.join(process.cwd(), 'services/app-private/value-operation-signer.ts'), 'utf8');
-    const nativeSignerContent = fs.readFileSync(path.join(process.cwd(), 'services/app-private/native-value-signing.ts'), 'utf8');
-
-    supportedLayers.filter((layer) => layer !== 'StateChain').forEach(layer => {
-      expect(signerContent).toMatch(new RegExp(`\\b${layer}: ["']m/`));
-    });
-    expect(signerContent).toContain("request.layer === 'StateChain'");
-    expect(nativeSignerContent).toContain('NATIVE_VALUE_SIGNER_REQUIRED');
-    expect(signerContent).not.toContain('workerManager.derivePath');
+  it('keeps the legacy signer explicitly non-value and limited to approved message layers', () => {
+    const signerContent = fs.readFileSync(path.join(process.cwd(), 'services/signer.ts'), 'utf8');
+    expect(signerContent).toContain("readonly layer: 'Mainnet' | 'Nostr'");
+    expect(signerContent).toContain('requestNonValueMessageSignature');
+    expect(signerContent).not.toMatch(/export\s+(?:const|function)\s+requestEnclaveSignature/);
+    for (const legacyValueLayer of ['Stacks', 'Liquid', 'Ark', 'BitVM', 'Maven', 'BOB', 'B2', 'Rootstock', 'RGB', 'StateChain']) {
+      expect(signerContent).not.toContain(`request.layer === "${legacyValueLayer}"`);
+    }
   });
 
   it.skip('should have native parsePayload support for all layers', () => {

@@ -1,78 +1,35 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchMavenAssets, createMavenTransfer } from '../services/maven';
-import { ValueOperationAuthorizer, ValueOperationRequest } from '../services/value-operation';
-import { createAppPrivateValueOperationAuthority } from '../services/app-private/value-operation-authority';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { authorizeAdapterArtifact, forgedAuthorization } from './value-operation-adapter-test-helpers';
+import { createMavenTransfer, createMavenTransferArtifact, fetchMavenAssets } from '../services/maven';
 
-const rejectionAuthority = createAppPrivateValueOperationAuthority('test-vault');
-const rejectAuthorization: ValueOperationAuthorizer = Object.assign(
-    async (request: ValueOperationRequest) => rejectionAuthority.reject(request),
-    { consumer: rejectionAuthority.consumer },
-);
+const fetchMock = vi.fn();
+vi.stubGlobal('fetch', fetchMock);
+beforeEach(() => { fetchMock.mockReset(); vi.clearAllMocks(); });
 
-// Mock dependencies
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
-
-vi.mock('../services/network', () => ({
-    endpointsFor: () => ({ MAVEN_API: 'https://mock.maven.api' }),
-    fetchWithRetry: async (url: string, options: any) => global.fetch(url, options)
-}));
-
-vi.mock('../services/prices', () => ({
-    fetchBtcPrice: vi.fn().mockResolvedValue(100000)
-}));
-
-vi.mock('../services/app-private/value-operation-signer', () => ({
-    signAuthorizedValueOperation: vi.fn().mockResolvedValue({
-        signature: 'mock_signature',
-        pubkey: 'mock_pubkey'
-    })
-}));
-
-beforeEach(() => {
-    vi.clearAllMocks();
-    mockFetch.mockReset();
-});
-
-describe('Maven Service', () => {
-    it('should fetch Maven assets successfully', async () => {
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({
-                assets: [{
-                    id: 'mav123',
-                    name: 'Maven Token',
-                    symbol: 'MAV',
-                    balance: 1,
-                    valueUsd: 10.50
-                }]
-            })
-        });
-
-        const assets = await fetchMavenAssets('bc1qtest');
-        expect(assets).toHaveLength(1);
-        expect(assets[0].symbol).toBe('MAV');
-        expect(assets[0].balance).toBe(1);
+describe('Maven service', () => {
+    it('preserves read-only asset discovery', async () => {
+        fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ assets: [{ id: 'mav1', name: 'Maven', symbol: 'MAV', balance: 1, valueUsd: 10 }] }) });
+        expect(await fetchMavenAssets('bc1qtest')).toHaveLength(1);
     });
 
-    it('should handle empty or failed asset fetch', async () => {
-        mockFetch.mockResolvedValueOnce({
-            ok: false,
-            status: 404
+    it('returns unsupported for an exact transfer without fetching', async () => {
+        const artifact = createMavenTransferArtifact({
+            assetId: 'mav1', amount: '10', recipient: 'maven:recipient', authorityCommitment: 'authority-commitment',
         });
-
-        const assets = await fetchMavenAssets('bc1qtest');
-        expect(assets).toEqual([]);
+        fetchMock.mockReset();
+        const outcome = await createMavenTransfer({ authorization: await authorizeAdapterArtifact(artifact), artifact });
+        expect(outcome).toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        expect(JSON.stringify(outcome)).not.toContain('authority-commitment');
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('quarantines Maven transfer before signing or sequencer broadcast', async () => {
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({ txid: 'mav_txid_123' })
-        });
-
-        await expect(createMavenTransfer('asset_id', 10, 'recipient_addr', rejectAuthorization))
-            .rejects.toThrow('USER_REJECTED');
-        expect(mockFetch).not.toHaveBeenCalled();
+    it('rejects mismatched and forged requests', async () => {
+        const artifact = createMavenTransferArtifact({ assetId: 'mav1', amount: '10', recipient: 'maven:r', authorityCommitment: 'commitment' });
+        const authorization = await authorizeAdapterArtifact(artifact);
+        await expect(createMavenTransfer({ authorization, artifact: { ...artifact, amount: '11' } }))
+            .resolves.toMatchObject({ kind: 'rejected', reason: 'artifact_digest_mismatch' });
+        await expect(createMavenTransfer({ authorization: forgedAuthorization(), artifact }))
+            .resolves.toMatchObject({ kind: 'rejected' });
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 });

@@ -18,7 +18,7 @@ describe('Yield Service (Yield.xyz Integration)', () => {
         expect(yields[0]).toHaveProperty('apy', 3.8);
     });
 
-    it('quarantines yield transaction construction before provider I/O', async () => {
+    it('should construct a yield transaction payload', async () => {
         const state: any = { rpcStrategy: 'Sovereign-First', version: '1.9.5' };
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
@@ -27,8 +27,19 @@ describe('Yield Service (Yield.xyz Integration)', () => {
             })
         });
 
-        await expect(createYieldTransaction('y1', '1.0', state))
-            .rejects.toThrow('YIELD_TRANSACTION_QUARANTINED');
-        expect(global.fetch).not.toHaveBeenCalled();
+        const result = await createYieldTransaction('y1', '1.0', state);
+        expect(result).toMatchObject({
+            kind: 'prepared',
+            action: { transactionData: { to: '0xYieldContractAddress', data: '0xData' }, status: 'unsigned-provider-payload' },
+        });
+        expect(result.kind === 'prepared' && result.action.feeAmount).toBeGreaterThan(0);
+    });
+
+    it('never fabricates a yield transaction when provider status is ambiguous', async () => {
+        const state: any = { rpcStrategy: 'Sovereign-First', version: '1.9.5' };
+        global.fetch = vi.fn().mockRejectedValue(new Error('timeout'));
+        const result = await createYieldTransaction('y1', '1.0', state);
+        expect(result).toEqual({ kind: 'indeterminate', reason: 'provider_request_ambiguous' });
+        expect(result).not.toHaveProperty('action');
     });
 });

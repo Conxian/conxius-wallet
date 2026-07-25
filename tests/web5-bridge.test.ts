@@ -4,6 +4,7 @@ import { EnclaveKeyManager } from '../services/web5';
 // Mock enclave-storage
 vi.mock('../services/enclave-storage', () => ({
     getDerivedSecretNative: vi.fn().mockResolvedValue({ pubkey: '02' + 'a'.repeat(64) }),
+    signNonValueMessageNative: vi.fn().mockResolvedValue({ signature: 'b'.repeat(128) }),
     getEnclaveBlob: vi.fn().mockResolvedValue('test-vault')
 }));
 
@@ -30,8 +31,10 @@ describe('EnclaveKeyManager', () => {
         expect(jwk.x).toBe(Buffer.from('a'.repeat(64), 'hex').toString('base64url'));
     });
 
-    it('quarantines generic Web5 signing outside the value-operation authority', async () => {
+    it('should sign data via enclave', async () => {
         const data = new Uint8Array([1, 2, 3]);
-        await expect(km.sign({ keyAlias: 'test', data })).rejects.toThrow('WEB5_SIGNING_QUARANTINED');
+        const sig = await km.sign({ keyAlias: 'test', data });
+        expect(sig).toBeInstanceOf(Uint8Array);
+        expect(Buffer.from(sig).toString('hex')).toBe('b'.repeat(128));
     });
 });

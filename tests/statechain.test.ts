@@ -1,87 +1,37 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { transferStateChainUtxo, withdrawStateChainUtxo } from '../services/statechain';
-import { ValueOperationAuthorizer, ValueOperationRequest } from '../services/value-operation';
-import { createAppPrivateValueOperationAuthority } from '../services/app-private/value-operation-authority';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { authorizeAdapterArtifact, forgedAuthorization } from './value-operation-adapter-test-helpers';
+import {
+    createStateChainTransferArtifact,
+    createStateChainWithdrawalArtifact,
+    transferStateChainUtxo,
+    withdrawStateChainUtxo,
+} from '../services/statechain';
 
-const rejectionAuthority = createAppPrivateValueOperationAuthority('test-vault');
-const rejectAuthorization: ValueOperationAuthorizer = Object.assign(
-    async (request: ValueOperationRequest) => rejectionAuthority.reject(request),
-    { consumer: rejectionAuthority.consumer },
-);
+const fetchMock = vi.fn();
+vi.stubGlobal('fetch', fetchMock);
+beforeEach(() => { fetchMock.mockReset(); vi.clearAllMocks(); });
 
-// Mock dependencies
-vi.mock('../services/notifications', () => ({
-    notificationService: {
-        notify: vi.fn()
-    }
-}));
-
-vi.mock('../services/app-private/value-operation-signer', () => ({
-    signAuthorizedValueOperation: vi.fn().mockResolvedValue({
-        signature: 'mock_schnorr_signature_hex',
-        pubkey: 'mock_pubkey',
-        timestamp: Date.now()
-    })
-}));
-
-vi.mock('../services/network', () => ({
-    endpointsFor: () => ({ STATE_CHAIN_API: 'https://mock.statechains.api' }),
-    fetchWithRetry: async (url: string, options: any) => global.fetch(url, options)
-}));
-
-// Mock fetch globally
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
-
-describe('StateChain Service', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockFetch.mockReset();
-    });
-
-    it('quarantines transfer before coordinator broadcast without authoritative evidence', async () => {
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({ txid: 'statechain_txid_123' })
+describe('StateChain gate-bound production adapters', () => {
+    it('returns unsupported for exact transfer and withdrawal artifacts with no fetch', async () => {
+        const transfer = createStateChainTransferArtifact({ utxoId: 'sc:utxo-1', recipientPubkey: '03newowner', currentIndex: 0 });
+        const withdrawal = createStateChainWithdrawalArtifact({
+            utxoId: 'sc:utxo-1', destination: 'bc1qdestination', currentIndex: 0, withdrawalCommitment: 'unsigned-withdrawal-commitment',
         });
-
-        await expect(transferStateChainUtxo(
-            'sc:utxo-1', 
-            '03newowner',
-            0,
-            rejectAuthorization
-        )).rejects.toThrow('USER_REJECTED');
-        expect(mockFetch).not.toHaveBeenCalled();
+        await expect(transferStateChainUtxo({ authorization: await authorizeAdapterArtifact(transfer), artifact: transfer }))
+            .resolves.toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        const outcome = await withdrawStateChainUtxo({ authorization: await authorizeAdapterArtifact(withdrawal), artifact: withdrawal });
+        expect(outcome).toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        expect(JSON.stringify(outcome)).not.toContain('unsigned-withdrawal-commitment');
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('quarantines withdrawal instead of fabricating a transaction ID', async () => {
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({ txid: 'withdrawal_txid_456' })
-        });
-
-        await expect(withdrawStateChainUtxo(
-            'sc:utxo-1',
-            'bc1q_dest',
-            rejectAuthorization
-        )).rejects.toThrow('USER_REJECTED');
-        expect(mockFetch).not.toHaveBeenCalled();
-    });
-
-    it('rejects a service-supplied fabricated success before coordinator submission', async () => {
-        const gate = createAppPrivateValueOperationAuthority('test-vault');
-        const fabricatedAuthorization = Object.assign(vi.fn(async () => ({
-            status: 'allowed' as const,
-            authorization: { kind: 'value-operation-authorization' as const } as never,
-            signature: { signature: 'fabricated', pubkey: 'fabricated', timestamp: 0 }
-        })), { consumer: gate.consumer });
-
-        await expect(transferStateChainUtxo(
-            'sc:utxo-1',
-            '03newowner',
-            0,
-            fabricatedAuthorization
-        )).rejects.toThrow('not issued by this App-private authority');
-        expect(mockFetch).not.toHaveBeenCalled();
+    it('rejects mismatched and forged requests', async () => {
+        const artifact = createStateChainTransferArtifact({ utxoId: 'sc:utxo-1', recipientPubkey: '03newowner', currentIndex: 0 });
+        const authorization = await authorizeAdapterArtifact(artifact);
+        await expect(transferStateChainUtxo({ authorization, artifact: { ...artifact, currentIndex: '1' } }))
+            .resolves.toMatchObject({ kind: 'rejected', reason: 'artifact_digest_mismatch' });
+        await expect(transferStateChainUtxo({ authorization: forgedAuthorization(), artifact }))
+            .resolves.toMatchObject({ kind: 'rejected' });
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 });

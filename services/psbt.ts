@@ -102,6 +102,88 @@ export function buildSbtcPegInPsbt(params: {
     return psbt.toBase64();
 }
 
+export function getPsbtSighashes(
+  psbtBase64: string,
+  pubkey: Buffer,
+  network: Network,
+): { hash: Buffer; index: number }[] {
+  const psbt = bitcoin.Psbt.fromBase64(psbtBase64, {
+    network: networkFrom(network),
+  });
+  const hashes: { hash: Buffer; index: number }[] = [];
+
+  // Dummy signer to capture hashes
+  const captureSigner = {
+    publicKey: pubkey,
+    sign: (hash: Buffer) => {
+      hashes.push({ hash, index: -1 }); // index update below
+      return Buffer.alloc(64);
+    },
+  };
+
+  for (let i = 0; i < psbt.inputCount; i++) {
+    const startLen = hashes.length;
+    try {
+      psbt.signInput(i, captureSigner);
+    } catch {}
+    if (hashes.length > startLen) {
+      hashes[hashes.length - 1].index = i;
+    }
+  }
+  return hashes;
+}
+
+export function finalizePsbtWithSigs(
+  psbtBase64: string,
+  signatures: { index: number; signature: Buffer }[],
+  pubkey: Buffer,
+  network: Network,
+) {
+  const psbt = bitcoin.Psbt.fromBase64(psbtBase64, {
+    network: networkFrom(network),
+  });
+
+  signatures.forEach((sigItem) => {
+    const signer = {
+      publicKey: pubkey,
+      sign: () => sigItem.signature,
+    };
+    psbt.signInput(sigItem.index, signer);
+  });
+
+  psbt.finalizeAllInputs();
+  return Buffer.from(psbt.extractTransaction().toBuffer()).toString('hex');
+}
+
+export function finalizePsbtWithSigsReturnBase64(
+  psbtBase64: string,
+  signatures: { index: number; signature: Buffer }[],
+  pubkey: Buffer,
+  network: Network,
+) {
+  const psbt = bitcoin.Psbt.fromBase64(psbtBase64, {
+    network: networkFrom(network),
+  });
+
+  signatures.forEach((sigItem) => {
+    const signer = {
+      publicKey: pubkey,
+      sign: () => sigItem.signature,
+    };
+    psbt.signInput(sigItem.index, signer);
+  });
+
+  psbt.finalizeAllInputs();
+  return psbt.toBase64();
+}
+
+export function getUnsignedTxHex(psbtBase64: string, network: Network) {
+  const psbt = bitcoin.Psbt.fromBase64(psbtBase64, { network: networkFrom(network) });
+  // unsignedTx is technically an internal property, cast to any to avoid TS issues
+  const tx = (psbt.data.globalMap.unsignedTx as any).tx;
+  return Buffer.from(tx.toBuffer()).toString('hex');
+}
+
 /**
  * Builds a PSBT for a Native Peg-in to any Bitcoin Layer.
  * Supports optional OP_RETURN data for protocol-specific routing (e.g. sBTC, BOB).
