@@ -1,34 +1,46 @@
 import { LnBackendConfig } from '../types';
+import { LightningPaymentState } from './lightning';
+import { createLnInvoice } from "./breez";
 import {
-  isValidPaymentTransition,
-  LightningPaymentIntent,
-  checkIdempotency,
-  savePaymentIntent,
-  classifyLightningError,
-  LightningPaymentState
-} from './lightning';
-import { createLnInvoice, payLnInvoice } from "./breez";
+  consumeValueOperationSettlementAuthorization,
+  ValueOperationSettlementAuthorization,
+} from './value-operation';
 
 export interface LightningBackend {
   configured: boolean;
   createInvoice(amountSats: number, memo?: string): Promise<{ invoice: string }>;
-  payInvoice(invoice: string, idempotencyKey?: string, fingerprint?: string): Promise<{ preimage?: string, state?: LightningPaymentState }>;
-  lnurlPay(callback: string, amountMsat: number, comment?: string): Promise<{ status: string }>;
-  lnurlWithdraw(callback: string, k1: string, invoice: string): Promise<{ status: string }>;
+  payInvoice(invoice: string, authorization: ValueOperationSettlementAuthorization, network: string, idempotencyKey?: string, fingerprint?: string): Promise<{ preimage?: string, state?: LightningPaymentState }>;
+  lnurlPay(callback: string, amountMsat: number, authorization: ValueOperationSettlementAuthorization, network: string, comment?: string): Promise<{ status: string }>;
+  lnurlWithdraw(callback: string, k1: string, invoice: string, authorization: ValueOperationSettlementAuthorization, network: string): Promise<{ status: string }>;
 }
 
 class NoneBackend implements LightningBackend {
   configured = false;
   async createInvoice(_amountSats: number, _memo?: string): Promise<{ invoice: string }> {
+    void _amountSats;
+    void _memo;
     throw new Error('Lightning backend not configured');
   }
-  async payInvoice(_invoice: string): Promise<{ preimage?: string }> {
+  async payInvoice(_invoice: string, _authorization: ValueOperationSettlementAuthorization, _network: string): Promise<{ preimage?: string }> {
+    void _invoice;
+    void _authorization;
+    void _network;
     throw new Error('Lightning backend not configured');
   }
-  async lnurlPay(_callback: string, _amountMsat: number, _comment?: string): Promise<{ status: string }> {
+  async lnurlPay(_callback: string, _amountMsat: number, _authorization: ValueOperationSettlementAuthorization, _network: string, _comment?: string): Promise<{ status: string }> {
+    void _callback;
+    void _amountMsat;
+    void _authorization;
+    void _network;
+    void _comment;
     throw new Error('Lightning backend not configured');
   }
-  async lnurlWithdraw(_callback: string, _k1: string, _invoice: string): Promise<{ status: string }> {
+  async lnurlWithdraw(_callback: string, _k1: string, _invoice: string, _authorization: ValueOperationSettlementAuthorization, _network: string): Promise<{ status: string }> {
+    void _callback;
+    void _k1;
+    void _invoice;
+    void _authorization;
+    void _network;
     throw new Error('Lightning backend not configured');
   }
 }
@@ -56,7 +68,7 @@ class LndBackend implements LightningBackend {
     const data = await res.json();
     return { invoice: data.payment_request };
   }
-  async payInvoice(invoice: string) {
+  private async payInvoiceAfterAuthorization(invoice: string) {
     const url = new URL('/v1/channels/transactions', this.baseUrl).toString();
     const res = await fetch(url, {
       method: 'POST',
@@ -70,17 +82,41 @@ class LndBackend implements LightningBackend {
     const data = await res.json();
     return { preimage: data.payment_preimage };
   }
-  async lnurlPay(callback: string, amountMsat: number, comment?: string) {
+  async payInvoice(invoice: string, authorization: ValueOperationSettlementAuthorization, network: string) {
+    consumeValueOperationSettlementAuthorization({
+      authorization,
+      layer: 'Lightning',
+      provider: 'lnd-rest',
+      network,
+      intent: { kind: 'bolt11', invoice },
+    });
+    return this.payInvoiceAfterAuthorization(invoice);
+  }
+  async lnurlPay(callback: string, amountMsat: number, authorization: ValueOperationSettlementAuthorization, network: string, comment?: string) {
+    consumeValueOperationSettlementAuthorization({
+      authorization,
+      layer: 'Lightning',
+      provider: 'lnd-rest',
+      network,
+      intent: { kind: 'lnurl-pay', callback, amountMsat, ...(comment ? { comment } : {}) },
+    });
     const cb = new URL(callback);
     cb.searchParams.set('amount', `${amountMsat}`);
     if (comment) cb.searchParams.set('comment', comment);
     const res = await fetch(cb.toString());
     const data = await res.json();
     if (!data.pr) throw new Error('LNURL callback missing invoice');
-    await this.payInvoice(data.pr);
+    await this.payInvoiceAfterAuthorization(data.pr);
     return { status: 'paid' };
   }
-  async lnurlWithdraw(callback: string, k1: string, invoice: string) {
+  async lnurlWithdraw(callback: string, k1: string, invoice: string, authorization: ValueOperationSettlementAuthorization, network: string) {
+    consumeValueOperationSettlementAuthorization({
+      authorization,
+      layer: 'Lightning',
+      provider: 'lnd-rest',
+      network,
+      intent: { kind: 'lnurl-withdraw', callback, k1, invoice },
+    });
     const url = new URL(callback);
     url.searchParams.set('k1', k1);
     url.searchParams.set('pr', invoice);
@@ -101,105 +137,37 @@ class BreezBackend implements LightningBackend {
     return { invoice: bolt11 };
   }
 
-  /**
-   * SRL-2 & SRL-7: Durable Payment Execution
-   */
-  async payInvoice(invoice: string, idempotencyKey?: string, fingerprint?: string): Promise<{ preimage?: string, state?: LightningPaymentState }> {
-    let intent: LightningPaymentIntent | null = null;
-
-    // Resolve existing intent if possible
-    if (idempotencyKey) {
-      intent = checkIdempotency(idempotencyKey, fingerprint || "fp_default");
-      if (intent) {
-        // If terminal, return outcome
-        if (intent.state === 'SETTLED' || intent.state === 'FAILED_CLOSED' || intent.state === 'EXPIRED') {
-          return { preimage: intent.terminalOutcome?.preimage, state: intent.state };
-        }
-        // If already in flight, prevent concurrent execution (SRL-2 Bug Fix)
-        if (intent.state === 'EXECUTION_IN_FLIGHT') {
-          throw new Error('Payment already in flight');
-        }
-      }
-    }
-
-    if (!intent) {
-      // Improved default key with random suffix to avoid theoretical millisecond collisions
-      const defaultKey = "ik_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
-      intent = {
-        id: "pay_" + Math.random().toString(36).substr(2, 9),
-        idempotencyKey: idempotencyKey || defaultKey,
-        fingerprint: fingerprint || "fp_default",
-        state: 'INTENT_ACCEPTED',
-        attemptNo: 1,
-        occurredAt: Date.now()
-      };
-      savePaymentIntent(intent);
-    }
-
-    const maxAttempts = 3;
-    while (intent.attemptNo <= maxAttempts) {
-      try {
-        // Transition to IN_FLIGHT if valid
-        if (isValidPaymentTransition(intent.state, 'EXECUTION_IN_FLIGHT')) {
-           intent.state = 'EXECUTION_IN_FLIGHT';
-           savePaymentIntent(intent);
-        } else if (intent.state !== 'EXECUTION_IN_FLIGHT') {
-           throw new Error(`Illegal state transition from ${intent.state} to EXECUTION_IN_FLIGHT`);
-        }
-
-        const res = await payLnInvoice(invoice);
-
-        intent.state = 'SETTLED';
-        intent.terminalOutcome = { preimage: res.paymentHash };
-        savePaymentIntent(intent);
-
-        return { preimage: res.paymentHash, state: 'SETTLED' };
-      } catch (error: any) {
-        const failureClass = classifyLightningError(error);
-        intent.failureClass = failureClass;
-
-        if (failureClass === 'PERMANENT' || intent.attemptNo >= maxAttempts) {
-          intent.state = 'FAILED_CLOSED';
-          intent.reasonCode = error.message || 'UNKNOWN_FAILURE';
-          savePaymentIntent(intent);
-          throw error;
-        }
-
-        // TRANSIENT retry logic (SRL-7)
-        intent.attemptNo++;
-        // Reset state to accept retry attempt
-        intent.state = 'INTENT_ACCEPTED';
-        savePaymentIntent(intent);
-
-        // Exponential backoff with jitter
-        const delay = Math.pow(2, intent.attemptNo) * 100 + Math.random() * 100;
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-
-    intent.state = 'FAILED_CLOSED';
-    savePaymentIntent(intent);
-    throw new Error('Payment failed after maximum retries');
+  async payInvoice(
+    _invoice: string,
+    _authorization: ValueOperationSettlementAuthorization,
+    _network: string,
+    _idempotencyKey?: string,
+    _fingerprint?: string,
+  ): Promise<{ preimage?: string, state?: LightningPaymentState }> {
+    void _invoice;
+    void _authorization;
+    void _network;
+    void _idempotencyKey;
+    void _fingerprint;
+    throw new Error('BREEZ_BACKEND_SETTLEMENT_QUARANTINED: use the App-authorized Breez settlement boundary');
   }
 
-  async lnurlPay(callback: string, amountMsat: number, comment?: string) {
-    const cb = new URL(callback);
-    cb.searchParams.set("amount", `${amountMsat}`);
-    if (comment) cb.searchParams.set("comment", comment);
-    const res = await fetch(cb.toString());
-    const data = await res.json();
-    if (!data.pr) throw new Error("LNURL callback missing invoice");
-    await this.payInvoice(data.pr);
-    return { status: "paid" };
+  async lnurlPay(_callback: string, _amountMsat: number, _authorization: ValueOperationSettlementAuthorization, _network: string, _comment?: string): Promise<{ status: string }> {
+    void _callback;
+    void _amountMsat;
+    void _authorization;
+    void _network;
+    void _comment;
+    throw new Error('BREEZ_BACKEND_LNURL_QUARANTINED: authoritative settlement adapter unavailable');
   }
 
-  async lnurlWithdraw(callback: string, k1: string, invoice: string) {
-    const url = new URL(callback);
-    url.searchParams.set("k1", k1);
-    url.searchParams.set("pr", invoice);
-    const res = await fetch(url.toString());
-    const data = await res.json();
-    return { status: data.status || "ok" };
+  async lnurlWithdraw(_callback: string, _k1: string, _invoice: string, _authorization: ValueOperationSettlementAuthorization, _network: string): Promise<{ status: string }> {
+    void _callback;
+    void _k1;
+    void _invoice;
+    void _authorization;
+    void _network;
+    throw new Error('BREEZ_BACKEND_LNURL_QUARANTINED: authoritative settlement adapter unavailable');
   }
 }
 

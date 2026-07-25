@@ -7,6 +7,7 @@ import {
   getPaymentIntent
 } from '../services/lightning';
 import { getLightningBackend } from '../services/lightning-backend';
+import { ValueOperationSettlementAuthorization } from '../services/value-operation';
 
 describe('Lightning Resilience SRL-1 & SRL-2', () => {
   it('validates state transitions strictly', () => {
@@ -41,7 +42,7 @@ describe('Lightning Resilience SRL-1 & SRL-2', () => {
     expect(() => checkIdempotency(key, 'different_fp')).toThrow(/409 Conflict/);
   });
 
-  it('detects concurrent execution in flight', async () => {
+  it('quarantines the legacy Breez backend settlement entrypoint', async () => {
      const backend = getLightningBackend({ type: 'Breez' });
      const key = 'concurrent_key';
      const fingerprint = 'fp1';
@@ -57,8 +58,13 @@ describe('Lightning Resilience SRL-1 & SRL-2', () => {
      };
      savePaymentIntent(intent);
 
-     // Attempt another payInvoice with same key
-     await expect(backend.payInvoice('invoice', key, fingerprint)).rejects.toThrow('Payment already in flight');
+     await expect(backend.payInvoice(
+       'invoice',
+       { kind: 'value-operation-settlement-authorization' } as ValueOperationSettlementAuthorization,
+       'mainnet',
+       key,
+       fingerprint,
+     )).rejects.toThrow('BREEZ_BACKEND_SETTLEMENT_QUARANTINED');
   });
 });
 

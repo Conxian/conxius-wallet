@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { broadcastAuthorizedTransaction } from '../services/protocol';
 import {
   createValueOperationRequest,
-  createWalletValueOperationGate,
   resetValueOperationReplayCacheForTests,
   ValueOperationBroadcastAuthorization,
 } from '../services/value-operation';
+import { createAppPrivateValueOperationAuthority } from '../services/app-private/value-operation-authority';
+
+const createWalletValueOperationGate = createAppPrivateValueOperationAuthority;
 
 const mocks = vi.hoisted(() => ({
   fetchWithRetry: vi.fn(),

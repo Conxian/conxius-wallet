@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { liftToArk, forfeitVtxo, syncVtxos, VTXO } from '../services/ark';
-import { createWalletValueOperationGate, ValueOperationAuthorizer } from '../services/value-operation';
+import { ValueOperationAuthorizer } from '../services/value-operation';
+import { createAppPrivateValueOperationAuthority } from '../services/app-private/value-operation-authority';
 
 const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
-    createWalletValueOperationGate('test-vault').reject(request);
+    createAppPrivateValueOperationAuthority('test-vault').reject(request);
 
 // Mock signer
 vi.mock('../services/signer', () => ({

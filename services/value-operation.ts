@@ -1,8 +1,13 @@
-import { Capacitor } from '@capacitor/core';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
-import { requestEnclaveSignature, SignRequest, SignResult } from './signer';
-import { getWalletEvidenceAdapter } from './value-operation-evidence';
+import { SignRequest, SignResult } from './signer';
+import {
+  assertSettlementAuthorizationMatchesRequest,
+  consumeBroadcastAuthorization,
+  consumeSettlementAuthorization,
+  consumeSignatureAuthorization,
+  isRegisteredValueOperationAuthorization,
+} from './app-private/value-operation-capability-registry';
 
 export const VALUE_OPERATION_VERSION = 'conxius.value-operation.v1' as const;
 
@@ -108,6 +113,19 @@ export interface ValueOperationBroadcastAuthorization {
   readonly kind: 'value-operation-broadcast-authorization';
 }
 
+export interface ValueOperationSettlementAuthorization {
+  readonly kind: 'value-operation-settlement-authorization';
+}
+
+export interface ValueOperationSettlementSubmission {
+  authorization: ValueOperationSettlementAuthorization;
+  layer: string;
+  provider: string;
+  network: string;
+  intent: unknown;
+  now?: Date;
+}
+
 type DeniedStatus = 'rejected' | 'quarantined' | 'simulated' | 'unsupported';
 export type ValueOperationOutcome =
   | {
@@ -115,6 +133,7 @@ export type ValueOperationOutcome =
       authorization: ValueOperationAuthorization;
       signature?: SignResult;
       broadcastAuthorization?: ValueOperationBroadcastAuthorization;
+      settlementAuthorization?: ValueOperationSettlementAuthorization;
     }
   | { status: DeniedStatus; code: string; reason: string; envelopeDigest?: string };
 
@@ -140,18 +159,6 @@ export type CreateUnverifiedValueOperationRequestInput = Omit<CreateValueOperati
 };
 
 const encoder = new TextEncoder();
-const consumedAuthorizations = new Set<string>();
-const issuedAuthorizations = new WeakSet<object>();
-const consumedSignatureAuthorizations = new WeakSet<object>();
-const broadcastAuthorizations = new WeakMap<object, {
-  signedHex: string;
-  signedHexDigest: string;
-  layer: string;
-  network: string;
-  expiresAt: number;
-  consumed: boolean;
-}>();
-
 export function createValueOperationNonce(): string {
   const bytes = new Uint8Array(16);
   globalThis.crypto.getRandomValues(bytes);
@@ -248,11 +255,11 @@ export function createUnverifiedValueOperationRequest(input: CreateUnverifiedVal
   });
 }
 
-function denied(status: DeniedStatus, code: string, reason: string, envelopeDigest?: string): ValueOperationOutcome {
+export function createDeniedValueOperationOutcome(status: DeniedStatus, code: string, reason: string, envelopeDigest?: string): ValueOperationOutcome {
   return { status, code, reason, envelopeDigest };
 }
 
-function createEnvelope(request: ValueOperationRequest, decision?: ValueOperationEvidenceDecision): ValueOperationEnvelope {
+export function createValueOperationEnvelope(request: ValueOperationRequest, decision?: ValueOperationEvidenceDecision): ValueOperationEnvelope {
   return {
     version: VALUE_OPERATION_VERSION,
     operationType: request.operationType,
@@ -274,7 +281,7 @@ function createEnvelope(request: ValueOperationRequest, decision?: ValueOperatio
   };
 }
 
-function evidenceRequest(request: ValueOperationRequest): ValueOperationEvidenceRequest {
+export function createValueOperationEvidenceRequest(request: ValueOperationRequest): ValueOperationEvidenceRequest {
   return {
     version: VALUE_OPERATION_VERSION,
     requestDigest: request.intentDigest,
@@ -292,166 +299,26 @@ function evidenceRequest(request: ValueOperationRequest): ValueOperationEvidence
   };
 }
 
-function validateRequestIntegrity(request: ValueOperationRequest): boolean {
+export function validateValueOperationRequestIntegrity(request: ValueOperationRequest): boolean {
   const fields = requestIntentFields(request);
   return request.payloadDigest === fields.payloadDigest
     && request.descriptionDigest === fields.descriptionDigest
     && request.intentDigest === digestValueOperationValue({ domain: `${VALUE_OPERATION_VERSION}.intent`, request: fields });
 }
 
-function evaluateConfirmedValueOperation(
-  request: ValueOperationRequest,
-  options: { now?: Date; evidenceDecision?: ValueOperationEvidenceDecision },
-): ValueOperationOutcome {
-  const now = options.now ?? new Date();
-  const envelope = createEnvelope(request, options.evidenceDecision);
-  const envelopeDigest = digestValueOperationEnvelope(envelope);
-
-  if (!validateRequestIntegrity(request)) {
-    return denied('rejected', 'REQUEST_MUTATION_DETECTED', 'The signable request no longer matches its canonical binding.', envelopeDigest);
-  }
-  if (!request.nonce || !request.audience || !request.keyIdentity || !request.algorithm) {
-    return denied('rejected', 'MALFORMED_ENVELOPE', 'Required request-binding fields are missing.', envelopeDigest);
-  }
-
-  const issuedAt = Date.parse(request.issuedAt);
-  const expiresAt = Date.parse(request.expiresAt);
-  if (!Number.isFinite(issuedAt) || !Number.isFinite(expiresAt) || issuedAt > expiresAt) {
-    return denied('rejected', 'MALFORMED_ENVELOPE_TIME', 'Envelope time bounds are malformed.', envelopeDigest);
-  }
-  if (now.getTime() < issuedAt || now.getTime() >= expiresAt) {
-    return denied('quarantined', 'STALE_ENVELOPE', 'The value-operation envelope is not currently valid.', envelopeDigest);
-  }
-
-  const decision = options.evidenceDecision;
-  if (!decision) return denied('quarantined', 'MISSING_AUTHORITATIVE_EVIDENCE', 'Authoritative provider evidence is required.', envelopeDigest);
-  if (decision.status !== 'verified' || decision.providerStatus !== 'authoritative') {
-    const status = decision.status === 'unsupported' || decision.providerStatus === 'unsupported'
-      ? 'unsupported' : decision.status === 'non-authoritative' ? 'simulated' : 'quarantined';
-    return denied(status, decision.code, decision.reason, envelopeDigest);
-  }
-
-  const evidenceIssuedAt = Date.parse(decision.issuedAt);
-  const evidenceExpiresAt = Date.parse(decision.expiresAt);
-  if (!Number.isFinite(evidenceIssuedAt) || !Number.isFinite(evidenceExpiresAt)
-    || now.getTime() < evidenceIssuedAt || now.getTime() >= evidenceExpiresAt) {
-    return denied('quarantined', 'STALE_EVIDENCE', 'Provider evidence is stale or malformed.', envelopeDigest);
-  }
-  if (decision.requestDigest !== request.intentDigest || decision.nonce !== request.nonce
-    || decision.audience !== request.audience || decision.keyIdentity !== request.keyIdentity
-    || decision.algorithm !== request.algorithm) {
-    return denied('rejected', 'EVIDENCE_REQUEST_MISMATCH', 'Evidence is not bound to this exact operation request.', envelopeDigest);
-  }
-
-  const authorization: ValueOperationAuthorization = deepFreeze({
-    kind: 'value-operation-authorization', envelope, envelopeDigest,
-    nonce: request.nonce, audience: request.audience,
-    authorizedAt: now.toISOString(), expiresAt: request.expiresAt,
-  });
-  issuedAuthorizations.add(authorization);
-  return { status: 'allowed', authorization };
-}
-
-async function executeConfirmedValueOperation(
-  request: ValueOperationRequest,
-  vault: string | Uint8Array,
-  options: { now?: Date } = {},
-): Promise<ValueOperationOutcome> {
-  const preflight = evaluateConfirmedValueOperation(request, { now: options.now });
-  if (preflight.status !== 'quarantined' || preflight.code !== 'MISSING_AUTHORITATIVE_EVIDENCE') {
-    return preflight;
-  }
-
-  const evidenceAdapter = getWalletEvidenceAdapter();
-  if (!evidenceAdapter) return preflight;
-
-  let evidenceDecision: ValueOperationEvidenceDecision;
-  try {
-    evidenceDecision = await evidenceAdapter.verify(evidenceRequest(request));
-  } catch {
-    return denied('quarantined', 'EVIDENCE_ADAPTER_FAILED', 'Authoritative evidence verification was unavailable.');
-  }
-
-  const outcome = evaluateConfirmedValueOperation(request, { ...options, evidenceDecision });
-  if (outcome.status !== 'allowed') return outcome;
-  if (!Capacitor.isNativePlatform()) {
-    return denied('unsupported', 'NATIVE_VALUE_SIGNER_REQUIRED', 'Production value operations require the native signer.', outcome.authorization.envelopeDigest);
-  }
-
-  const replayKey = `${outcome.authorization.audience}:${outcome.authorization.nonce}`;
-  if (consumedAuthorizations.has(replayKey)) {
-    return denied('rejected', 'REPLAY_DETECTED', 'This value-operation authorization was already consumed.', outcome.authorization.envelopeDigest);
-  }
-  consumedAuthorizations.add(replayKey);
-
-  try {
-    const signature = await requestEnclaveSignature({
-      type: request.signingType,
-      layer: request.chainLayer,
-      payload: request.payload,
-      description: request.description,
-    }, vault);
-    if (!signature.signature && !signature.broadcastReadyHex) {
-      return denied('rejected', 'EMPTY_NATIVE_SIGNATURE', 'The native signer returned no authoritative signing result.', outcome.authorization.envelopeDigest);
-    }
-    if (!signature.broadcastReadyHex) return { ...outcome, signature };
-
-    const broadcastAuthorization = deepFreeze({
-      kind: 'value-operation-broadcast-authorization' as const,
-    });
-    broadcastAuthorizations.set(broadcastAuthorization, {
-      signedHex: signature.broadcastReadyHex,
-      signedHexDigest: digestValueOperationValue(signature.broadcastReadyHex),
-      layer: request.chainLayer,
-      network: request.network,
-      expiresAt: Math.min(Date.parse(request.expiresAt), Date.now() + 60_000),
-      consumed: false,
-    });
-    return { ...outcome, signature, broadcastAuthorization };
-  } catch {
-    return denied('rejected', 'NATIVE_SIGNING_FAILED', 'The native signer rejected or failed the value operation.', outcome.authorization.envelopeDigest);
-  }
-}
-
 export interface ValueOperationAuthorizer {
   (request: ValueOperationRequest): Promise<ValueOperationOutcome>;
-}
-
-export interface WalletValueOperationGate {
-  confirm(request: ValueOperationRequest): Promise<ValueOperationOutcome>;
-  reject(request: ValueOperationRequest): ValueOperationOutcome;
-}
-
-/** Wallet-owned gate instance for the application confirmation queue. */
-export function createWalletValueOperationGate(vault: string | Uint8Array): WalletValueOperationGate {
-  return Object.freeze({
-    confirm: (request: ValueOperationRequest) => executeConfirmedValueOperation(request, vault),
-    reject: (request: ValueOperationRequest) => denied(
-      'rejected',
-      'USER_REJECTED',
-      'The user did not confirm the value operation.',
-      digestValueOperationEnvelope(createEnvelope(request)),
-    ),
-  });
 }
 
 export function consumeValueOperationBroadcastAuthorization(
   authorization: ValueOperationBroadcastAuthorization,
   submission: { signedHex: string; layer: string; network: string; now?: Date },
 ): void {
-  const record = broadcastAuthorizations.get(authorization);
-  if (!record) throw new Error('BROADCAST_AUTHORIZATION_INVALID: authorization was not issued by the wallet gate');
-  const now = submission.now ?? new Date();
-  if (record.consumed) throw new Error('BROADCAST_AUTHORIZATION_REPLAYED: authorization is one-time');
-  if (now.getTime() >= record.expiresAt) throw new Error('BROADCAST_AUTHORIZATION_STALE: authorization expired');
-  if (submission.layer !== record.layer || submission.network !== record.network) {
-    throw new Error('BROADCAST_AUTHORIZATION_CONTEXT_MISMATCH: layer or network differs from authorization');
-  }
-  if (submission.signedHex !== record.signedHex
-    || digestValueOperationValue(submission.signedHex) !== record.signedHexDigest) {
-    throw new Error('BROADCAST_AUTHORIZATION_TRANSACTION_MISMATCH: signed transaction differs from authorization');
-  }
-  record.consumed = true;
+  consumeBroadcastAuthorization(authorization, submission);
+}
+
+export function consumeValueOperationSettlementAuthorization(submission: ValueOperationSettlementSubmission): void {
+  consumeSettlementAuthorization(submission.authorization, submission);
 }
 
 export function valueOperationOutcomeMessage(outcome: ValueOperationOutcome): string {
@@ -472,12 +339,12 @@ export function requireValueOperationSignature(
   request?: ValueOperationRequest,
 ): SignResult {
   if (outcome.status !== 'allowed') throw new ValueOperationDeniedError(outcome);
-  if (!issuedAuthorizations.has(outcome.authorization)) {
+  if (!isRegisteredValueOperationAuthorization(outcome.authorization)) {
     throw new Error('Allowed value operation authorization was not issued by the wallet gate.');
   }
   if (request) {
     const envelope = outcome.authorization.envelope;
-    if (!validateRequestIntegrity(request)
+    if (!validateValueOperationRequestIntegrity(request)
       || envelope.operationType !== request.operationType
       || envelope.chainLayer !== request.chainLayer
       || envelope.signingType !== request.signingType
@@ -494,12 +361,31 @@ export function requireValueOperationSignature(
       throw new Error('Allowed value operation authorization does not match the service request.');
     }
   }
-  if (consumedSignatureAuthorizations.has(outcome.authorization)) {
-    throw new Error('Allowed value operation authorization was already consumed.');
-  }
   if (!outcome.signature) throw new Error('Allowed value operation is missing its native signature result.');
-  consumedSignatureAuthorizations.add(outcome.authorization);
+  consumeSignatureAuthorization(outcome.authorization);
   return outcome.signature;
+}
+
+export function requireValueOperationSettlementAuthorization(
+  outcome: ValueOperationOutcome,
+  request: ValueOperationRequest,
+): ValueOperationSettlementAuthorization {
+  if (outcome.status !== 'allowed') throw new ValueOperationDeniedError(outcome);
+  if (!isRegisteredValueOperationAuthorization(outcome.authorization)) {
+    throw new Error('Allowed value operation authorization was not issued by the App-private gate.');
+  }
+  if (!outcome.settlementAuthorization) {
+    throw new Error('Allowed value operation is missing its settlement authorization.');
+  }
+  assertSettlementAuthorizationMatchesRequest(outcome.settlementAuthorization, request);
+  return outcome.settlementAuthorization;
+}
+
+export async function authorizeValueOperationSettlement(
+  authorize: ValueOperationAuthorizer,
+  request: ValueOperationRequest,
+): Promise<ValueOperationSettlementAuthorization> {
+  return requireValueOperationSettlementAuthorization(await authorize(request), request);
 }
 
 export async function authorizeValueOperationSignature(
@@ -510,5 +396,7 @@ export async function authorizeValueOperationSignature(
 }
 
 export function resetValueOperationReplayCacheForTests(): void {
-  consumedAuthorizations.clear();
+  // Capability registries are WeakMap/WeakSet-backed and intentionally cannot
+  // be converted into constructible test hooks. Authority replay state has an
+  // explicit test-only reset in the App-private authority module.
 }

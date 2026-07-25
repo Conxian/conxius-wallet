@@ -50,10 +50,10 @@ import { getEnclaveBlob, persistState, removeEnclaveBlob, STORAGE_KEY } from './
 import { getTranslation } from './services/i18n';
 import { AppState, WalletConfig, AppMode, Asset, SilentPaymentScanOptions, SilentPaymentScanState, SilentPaymentUtxo } from './types';
 import {
-  createWalletValueOperationGate,
   ValueOperationOutcome,
   ValueOperationRequest,
 } from './services/value-operation';
+import { createAppPrivateValueOperationAuthority } from './services/app-private/value-operation-authority';
 import { cancelSilentPaymentScan, dedupeSilentPaymentUtxos, getSilentPaymentScanStatus, scanForSilentPayments } from './services/silent-payments';
 
 const BOOT_SEQUENCE = [
@@ -112,7 +112,7 @@ const App: React.FC = () => {
   } | null>(null);
 
   const currentPinRef = useRef<string | null>(null);
-  const valueOperationGateRef = useRef(createWalletValueOperationGate(STORAGE_KEY));
+  const valueOperationGateRef = useRef(createAppPrivateValueOperationAuthority(STORAGE_KEY));
 
   useEffect(() => {
     async function checkEnclave() {

@@ -1,4 +1,8 @@
 import { registerPlugin } from '@capacitor/core';
+import {
+  consumeValueOperationSettlementAuthorization,
+  ValueOperationSettlementAuthorization,
+} from './value-operation';
 
 export interface BreezPluginDef {
   start(options: {
@@ -33,8 +37,6 @@ export interface BreezPluginDef {
 
 const Breez = registerPlugin<BreezPluginDef>("Breez");
 
-export { Breez };
-
 export async function startBreezNode(
   options: {
     mnemonic?: string;
@@ -55,7 +57,18 @@ export async function createLnInvoice(amountMsat: number, description: string) {
   return Breez.invoice({ amountMsat, description });
 }
 
-export async function payLnInvoice(bolt11: string) {
+export async function payLnInvoice(
+  bolt11: string,
+  authorization: ValueOperationSettlementAuthorization,
+  network: string,
+) {
+  consumeValueOperationSettlementAuthorization({
+    authorization,
+    layer: 'Lightning',
+    provider: 'breez-plugin',
+    network,
+    intent: { kind: 'bolt11', invoice: bolt11 },
+  });
   return Breez.pay({ bolt11 });
 }
 
@@ -67,6 +80,19 @@ export async function getBreezOnchainAddress() {
   return Breez.receiveOnchain();
 }
 
-export async function sendBreezOnchain(address: string, amountSats: number, feeRateSatsPerVbyte: number) {
+export async function sendBreezOnchain(
+  address: string,
+  amountSats: number,
+  feeRateSatsPerVbyte: number,
+  authorization: ValueOperationSettlementAuthorization,
+  network: string,
+) {
+  consumeValueOperationSettlementAuthorization({
+    authorization,
+    layer: 'Lightning',
+    provider: 'breez-plugin',
+    network,
+    intent: { kind: 'breez-onchain', address, amountSats, feeRateSatsPerVbyte },
+  });
   return Breez.sendOnchain({ address, amountSats, feeRateSatsPerVbyte });
 }
