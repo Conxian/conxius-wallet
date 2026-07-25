@@ -1,8 +1,28 @@
 import { test, expect } from '@playwright/test';
 import { openFeature, resetBrowserState, waitForWalletShell } from './helpers';
 
+const walletAddress = 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4';
+const recipientAddress = 'bc1q4h0ycu78h88wzldxc7e79vhw5xsde0n8jk4wl5';
+
 test.describe('Full Wallet System Integration', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/context.tsx', async route => {
+      const response = await route.fetch();
+      const source = await response.text();
+      const languageField = /(?<indent>\s*)language:\s*["']en["']/;
+
+      if (!languageField.test(source)) {
+        throw new Error('Unable to install the wallet E2E fixture in initialAppState');
+      }
+
+      const fixtureSource = source.replace(
+        languageField,
+        `$<indent>walletConfig: { type: "single", masterAddress: "${walletAddress}" },\n$<indent>language: "en"`,
+      );
+
+      await route.fulfill({ response, body: fixtureSource });
+    });
+
     await page.route('**/address/*/utxo', async route => {
       await route.fulfill({
         status: 200,
@@ -66,16 +86,19 @@ test.describe('Full Wallet System Integration', () => {
 
     await openFeature(page, 'Dashboard', 'Wallet');
     await page.getByRole('button', { name: 'Send payment', exact: true }).click();
-    await page.getByPlaceholder('Enter Bitcoin Address', { exact: true }).fill('bc1qtestrecipient');
+    await page.getByPlaceholder('Enter Bitcoin Address', { exact: true }).fill(recipientAddress);
     await page.getByPlaceholder('0.00', { exact: true }).fill('10000');
     await page.getByRole('button', { name: 'Construct PSBT', exact: true }).click();
-    await page.getByRole('button', { name: 'Sign Transaction', exact: true }).click();
+    const signTransaction = page.getByRole('button', { name: 'Sign Transaction', exact: true });
+    await expect(signTransaction).toBeVisible();
+    await signTransaction.click();
 
-    // The signing request must be explicitly reviewed before the wallet
-    // exposes the broadcast action.
+    // The signing request must be explicitly reviewed. Without authoritative
+    // provider evidence, the browser must remain fail-closed.
     await expect(page.getByRole('heading', { name: 'Signature Request', exact: true })).toBeVisible();
     await expect(page.getByText('Full Message Payload (WYSIWYS)', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Confirm Sign', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Broadcast to Mempool', exact: true })).toBeVisible();
+    await expect(page.getByText('MISSING_AUTHORITATIVE_EVIDENCE: Authoritative provider evidence is required.', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Broadcast to Mempool', exact: true })).toHaveCount(0);
   });
 });
