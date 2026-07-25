@@ -111,7 +111,11 @@ export const parseRgbInvoice = (invoice: string): RgbInvoice | null => {
         const decoded = bech32m.decode(invoice.slice(4));
         if (decoded.prefix !== 'rgb') return null;
         const hexData = Buffer.from(bech32m.fromWords(decoded.words)).toString('hex');
-        return { assetId: `rgb:${hexData.substring(0, 32)}`, amount: parseInt(hexData.substring(32, 48), 16) || 0, beneficiary: hexData.substring(48) || 'blinded_utxo' };
+        if (hexData.length <= 48) return null;
+        const amount = parseInt(hexData.substring(32, 48), 16);
+        const beneficiary = hexData.substring(48);
+        if (!Number.isSafeInteger(amount) || amount < 0 || !beneficiary) return null;
+        return { assetId: `rgb:${hexData.substring(0, 32)}`, amount, beneficiary };
     } catch { return null; }
 };
 

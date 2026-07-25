@@ -72,7 +72,9 @@ describe('value UI fail-closed boundaries', () => {
         vi.clearAllMocks();
         localStorage.clear();
         mocks.fetchUtxos.mockResolvedValue([]);
-        mocks.fetchNativePegAddress.mockResolvedValue('bc1qpegaddress');
+        mocks.fetchNativePegAddress.mockResolvedValue({
+            kind: 'available', address: 'bc1qpegaddress', source: 'qualified-provider',
+        });
         mocks.buildPsbt.mockResolvedValue('70736274ff00');
         mocks.buildSbtcPegInPsbt.mockResolvedValue('70736274ff00');
         mocks.buildNativePegPsbt.mockResolvedValue('70736274ff00');
@@ -177,6 +179,25 @@ describe('value UI fail-closed boundaries', () => {
         expect(mocks.broadcastTransaction).not.toHaveBeenCalled();
         expect(notify).not.toHaveBeenCalledWith('success', expect.anything());
         expect(screen.queryByText('Transfer Broadcast')).not.toBeInTheDocument();
+    });
+
+    it('native peg-in stops before PSBT construction when no qualified peg address is available', async () => {
+        mocks.fetchNativePegAddress.mockResolvedValueOnce({
+            kind: 'unsupported', reason: 'qualified_peg_address_provider_unavailable', layer: 'Stacks', network: 'mainnet',
+        });
+        const authorization = vi.fn();
+        const { notify } = renderWithContext(<NTTBridge />, authorization);
+        const user = userEvent.setup();
+
+        await user.type(screen.getByLabelText('Amount to Bridge'), '0.001');
+        await user.click(screen.getByRole('button', { name: /Next: Review Bridge/i }));
+        await user.click(screen.getByRole('button', { name: /Initiate Sovereign Transfer/i }));
+
+        await waitFor(() => expect(notify).toHaveBeenCalledWith('error', expect.stringContaining('peg address provider')));
+        expect(mocks.buildSbtcPegInPsbt).not.toHaveBeenCalled();
+        expect(mocks.buildNativePegPsbt).not.toHaveBeenCalled();
+        expect(authorization).not.toHaveBeenCalled();
+        expect(mocks.signValue).not.toHaveBeenCalled();
     });
 
     it('NTT simulation remains explicitly unsupported with no completion identifier', async () => {

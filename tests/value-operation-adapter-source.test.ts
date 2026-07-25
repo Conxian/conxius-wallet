@@ -13,6 +13,9 @@ const ADAPTER_FILES = [
     'services/lightning.ts',
     'services/lightning-backend.ts',
     'services/swap.ts',
+    'services/dlc.ts',
+    'services/payjoin.ts',
+    'services/coinjoin.ts',
 ] as const;
 const BANNED = [
     'forfeit_tx_',
@@ -47,5 +50,21 @@ describe('production adapter source contamination', () => {
         expect(source).not.toMatch(/state\s*=\s*['"]SETTLED['"]/);
         expect(source).not.toMatch(/notify(?:Transaction)?\s*\(/);
         expect(source).not.toMatch(/setTimeout\s*\([^)]*(?:swap|payment|settle)/is);
+    });
+
+    it.each([
+        ['services/dlc.ts', ['sig1', 'sig2', 'cet_txid_', 'generateRandomString', 'Date.now()']],
+        ['services/payjoin.ts', ['PayjoinClient', 'signPsbtCallback', 'getPayjoinPsbt', 'extractTransaction', 'getId()', 'localStorage', 'fetch(']],
+        ['services/real-world.ts', ['cp_inv_', 'bc1q_merchant_prod', 'createTravelBooking', "'inv_' + Date.now()"]],
+        ['services/protocol.ts', ['broadcastTransaction', 'bc1q_production_gateway', 'return true;', 'return 840000']],
+        ['services/coinjoin.ts', ['registration_token_', 'blinded_', 'notificationService', 'generateRandomString', 'Date.now()']],
+        ['services/yield.ts', ['0xYieldContractAddress', '0xEnterActionPayload']],
+        ['services/boltz.ts', ['createReverseSwap', 'createSubmarineSwap', 'refundPrivateKey', 'preimageHash']],
+        ['services/multisig.ts', ['bc1p_musig2_derived_error']],
+        ['services/psbt.ts', ['export async function signPsbtBase64', 'signPsbtBase64WithSeed', 'mnemonicToSeed']],
+        ['services/rgb.ts', ["|| 'blinded_utxo'"]],
+    ] as const)('%s excludes path-specific synthetic value artifacts', (file, banned) => {
+        const source = readFileSync(file, 'utf8');
+        for (const literal of banned) expect(source).not.toContain(literal);
     });
 });

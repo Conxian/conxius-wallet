@@ -72,7 +72,13 @@ const NTTBridge: React.FC = () => {
       setBridgeStatus('INITIATING');
       try {
           const utxos = await fetchUtxos(context.state.walletConfig?.masterAddress || '', context.state.network);
-          const pegInAddress = await fetchNativePegAddress(targetLayer as any, context.state.network);
+          const pegAddress = await fetchNativePegAddress(targetLayer as any, context.state.network);
+          if (pegAddress.kind === 'unsupported') {
+              context.notify('error', 'Native peg-in unavailable: no qualified peg address provider is configured.');
+              setBridgeStatus('FAILED');
+              return;
+          }
+          const pegInAddress = pegAddress.address;
           const amountSats = parseBtcToSatoshis(amount);
           const amountSatsString = amountSats.toString();
           const amountSatsNumber = toSafeSatoshiNumber(amountSats);

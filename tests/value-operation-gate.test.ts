@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sha256 } from '@noble/hashes/sha2.js';
 import * as evidenceVerifier from '../services/value-operation-evidence-verifier';
 import * as gateExports from '../services/value-operation-gate';
+import { failClosed } from '../services/production-guard';
 import {
     canonicalEncode,
     CanonicalEncodingError,
@@ -292,6 +293,30 @@ describe('production verifier containment and mocked verifier outcomes', () => {
             .resolves.toEqual({ kind: 'unsupported', reason: 'unsupported_provider' });
         await expect(createValueOperationGate().authorize(baseRequest()))
             .resolves.toEqual({ kind: 'unsupported', reason: 'unsupported_provider' });
+    });
+
+    it('treats production/debug guard outputs and debug integrity tokens as opaque non-authoritative evidence', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const productionGuardSimulation = failClosed('Value operation evidence', {
+            kind: 'simulated', marker: 'typescript-production-guard-simulation',
+        }, false);
+        const opaqueEvidenceValues = [
+            productionGuardSimulation,
+            { source: 'android-production-runtime-guard', buildType: 'debug', simulated: true },
+            { token: 'play_integrity_token_debug_stub', status: 'verified', authoritative: true },
+        ] as const;
+
+        for (const opaqueEvidence of opaqueEvidenceValues) {
+            const outcome = await createValueOperationGate().authorize(baseRequest({ evidence: { opaqueEvidence } }));
+            expect(outcome).toEqual({ kind: 'unsupported', reason: 'unsupported_provider' });
+            expect(outcome.kind).not.toMatch(/authorized|submitted|settled/);
+        }
+
+        const callerStatus = baseRequest() as unknown as Record<string, unknown>;
+        callerStatus.providerStatus = productionGuardSimulation;
+        callerStatus.evidenceStatus = 'play_integrity_token_debug_stub';
+        await expect(createValueOperationGate().authorize(callerStatus))
+            .resolves.toEqual({ kind: 'rejected', reason: 'malformed_value_operation' });
     });
 
     it.each([

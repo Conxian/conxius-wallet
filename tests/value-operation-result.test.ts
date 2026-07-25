@@ -69,6 +69,22 @@ describe('shared value-operation execution contract', () => {
         expect(Object.keys(resultExports).filter((name) => /accept|promote|submit|settle|unwrap|success/i.test(name))).toEqual([]);
     });
 
+    it('rejects opaque debug markers and caller status fields as execution authority', async () => {
+        const artifact = {
+            kind: 'conxius.wallet.contract-test.v1', operation: 'transfer', chain: 'bitcoin', layer: 'contract-test',
+            network: 'testnet', amount: '10',
+        } as const;
+        const authorization = await authorizeAdapterArtifact(artifact);
+        const debugEvidence = {
+            productionGuard: { kind: 'simulated', value: true },
+            androidDebugSimulation: true,
+            integrityToken: 'play_integrity_token_debug_stub',
+        };
+        expect(knownUnsupportedValueOperation({
+            authorization, artifact, evidence: debugEvidence, providerStatus: 'verified', settlementStatus: 'settled',
+        } as never, expected)).toEqual({ kind: 'rejected', reason: 'malformed_execution_request' });
+    });
+
     it('rejects a capability after its wallet-local expiry without consuming a stage', async () => {
         const artifact = {
             kind: 'conxius.wallet.contract-test.v1', operation: 'transfer', chain: 'bitcoin', layer: 'contract-test',
