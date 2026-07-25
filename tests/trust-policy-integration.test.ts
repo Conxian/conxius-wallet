@@ -1,51 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
-import { NttService, getRecommendedBridgeProtocol } from '../services/ntt';
+import { describe, expect, it } from 'vitest';
+import { createNttTransferArtifact, getRecommendedBridgeProtocol } from '../services/ntt';
 import { TrustTier } from '../services/trust-policy';
 
+const fields = { network: 'mainnet', sourceChain: 'Ethereum', destinationChain: 'Base', asset: 'sBTC', amountBaseUnits: '1', recipient: 'recipient', signerIdentity: 'key', route: 'route', providerConfigurationDigest: '11'.repeat(32), quoteDigest: '22'.repeat(32), expiry: '1', maxFeeBaseUnits: '1', idempotencyDigest: '33'.repeat(32) } as const;
 describe('Trust Policy Integration', () => {
-    describe('NttService.executeNtt', () => {
-        it('should reject non-compliant T1 routes', async () => {
-            const signer = { address: () => '0x123' } as any;
-            await expect(NttService.executeNtt(
-                '1.0',
-                'Ethereum',
-                'Base',
-                signer,
-                'mainnet',
-                undefined,
-                TrustTier.T1
-            )).rejects.toThrow('NTT_EXECUTION_QUARANTINED');
-        });
-
-        it('should reject non-hardened T2 routes', async () => {
-            const signer = { address: () => '0x123' } as any;
-            await expect(NttService.executeNtt(
-                '1.0',
-                'Ethereum',
-                'Base',
-                signer,
-                'mainnet',
-                undefined,
-                TrustTier.T2,
-                false // not hardened
-            )).rejects.toThrow('NTT_EXECUTION_QUARANTINED');
-        });
-    });
-
-    describe('getRecommendedBridgeProtocol', () => {
-        it('should return None if NTT does not meet required tier', () => {
-            const protocol = getRecommendedBridgeProtocol('Ethereum', 'Base', TrustTier.T1);
-            expect(protocol).toBe('None');
-        });
-
-        it('should return NTT if compliant with T3', () => {
-            const protocol = getRecommendedBridgeProtocol('Ethereum', 'Base', TrustTier.T3);
-            expect(protocol).toBe('NTT');
-        });
-
-        it('should return Native regardless of tier for Mainnet -> Stacks', () => {
-            const protocol = getRecommendedBridgeProtocol('Mainnet', 'Stacks', TrustTier.T1);
-            expect(protocol).toBe('Native');
-        });
-    });
+  it('rejects non-compliant NTT artifact routes before authorization', () => {
+    expect(() => createNttTransferArtifact({ ...fields, trustTier: TrustTier.T1 })).toThrow('Guard: T1 (Sovereign) requires IBC light-client paths');
+    expect(() => createNttTransferArtifact({ ...fields, trustTier: TrustTier.T2, hardenedRoute: false })).toThrow('Guard: T2 (Hybrid) requires hardened configuration');
+  });
+  it('keeps read-only protocol recommendations', () => {
+    expect(getRecommendedBridgeProtocol('Ethereum', 'Base', TrustTier.T1)).toBe('None');
+    expect(getRecommendedBridgeProtocol('Ethereum', 'Base', TrustTier.T3)).toBe('NTT');
+    expect(getRecommendedBridgeProtocol('Mainnet', 'Stacks', TrustTier.T1)).toBe('Native');
+  });
 });

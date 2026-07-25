@@ -53,7 +53,11 @@ test.describe('Full Wallet System - Strict Functional Audit', () => {
 
     await openFeature(page, 'Marketplace & Services', 'Bazaar');
     await expect(page.getByRole('heading', { name: 'Sovereign Bazaar', exact: true })).toBeVisible();
-    await expect(page.getByText('Marketplace Offline', { exact: true })).toBeVisible();
+    await expect(page.getByText('Catalog preview only. Checkout and fulfillment are unavailable.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Preview only / No transactions', { exact: true })).toBeVisible();
+    await expect(page.getByText('Catalog Preview Unavailable', { exact: true })).toBeVisible();
+    await expect(page.getByText(/Purchase successful|Code delivered|Payment Verified|Redemption Code/i)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^(Buy|Purchase|Checkout)(\b| )/i })).toHaveCount(0);
 
     await openFeature(page, 'Payments', 'Payments');
     await expect(page.getByRole('heading', { name: 'Citadel Pay', exact: true })).toBeVisible();

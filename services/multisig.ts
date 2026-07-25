@@ -133,6 +133,6 @@ export const deriveMusig2TaprootAddress = (pubkeys: string[], network: Network):
         return address!;
     } catch (e) {
         console.error("[MultiSig] P2TR Error:", e);
-        return "bc1p_musig2_derived_error";
+        throw new Error('Unable to derive MuSig2 Taproot address.', { cause: e });
     }
 };

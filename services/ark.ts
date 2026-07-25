@@ -1,14 +1,11 @@
-import * as bitcoin from 'bitcoinjs-lib';
-import { notificationService } from './notifications';
 import { endpointsFor, fetchWithRetry } from './network';
-import { fetchBtcPrice } from './prices';
 import { Network } from '../types';
+import { digestCanonicalPayload, type CanonicalObject } from './value-operation-gate';
 import {
-    createUnverifiedValueOperationRequest,
-    createValueOperationNonce,
-    ValueOperationAuthorizer,
-    authorizeValueOperationSignature,
-} from './value-operation';
+    knownUnsupportedValueOperation,
+    type AuthorizedValueOperationExecution,
+    type ValueOperationExecutionOutcome,
+} from './value-operation-result';
 
 export interface VTXO {
     txid: string;
@@ -29,6 +26,86 @@ export interface LiftRequest {
     feeRate?: number;
 }
 
+export type ArkLiftOutcome =
+    | Readonly<{ kind: 'rejected'; reason: 'malformed_lift_request' }>
+    | Readonly<{ kind: 'unsupported'; reason: 'qualified_asp_boarding_data_unavailable' }>;
+
+export interface ArkForfeitArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.ark-forfeit.v1';
+    readonly chain: 'bitcoin';
+    readonly layer: 'ark';
+    readonly operation: 'forfeit-vtxo';
+    readonly network: Network;
+    readonly recipient: string;
+    readonly amountSats: string;
+    readonly vtxoTxid: string;
+    readonly vtxoVout: string;
+    readonly ownerPubkey: string;
+    readonly serverPubkey: string;
+    readonly roundTxid: string;
+    readonly expiryHeight: string;
+    readonly currentStatus: VTXO['status'];
+    readonly aspConfigurationDigest: string;
+}
+
+export interface ArkRedeemArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.ark-redeem.v1';
+    readonly chain: 'bitcoin';
+    readonly layer: 'ark';
+    readonly operation: 'unilateral-exit';
+    readonly network: Network;
+    readonly destination: 'bitcoin-l1-unilateral-exit';
+    readonly amountSats: string;
+    readonly vtxoTxid: string;
+    readonly vtxoVout: string;
+    readonly ownerPubkey: string;
+    readonly serverPubkey: string;
+    readonly roundTxid: string;
+    readonly expiryHeight: string;
+    readonly currentStatus: VTXO['status'];
+    readonly aspConfigurationDigest: string;
+}
+
+export type ArkForfeitRequest = AuthorizedValueOperationExecution<ArkForfeitArtifact>;
+export type ArkRedeemRequest = AuthorizedValueOperationExecution<ArkRedeemArtifact>;
+
+const ARK_ASP_CONFIGURATION_DIGEST = digestCanonicalPayload(Object.freeze({
+    kind: 'conxius.wallet.unqualified-ark-asp.v1',
+}));
+
+function canonicalInteger(value: number, field: string): string {
+    if (!Number.isSafeInteger(value) || value < 0) throw new Error(`Invalid ${field}.`);
+    return String(value);
+}
+
+export function createArkForfeitArtifact(
+    vtxo: VTXO,
+    recipient: string,
+    network: Network,
+): ArkForfeitArtifact {
+    if (!vtxo.txid || !recipient.trim()) throw new Error('Invalid Ark forfeit request.');
+    return Object.freeze({
+        kind: 'conxius.wallet.ark-forfeit.v1', chain: 'bitcoin', layer: 'ark', operation: 'forfeit-vtxo',
+        network, recipient: recipient.trim(), amountSats: canonicalInteger(vtxo.amount, 'VTXO amount'),
+        vtxoTxid: vtxo.txid, vtxoVout: canonicalInteger(vtxo.vout, 'VTXO output'), ownerPubkey: vtxo.ownerPubkey,
+        serverPubkey: vtxo.serverPubkey, roundTxid: vtxo.roundTxid,
+        expiryHeight: canonicalInteger(vtxo.expiryHeight, 'VTXO expiry height'), currentStatus: vtxo.status,
+        aspConfigurationDigest: ARK_ASP_CONFIGURATION_DIGEST,
+    });
+}
+
+export function createArkRedeemArtifact(vtxo: VTXO, network: Network): ArkRedeemArtifact {
+    if (!vtxo.txid) throw new Error('Invalid Ark redeem request.');
+    return Object.freeze({
+        kind: 'conxius.wallet.ark-redeem.v1', chain: 'bitcoin', layer: 'ark', operation: 'unilateral-exit',
+        network, destination: 'bitcoin-l1-unilateral-exit', amountSats: canonicalInteger(vtxo.amount, 'VTXO amount'),
+        vtxoTxid: vtxo.txid, vtxoVout: canonicalInteger(vtxo.vout, 'VTXO output'), ownerPubkey: vtxo.ownerPubkey,
+        serverPubkey: vtxo.serverPubkey, roundTxid: vtxo.roundTxid,
+        expiryHeight: canonicalInteger(vtxo.expiryHeight, 'VTXO expiry height'), currentStatus: vtxo.status,
+        aspConfigurationDigest: ARK_ASP_CONFIGURATION_DIGEST,
+    });
+}
+
 /**
  * Ark Protocol Service (M5 Implementation)
  * Handles off-chain VTXO lifecycle management and Boarding (Lifting).
@@ -38,9 +115,21 @@ export interface LiftRequest {
  * Creates a Boarding (Lift) Transaction PSBT.
  * Moves L1 BTC -> Ark Boarding Address.
  */
-export const createLiftPsbt = async (req: LiftRequest): Promise<{ psbtBase64: string, boardingAddress: string }> => {
-    void req;
-    throw new Error('ARK_LIFT_PSBT_QUARANTINED: exact request-bound ASP and UTXO construction authority is unavailable');
+export const createLiftPsbt = async (req: LiftRequest): Promise<ArkLiftOutcome> => {
+    if (
+        typeof req !== 'object'
+        || req === null
+        || !Number.isSafeInteger(req.amountSats)
+        || req.amountSats <= 0
+        || typeof req.senderAddress !== 'string'
+        || !req.senderAddress.trim()
+        || typeof req.senderPubkey !== 'string'
+        || !req.senderPubkey.trim()
+        || (req.feeRate !== undefined && (!Number.isFinite(req.feeRate) || req.feeRate <= 0))
+    ) {
+        return Object.freeze({ kind: 'rejected', reason: 'malformed_lift_request' });
+    }
+    return Object.freeze({ kind: 'unsupported', reason: 'qualified_asp_boarding_data_unavailable' });
 };
 
 /**
@@ -79,84 +168,16 @@ export const syncVtxos = async (address: string, network: Network = 'mainnet'): 
  * Forfeits a VTXO back to L1 or to another user (Off-chain Transfer).
  * This broadcasts a signed forfeit transaction via the ASP.
  */
-export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network: Network, authorizeValueOperation: ValueOperationAuthorizer): Promise<string> => {
-    notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'Ark Transfer', message: `Preparing VTXO ${vtxo.txid.slice(0,8)} forfeit...` });
-    
-    if (!vtxo.txid || !recipientAddress) throw new Error("Invalid VTXO or Recipient");
-
-    try {
-        const { ARK_API } = endpointsFor(network);
-
-        if (!ARK_API) throw new Error('ARK_BROADCAST_UNSUPPORTED: authoritative ASP endpoint unavailable');
-
-        const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(vtxo.txid + recipientAddress))).toString("hex");
-        const request = createUnverifiedValueOperationRequest({
-                operationType: 'transfer', chainLayer: 'Ark',
-                payload: { hash: msgHash, vtxoId: vtxo.txid, recipient: recipientAddress },
-                network, purpose: 'ark.forfeit-vtxo', nonce: createValueOperationNonce(),
-                audience: 'conxius-wallet', keyIdentity: 'wallet.ark.account-0',
-                algorithm: 'secp256k1-schnorr', signingType: 'psbt',
-                description: `Forfeit VTXO to ${recipientAddress}`,
-            });
-        const signResult = await authorizeValueOperationSignature(authorizeValueOperation, request);
-
-        const response = await fetchWithRetry(`${ARK_API}/v1/forfeit`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ vtxoId: vtxo.txid, recipient: recipientAddress, signature: signResult.signature })
-        });
-        if (!response.ok) throw new Error('Ark ASP rejected forfeit');
-        const data = await response.json();
-        if (typeof data.txid !== 'string' || !data.txid) throw new Error('Ark ASP returned no authoritative transaction ID');
-        return data.txid;
-
-    } catch (e: any) {
-        notificationService.notify({ category: 'TRANSACTION', type: 'error', title: 'Ark Transfer', message: `Forfeit failed: ${e.message}` });
-        throw e;
-    }
-};
+export const forfeitVtxo = async (request: ArkForfeitRequest): Promise<ValueOperationExecutionOutcome> =>
+    knownUnsupportedValueOperation(request, {
+        artifactKind: 'conxius.wallet.ark-forfeit.v1', operationType: 'forfeit-vtxo', layer: 'ark', chain: 'bitcoin',
+    });
 
 /**
  * Redeems a VTXO (Unilateral Exit).
  * This creates a transaction that spends the VTXO and broadcasts it to Bitcoin L1.
  */
-export const redeemVtxo = async (vtxo: VTXO, authorizeValueOperation: ValueOperationAuthorizer, network: Network): Promise<string> => {
-    notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'Ark Redemption', message: `Preparing unilateral exit for ${vtxo.txid.slice(0,8)}...` });
-
-    try {
-        const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from("redeem:" + vtxo.txid))).toString("hex");
-
-        const { ARK_API } = endpointsFor(network);
-        if (!ARK_API) throw new Error('ARK_REDEMPTION_UNSUPPORTED: authoritative ASP endpoint unavailable');
-        const request = createUnverifiedValueOperationRequest({
-                operationType: 'withdraw', chainLayer: 'Ark', payload: { hash: msgHash, vtxoId: vtxo.txid },
-                network, purpose: 'ark.redeem-vtxo', nonce: createValueOperationNonce(),
-                audience: 'conxius-wallet', keyIdentity: 'wallet.ark.account-0',
-                algorithm: 'secp256k1-schnorr', signingType: 'message',
-                description: `Redeem VTXO ${vtxo.txid.slice(0,8)}`,
-            });
-        const signResult = await authorizeValueOperationSignature(authorizeValueOperation, request);
-
-        const response = await fetchWithRetry(`${ARK_API}/v1/redeem`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ vtxoId: vtxo.txid, signature: signResult.signature })
-        });
-        if (!response.ok) throw new Error('Ark ASP rejected redemption');
-        const data = await response.json();
-        if (typeof data.txid !== 'string' || !data.txid) throw new Error('Ark ASP returned no authoritative redemption transaction ID');
-
-        notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'Ark Redemption', message: 'Unilateral Exit Broadcasted' });
-        return data.txid;
-
-    } catch (e: any) {
-        notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'Ark Redemption', message: `Redemption failed: ${e.message}` });
-        throw e;
-    }
-};
-
-// Backwards compatibility for existing calls
-export const liftToArk = async (amount: number, address: string, aspId: string): Promise<any> => {
-    void amount;
-    void address;
-    void aspId;
-    throw new Error('ARK_LIFT_QUARANTINED: authoritative request-bound Ark lift authority and provider evidence are unavailable');
-};
+export const redeemVtxo = async (request: ArkRedeemRequest): Promise<ValueOperationExecutionOutcome> =>
+    knownUnsupportedValueOperation(request, {
+        artifactKind: 'conxius.wallet.ark-redeem.v1', operationType: 'unilateral-exit', layer: 'ark', chain: 'bitcoin',
+    });

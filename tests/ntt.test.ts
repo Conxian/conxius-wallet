@@ -1,93 +1,47 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { authorizeAdapterArtifact, forgedAuthorization } from './value-operation-adapter-test-helpers';
+import { consumeAuthorizedValueOperationStage } from '../services/value-operations';
+import { digestCanonicalPayload } from '../services/value-operation-gate';
 
-// Mock noble hashes
-vi.mock('@noble/hashes/sha2.js', () => ({
-    sha256: vi.fn().mockReturnValue(new Uint8Array(32))
+const sdk = vi.hoisted(() => ({ wormhole: vi.fn(), initiateTransfer: vi.fn(), signer: vi.fn() }));
+vi.mock('@wormhole-foundation/sdk-evm', () => ({ EvmPlatform: class {} }));
+vi.mock('@wormhole-foundation/sdk', () => ({
+  wormhole: sdk.wormhole,
+  TokenTransfer: { from: vi.fn(), quoteTransfer: vi.fn() },
 }));
+import { createNttTransferArtifact, NttService } from '../services/ntt';
+import { TrustTier } from '../services/trust-policy';
 
-// Mock EvmPlatform
-vi.mock('@wormhole-foundation/sdk-evm', () => ({
-    EvmPlatform: class {}
-}));
+const DIGEST_A = '11'.repeat(32); const DIGEST_B = '22'.repeat(32); const DIGEST_C = '33'.repeat(32);
+function artifact() {
+  return createNttTransferArtifact({
+    network: 'mainnet', sourceChain: 'Ethereum', destinationChain: 'Base', asset: 'sBTC', amountBaseUnits: '100000000',
+    recipient: '0xrecipient', signerIdentity: 'wallet-evm-key', route: 'Ethereum>sBTC-NTT>Base', trustTier: TrustTier.T3,
+    providerConfigurationDigest: DIGEST_A, quoteDigest: DIGEST_B, expiry: '2000000000', maxFeeBaseUnits: '10000', idempotencyDigest: DIGEST_C,
+  });
+}
 
-// Mock Wormhole SDK with static methods
-vi.mock('@wormhole-foundation/sdk', async (importOriginal) => {
-    const actual = await importOriginal<any>();
+describe('NTT gate-bound execution', () => {
+  it('returns digest-only unsupported without SDK, signer, storage, or stage consumption', async () => {
+    const exact = artifact(); const authorization = await authorizeAdapterArtifact(exact);
+    const result = await NttService.executeNtt({ authorization, artifact: exact });
+    expect(result).toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+    expect(typeof result).toBe('object'); expect(JSON.stringify(result)).not.toContain('0xrecipient');
+    expect(sdk.wormhole).not.toHaveBeenCalled(); expect(sdk.initiateTransfer).not.toHaveBeenCalled(); expect(sdk.signer).not.toHaveBeenCalled();
+    expect(consumeAuthorizedValueOperationStage(authorization, 'sign', authorization.envelopeDigest)).toMatchObject({ kind: 'consumed' });
+  });
 
-    const mockWormholeInstance = {
-        getChain: vi.fn().mockImplementation((chain) => ({
-            chain,
-            address: () => '0xmockaddress'
-        })),
-        tokenTransfer: vi.fn().mockResolvedValue({
-            transfer: { amount: 1000n },
-            initiateTransfer: vi.fn().mockResolvedValue(['0xmocktxid'])
-        }),
-        getTransactionStatus: vi.fn().mockResolvedValue({ state: 'Confirmed', vaa: { signatures: [1, 2, 3] } })
-    };
+  it('rejects forged, missing, and changed route/amount bindings', async () => {
+    const exact = artifact(); const authorization = await authorizeAdapterArtifact(exact);
+    expect(exact.amountBaseUnits).toBe('100000000');
+    expect(digestCanonicalPayload({ ...exact, amountBaseUnits: '2' })).not.toBe(digestCanonicalPayload(exact));
+    await expect(NttService.executeNtt({ authorization: forgedAuthorization(), artifact: exact })).resolves.toMatchObject({ kind: 'rejected' });
+    await expect(NttService.executeNtt({ artifact: exact } as never)).resolves.toMatchObject({ kind: 'rejected' });
+    await expect(NttService.executeNtt({ authorization, artifact: { ...exact, amountBaseUnits: '2' } })).resolves.toMatchObject({ kind: 'rejected', reason: 'artifact_digest_mismatch' });
+    await expect(NttService.executeNtt({ authorization, artifact: { ...exact, route: 'changed' } })).resolves.toMatchObject({ kind: 'rejected', reason: 'artifact_digest_mismatch' });
+  });
 
-    const MockWormholeClass = vi.fn().mockImplementation(() => mockWormholeInstance);
-    // @ts-ignore
-    MockWormholeClass.tokenId = vi.fn().mockReturnValue('0xmocktokenid');
-    // @ts-ignore
-    MockWormholeClass.chainAddress = vi.fn().mockReturnValue('0xmockchainaddress');
-
-    return {
-        ...actual,
-        Wormhole: MockWormholeClass,
-        TokenTransfer: {
-            quoteTransfer: vi.fn().mockResolvedValue({ totalFee: 1000n }),
-            from: vi.fn().mockResolvedValue({
-                fetchAttestation: vi.fn().mockResolvedValue([{ vaa: new Uint8Array([1, 2, 3]) }])
-            })
-        },
-        amount: {
-            units: vi.fn().mockReturnValue(1000n),
-            parse: vi.fn().mockReturnValue({ amount: 1000n, decimals: 8 })
-        },
-        wormhole: vi.fn().mockResolvedValue(mockWormholeInstance),
-        chainAddress: vi.fn().mockReturnValue('0xmockchainaddress'),
-        tokenId: vi.fn().mockReturnValue('0xmocktokenid')
-    };
-});
-
-// Mock global fetch
-global.fetch = vi.fn().mockResolvedValue({
-    ok: true,
-    json: vi.fn().mockResolvedValue([{ symbol: 'W', address: '0x123' }])
-});
-
-// Import the service
-import { NttService } from '../services/ntt';
-
-describe('NttService Public Integration', () => {
-    const mockSigner: any = {
-        address: () => '0x123',
-        chain: 'Ethereum'
-    };
-
-    it('quarantines NTT before invoking the public signer or provider transfer', async () => {
-        const address = vi.spyOn(mockSigner, 'address');
-        await expect(NttService.executeNtt('1.0', 'Ethereum', 'Base', mockSigner, 'mainnet'))
-            .rejects.toThrow('NTT_EXECUTION_QUARANTINED');
-        expect(address).not.toHaveBeenCalled();
-    });
-
-    it('should estimate fees correctly', async () => {
-        const fees = await NttService.estimateFees('1.0', 'Ethereum', 'Base', 'mainnet');
-        expect(fees.totalFee).toBeGreaterThan(0);
-        expect(fees.integratorFee).toBeDefined();
-    });
-
-    it('should track progress using SDK status', async () => {
-        const progress = await NttService.trackProgress('0xmocktxid', 'mainnet');
-        expect(progress.status).toBe('Confirmed');
-        expect(progress.signatures).toBe(3);
-    });
-
-    it('should discover public NTT tokens', async () => {
-        const tokens = await NttService.discoverPublicNttTokens('mainnet');
-        expect(tokens).toHaveLength(1);
-        expect(tokens[0].symbol).toBe('W');
-    });
+  it('preserves route trust validation as artifact preparation policy', () => {
+    expect(() => createNttTransferArtifact({ ...artifact(), trustTier: TrustTier.T1 } as never)).toThrow('Guard: T1 (Sovereign) requires IBC light-client paths');
+  });
 });

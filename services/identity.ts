@@ -1,4 +1,4 @@
-import { getPublicKeyNative } from './enclave-storage';
+import { signNonValueMessageNative, getPublicKeyNative } from './enclave-storage';
 import { Network } from '../types';
 import * as bitcoin from 'bitcoinjs-lib';
 import { enforcePhase6Guard } from "./security-constants";
@@ -103,8 +103,22 @@ export class IdentityService {
 
       const message = `${domain} wants you to sign in with your Conxius Identity:\n${didInfo.address}\n\nURI: ${didInfo.did}\nWeb5: ${didInfo.web5Did || 'N/A'}\nNonce: ${challenge}\nIssued At: ${timestamp}`;
 
-      void message;
-      throw new Error('IDENTITY_SIGNING_QUARANTINED: generic native signing is restricted to the App-private value-operation authority');
+      const messageHash = Buffer.from(
+        bitcoin.crypto.sha256(Buffer.from(message)),
+      ).toString("hex");
+      const sigRes = await signNonValueMessageNative({
+          intentClass: 'non-value-message',
+          purpose: 'identity-login',
+          domain: 'conxius.identity.login',
+          vault: this.vaultName,
+          messageHash,
+          network: this.network
+      });
+
+      return {
+          signature: sigRes.signature,
+          message
+      };
   }
 
   /**

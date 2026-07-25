@@ -1,25 +1,15 @@
-import { registerPlugin } from "@capacitor/core";
 import { bech32 } from 'bech32';
+import bolt11 from 'light-bolt11-decoder';
 import { Buffer } from 'buffer';
 import { fetchWithRetry } from './network';
-import { ValueOperationSettlementAuthorization } from './value-operation';
-import type { ValueOperationCapabilityConsumer } from './value-operation-capability-consumer';
-import { assertTrustedValueOperationCapabilityConsumer } from './app-private/value-operation-authority';
 import type { Network } from '../types';
-import { requireBolt11Settlement } from './bolt11-settlement';
-
-export { decodeBolt11, requireBolt11Settlement } from './bolt11-settlement';
-
-interface BreezManagerPlugin {
-  payInvoice(options: { bolt11: string }): Promise<string | { paymentHash?: string; preimage?: string }>;
-}
-
-const BreezManager = registerPlugin<BreezManagerPlugin>('BreezManager');
+import { digestCanonicalPayload, type CanonicalObject } from './value-operation-gate';
+import { knownUnsupportedValueOperation, type AuthorizedValueOperationExecution, type ValueOperationExecutionOutcome } from './value-operation-result';
 
 /**
  * Lightning Service
  * Unified interface for BOLT11 and LNURL.
- * Integrates with native BreezManager on Android.
+* Read-only parsing remains available; payment execution is gate-contained.
  */
 
 export type LnurlPayParams = {
@@ -57,47 +47,75 @@ export async function fetchLnurlParams(url: string): Promise<LnurlPayParams | Ln
   return await res.json();
 }
 
-/**
- * Native Bridge: Breez SDK Interaction
- */
-export async function payLightningInvoice(
-    invoice: string,
-    amountSats: number,
-    authorization: ValueOperationSettlementAuthorization,
-    network: Network,
-    consumer: ValueOperationCapabilityConsumer,
-): Promise<string> {
-    assertTrustedValueOperationCapabilityConsumer(consumer);
-    requireBolt11Settlement(invoice, amountSats, network);
-    consumer.consumeSettlementAuthorization({
-      authorization,
-      layer: 'Lightning',
-      provider: 'native-breez-manager',
-      network,
-      intent: { kind: 'bolt11', invoice, amountSats },
-    });
-    const result = await BreezManager.payInvoice({ bolt11: invoice });
-    const receipt = typeof result === 'string' ? result : result?.paymentHash ?? result?.preimage;
-    if (typeof receipt !== 'string' || !receipt) throw new Error('Lightning provider returned no authoritative receipt');
-    return receipt;
+export function decodeBolt11(invoice: string) {
+  try {
+    const decoded: any = bolt11.decode(invoice);
+    const amountMsat = decoded.sections?.find((s: any) => s.name === 'amount')?.value || null;
+    const payee = decoded.payeeNodeKey || decoded.payeeNode || null;
+    const description = decoded.sections?.find((s: any) => s.name === 'description')?.value || null;
+    const paymentHash = decoded.sections?.find((s: any) => s.name === 'payment_hash')?.value || null;
+    const expiry = decoded.expiry || 3600;
+
+    return {
+        valid: true,
+        amountMsat,
+        payee,
+        description,
+        expiry,
+        timestamp: decoded.timestamp,
+        paymentHash,
+    };
+  } catch {
+    return { valid: false };
+  }
 }
 
-export async function payLnurl(
-    params: LnurlPayParams | LnurlWithdrawParams,
-    amountSats: number,
-    authorization: ValueOperationSettlementAuthorization,
-    network: string,
-    consumer: ValueOperationCapabilityConsumer,
-): Promise<string> {
-    assertTrustedValueOperationCapabilityConsumer(consumer);
-    consumer.consumeSettlementAuthorization({
-      authorization,
-      layer: 'Lightning',
-      provider: 'native-breez-manager',
-      network,
-      intent: { kind: 'lnurl-pay', params, amountSats },
-    });
-    throw new Error('LNURL_PAYMENT_UNSUPPORTED: authoritative LNURL payment adapter unavailable');
+export interface LightningInvoicePaymentArtifact extends CanonicalObject {
+  readonly kind: 'conxius.wallet.lightning-invoice-payment.v1'; readonly operation: 'pay-lightning-invoice'; readonly chain: 'bitcoin'; readonly layer: 'lightning'; readonly network: Network;
+  readonly invoiceDigest: string; readonly paymentHash: string; readonly payee: string; readonly invoiceExpiry: string; readonly amountMsat: string; readonly maxFeeMsat: string;
+  readonly providerIdentity: string; readonly providerConfigurationDigest: string; readonly idempotencyDigest: string;
+}
+export interface LnurlPaymentArtifact extends CanonicalObject {
+  readonly kind: 'conxius.wallet.lnurl-payment.v1'; readonly operation: 'pay-lnurl'; readonly chain: 'bitcoin'; readonly layer: 'lightning'; readonly network: Network;
+  readonly lnurlDigest: string; readonly callbackDigest: string; readonly metadataDigest: string; readonly amountMsat: string; readonly minSendableMsat: string;
+  readonly maxSendableMsat: string; readonly maxFeeMsat: string; readonly providerIdentity: string; readonly providerConfigurationDigest: string; readonly idempotencyDigest: string;
+}
+export type LightningInvoicePaymentRequest = AuthorizedValueOperationExecution<LightningInvoicePaymentArtifact>;
+export type LnurlPaymentRequest = AuthorizedValueOperationExecution<LnurlPaymentArtifact>;
+const HEX_DIGEST = /^[0-9a-f]{64}$/;
+const canonicalUnsigned = (value: string, field: string): string => { if (!/^(0|[1-9][0-9]*)$/.test(value)) throw new Error(`Invalid Lightning ${field}.`); return value; };
+const required = (value: string, field: string): string => { const normalized = value.trim(); if (!normalized) throw new Error(`Invalid Lightning ${field}.`); return normalized; };
+const digest = (value: string, field: string): string => { const normalized = value.toLowerCase(); if (!HEX_DIGEST.test(normalized)) throw new Error(`Invalid Lightning ${field} digest.`); return normalized; };
+const digestText = (kind: string, value: string): string => digestCanonicalPayload(Object.freeze({ kind, value }));
+
+export function createLightningInvoicePaymentArtifact(fields: { invoice: string; network: Network; amountMsat: string; maxFeeMsat: string; providerIdentity: string; providerConfigurationDigest: string; idempotencyDigest: string }): LightningInvoicePaymentArtifact {
+  const invoice = required(fields.invoice, 'invoice');
+  const decoded = decodeBolt11(invoice) as { valid: boolean; paymentHash?: unknown; payee?: unknown; expiry?: unknown; timestamp?: unknown };
+  const invoiceExpiry = decoded.valid && Number.isSafeInteger(decoded.expiry) && Number.isSafeInteger(decoded.timestamp) ? String(Number(decoded.timestamp) + Number(decoded.expiry)) : '0';
+  return Object.freeze({
+    kind: 'conxius.wallet.lightning-invoice-payment.v1', operation: 'pay-lightning-invoice', chain: 'bitcoin', layer: 'lightning', network: fields.network,
+    invoiceDigest: digestText('conxius.wallet.bolt11.v1', invoice), paymentHash: decoded.valid && typeof decoded.paymentHash === 'string' ? decoded.paymentHash : '',
+    payee: decoded.valid && typeof decoded.payee === 'string' ? decoded.payee : '', invoiceExpiry, amountMsat: canonicalUnsigned(fields.amountMsat, 'amount'),
+    maxFeeMsat: canonicalUnsigned(fields.maxFeeMsat, 'maximum fee'), providerIdentity: required(fields.providerIdentity, 'provider identity'),
+    providerConfigurationDigest: digest(fields.providerConfigurationDigest, 'provider configuration'), idempotencyDigest: digest(fields.idempotencyDigest, 'idempotency'),
+  });
+}
+export function createLnurlPaymentArtifact(fields: { lnurl: string; params: LnurlPayParams; network: Network; amountMsat: string; maxFeeMsat: string; providerIdentity: string; providerConfigurationDigest: string; idempotencyDigest: string }): LnurlPaymentArtifact {
+  return Object.freeze({
+    kind: 'conxius.wallet.lnurl-payment.v1', operation: 'pay-lnurl', chain: 'bitcoin', layer: 'lightning', network: fields.network,
+    lnurlDigest: digestText('conxius.wallet.lnurl.v1', required(fields.lnurl, 'LNURL')), callbackDigest: digestText('conxius.wallet.lnurl-callback.v1', required(fields.params.callback, 'LNURL callback')),
+    metadataDigest: digestText('conxius.wallet.lnurl-metadata.v1', fields.params.metadata), amountMsat: canonicalUnsigned(fields.amountMsat, 'amount'),
+    minSendableMsat: canonicalUnsigned(String(fields.params.minSendable), 'minimum amount'), maxSendableMsat: canonicalUnsigned(String(fields.params.maxSendable), 'maximum amount'),
+    maxFeeMsat: canonicalUnsigned(fields.maxFeeMsat, 'maximum fee'), providerIdentity: required(fields.providerIdentity, 'provider identity'),
+    providerConfigurationDigest: digest(fields.providerConfigurationDigest, 'provider configuration'), idempotencyDigest: digest(fields.idempotencyDigest, 'idempotency'),
+  });
+}
+/** A preimage is never returned without qualified receipt and payment-hash evidence. */
+export async function payLightningInvoice(request: LightningInvoicePaymentRequest): Promise<ValueOperationExecutionOutcome> {
+  return knownUnsupportedValueOperation(request, { artifactKind: 'conxius.wallet.lightning-invoice-payment.v1', operationType: 'pay-lightning-invoice', layer: 'lightning', chain: 'bitcoin' });
+}
+export async function payLnurl(request: LnurlPaymentRequest): Promise<ValueOperationExecutionOutcome> {
+  return knownUnsupportedValueOperation(request, { artifactKind: 'conxius.wallet.lnurl-payment.v1', operationType: 'pay-lnurl', layer: 'lightning', chain: 'bitcoin' });
 }
 
 /**
@@ -117,18 +135,6 @@ export type LightningPaymentState =
  * SRL-7: Failure Taxonomy
  */
 export type LightningFailureClass = 'PERMANENT' | 'TRANSIENT' | 'INDETERMINATE';
-
-export interface LightningPaymentIntent {
-  id: string;
-  idempotencyKey: string;
-  fingerprint: string;
-  state: LightningPaymentState;
-  failureClass?: LightningFailureClass;
-  reasonCode?: string;
-  attemptNo: number;
-  occurredAt: number;
-  terminalOutcome?: any;
-}
 
 /**
  * Validates state transition according to SRL-1 invariants.
@@ -157,35 +163,6 @@ export function isValidPaymentTransition(current: LightningPaymentState, next: L
 
   // Only allow moving forward in the order
   return nextIndex > currentIndex;
-}
-
-/**
- * SRL-2: Idempotency & Conflict Store (Simulation)
- * NOTE: In production, this must be persisted to encrypted local storage (Room/SQLCipher).
- */
-const paymentIntentStore = new Map<string, LightningPaymentIntent>();
-
-export function getPaymentIntent(idempotencyKey: string): LightningPaymentIntent | undefined {
-  return paymentIntentStore.get(idempotencyKey);
-}
-
-export function savePaymentIntent(intent: LightningPaymentIntent): void {
-  paymentIntentStore.set(intent.idempotencyKey, intent);
-}
-
-/**
- * SRL-2: Idempotency Check with conflict detection.
- * Returns existing intent if fingerprint matches, otherwise throws 409 conflict.
- */
-export function checkIdempotency(idempotencyKey: string, fingerprint: string): LightningPaymentIntent | null {
-  const existing = getPaymentIntent(idempotencyKey);
-  if (existing) {
-    if (existing.fingerprint !== fingerprint) {
-      throw new Error('409 Conflict: Idempotency key already used with different fingerprint');
-    }
-    return existing;
-  }
-  return null;
 }
 
 /**

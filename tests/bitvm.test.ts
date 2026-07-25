@@ -10,13 +10,7 @@ import {
     validateBitVmProofEnvelope,
     verifyBitVmProof,
 } from '../services/bitvm';
-import { signAuthorizedValueOperation } from '../services/app-private/value-operation-signer';
-
-vi.mock('../services/app-private/value-operation-signer', () => ({
-    signAuthorizedValueOperation: vi.fn(),
-}));
-
-const signer = vi.mocked(signAuthorizedValueOperation);
+const signer = vi.fn();
 
 const canonicalEnvelope: BitVmProofEnvelope = {
     schemaVersion: BITVM_PROOF_SCHEMA_VERSION,

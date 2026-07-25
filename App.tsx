@@ -42,7 +42,7 @@ import Marketplace from './components/Marketplace';
 import Studio from './components/Studio';
 import SatoshiAIChat from './components/SatoshiAIChat';
 import ErrorBoundary from './components/ErrorBoundary';
-import SignLoginMessageModal from './components/SignLoginMessageModal';
+import ValueOperationAuthorizationModal from './components/ValueOperationAuthorizationModal';
 import ToastContainer from './components/Toast';
 
 import { AppContext, initialAppState } from './context';
@@ -50,11 +50,10 @@ import { getEnclaveBlob, persistState, removeEnclaveBlob, STORAGE_KEY } from './
 import { getTranslation } from './services/i18n';
 import { AppState, WalletConfig, AppMode, Asset, SilentPaymentScanOptions, SilentPaymentScanState, SilentPaymentUtxo } from './types';
 import {
-  ValueOperationOutcome,
-  ValueOperationRequest,
-  ValueOperationAuthorizer,
-} from './services/value-operation';
-import { createAppPrivateValueOperationAuthority } from './services/app-private/value-operation-authority';
+  type PreparedValueOperationAuthorizationRequest,
+  type ValueOperationAuthorizationRequest,
+} from './services/value-operations';
+import { createValueOperationAuthorizationQueue } from './services/value-operation-authorization-queue';
 import { cancelSilentPaymentScan, dedupeSilentPaymentUtxos, getSilentPaymentScanStatus, scanForSilentPayments } from './services/silent-payments';
 
 const BOOT_SEQUENCE = [
@@ -107,13 +106,17 @@ const App: React.FC = () => {
   const [bootStep, setBootStep] = useState(0);
   const [enclaveExists, setEnclaveExists] = useState(false);
   const [toasts, setToasts] = useState<any[]>([]);
-  const [pendingValueOperation, setPendingValueOperation] = useState<{
-    request: ValueOperationRequest;
-    resolve: (outcome: ValueOperationOutcome) => void;
-  } | null>(null);
+  const [pendingValueOperation, setPendingValueOperation] = useState<PreparedValueOperationAuthorizationRequest | null>(null);
+  const valueOperationQueueRef = useRef<ReturnType<typeof createValueOperationAuthorizationQueue> | null>(null);
+  if (valueOperationQueueRef.current == null) {
+    valueOperationQueueRef.current = createValueOperationAuthorizationQueue(setPendingValueOperation);
+  }
+
+  useEffect(() => () => {
+    valueOperationQueueRef.current?.dispose();
+  }, []);
 
   const currentPinRef = useRef<string | null>(null);
-  const [valueOperationAuthority] = useState(() => createAppPrivateValueOperationAuthority(STORAGE_KEY));
 
   useEffect(() => {
     async function checkEnclave() {
@@ -262,22 +265,12 @@ const App: React.FC = () => {
 
   const removeToast = (id: string) => setToasts((prev: any) => prev.filter((t: any) => t.id !== id));
 
-  const authorizeValueOperation: ValueOperationAuthorizer = Object.assign(
-    async (request: ValueOperationRequest): Promise<ValueOperationOutcome> => new Promise<ValueOperationOutcome>((resolve) => {
-      setPendingValueOperation({ request, resolve });
-    }),
-    { consumer: valueOperationAuthority.consumer },
-  );
+  const requestValueOperationAuthorization = async (request: ValueOperationAuthorizationRequest) => {
+    return valueOperationQueueRef.current!.enqueue(request);
+  };
 
-  const completeValueOperation = async (userConfirmed: boolean) => {
-    const pending = pendingValueOperation;
-    if (!pending) return;
-    setPendingValueOperation(null);
-
-    const outcome = userConfirmed
-      ? await valueOperationAuthority.confirm(pending.request)
-      : valueOperationAuthority.reject(pending.request);
-    pending.resolve(outcome);
+  const finishValueOperation = async (confirmation: 'confirmed' | 'cancelled') => {
+    await valueOperationQueueRef.current!.completeActive(confirmation);
   };
 
   const setWalletConfig = async (config: WalletConfig, pin?: string) => {
@@ -387,7 +380,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <AppContext.Provider value={{ state: state as any, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify: notifyUser, authorizeValueOperation, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, scanSilentPayments, cancelSilentPaymentScan: cancelAppSilentPaymentScan, getWormholeSigner }}>
+    <AppContext.Provider value={{ state: state as any, setPrivacyMode, updateFees, toggleGateway, setMainnetLive, setWalletConfig, updateAssets, claimBounty, resetEnclave, setLanguage, notify: notifyUser, requestValueOperationAuthorization, lockWallet, setNetwork, setMode, setLnBackend, setSecurity, setAiConfig, setCustomNodes, setRpcStrategy, scanSilentPayments, cancelSilentPaymentScan: cancelAppSilentPaymentScan, getWormholeSigner }}>
       <div className={`flex bg-ivory text-brand-deep min-h-screen selection:bg-accent-earth/30 overflow-hidden`}>
         <div className="hidden md:block">
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -437,10 +430,10 @@ const App: React.FC = () => {
           {activeTab !== 'menu' && <SatoshiAIChat />}
 
           {pendingValueOperation && (
-            <SignLoginMessageModal
-                message={pendingValueOperation.request.description}
-                onConfirm={() => void completeValueOperation(true)}
-                onCancel={() => void completeValueOperation(false)}
+            <ValueOperationAuthorizationModal
+                request={pendingValueOperation}
+                onConfirm={() => void finishValueOperation('confirmed')}
+                onCancel={() => void finishValueOperation('cancelled')}
             />
           )}
           <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />

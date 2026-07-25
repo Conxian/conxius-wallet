@@ -14,11 +14,41 @@ and compatibility items must be reviewed before promotion to `main`.
 
 The [CON-1544 KeyMint / StrongBox and Play Integrity qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md)
 is the authority for the Android attestation boundary. Client collection and
-request binding are implemented. The wallet-side centralized value-operation
-gate is documented in the
-[CON-1546 boundary report](../reports/CON_1546_VALUE_OPERATION_BOUNDARY.md);
-real-device evidence, backend verification, durable replay, protocol/provider
-qualification, and release acceptance remain pending.
+request binding are implemented; real-device evidence, backend verification,
+authoritative value-operation decisions, and release acceptance remain pending.
+
+### Wallet value-operation containment
+
+**Completed wallet-local scope — fail-closed containment; production execution
+unsupported:**
+
+- Versioned canonical envelope and domain-separated digest vectors in
+  `services/value-operation-gate.ts`.
+- One application gate, typed App/context authorization queue, exact artifact
+  binding, native-only gate-bound PSBT signing, typed adapter outcomes, and
+  quarantine/removal of reviewed synthetic or direct execution paths.
+- Reviewed migration coverage across Dashboard, PaymentPortal, NTTBridge, Ark,
+  RGB, StateChain, Maven, Taproot Assets, Monetization, Wormhole/NTT,
+  Lightning/backends, swaps, DLC, PayJoin/CoinJoin, protocol raw broadcast/
+  verification, merchant fallbacks, seed-based PSBT helpers, raw enclave/
+  Breez/BDK bypasses, and Marketplace preview behavior.
+
+**Pending authoritative enablement:**
+
+- Replace the production `unsupported_provider` verifier only with a reviewed
+  external verifier that binds authoritative provider evidence to the exact
+  canonical envelope.
+- Qualify provider/hardware custody and operations, roots/collateral/revocation,
+  trusted time, durable distributed replay, and provider receipts/finality.
+- Complete production-like integration, web/E2E/Android validation, staged
+  rollout and outage controls, independent security review, release acceptance,
+  and COO approval before promotion to `main`.
+
+The focused status and non-goal matrix are recorded in
+[`ISSUE_444_VALUE_OPERATION_GATE_CONTAINMENT.md`](../reports/ISSUE_444_VALUE_OPERATION_GATE_CONTAINMENT.md).
+SDK canonical rail/trust/replay work, CON-1517/CON-1543, provider operations,
+and CON-1512 are dependencies or adjacent tracks, not completed by this wallet
+containment change.
 
 ### Bitcoin fee-estimation alignment
 

@@ -42,9 +42,8 @@ export async function openFeature(page: Page, desktopLabel: string, mobileLabel:
 }
 
 /**
-* NTTBridge's supported web persistence contract. The component restores a
-* pending transfer from these keys on mount; tests use this documented
-* fixture instead of inventing a non-existent "in transit" UI state.
+* Legacy NTT persistence keys. The bridge clears these unbound identifiers on
+* mount so they cannot restore synthetic pending or completed transfer state.
 */
 export const bridgePersistenceKeys = {
   transaction: 'PENDING_NTT_TX',

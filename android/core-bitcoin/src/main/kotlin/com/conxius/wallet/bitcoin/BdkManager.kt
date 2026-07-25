@@ -1,6 +1,5 @@
 package com.conxius.wallet.bitcoin
 
-import com.conxius.wallet.crypto.EphemeralSeed
 import org.bitcoindevkit.*
 
 class BdkManager(private val network: Network = Network.BITCOIN) {
@@ -67,30 +66,6 @@ class BdkManager(private val network: Network = Network.BITCOIN) {
             initializeDescriptors(external, internal, proxyUrl)
         } catch (e: Exception) {
             throw e
-        }
-    }
-
-    fun signPsbt(ephemeralSeed: EphemeralSeed, psbtBase64: String): String {
-        val currentWallet = wallet ?: throw IllegalStateException("Wallet not initialized")
-        val psbt = Psbt(psbtBase64)
-
-        return ephemeralSeed.use {
-            val finalized = currentWallet.sign(
-                psbt,
-                SignOptions(
-                    trustWitnessUtxo = false,
-                    assumeHeight = null,
-                    allowAllSighashes = false,
-                    tryFinalize = true,
-                    signWithTapInternalKey = true,
-                    allowGrinding = true,
-                ),
-            )
-            if (finalized) {
-                psbt.serialize()
-            } else {
-                throw Exception("Failed to sign PSBT")
-            }
         }
     }
 

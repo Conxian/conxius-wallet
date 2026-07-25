@@ -12,7 +12,7 @@ const mockSigner = {
 };
 
 // Mocking the service to ensure the Conclave Mock is used
-vi.mock('../services/app-private/value-operation-signer', () => ({
+vi.mock('../services/signer', () => ({
   SignerService: {
     getInstance: () => mockSigner,
   },
