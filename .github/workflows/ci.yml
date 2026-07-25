@@ -282,6 +282,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Validate Android toolchain matrix
+        run: node scripts/ci/check_android_toolchain_matrix.mjs
       - name: Validate silent-payment native build contract
         run: node scripts/ci/validate_silent_payments_native_build.mjs
       - name: Validate release version and derive Android version code
