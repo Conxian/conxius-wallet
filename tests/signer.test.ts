@@ -3,6 +3,7 @@ import {
   deriveSovereignRoots, 
   signBip322Message, 
   requestEnclaveSignature,
+  requestNonValueMessageSignature,
   parseBip322Message,
   SignRequest 
 } from '../services/signer';
@@ -202,15 +203,31 @@ describe('signer service', () => {
       expect(derivePathSpy).not.toHaveBeenCalled();
     });
 
-    it('should throw error when master seed is missing', async () => {
+    it('blocks legacy PSBT signing before native or worker execution', async () => {
       const request: SignRequest = {
         type: 'psbt',
         layer: 'Mainnet',
-        payload: { test: 'data' },
+        payload: { psbt: 'unsigned-psbt' },
         description: 'Test transaction'
       };
+      const derivePathSpy = vi.spyOn(workerManager, 'derivePath');
 
-      await expect(requestEnclaveSignature(request, undefined as any)).rejects.toThrow('Seed required for fallback signer');
+      await expect(requestEnclaveSignature(request, 'vault')).rejects.toThrow('centralized value-operation gate');
+      expect(signNative).not.toHaveBeenCalled();
+      expect(derivePathSpy).not.toHaveBeenCalled();
+    });
+
+    it('blocks an as-any PSBT masquerading through the non-value API before execution', async () => {
+      const derivePathSpy = vi.spyOn(workerManager, 'derivePath');
+      await expect(requestNonValueMessageSignature({
+        intentClass: 'non-value-message',
+        type: 'message',
+        layer: 'Mainnet',
+        payload: { message: 'login', nested: { psbt: 'unsigned-psbt' } },
+        description: 'Masqueraded value request',
+      } as any, 'vault')).rejects.toThrow('message-compatible payloads only');
+      expect(signNative).not.toHaveBeenCalled();
+      expect(derivePathSpy).not.toHaveBeenCalled();
     });
 
     it('should simulate processing delay on web platform', async () => {
@@ -304,7 +321,7 @@ describe('signer service', () => {
 });
 
 describe('Enclave Layer Signing (Native)', () => {
-    it('should call signNative with correct network for RGB', async () => {
+    it('quarantines legacy RGB PSBT signing before native execution', async () => {
       const { signNative } = await import('../services/enclave-storage');
       const request: SignRequest = {
         type: 'psbt',
@@ -321,15 +338,11 @@ describe('Enclave Layer Signing (Native)', () => {
       // Mock signNative to return success
       (signNative as any).mockResolvedValue({ signature: 'sig', pubkey: 'pub' });
 
-      await requestEnclaveSignature(request, 'vault');
-
-      expect(signNative).toHaveBeenCalledWith(expect.objectContaining({
-        network: 'rgb',
-        path: "m/86'/0'/0'/0/0"
-      }));
+      await expect(requestEnclaveSignature(request, 'vault')).rejects.toThrow('centralized value-operation gate');
+      expect(signNative).not.toHaveBeenCalled();
     });
 
-    it('should call signNative with sequential path for StateChain', async () => {
+    it('quarantines legacy StateChain PSBT signing before native execution', async () => {
       const { signNative } = await import('../services/enclave-storage');
       const request: SignRequest = {
         type: 'psbt',
@@ -342,11 +355,7 @@ describe('Enclave Layer Signing (Native)', () => {
       (Capacitor.isNativePlatform as any).mockReturnValue(true);
       (signNative as any).mockResolvedValue({ signature: 'sig', pubkey: 'pub' });
 
-      await requestEnclaveSignature(request, 'vault');
-
-      expect(signNative).toHaveBeenCalledWith(expect.objectContaining({
-        network: 'statechain',
-        path: "m/84'/0'/0'/2/5"
-      }));
+      await expect(requestEnclaveSignature(request, 'vault')).rejects.toThrow('centralized value-operation gate');
+      expect(signNative).not.toHaveBeenCalled();
     });
 });

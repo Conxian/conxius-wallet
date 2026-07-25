@@ -30,6 +30,7 @@ import {
   unavailableValueOperationEvidence,
   valueOperationOutcomeMessage,
 } from '../services/value-operations';
+import { parseSatoshiAmount } from '../services/bitcoin-amount';
 import AssetDetailModal from './AssetDetailModal';
 import UTXOManager from './UTXOManager';
 import SilentPayments from './SilentPayments';
@@ -59,6 +60,13 @@ const Dashboard: React.FC = () => {
   const ethAddress = "0xCXN...root";
   const taprootAddress = "bc1p...root";
   const network = state.network;
+  const parsedSendAmountSats = (() => {
+    try {
+      return parseSatoshiAmount(sendAmount);
+    } catch {
+      return null;
+    }
+  })();
 
   const handleQrError = () => setQrError(true);
 
@@ -238,7 +246,7 @@ const Dashboard: React.FC = () => {
                       </div>
                       <button
                         onClick={() => setSendStep('sign')}
-                        disabled={!sendAddress || !sendAmount}
+                        disabled={!sendAddress || parsedSendAmountSats === null}
                         className="w-full bg-brand-deep text-white font-black py-5 rounded-2xl uppercase tracking-widest hover:bg-ivory transition-all disabled:opacity-50 shadow-lg"
                       >
                         Review Transfer
@@ -255,14 +263,14 @@ const Dashboard: React.FC = () => {
                           </div>
                           <div className="flex justify-between text-xs">
                               <span className="text-brand-earth font-bold">Amount</span>
-                              <span className="font-mono text-accent-earth font-bold">{parseInt(sendAmount).toLocaleString()} sats</span>
+                              <span className="font-mono text-accent-earth font-bold">{parsedSendAmountSats?.toLocaleString() ?? 'Invalid'} sats</span>
                           </div>
                       </div>
                       <button 
                         onClick={async () => {
                             setIsSigning(true);
                             try {
-                                const amountSats = sendAmount.trim();
+                                const amountSats = parseSatoshiAmount(sendAmount).toString();
                                 const intent = createDeterministicValueOperationIntent({
                                   operationType: 'bitcoin-transfer',
                                   chain: 'bitcoin',

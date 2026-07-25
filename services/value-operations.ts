@@ -4,6 +4,7 @@ import {
     digestValueOperationIntent,
     ValueOperationAuthorizationError,
     type AuthorizedValueOperation,
+    type CanonicalObject,
     type CanonicalValue,
     type ProtocolKeyCustody,
     type ProviderEvidenceInput,
@@ -22,6 +23,11 @@ export interface ValueOperationDisplaySummary {
     readonly destination?: string;
     readonly network: string;
     readonly purpose: string;
+}
+
+export interface BitcoinPsbtOperationPayload extends CanonicalObject {
+    readonly kind: 'bitcoin-psbt';
+    readonly psbt: string;
 }
 
 export interface ValueOperationAuthorizationRequest {
@@ -56,6 +62,16 @@ export function prepareValueOperationAuthorization(
 ): PreparedValueOperationAuthorizationRequest {
     const intentDigest = digestValueOperationIntent(request.intent);
     return Object.freeze({ ...request, intentDigest });
+}
+
+export function createBitcoinPsbtOperationPayload(psbt: string): BitcoinPsbtOperationPayload {
+    const normalized = psbt.trim();
+    if (!normalized || /\s/.test(normalized)) throw new Error('Invalid PSBT artifact.');
+    return Object.freeze({ kind: 'bitcoin-psbt', psbt: normalized });
+}
+
+export function digestBitcoinPsbtOperation(psbt: string): string {
+    return digestCanonicalPayload(createBitcoinPsbtOperationPayload(psbt));
 }
 
 export async function requestValueOperationAuthorization(

@@ -39,6 +39,63 @@ export interface NonValueMessageSignRequest {
   readonly description: string;
 }
 
+export class LegacyValueSigningBlockedError extends Error {
+  readonly code = 'legacy_value_signing_blocked';
+
+  constructor(message = 'Value signing is blocked at the legacy signer. Use the centralized value-operation gate.') {
+    super(message);
+    this.name = 'LegacyValueSigningBlockedError';
+  }
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function containsValueOperationShape(value: unknown, seen = new Set<object>()): boolean {
+  if (value === null || typeof value !== 'object') return false;
+  if (seen.has(value)) return false;
+  seen.add(value);
+  if (Array.isArray(value)) return value.some((entry) => containsValueOperationShape(entry, seen));
+  if (!isPlainRecord(value)) return true;
+  const keys = Object.keys(value);
+  if (keys.some((key) => key.toLowerCase() === 'psbt')) return true;
+  if (keys.includes('operationType') || keys.includes('canonicalOperationDigest') || keys.includes('broadcastReadyHex')) {
+    return true;
+  }
+  return Object.values(value).some((entry) => containsValueOperationShape(entry, seen));
+}
+
+function assertNonValueMessageRequest(request: unknown): asserts request is NonValueMessageSignRequest {
+  if (!isPlainRecord(request)) throw new LegacyValueSigningBlockedError('Malformed non-value signing request.');
+  const keys = Object.keys(request).sort();
+  const expected = ['description', 'intentClass', 'layer', 'payload', 'type'];
+  if (keys.length !== expected.length || keys.some((key, index) => key !== expected[index])) {
+    throw new LegacyValueSigningBlockedError('Malformed non-value signing request.');
+  }
+  if (
+    request.intentClass !== 'non-value-message'
+    || (request.type !== 'message' && request.type !== 'bip322')
+    || typeof request.layer !== 'string' || request.layer.length === 0
+    || typeof request.description !== 'string' || request.description.length === 0
+    || containsValueOperationShape(request.payload)
+  ) {
+    throw new LegacyValueSigningBlockedError('Non-value signing accepts message-compatible payloads only.');
+  }
+  const payload = request.payload;
+  if (typeof payload === 'string') return;
+  if (!isPlainRecord(payload)) throw new LegacyValueSigningBlockedError('Non-value signing accepts message-compatible payloads only.');
+  const payloadKeys = Object.keys(payload);
+  if (payloadKeys.length !== 1 || !['hash', 'message'].includes(payloadKeys[0]) || typeof payload[payloadKeys[0]] !== 'string') {
+    throw new LegacyValueSigningBlockedError('Non-value signing accepts a string, message, or 32-byte hash payload only.');
+  }
+  if (payloadKeys[0] === 'hash' && !/^[0-9a-f]{64}$/i.test(payload.hash as string)) {
+    throw new LegacyValueSigningBlockedError('Non-value hash payload must be exactly 32 bytes.');
+  }
+}
+
 /**
  * High-level signing interface. Routes to Native Enclave (StrongBox)
  * or secure TypeScript worker based on environment.
@@ -47,6 +104,7 @@ export const requestEnclaveSignature = async (
   request: SignRequest,
   seedOrVault: string | Uint8Array
 ): Promise<SignResult> => {
+  if (!request || request.type === 'psbt') throw new LegacyValueSigningBlockedError();
   console.info(`[Signer] Requesting signature for layer: ${request.layer}`);
 
   if (Capacitor.isNativePlatform()) {
@@ -241,7 +299,10 @@ export const requestEnclaveSignature = async (
 export const requestNonValueMessageSignature = async (
   request: NonValueMessageSignRequest,
   seedOrVault: string | Uint8Array,
-): Promise<SignResult> => requestEnclaveSignature(request, seedOrVault);
+): Promise<SignResult> => {
+  assertNonValueMessageRequest(request);
+  return requestEnclaveSignature(request, seedOrVault);
+};
 
 /**
  * Signs a BIP-322 message (Used by tests and login flows)

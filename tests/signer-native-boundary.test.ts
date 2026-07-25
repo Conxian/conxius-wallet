@@ -84,7 +84,7 @@ describe('native signer security boundary', () => {
     expect(mocks.derivePath).not.toHaveBeenCalled();
   });
 
-  it('fails closed when native batch signing rejects without finalizing or using the worker', async () => {
+  it('blocks legacy PSBT requests before native batch signing or worker use', async () => {
     mocks.signBatch.mockRejectedValueOnce(new Error('Native batch signing failed'));
     const batchRequest: SignRequest = {
       type: 'psbt',
@@ -93,10 +93,10 @@ describe('native signer security boundary', () => {
       description: 'Native batch boundary regression',
     };
 
-    await expect(requestEnclaveSignature(batchRequest, 'vault-id')).rejects.toThrow('Native batch signing failed');
+    await expect(requestEnclaveSignature(batchRequest, 'vault-id')).rejects.toThrow('centralized value-operation gate');
 
-    expect(mocks.signTransaction).toHaveBeenCalledOnce();
-    expect(mocks.signBatch).toHaveBeenCalledOnce();
+    expect(mocks.signTransaction).not.toHaveBeenCalled();
+    expect(mocks.signBatch).not.toHaveBeenCalled();
     expect(mocks.finalizePsbtWithSigs).not.toHaveBeenCalled();
     expect(mocks.derivePath).not.toHaveBeenCalled();
   });
