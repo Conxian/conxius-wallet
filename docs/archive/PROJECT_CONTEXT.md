@@ -31,6 +31,33 @@ Conxius Wallet is a sovereign-first mobile wallet leveraging a Bridged Sovereign
 ---
 *Updated: June 22, 2026*
 
+## Session Notes (2026-07-25 — issue #444 value-operation containment)
+
+- **Status:** **Implemented — fail-closed containment; production execution
+  unsupported.** The wallet now has one application gate, a typed authorization
+  queue, exact authorization/artifact binding, a native-only gate-bound PSBT
+  signer, typed adapter outcomes, and negative source/runtime regressions.
+- The canonical implementation surfaces are
+  `services/value-operation-gate.ts`,
+  `services/value-operation-evidence-verifier.ts`,
+  `services/value-operations.ts`,
+  `services/value-operation-result.ts`,
+  `services/value-operation-authorization-queue.ts`,
+  `services/value-signer.ts`, and `services/bitcoin-broadcast.ts`.
+- The concrete production evidence verifier always returns
+  `unsupported_provider`. User confirmation, native selection, local/debug
+  status, or synthetic data cannot authorize a value operation. Reviewed
+  sign/broadcast/settlement paths return typed rejected, unsupported, or
+  quarantined outcomes before side effects.
+- Stage consumption is client-process-local containment only. Authoritative
+  provider verification, trusted time, durable distributed replay prevention,
+  provider receipts/finality, hardware/provider qualification, rollout, and
+  independent release acceptance remain open. See the
+  [issue #444 evidence record](../reports/ISSUE_444_VALUE_OPERATION_GATE_CONTAINMENT.md).
+- This wallet change does not close CON-1512/CON-1517, CON-1543, provider
+  operations, or the SDK canonical rail/trust/replay work. P0 promotion to
+  `main` requires COO review.
+
 ## Session Notes (2026-07-22 — CON-1544 boundary)
 
 - PR #441 merged the wallet-side KeyMint policy/evidence/canonical-binding
@@ -39,10 +66,9 @@ Conxius Wallet is a sovereign-first mobile wallet leveraging a Bridged Sovereign
 - The [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md)
   records the implemented boundary, the legacy AES StrongBox/TEE fallback, the
   real-device/backend qualification matrix, and the P0 exit gate.
-- PR #443 remains open and is not represented as delivered. Backend
-  verification, real-device evidence, durable freshness/replay, centralized
-  value-operation enforcement, rollout/runbook controls, and independent review
-  remain pending.
+- PR #443 is merged. Backend verification, real-device evidence, durable
+  freshness/replay, authoritative value-operation decisions, rollout/runbook
+  controls, and independent review remain pending.
 
 ## Session Notes (2026-06-30 — COO Alignment)
 - **Full Maintenance Sync**: Pulled latest main, verified clean working tree.

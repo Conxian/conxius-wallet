@@ -1,116 +1,48 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { liftToArk, forfeitVtxo, syncVtxos, VTXO } from '../services/ark';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { authorizeAdapterArtifact, forgedAuthorization } from './value-operation-adapter-test-helpers';
+import {
+    createArkForfeitArtifact,
+    createArkRedeemArtifact,
+    createLiftPsbt,
+    forfeitVtxo,
+    redeemVtxo,
+    type VTXO,
+} from '../services/ark';
 
-// Mock signer
-vi.mock('../services/signer', () => ({
-    requestEnclaveSignature: vi.fn().mockResolvedValue({ signature: 'mock_sig', pubkey: 'mock_pub' })
-}));
+const fetchMock = vi.fn();
+vi.stubGlobal('fetch', fetchMock);
+const vtxo: VTXO = {
+    txid: '11'.repeat(32), vout: 0, amount: 100000, ownerPubkey: 'owner-key', serverPubkey: 'server-key',
+    roundTxid: '22'.repeat(32), expiryHeight: 900000, status: 'available',
+};
 
-// Mock fetch globally
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+beforeEach(() => { fetchMock.mockReset(); vi.clearAllMocks(); });
 
-beforeEach(() => {
-    vi.clearAllMocks();
-    mockFetch.mockReset();
-});
-
-describe('Ark Service', () => {
-    it('should lift amount to Ark VTXO (Legacy Shim)', async () => {
-        const vtxo = await liftToArk(100000, 'bc1qtest', 'asp:main');
-        expect(vtxo.id).toContain('vtxo:');
-        expect(vtxo.amount).toBe(100000);
-        expect(vtxo.status).toBe('lifting');
+describe('Ark gate-bound production adapters', () => {
+    it('returns unsupported for exact forfeit and redeem artifacts without fetching or synthetic success', async () => {
+        const forfeitArtifact = createArkForfeitArtifact(vtxo, 'bc1qrecipient', 'mainnet');
+        const redeemArtifact = createArkRedeemArtifact(vtxo, 'mainnet');
+        const forfeit = await forfeitVtxo({ authorization: await authorizeAdapterArtifact(forfeitArtifact), artifact: forfeitArtifact });
+        const redeem = await redeemVtxo({ authorization: await authorizeAdapterArtifact(redeemArtifact), artifact: redeemArtifact });
+        expect(forfeit).toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        expect(redeem).toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        expect(JSON.stringify([forfeit, redeem])).not.toContain(vtxo.txid);
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('should forfeit a VTXO successfully via API', async () => {
-        const mockVtxo: VTXO = {
-            txid: 'txid123',
-            vout: 0,
-            amount: 100000,
-            ownerPubkey: 'pubkey1',
-            serverPubkey: 'serverpubkey1',
-            roundTxid: 'round1',
-            expiryHeight: 100,
-            status: 'available'
-        };
-
-        // Mock successful API response
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({ txid: 'txid_real_network_123' })
-        });
-
-        const txid = await forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', 'mock_vault');
-        expect(txid).toBe('txid_real_network_123');
+    it('rejects mismatched and forged requests', async () => {
+        const artifact = createArkForfeitArtifact(vtxo, 'bc1qrecipient', 'mainnet');
+        const authorization = await authorizeAdapterArtifact(artifact);
+        await expect(forfeitVtxo({ authorization, artifact: { ...artifact, recipient: 'bc1qswapped' } }))
+            .resolves.toMatchObject({ kind: 'rejected', reason: 'artifact_digest_mismatch' });
+        await expect(forfeitVtxo({ authorization: forgedAuthorization(), artifact }))
+            .resolves.toMatchObject({ kind: 'rejected' });
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('should fallback to simulation if forfeit API fails', async () => {
-        const mockVtxo: VTXO = {
-            txid: 'txid123',
-            vout: 0,
-            amount: 100000,
-            ownerPubkey: 'pubkey1',
-            serverPubkey: 'serverpubkey1',
-            roundTxid: 'round1',
-            expiryHeight: 100,
-            status: 'available'
-        };
-
-        // Mock persistent failure for all retries
-        mockFetch.mockRejectedValue(new Error('Network Error'));
-
-        const txid = await forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', 'mock_vault');
-        expect(txid).toContain('forfeit_tx_');
-    });
-
-    it('should sync VTXOs for an address', async () => {
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({
-                vtxos: [{
-                    txid: 'txid123',
-                    vout: 0,
-                    amount: 50000,
-                    ownerPubkey: 'pubkey1',
-                    serverPubkey: 'serverpubkey1',
-                    roundTxid: 'round1',
-                    expiryHeight: 100,
-                    status: 'available'
-                }]
-            })
-        });
-
-        const vtxos = await syncVtxos('bc1qtest', 'mainnet');
-        expect(vtxos.length).toBeGreaterThan(0);
-        expect(vtxos[0].status).toBe('available');
-    });
-});
-
-describe('Ark Redemption', () => {
-    it('should redeem a VTXO successfully', async () => {
-        const mockVtxo: VTXO = {
-            txid: 'txid_to_redeem',
-            vout: 0,
-            amount: 100000,
-            ownerPubkey: 'pubkey1',
-            serverPubkey: 'serverpubkey1',
-            roundTxid: 'round1',
-            expiryHeight: 100,
-            status: 'available'
-        };
-
-        // Mock requestEnclaveSignature is harder because it's imported.
-        // But we can mock it by mocking the module it comes from if needed.
-        // For now, let's just check if it calls the API.
-
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({ txid: 'redemption_tx_real' })
-        });
-
-        const { redeemVtxo } = await import('../services/ark');
-        const txid = await redeemVtxo(mockVtxo, 'mock_vault', 'mainnet');
-        expect(txid).toContain('redemption_tx_');
+    it('does not fabricate a boarding address when ASP data is unavailable', async () => {
+        fetchMock.mockRejectedValue(new Error('offline'));
+        await expect(createLiftPsbt({ amountSats: 1000, senderAddress: 'bc1qsender', senderPubkey: '02aa', network: 'mainnet' }))
+            .resolves.toEqual({ kind: 'unsupported', reason: 'qualified_asp_boarding_data_unavailable' });
     });
 });

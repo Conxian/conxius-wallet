@@ -26,7 +26,7 @@ import { fetchDLCEvents } from '../services/dlc';
 
 const DeFiDashboard: React.FC = () => {
   const context = useContext(AppContext);
-  const { state, authorizeSignature, notify } = context!;
+  const { state, notify } = context!;
   const { mode, assets } = state;
 
   const [activeTab, setActiveTab] = useState<'positions' | 'opportunities' | 'staking' | 'dlc'>('positions');
