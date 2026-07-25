@@ -23,7 +23,7 @@ describe('Ark Service', () => {
         expect(vtxo.status).toBe('lifting');
     });
 
-    it('should forfeit a VTXO successfully via API', async () => {
+    it('quarantines forfeit before signing or ASP broadcast without authoritative evidence', async () => {
         const mockVtxo: VTXO = {
             txid: 'txid123',
             vout: 0,
@@ -41,11 +41,12 @@ describe('Ark Service', () => {
             json: () => Promise.resolve({ txid: 'txid_real_network_123' })
         });
 
-        const txid = await forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', 'mock_vault');
-        expect(txid).toBe('txid_real_network_123');
+        await expect(forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', 'mock_vault'))
+            .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it('should fallback to simulation if forfeit API fails', async () => {
+    it('never falls back to a synthetic forfeit transaction ID', async () => {
         const mockVtxo: VTXO = {
             txid: 'txid123',
             vout: 0,
@@ -60,8 +61,9 @@ describe('Ark Service', () => {
         // Mock persistent failure for all retries
         mockFetch.mockRejectedValue(new Error('Network Error'));
 
-        const txid = await forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', 'mock_vault');
-        expect(txid).toContain('forfeit_tx_');
+        await expect(forfeitVtxo(mockVtxo, 'bc1qrecipient', 'mainnet', 'mock_vault'))
+            .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it('should sync VTXOs for an address', async () => {
@@ -88,7 +90,7 @@ describe('Ark Service', () => {
 });
 
 describe('Ark Redemption', () => {
-    it('should redeem a VTXO successfully', async () => {
+    it('quarantines redemption instead of returning a synthetic transaction ID', async () => {
         const mockVtxo: VTXO = {
             txid: 'txid_to_redeem',
             vout: 0,
@@ -110,7 +112,8 @@ describe('Ark Redemption', () => {
         });
 
         const { redeemVtxo } = await import('../services/ark');
-        const txid = await redeemVtxo(mockVtxo, 'mock_vault', 'mainnet');
-        expect(txid).toContain('redemption_tx_');
+        await expect(redeemVtxo(mockVtxo, 'mock_vault', 'mainnet'))
+            .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        expect(mockFetch).not.toHaveBeenCalled();
     });
 });

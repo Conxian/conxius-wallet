@@ -14,8 +14,11 @@ and compatibility items must be reviewed before promotion to `main`.
 
 The [CON-1544 KeyMint / StrongBox and Play Integrity qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md)
 is the authority for the Android attestation boundary. Client collection and
-request binding are implemented; real-device evidence, backend verification,
-centralized value-operation enforcement, and release acceptance remain pending.
+request binding are implemented. The wallet-side centralized value-operation
+gate is documented in the
+[CON-1546 boundary report](../reports/CON_1546_VALUE_OPERATION_BOUNDARY.md);
+real-device evidence, backend verification, durable replay, protocol/provider
+qualification, and release acceptance remain pending.
 
 ### Bitcoin fee-estimation alignment
 

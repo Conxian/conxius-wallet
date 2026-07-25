@@ -2,7 +2,12 @@ import * as bitcoin from 'bitcoinjs-lib';
 import { bech32m } from 'bech32';
 import { notificationService } from './notifications';
 import { getTransactionStatus } from './protocol';
-import { requestEnclaveSignature } from './signer';
+import {
+    createUnverifiedValueOperationRequest,
+    createValueOperationNonce,
+    executeValueOperation,
+    requireValueOperationSignature,
+} from './value-operation';
 
 export type RgbSchema = 'RGB20' | 'RGB21' | 'RGB25' | 'NIA';
 
@@ -145,35 +150,25 @@ export const createRgbTransfer = async (
     beneficiary: string,
     vault: string
 ): Promise<Consignment> => {
-    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'RGB Transfer', message: `Preparing consignment for ${amount} ${assetId.slice(0,8)}...` });
+    notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'RGB Transfer', message: `Preparing consignment for ${amount} ${assetId.slice(0,8)}...` });
 
     try {
         // 1. Prepare State Transition Hash
         const transitionHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(assetId + amount + beneficiary))).toString("hex");
 
         // 2. Request Enclave Signature (Taproot Tweak)
-        const signResult = await requestEnclaveSignature({
-            type: 'message',
-            layer: 'RGB',
-            payload: { hash: transitionHash },
-            description: `Transfer ${amount} RGB units to ${beneficiary.slice(0,12)}...`
-        }, vault);
+        requireValueOperationSignature(await executeValueOperation(
+            createUnverifiedValueOperationRequest({
+                operationType: 'transfer', chainLayer: 'RGB',
+                payload: { hash: transitionHash, assetId, amount, beneficiary },
+                network: 'mainnet', purpose: 'rgb.transfer', nonce: createValueOperationNonce(),
+                audience: 'conxius-wallet', keyIdentity: 'wallet.rgb.account-0',
+                algorithm: 'secp256k1-schnorr', signingType: 'message',
+                description: `Transfer ${amount} RGB units to ${beneficiary.slice(0,12)}...`,
+            }), vault, { userConfirmed: true },
+        ));
 
-        // 3. Construct Consignment
-        const consignment: Consignment = {
-            id: `consignment:${Date.now()}`,
-            assetId,
-            vouts: [0],
-            anchor: {
-                txid: 'pending_on_chain_txid',
-                vout: 0,
-                amount: 1000 // sats for anchor
-            },
-            witness: signResult.signature,
-            endpoints: ['https://storm.conxianlabs.com']
-        };
-
-        return consignment;
+        throw new Error('RGB_SETTLEMENT_UNSUPPORTED: no authoritative anchor transaction or consignment transport receipt is available');
 
     } catch (e: any) {
         notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'RGB', message: `RGB Transfer Failed: ${e.message}` });

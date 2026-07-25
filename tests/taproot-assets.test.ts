@@ -17,15 +17,14 @@ describe("Taproot Assets Service", () => {
         expect(assets[0].name).toBe("Citadel Credits");
     });
 
-    it("should initiate a transfer and call the enclave", async () => {
+    it("quarantines transfer and never derives a signature-shaped txid", async () => {
         const transfer = {
             assetId: "tap:123",
             amount: 100n,
             recipientAddr: "taproot_addr_abc"
         };
-        const txid = await transferTaprootAsset(transfer, "test_vault");
-
-        expect(txid).toContain("taproot_txid_");
-        expect(requestEnclaveSignature).toHaveBeenCalled();
+        await expect(transferTaprootAsset(transfer, "test_vault"))
+            .rejects.toThrow('MISSING_AUTHORITATIVE_EVIDENCE');
+        expect(requestEnclaveSignature).not.toHaveBeenCalled();
     });
 });

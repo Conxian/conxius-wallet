@@ -1,8 +1,13 @@
-import { requestEnclaveSignature } from './signer';
 import { notificationService } from './notifications';
 import { endpointsFor, fetchWithRetry } from './network';
 import { Network, Asset } from '../types';
 import * as bitcoin from 'bitcoinjs-lib';
+import {
+    createUnverifiedValueOperationRequest,
+    createValueOperationNonce,
+    executeValueOperation,
+    requireValueOperationSignature,
+} from './value-operation';
 
 export interface MavenAsset extends Asset {
     mavenId: string;
@@ -58,23 +63,26 @@ export const createMavenTransfer = async (
         const payload = {
             assetId,
             amount,
-            recipient,
-            timestamp: Date.now()
+            recipient
         };
 
         const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(JSON.stringify(payload)))).toString("hex");
 
         // 2. Request Enclave Signature
-        const signResult = await requestEnclaveSignature({
-            type: 'psbt',
-            layer: 'Maven',
-            payload: { hash: msgHash, ...payload },
-            description: `Maven Transfer: ${amount} units`
-        }, vault);
+        const signResult = requireValueOperationSignature(await executeValueOperation(
+            createUnverifiedValueOperationRequest({
+                operationType: 'transfer', chainLayer: 'Maven', payload: { hash: msgHash, ...payload },
+                network, purpose: 'maven.transfer', nonce: createValueOperationNonce(),
+                audience: 'conxius-wallet', keyIdentity: 'wallet.maven.account-0',
+                algorithm: 'secp256k1-ecdsa', signingType: 'psbt',
+                description: `Maven Transfer: ${amount} units`,
+            }), vault, { userConfirmed: true },
+        ));
 
         // 3. Broadcast to Maven Indexer/Sequencer
         const { MAVEN_API } = endpointsFor(network);
-        if (MAVEN_API) {
+        if (!MAVEN_API) throw new Error('MAVEN_TRANSFER_UNSUPPORTED: authoritative sequencer endpoint unavailable');
+        {
             const response = await fetchWithRetry(`${MAVEN_API}/v1/transfer`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -91,11 +99,10 @@ export const createMavenTransfer = async (
             }
 
             const data = await response.json();
+            if (typeof data.txid !== 'string' || !data.txid) throw new Error('Maven sequencer returned no authoritative transaction ID');
             notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'Maven Transfer', message: 'Transfer successful' });
             return data.txid;
         }
-
-        return "maven_sim_txid_" + Date.now();
 
     } catch (e: any) {
         notificationService.notify({ category: 'TRANSACTION', type: 'error', title: 'Maven Transfer', message: `Transfer failed: ${e.message}` });

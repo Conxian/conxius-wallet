@@ -1,21 +1,27 @@
 
-import { Signer, UnsignedTransaction, Chain, Network, ChainContext } from '@wormhole-foundation/sdk';
-import { SignRequest, SignResult } from './signer';
+import { UnsignedTransaction, Chain } from '@wormhole-foundation/sdk';
 import { BitcoinLayer } from '../types';
+import {
+  createUnverifiedValueOperationRequest,
+  createValueOperationNonce,
+  ValueOperationOutcome,
+  ValueOperationRequest,
+  valueOperationOutcomeMessage,
+} from './value-operation';
 
 /**
  * ConxiusWormholeSigner
- * Adapts the Conxius Secure Enclave (signer.ts) to the Wormhole SDK Signer interface.
+* Adapts Wormhole transaction requests to the wallet-owned value-operation gate.
  * 
- * This allows the Wormhole SDK to request signatures for transactions
- * which are then securely signed by the device's TEE/StrongBox via the App's authorization flow.
+* The gate remains fail-closed until wallet-owned authoritative evidence verification
+* and native signing are available; this class never falls back to browser signing.
  */
 export class ConxiusWormholeSigner {
   private _chain: Chain;
   private _address: string;
-  private _authCallback: (req: SignRequest) => Promise<SignResult>;
+  private _authCallback: (req: ValueOperationRequest) => Promise<ValueOperationOutcome>;
 
-  constructor(chain: Chain, address: string, authCallback: (req: SignRequest) => Promise<SignResult>) {
+  constructor(chain: Chain, address: string, authCallback: (req: ValueOperationRequest) => Promise<ValueOperationOutcome>) {
     this._chain = chain;
     this._address = address;
     this._authCallback = authCallback;
@@ -48,22 +54,25 @@ export class ConxiusWormholeSigner {
 
       // Request signature via AppContext authorization flow
       // This ensures biometrics/PIN are handled correctly by the central Enclave manager
-      const result = await this._authCallback({
-          type: 'psbt',
-          layer: layer as any, // Cast to match signer types
+      const result = await this._authCallback(createUnverifiedValueOperationRequest({
+          operationType: 'bridge',
+          chainLayer: layer,
           payload: transaction,
-          description: description || `Sign ${this._chain} Transaction`
-      });
+          network: 'mainnet',
+          purpose: 'wormhole.sign-transaction',
+          nonce: createValueOperationNonce(),
+          audience: 'wormhole-sdk',
+          keyIdentity: `wallet.wormhole.${chainName.toLowerCase()}`,
+          algorithm: chainName === 'Bitcoin' ? 'secp256k1-ecdsa' : 'secp256k1-ecdsa-recoverable',
+          signingType: 'psbt',
+          description: description || `Sign ${this._chain} Transaction`,
+      }));
 
-      // The SDK expects the signed transaction (often the signature or the signed RLP)
-      // If result.broadcastReadyHex is present, that's usually the full signed tx.
-      if (result.broadcastReadyHex) {
-        signed.push(result.broadcastReadyHex);
-      } else {
-        // If we only got a signature, we might need to combine it.
-        // For now, assume broadcastReadyHex is what we want if available.
-        signed.push(result.signature);
-      }
+      if (result.status !== 'allowed') throw new Error(valueOperationOutcomeMessage(result));
+
+      const broadcastReadyHex = result.signature?.broadcastReadyHex;
+      if (!broadcastReadyHex) throw new Error('Wormhole signing produced no authoritative signed transaction.');
+      signed.push(broadcastReadyHex);
     }
     return signed;
   }

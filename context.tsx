@@ -3,7 +3,7 @@ import { createContext } from 'react';
 import { AppState, WalletConfig, Asset, Network, AppMode, LnBackendConfig, SilentPaymentScanOptions } from './types';
 import { Language } from './services/i18n';
 import { ToastType } from './components/Toast';
-import { SignRequest, SignResult } from './services/signer';
+import { ValueOperationOutcome, ValueOperationRequest } from './services/value-operation';
 
 export const AppContext = createContext<{
   state: AppState & { language: Language };
@@ -17,7 +17,7 @@ export const AppContext = createContext<{
   resetEnclave: () => void;
   setLanguage: (lang: Language) => void;
   notify: (type: ToastType, message: string, title?: string) => void;
-  authorizeSignature: (request: SignRequest) => Promise<SignResult>;
+  authorizeValueOperation: (request: ValueOperationRequest) => Promise<ValueOperationOutcome>;
   lockWallet: () => void;
   setNetwork: (network: Network) => void;
   setMode: (mode: AppMode) => void;

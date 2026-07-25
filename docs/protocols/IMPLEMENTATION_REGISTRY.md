@@ -18,14 +18,14 @@ permalink: /docs/implementation-registry
 | **NIP-47 (NWC)** | ✅ PRODUCTION | Native NwcManager + TS event support. |
 | **DLC (Discreet Log)** | ✅ PRODUCTION | `core/dlc-orchestrator.clar` implemented. |
 | **sBTC Bridge** | ✅ PRODUCTION | Clarity 4.0 contract in `core/stacks-bridge.clar`. |
-| **Ark** | ✅ PRODUCTION | `core/ark-vutxo.clar` implemented, Kotlin ArkManager native. |
-| **StateChain** | ✅ PRODUCTION | Native StateChainManager + TS Simulation. |
-| **Maven** | ✅ PRODUCTION | Native MavenManager + TS AI Marketplace. |
+| **Ark** | 🟠 VALUE OPERATIONS QUARANTINED | Construction/discovery may remain available, but forfeit/redemption require the centralized native-only value gate and an authoritative ASP receipt. No synthetic transaction ID fallback remains. |
+| **StateChain** | 🟠 VALUE OPERATIONS QUARANTINED | Transfer/withdraw require the centralized native-only value gate and an authoritative coordinator receipt. Missing evidence or receipt fails closed. |
+| **Maven** | 🟠 VALUE OPERATIONS QUARANTINED | Discovery remains available; transfer requires the centralized native-only value gate and an authoritative sequencer receipt. |
 | **Liquid** | ✅ PRODUCTION | Native LiquidManager + TS Liquidjs support. |
 | **EVM (BOB/RSK)** | ✅ PRODUCTION | Native EvmManager + TS Ethers support. |
 | **Musig2** | ✅ PRODUCTION | Aligned with `@noble/curves`, native session management. |
 | **Stacks** | ✅ PRODUCTION | Native StacksManager + Stacks.js (TS). |
-| **RGB** | ✅ PRODUCTION | Native RgbManager (Stub) + AluVM Simulation (TS). |
+| **RGB** | 🟠 VALUE OPERATIONS QUARANTINED | Validation/draft logic is non-authoritative. Transfer signing and settlement require the centralized gate plus authoritative anchor/transport receipts; `pending_on_chain_txid` was removed. |
 | **BitVM2** | 🔬 RESEARCH / QUARANTINED | Typed proof-envelope validation only. No reviewed wallet verifier, segment backend, challenge source, or authoritative dispute signer exists. |
 | **Web5** | ✅ PRODUCTION | Native Web5Manager + Web5 API (TS). |
 | **Yield (Yield.xyz)** | ✅ PRODUCTION | Native Yield Manager + TS yield discovery. |
@@ -40,8 +40,8 @@ permalink: /docs/implementation-registry
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
 | **Ordinals / Runes** | ✅ PRODUCTION | Native inscription and transfer support via BDK. |
-| **RGB Assets** | ✅ PRODUCTION | Native RgbManager + ALU simulation (TS). |
-| **Taproot Assets** | ✅ PRODUCTION | Discovery and transfer logic (TS + Native Stub). |
+| **RGB Assets** | 🟠 VALUE OPERATIONS QUARANTINED | Discovery/validation only; transfer success is unavailable without authoritative evidence, anchor, and settlement receipts. |
+| **Taproot Assets** | 🟠 VALUE OPERATIONS QUARANTINED | Discovery remains available. Transfer cannot sign without authoritative evidence and remains unsupported until a real tapd receipt adapter exists. |
 
 ## IV. NATIVE ARCHITECTURE (PHASE 5)
 
@@ -51,7 +51,17 @@ permalink: /docs/implementation-registry
 | **Secure Enclave** | ✅ NATIVE | Android Keystore with StrongBox requested where supported; existing AES storage may fall back to TEE. Universal StrongBox backing and protocol-signing qualification are not claimed. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md). |
 | **Bitcoin Logic** | ✅ NATIVE | BDK Kotlin (v0.30.0) |
 | **Database** | ✅ NATIVE | Room + SQLCipher (Encrypted) |
-| **Integrity** | 🟡 IN PROGRESS | Root detection is local; Play Integrity SDK `1.6.0` Standard API client/token acquisition is present with opaque-token handling and deterministic request-hash binding. Backend decryption/verdict verification/request-hash comparison, Android Key Attestation chain/root/revocation and device qualification, replay/freshness trust policy, centralized value-operation enforcement, and production rollout remain pending. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md). |
+| **Integrity** | 🟡 IN PROGRESS | Root detection and Play Integrity token acquisition remain client-side. The wallet-owned centralized value-operation gate now enforces typed fail-closed outcomes, exact request/evidence binding, local replay checks, and native-only value signing. Backend token/attestation verification, durable replay, device/provider/protocol qualification, and production rollout remain pending. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md) and [CON-1546 boundary report](../reports/CON_1546_VALUE_OPERATION_BOUNDARY.md). |
+
+## Central value-operation boundary
+
+`services/value-operation.ts` is the wallet-owned boundary for production value
+authorization. Only a typed `allowed` result can reach the native signer;
+`rejected`, `quarantined`, `simulated`, and `unsupported` results cannot sign,
+broadcast, settle, or be rendered as success. Current callers remain
+quarantined until an authoritative external verifier supplies evidence bound to
+the exact envelope digest. See the
+[CON-1546 boundary report](../reports/CON_1546_VALUE_OPERATION_BOUNDARY.md).
 
 ## BitVM2 Enablement Gate
 

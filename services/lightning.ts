@@ -73,13 +73,16 @@ export async function payLightningInvoice(invoice: string): Promise<string> {
     // @ts-ignore: Android bridge call
     if (Capacitor && Capacitor.Plugins.BreezManager) {
         // @ts-ignore
-        return await Capacitor.Plugins.BreezManager.payInvoice({ bolt11: invoice });
+        const result = await Capacitor.Plugins.BreezManager.payInvoice({ bolt11: invoice });
+        const receipt = typeof result === 'string' ? result : result?.paymentHash ?? result?.preimage;
+        if (typeof receipt !== 'string' || !receipt) throw new Error('Lightning provider returned no authoritative receipt');
+        return receipt;
     }
-    return "mock_preimage_for_unsupported_platform";
+    throw new Error('LIGHTNING_PAYMENT_UNSUPPORTED: native Breez provider unavailable');
 }
 
 export async function payLnurl(params: LnurlPayParams | LnurlWithdrawParams, amount: number): Promise<string> {
-    return "lnurl_pay_sim_txid_" + Date.now();
+    throw new Error('LNURL_PAYMENT_UNSUPPORTED: authoritative LNURL payment adapter unavailable');
 }
 
 /**

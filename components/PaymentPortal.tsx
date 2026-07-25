@@ -24,6 +24,11 @@ import {
 } from 'lucide-react';
 import { AppContext } from '../context';
 import { fetchUtxos, broadcastTransaction } from '../services/protocol';
+import {
+  createUnverifiedValueOperationRequest,
+  createValueOperationNonce,
+  valueOperationOutcomeMessage,
+} from '../services/value-operation';
 import { buildPsbt } from '../services/psbt';
 import { getRecommendedFees } from '../services/fees';
 import { endpointsFor } from '../services/network';
@@ -99,6 +104,26 @@ const PaymentPortal: React.FC = () => {
     try {
         let txid = '';
         if (method === 'lightning') {
+             const lightningOutcome = await context.authorizeValueOperation(
+               createUnverifiedValueOperationRequest({
+                 operationType: 'settle',
+                 chainLayer: 'Lightning',
+                 payload: lnDetail?.type === 'lnurl'
+                   ? { kind: 'lnurl-pay', params: lnDetail.params, amount: parseFloat(amount) }
+                   : { kind: 'bolt11', invoice: recipient },
+                 network,
+                 purpose: 'payment-portal.lightning-payment',
+                 nonce: createValueOperationNonce(),
+                 audience: 'conxius-wallet',
+                 keyIdentity: 'wallet.lightning.node',
+                 algorithm: 'secp256k1-ecdsa',
+                 signingType: 'message',
+                 description: `Authorize Lightning payment of ${amount} BTC`,
+               }),
+             );
+             if (lightningOutcome.status !== 'allowed') {
+               throw new Error(valueOperationOutcomeMessage(lightningOutcome));
+             }
              if (lnDetail?.type === 'lnurl') {
                  txid = await payLnurl(lnDetail.params, parseFloat(amount));
              } else {
@@ -119,23 +144,34 @@ const PaymentPortal: React.FC = () => {
                  network
              });
 
-             const signed = await context.authorizeSignature({
-                 type: 'psbt',
-                 layer: 'Mainnet',
+             const outcome = await context.authorizeValueOperation(
+               createUnverifiedValueOperationRequest({
+                 operationType: 'send',
+                 chainLayer: 'Mainnet',
                  payload: { psbt: psbtHex },
-                 description: `Send ${amount} BTC to ${recipient}`
-             });
-
-             if (signed.broadcastReadyHex) {
-                 txid = await broadcastTransaction(signed.broadcastReadyHex, 'Mainnet', network);
+                 network,
+                 purpose: 'payment-portal.onchain-payment',
+                 nonce: createValueOperationNonce(),
+                 audience: 'conxius-wallet',
+                 keyIdentity: 'wallet.bitcoin.account-0',
+                 algorithm: 'secp256k1-ecdsa',
+                 signingType: 'psbt',
+                 description: `Send ${amount} BTC to ${recipient}`,
+               }),
+             );
+             if (outcome.status !== 'allowed') {
+               throw new Error(valueOperationOutcomeMessage(outcome));
              }
+             if (!outcome.signature?.broadcastReadyHex) {
+               throw new Error('Native signer returned no broadcast-ready transaction.');
+             }
+             txid = await broadcastTransaction(outcome.signature.broadcastReadyHex, 'Mainnet', network);
         }
 
-        if (txid) {
-            setOnchainTxid(txid);
-            setShowSuccess(true);
-            context.notify('success', `Payment Sent: ${txid.substring(0, 12)}...`);
-        }
+        if (!txid) throw new Error('Payment provider returned no authoritative receipt.');
+        setOnchainTxid(txid);
+        setShowSuccess(true);
+        context.notify('success', `Payment Sent: ${txid.substring(0, 12)}...`);
     } catch (e: any) {
         context.notify('error', e.message, 'Payment Failed');
     } finally {

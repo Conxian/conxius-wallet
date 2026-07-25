@@ -4,6 +4,11 @@ import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp,
 import { AppContext } from '../context';
 import { NttService, BRIDGE_STAGES, getRecommendedBridgeProtocol, NTT_CONFIGS } from '../services/ntt';
 import { fetchUtxos, broadcastTransaction, fetchSbtcWalletAddress, monitorSbtcPegIn, fetchNativePegAddress } from '../services/protocol';
+import {
+  createUnverifiedValueOperationRequest,
+  createValueOperationNonce,
+  valueOperationOutcomeMessage,
+} from '../services/value-operation';
 import { buildSbtcPegInPsbt, buildNativePegPsbt } from '../services/psbt';
 
 const NTTBridge: React.FC = () => {
@@ -82,16 +87,30 @@ const NTTBridge: React.FC = () => {
               });
           }
 
-          const signed = await context.authorizeSignature({
-              type: 'psbt',
-              layer: 'Mainnet',
-              payload: { psbt: psbtHex },
-              description: `Bridge ${amount} BTC to ${targetLayer}`
-          });
-
-          if (signed.broadcastReadyHex) {
+          const outcome = await context.authorizeValueOperation(
+            createUnverifiedValueOperationRequest({
+              operationType: 'bridge',
+              chainLayer: 'Mainnet',
+              payload: { psbt: psbtHex, targetLayer },
+              network: context.state.network,
+              purpose: 'bridge.native-peg',
+              nonce: createValueOperationNonce(),
+              audience: 'conxius-wallet',
+              keyIdentity: 'wallet.bitcoin.account-0',
+              algorithm: 'secp256k1-ecdsa',
+              signingType: 'psbt',
+              description: `Bridge ${amount} BTC to ${targetLayer}`,
+            }),
+          );
+          if (outcome.status !== 'allowed') {
+              throw new Error(valueOperationOutcomeMessage(outcome));
+          }
+          if (!outcome.signature?.broadcastReadyHex) {
+              throw new Error('Native signer returned no broadcast-ready transaction.');
+          }
+          {
               setBridgeStatus('BROADCASTING');
-              const txid = await broadcastTransaction(signed.broadcastReadyHex, 'Mainnet', context.state.network);
+              const txid = await broadcastTransaction(outcome.signature.broadcastReadyHex, 'Mainnet', context.state.network);
               setTxHash(txid);
               setStep(4);
               localStorage.setItem('PENDING_NTT_TX', txid);
@@ -113,12 +132,8 @@ const NTTBridge: React.FC = () => {
     setBridgeStatus('INITIATING');
 
     try {
-       // NTT logic would use NttService.executeNtt (simulation)
-       setTimeout(() => {
-           setTxHash('0x' + Math.random().toString(16).substring(2, 66));
-           setStep(4);
-           setBridgeStatus('COMPLETED');
-       }, 3000);
+       setBridgeStatus('FAILED');
+       throw new Error('NTT settlement is quarantined until an authoritative bridge adapter returns a request-bound receipt.');
     } catch (e: any) {
         context.notify('error', e.message, 'NTT Failed');
         setIsBridgeInProgress(false);
