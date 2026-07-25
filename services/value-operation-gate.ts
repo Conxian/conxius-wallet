@@ -1,11 +1,20 @@
 import { sha256 } from '@noble/hashes/sha2.js';
+import {
+    verifyValueOperationEvidence,
+    type EvidenceVerificationRequest,
+    type EvidenceVerificationResult,
+    type VerifiedEvidenceBinding,
+} from './value-operation-evidence-verifier';
 
 export const VALUE_OPERATION_PAYLOAD_SCHEMA = 'conxius.wallet.value-operation-payload.v1' as const;
+export const VALUE_OPERATION_INTENT_SCHEMA = 'conxius.wallet.value-operation-intent.v1' as const;
 export const VALUE_OPERATION_ENVELOPE_SCHEMA = 'conxius.wallet.value-operation-envelope.v1' as const;
 export const VALUE_OPERATION_PAYLOAD_HASH_DOMAIN = 'conxius.wallet.value-operation-payload.sha256.v1' as const;
+export const VALUE_OPERATION_INTENT_HASH_DOMAIN = 'conxius.wallet.value-operation-intent.sha256.v1' as const;
 export const VALUE_OPERATION_ENVELOPE_HASH_DOMAIN = 'conxius.wallet.value-operation-envelope.sha256.v1' as const;
 
 const HEX_DIGEST_PATTERN = /^[0-9a-f]{64}$/;
+const MAX_OPAQUE_EVIDENCE_BYTES = 64 * 1024;
 const capabilityRegistry = new WeakMap<object, CapabilityRecord>();
 const textEncoder = new TextEncoder();
 
@@ -38,6 +47,8 @@ export type ValueOperationReasonCode =
     | 'mismatched_authorization'
     | 'consumed_authorization';
 
+export type ValueOperationStage = 'sign' | 'broadcast' | 'settle';
+
 export class CanonicalEncodingError extends Error {
     readonly code = 'unsafe_canonical_value';
     readonly path: string;
@@ -56,8 +67,7 @@ export class ValueOperationAuthorizationError extends Error {
         | 'expired_authorization'
         | 'forged_authorization'
         | 'mismatched_authorization'
-        | 'consumed_authorization'
-        | 'non_authoritative_provider_evidence'>;
+        | 'consumed_authorization'>;
 
     constructor(reason: ValueOperationAuthorizationError['reason']) {
         super(reason);
@@ -79,8 +89,12 @@ export interface ValueOperationIntent {
     readonly audience: string;
 }
 
+/**
+* Confirmation records UX/user intent only. It is neither provider evidence
+* nor custody proof and can never authorize an operation by itself.
+*/
 export type UserConfirmation =
-    | Readonly<{ status: 'confirmed'; confirmationId: string }>
+    | Readonly<{ status: 'confirmed'; confirmationId: string; intentDigest: string }>
     | Readonly<{ status: 'cancelled' }>;
 
 export interface ProtocolKeyCustody {
@@ -89,16 +103,9 @@ export interface ProtocolKeyCustody {
     readonly algorithm: string;
 }
 
-/**
-* Opaque evidence is passed only to the verifier boundary. Claim fields are
-* deliberately ignored by the gate and exist to make accidental caller trust
-* visible in tests and migrations.
-*/
+/** Caller-supplied evidence is opaque and carries no trusted status flags. */
 export interface ProviderEvidenceInput {
-    readonly opaqueEvidence?: unknown;
-    readonly providerStatus?: unknown;
-    readonly evidenceStatus?: unknown;
-    readonly authoritative?: unknown;
+    readonly opaqueEvidence?: CanonicalValue;
 }
 
 export interface ValueOperationRequest {
@@ -129,62 +136,11 @@ export interface ValueOperationEnvelope {
     readonly evidenceDigest: string;
 }
 
-export interface VerifiedEvidenceBinding {
-    readonly kind: 'verified';
-    readonly resultClass: 'authoritative';
-    readonly providerStatus: 'verified';
-    readonly evidenceStatus: 'verified';
-    readonly providerDigest: string;
-    readonly evidenceDigest: string;
-    readonly boundEnvelopeDigest: string;
-    readonly issuedAtMs: number;
-    readonly expiresAtMs: number;
-}
-
-export type EvidenceVerificationResult =
-    | VerifiedEvidenceBinding
-    | Readonly<{
-        kind: 'rejected';
-        reason: Exclude<ValueOperationReasonCode,
-            | 'user_cancelled'
-            | 'unsupported_provider'
-            | 'unsupported_protocol_key_custody'
-            | 'simulated_provider_evidence'
-            | 'debug_provider_evidence'
-            | 'synthetic_provider_evidence'
-            | 'expired_authorization'
-            | 'forged_authorization'
-            | 'mismatched_authorization'
-            | 'consumed_authorization'>;
-    }>
-    | Readonly<{
-        kind: 'unsupported';
-        reason: 'unsupported_provider' | 'unsupported_protocol_key_custody';
-    }>
-    | Readonly<{
-        kind: 'simulated';
-        reason: 'simulated_provider_evidence' | 'debug_provider_evidence' | 'synthetic_provider_evidence';
-    }>
-    | Readonly<{
-        kind: 'quarantined';
-        reason: 'replayed_provider_evidence' | 'unavailable_provider_evidence' | 'revoked_provider_evidence';
-    }>;
-
-export interface EvidenceVerificationRequest {
-    readonly intent: Readonly<Omit<ValueOperationIntent, 'payload'>>;
-    readonly canonicalOperationDigest: string;
-    readonly custody: Readonly<ProtocolKeyCustody>;
-    readonly opaqueEvidence: unknown;
-}
-
-export interface TrustedValueEvidenceVerifier {
-    verify(request: EvidenceVerificationRequest): Promise<EvidenceVerificationResult>;
-}
-
 export interface ValueOperationAuthorizationCapability {
     readonly kind: 'value-operation-authorization';
     readonly envelopeDigest: string;
-    readonly expiresAtMs: number;
+    /** Wallet-local defense-in-depth deadline; not authoritative evidence freshness. */
+    readonly localExpiresAtMs: number;
 }
 
 export interface AuthorizedValueOperation {
@@ -201,40 +157,43 @@ export type ValueOperationGateOutcome =
     | Readonly<{ kind: 'simulated'; reason: ValueOperationReasonCode }>
     | Readonly<{ kind: 'quarantined'; reason: ValueOperationReasonCode }>;
 
-export interface AuthoritativeValueOperationResult<T> {
-    readonly kind: 'authoritative';
-    readonly envelopeDigest: string;
-    readonly authorization: ValueOperationAuthorizationCapability;
-    readonly value: T;
-}
-
-export interface NonAuthoritativeValueOperationResult<T = unknown> {
-    readonly kind: 'simulated' | 'debug' | 'synthetic';
-    readonly value?: T;
-}
-
-export type ValueOperationResult<T> = AuthoritativeValueOperationResult<T> | NonAuthoritativeValueOperationResult<T>;
-
 export interface ValueOperationGate {
-    authorize(request: ValueOperationRequest): Promise<ValueOperationGateOutcome>;
-    assertAndConsumeAuthorization(
+    authorize(request: unknown): Promise<ValueOperationGateOutcome>;
+    /**
+     * Gate-owned wrappers call this immediately before the named irreversible
+     * stage. Stage consumption is process-local replay defense only.
+     */
+    assertAndConsumeStage(
         capability: ValueOperationAuthorizationCapability,
+        stage: ValueOperationStage,
         expectedEnvelopeDigest: string,
     ): void;
-    acceptAuthoritativeResult<T>(result: ValueOperationResult<T>, expectedEnvelopeDigest: string): T;
 }
 
 interface CapabilityRecord {
     readonly gate: object;
     readonly envelopeDigest: string;
-    readonly expiresAtMs: number;
-    consumed: boolean;
+    readonly localExpiresAtMs: number;
+    readonly consumedStages: Set<ValueOperationStage>;
 }
 
-interface GateOptions {
-    readonly verifier: TrustedValueEvidenceVerifier;
-    readonly now: () => number;
-}
+const REQUEST_FIELDS = ['intent', 'confirmation', 'custody', 'evidence'] as const;
+const INTENT_FIELDS = [
+    'operationType', 'chain', 'layer', 'payload', 'network', 'purpose', 'domain', 'nonce', 'challenge', 'audience',
+] as const;
+const CUSTODY_FIELDS = ['boundary', 'protocolKeyIdentity', 'algorithm'] as const;
+const EVIDENCE_FIELDS = ['opaqueEvidence'] as const;
+const CONFIRMED_FIELDS = ['status', 'confirmationId', 'intentDigest'] as const;
+const CANCELLED_FIELDS = ['status'] as const;
+const ENVELOPE_FIELDS = [
+    'schema', 'envelopeVersion', 'operationType', 'chain', 'layer', 'canonicalOperationDigest', 'network', 'purpose',
+    'domain', 'nonce', 'challenge', 'audience', 'protocolKeyIdentity', 'algorithm', 'providerStatus', 'evidenceStatus',
+    'providerDigest', 'evidenceDigest',
+] as const;
+const ENVELOPE_CREATION_FIELDS = ENVELOPE_FIELDS.filter(
+    (field): field is Exclude<(typeof ENVELOPE_FIELDS)[number], 'schema' | 'envelopeVersion'> =>
+        field !== 'schema' && field !== 'envelopeVersion',
+);
 
 function compareCodeUnits(left: string, right: string): number {
     if (left === right) return 0;
@@ -260,22 +219,22 @@ function assertCanonicalString(value: string, path: string): void {
     }
 }
 
+/**
+* Numbers use ECMAScript JSON rendering. This schema does not define decimal
+* interoperability: monetary and precision-sensitive intent values MUST use
+* application-defined canonical strings, not JSON numbers.
+*/
 function encodeCanonicalValue(value: unknown, path: string, ancestors: Set<object>): string {
     if (value === null) return 'null';
 
     switch (typeof value) {
-        case 'boolean':
-            return value ? 'true' : 'false';
+        case 'boolean': return value ? 'true' : 'false';
         case 'string':
             assertCanonicalString(value, path);
             return JSON.stringify(value);
         case 'number':
-            if (!Number.isFinite(value)) {
-                throw new CanonicalEncodingError(path, 'numbers must be finite');
-            }
-            if (Object.is(value, -0)) {
-                throw new CanonicalEncodingError(path, 'negative zero is ambiguous');
-            }
+            if (!Number.isFinite(value)) throw new CanonicalEncodingError(path, 'numbers must be finite');
+            if (Object.is(value, -0)) throw new CanonicalEncodingError(path, 'negative zero is ambiguous');
             if (Number.isInteger(value) && !Number.isSafeInteger(value)) {
                 throw new CanonicalEncodingError(path, 'integers must be safe integers');
             }
@@ -285,16 +244,12 @@ function encodeCanonicalValue(value: unknown, path: string, ancestors: Set<objec
         case 'function':
         case 'symbol':
             throw new CanonicalEncodingError(path, `${typeof value} is unsupported`);
-        case 'object':
-            break;
-        default:
-            throw new CanonicalEncodingError(path, 'unsupported value');
+        case 'object': break;
+        default: throw new CanonicalEncodingError(path, 'unsupported value');
     }
 
     const objectValue = value as object;
-    if (ancestors.has(objectValue)) {
-        throw new CanonicalEncodingError(path, 'cyclic references are unsupported');
-    }
+    if (ancestors.has(objectValue)) throw new CanonicalEncodingError(path, 'cyclic references are unsupported');
     ancestors.add(objectValue);
 
     try {
@@ -314,9 +269,7 @@ function encodeCanonicalValue(value: unknown, path: string, ancestors: Set<objec
                 if (typeof key === 'symbol') return true;
                 return !/^(0|[1-9][0-9]*)$/.test(key) || Number(key) >= value.length;
             });
-            if (extraKeys.length > 0) {
-                throw new CanonicalEncodingError(path, 'array properties are unsupported');
-            }
+            if (extraKeys.length > 0) throw new CanonicalEncodingError(path, 'array properties are unsupported');
             return `[${value.map((entry, index) => encodeCanonicalValue(entry, `${path}[${index}]`, ancestors)).join(',')}]`;
         }
 
@@ -324,12 +277,10 @@ function encodeCanonicalValue(value: unknown, path: string, ancestors: Set<objec
         if (prototype !== Object.prototype && prototype !== null) {
             throw new CanonicalEncodingError(path, 'only plain objects are supported');
         }
-
         const ownKeys = Reflect.ownKeys(value);
         if (ownKeys.some((key) => typeof key === 'symbol')) {
             throw new CanonicalEncodingError(path, 'symbol properties are unsupported');
         }
-
         const stringKeys = ownKeys as string[];
         for (const key of stringKeys) {
             assertCanonicalString(key, `${path}.<key>`);
@@ -338,7 +289,6 @@ function encodeCanonicalValue(value: unknown, path: string, ancestors: Set<objec
                 throw new CanonicalEncodingError(`${path}.${key}`, 'accessors and non-enumerable properties are unsupported');
             }
         }
-
         return `{${stringKeys
             .sort(compareCodeUnits)
             .map((key) => `${JSON.stringify(key)}:${encodeCanonicalValue((value as Record<string, unknown>)[key], `${path}.${key}`, ancestors)}`)
@@ -361,252 +311,322 @@ function domainSeparatedDigest(domain: string, canonicalEncoding: string): strin
 }
 
 export function digestCanonicalPayload(payload: CanonicalValue): string {
-    const encoded = canonicalEncode({
-        schema: VALUE_OPERATION_PAYLOAD_SCHEMA,
-        payload,
-    });
+    const encoded = canonicalEncode({ schema: VALUE_OPERATION_PAYLOAD_SCHEMA, payload });
     return domainSeparatedDigest(VALUE_OPERATION_PAYLOAD_HASH_DOMAIN, encoded);
 }
 
-function assertNonEmptyString(value: string, field: string): void {
-    if (typeof value !== 'string' || value.length === 0 || value.trim() !== value) {
-        throw new CanonicalEncodingError(`$.${field}`, 'must be a non-empty, unpadded string');
+export function digestValueOperationIntent(intent: ValueOperationIntent): string {
+    const validated = validateIntent(intent);
+    const encoded = canonicalEncode({
+        schema: VALUE_OPERATION_INTENT_SCHEMA,
+        operationType: validated.operationType,
+        chain: validated.chain,
+        layer: validated.layer,
+        canonicalOperationDigest: digestCanonicalPayload(validated.payload),
+        network: validated.network,
+        purpose: validated.purpose,
+        domain: validated.domain,
+        nonce: validated.nonce,
+        challenge: validated.challenge,
+        audience: validated.audience,
+    });
+    return domainSeparatedDigest(VALUE_OPERATION_INTENT_HASH_DOMAIN, encoded);
+}
+
+function assertPlainDataObject(value: unknown, path: string): asserts value is Record<string, unknown> {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        throw new CanonicalEncodingError(path, 'must be a plain object');
+    }
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) {
+        throw new CanonicalEncodingError(path, 'must be a plain object');
+    }
+    for (const key of Reflect.ownKeys(value)) {
+        if (typeof key !== 'string') throw new CanonicalEncodingError(path, 'symbol properties are unsupported');
+        const descriptor = Object.getOwnPropertyDescriptor(value, key);
+        if (!descriptor || !descriptor.enumerable || !('value' in descriptor)) {
+            throw new CanonicalEncodingError(`${path}.${key}`, 'accessors and non-enumerable properties are unsupported');
+        }
+    }
+}
+
+function assertExactFields(
+    value: Record<string, unknown>, required: readonly string[], optional: readonly string[] = [], path = '$',
+): void {
+    const keys = Object.keys(value);
+    const allowed = new Set([...required, ...optional]);
+    if (keys.some((key) => !allowed.has(key)) || required.some((key) => !Object.hasOwn(value, key))) {
+        throw new CanonicalEncodingError(path, 'field set does not match schema');
+    }
+}
+
+function assertNonEmptyString(value: unknown, field: string, maxLength = 512): asserts value is string {
+    if (typeof value !== 'string' || value.length === 0 || value.length > maxLength || value.trim() !== value) {
+        throw new CanonicalEncodingError(`$.${field}`, `must be a non-empty, unpadded string of at most ${maxLength} code units`);
     }
     assertCanonicalString(value, `$.${field}`);
 }
 
-function assertDigest(value: string, field: string): void {
-    if (!HEX_DIGEST_PATTERN.test(value)) {
+function assertDigest(value: unknown, field: string): asserts value is string {
+    if (typeof value !== 'string' || !HEX_DIGEST_PATTERN.test(value)) {
         throw new CanonicalEncodingError(`$.${field}`, 'must be a lowercase SHA-256 hex digest');
     }
+}
+
+function validateIntent(value: unknown): ValueOperationIntent {
+    assertPlainDataObject(value, '$.intent');
+    assertExactFields(value, INTENT_FIELDS, [], '$.intent');
+    for (const field of INTENT_FIELDS.filter((field) => field !== 'payload')) {
+        assertNonEmptyString(value[field], `intent.${field}`);
+    }
+    canonicalEncode(value.payload as CanonicalValue);
+    return value as unknown as ValueOperationIntent;
+}
+
+function validateCustody(value: unknown): ProtocolKeyCustody {
+    assertPlainDataObject(value, '$.custody');
+    assertExactFields(value, CUSTODY_FIELDS, [], '$.custody');
+    if (value.boundary !== 'wallet-native-enclave' && value.boundary !== 'unsupported') {
+        throw new CanonicalEncodingError('$.custody.boundary', 'unsupported custody boundary');
+    }
+    assertNonEmptyString(value.protocolKeyIdentity, 'custody.protocolKeyIdentity');
+    assertNonEmptyString(value.algorithm, 'custody.algorithm');
+    return value as unknown as ProtocolKeyCustody;
+}
+
+function validateEvidence(value: unknown): ProviderEvidenceInput {
+    assertPlainDataObject(value, '$.evidence');
+    assertExactFields(value, [], EVIDENCE_FIELDS, '$.evidence');
+    if (Object.hasOwn(value, 'opaqueEvidence')) {
+        const encoded = canonicalEncode(value.opaqueEvidence as CanonicalValue);
+        if (textEncoder.encode(encoded).byteLength > MAX_OPAQUE_EVIDENCE_BYTES) {
+            throw new CanonicalEncodingError('$.evidence.opaqueEvidence', 'exceeds 65536 encoded bytes');
+        }
+    }
+    return value as ProviderEvidenceInput;
+}
+
+function validateConfirmation(value: unknown, expectedIntentDigest: string): UserConfirmation {
+    assertPlainDataObject(value, '$.confirmation');
+    if (value.status === 'cancelled') {
+        assertExactFields(value, CANCELLED_FIELDS, [], '$.confirmation');
+        return value as unknown as UserConfirmation;
+    }
+    if (value.status !== 'confirmed') {
+        throw new CanonicalEncodingError('$.confirmation.status', 'must be confirmed or cancelled');
+    }
+    assertExactFields(value, CONFIRMED_FIELDS, [], '$.confirmation');
+    assertNonEmptyString(value.confirmationId, 'confirmation.confirmationId');
+    assertDigest(value.intentDigest, 'confirmation.intentDigest');
+    if (value.intentDigest !== expectedIntentDigest) {
+        throw new CanonicalEncodingError('$.confirmation.intentDigest', 'does not bind the displayed intent');
+    }
+    return value as unknown as UserConfirmation;
+}
+
+function validateRequest(value: unknown): ValueOperationRequest {
+    assertPlainDataObject(value, '$');
+    assertExactFields(value, REQUEST_FIELDS);
+    const intent = validateIntent(value.intent);
+    const intentDigest = digestValueOperationIntent(intent);
+    const confirmation = validateConfirmation(value.confirmation, intentDigest);
+    const custody = validateCustody(value.custody);
+    const evidence = validateEvidence(value.evidence);
+    return { intent, confirmation, custody, evidence };
+}
+
+function validateEnvelope(value: unknown): ValueOperationEnvelope {
+    assertPlainDataObject(value, '$');
+    assertExactFields(value, ENVELOPE_FIELDS);
+    if (value.schema !== VALUE_OPERATION_ENVELOPE_SCHEMA) {
+        throw new CanonicalEncodingError('$.schema', 'unsupported envelope schema');
+    }
+    if (value.envelopeVersion !== 1) {
+        throw new CanonicalEncodingError('$.envelopeVersion', 'unsupported envelope version');
+    }
+    for (const field of [
+        'operationType', 'chain', 'layer', 'network', 'purpose', 'domain', 'nonce', 'challenge', 'audience',
+        'protocolKeyIdentity', 'algorithm', 'providerStatus', 'evidenceStatus',
+    ] as const) assertNonEmptyString(value[field], field);
+    assertDigest(value.canonicalOperationDigest, 'canonicalOperationDigest');
+    assertDigest(value.providerDigest, 'providerDigest');
+    assertDigest(value.evidenceDigest, 'evidenceDigest');
+    return value as unknown as ValueOperationEnvelope;
 }
 
 export function createValueOperationEnvelope(
     fields: Omit<ValueOperationEnvelope, 'schema' | 'envelopeVersion'>,
 ): Readonly<ValueOperationEnvelope> {
-    for (const field of [
-        'operationType',
-        'chain',
-        'layer',
-        'network',
-        'purpose',
-        'domain',
-        'nonce',
-        'challenge',
-        'audience',
-        'protocolKeyIdentity',
-        'algorithm',
-        'providerStatus',
-        'evidenceStatus',
-    ] as const) {
-        assertNonEmptyString(fields[field], field);
-    }
-    assertDigest(fields.canonicalOperationDigest, 'canonicalOperationDigest');
-    assertDigest(fields.providerDigest, 'providerDigest');
-    assertDigest(fields.evidenceDigest, 'evidenceDigest');
-
-    return Object.freeze({
-        schema: VALUE_OPERATION_ENVELOPE_SCHEMA,
-        envelopeVersion: 1,
-        ...fields,
-    });
+    assertPlainDataObject(fields, '$');
+    assertExactFields(fields, ENVELOPE_CREATION_FIELDS);
+    return Object.freeze(validateEnvelope({ schema: VALUE_OPERATION_ENVELOPE_SCHEMA, envelopeVersion: 1, ...fields }));
 }
 
 export function encodeValueOperationEnvelope(envelope: ValueOperationEnvelope): string {
-    return canonicalEncode(envelope as unknown as CanonicalObject);
+    return canonicalEncode(validateEnvelope(envelope) as unknown as CanonicalObject);
 }
 
 export function digestValueOperationEnvelope(envelope: ValueOperationEnvelope): string {
     return domainSeparatedDigest(VALUE_OPERATION_ENVELOPE_HASH_DOMAIN, encodeValueOperationEnvelope(envelope));
 }
 
-function freezeIntentWithoutPayload(intent: ValueOperationIntent): Readonly<Omit<ValueOperationIntent, 'payload'>> {
-    return Object.freeze({
-        operationType: intent.operationType,
-        chain: intent.chain,
-        layer: intent.layer,
-        network: intent.network,
-        purpose: intent.purpose,
-        domain: intent.domain,
-        nonce: intent.nonce,
-        challenge: intent.challenge,
-        audience: intent.audience,
-    });
-}
-
 function rejected(reason: ValueOperationReasonCode): ValueOperationGateOutcome {
     return Object.freeze({ kind: 'rejected', reason });
 }
 
-function mapVerifierOutcome(result: Exclude<EvidenceVerificationResult, VerifiedEvidenceBinding>): ValueOperationGateOutcome {
-    return Object.freeze({ kind: result.kind, reason: result.reason });
+function freezeIntentWithoutPayload(intent: ValueOperationIntent): Readonly<Omit<ValueOperationIntent, 'payload'>> {
+    return Object.freeze({
+        operationType: intent.operationType, chain: intent.chain, layer: intent.layer, network: intent.network,
+        purpose: intent.purpose, domain: intent.domain, nonce: intent.nonce, challenge: intent.challenge,
+        audience: intent.audience,
+    });
 }
 
-function validateRequestShape(request: ValueOperationRequest): string | null {
-    const intentFields: readonly (keyof Omit<ValueOperationIntent, 'payload'>)[] = [
-        'operationType', 'chain', 'layer', 'network', 'purpose', 'domain', 'nonce', 'challenge', 'audience',
-    ];
+function isKnownNonVerifiedResult(result: unknown): result is Exclude<EvidenceVerificationResult, VerifiedEvidenceBinding> {
     try {
-        for (const field of intentFields) assertNonEmptyString(request.intent[field], field);
-        digestCanonicalPayload(request.intent.payload);
+        assertPlainDataObject(result, '$.verification');
+        assertExactFields(result, ['kind', 'reason'], [], '$.verification');
+        if (typeof result.reason !== 'string' || typeof result.kind !== 'string') return false;
+        const reasonsByKind: Record<string, readonly string[]> = {
+            rejected: [
+                'missing_provider_evidence', 'malformed_provider_evidence', 'stale_provider_evidence',
+                'mismatched_provider_evidence', 'non_authoritative_provider_evidence', 'malformed_value_operation',
+                'malformed_protocol_key_custody', 'envelope_digest_mismatch',
+            ],
+            unsupported: ['unsupported_provider', 'unsupported_protocol_key_custody'],
+            simulated: ['simulated_provider_evidence', 'debug_provider_evidence', 'synthetic_provider_evidence'],
+            quarantined: ['replayed_provider_evidence', 'unavailable_provider_evidence', 'revoked_provider_evidence'],
+        };
+        return reasonsByKind[result.kind]?.includes(result.reason) ?? false;
     } catch {
-        return 'malformed_value_operation';
+        return false;
     }
-
-    try {
-        assertNonEmptyString(request.custody.protocolKeyIdentity, 'protocolKeyIdentity');
-        assertNonEmptyString(request.custody.algorithm, 'algorithm');
-    } catch {
-        return 'malformed_protocol_key_custody';
-    }
-    return null;
 }
 
-function createGate(options: GateOptions): ValueOperationGate {
+function validateVerifiedBinding(result: unknown): VerifiedEvidenceBinding | null {
+    try {
+        assertPlainDataObject(result, '$.verification');
+        assertExactFields(result, [
+            'kind', 'resultClass', 'providerStatus', 'evidenceStatus', 'providerDigest', 'evidenceDigest',
+            'boundEnvelopeDigest', 'localAuthorizationExpiresAtMs',
+        ], [], '$.verification');
+        if (
+            result.kind !== 'verified' || result.resultClass !== 'authoritative'
+            || result.providerStatus !== 'verified' || result.evidenceStatus !== 'verified'
+        ) return null;
+        assertDigest(result.providerDigest, 'verification.providerDigest');
+        assertDigest(result.evidenceDigest, 'verification.evidenceDigest');
+        assertDigest(result.boundEnvelopeDigest, 'verification.boundEnvelopeDigest');
+        if (!Number.isSafeInteger(result.localAuthorizationExpiresAtMs) || (result.localAuthorizationExpiresAtMs as number) < 0) {
+            return null;
+        }
+        return result as unknown as VerifiedEvidenceBinding;
+    } catch {
+        return null;
+    }
+}
+
+function createGate(): ValueOperationGate {
     const gateIdentity = Object.freeze({});
-
     const gate: ValueOperationGate = {
-        async authorize(request) {
-            if (request.confirmation.status === 'cancelled') {
-                return rejected('user_cancelled');
+        async authorize(untrustedRequest) {
+            let request: ValueOperationRequest;
+            try {
+                request = validateRequest(untrustedRequest);
+            } catch {
+                return rejected('malformed_value_operation');
             }
-
-            const malformedReason = validateRequestShape(request);
-            if (malformedReason) return rejected(malformedReason as ValueOperationReasonCode);
-
+            if (request.confirmation.status === 'cancelled') return rejected('user_cancelled');
             if (request.custody.boundary !== 'wallet-native-enclave') {
                 return Object.freeze({ kind: 'unsupported', reason: 'unsupported_protocol_key_custody' });
             }
 
             const canonicalOperationDigest = digestCanonicalPayload(request.intent.payload);
+            const intentDigest = digestValueOperationIntent(request.intent);
             let verification: EvidenceVerificationResult;
             try {
-                verification = await options.verifier.verify(Object.freeze({
-                    intent: freezeIntentWithoutPayload(request.intent),
-                    canonicalOperationDigest,
-                    custody: Object.freeze({ ...request.custody }),
-                    opaqueEvidence: request.evidence.opaqueEvidence,
-                }));
+                const verificationRequest: EvidenceVerificationRequest = Object.freeze({
+                    intent: freezeIntentWithoutPayload(request.intent), intentDigest, canonicalOperationDigest,
+                    confirmation: Object.freeze({
+                        confirmationId: request.confirmation.confirmationId,
+                        intentDigest: request.confirmation.intentDigest,
+                    }),
+                    custody: Object.freeze({ ...request.custody }), opaqueEvidence: request.evidence.opaqueEvidence,
+                });
+                verification = await verifyValueOperationEvidence(verificationRequest);
             } catch {
                 return Object.freeze({ kind: 'quarantined', reason: 'unavailable_provider_evidence' });
             }
 
-            if (verification.kind !== 'verified') return mapVerifierOutcome(verification);
-
-            if (
-                verification.resultClass !== 'authoritative'
-                || verification.providerStatus !== 'verified'
-                || verification.evidenceStatus !== 'verified'
-            ) {
-                return rejected('non_authoritative_provider_evidence');
+            if (isKnownNonVerifiedResult(verification)) {
+                return Object.freeze({ kind: verification.kind, reason: verification.reason });
             }
-
-            if (!HEX_DIGEST_PATTERN.test(verification.boundEnvelopeDigest)) {
-                return rejected('malformed_provider_evidence');
-            }
-
-            const now = options.now();
-            if (!Number.isSafeInteger(verification.issuedAtMs) || !Number.isSafeInteger(verification.expiresAtMs)) {
-                return rejected('malformed_provider_evidence');
-            }
-            if (verification.issuedAtMs > now || verification.expiresAtMs <= now || verification.expiresAtMs <= verification.issuedAtMs) {
-                return rejected('stale_provider_evidence');
-            }
+            const verified = validateVerifiedBinding(verification);
+            if (!verified) return rejected('malformed_provider_evidence');
 
             let envelope: Readonly<ValueOperationEnvelope>;
             try {
                 envelope = createValueOperationEnvelope({
-                    operationType: request.intent.operationType,
-                    chain: request.intent.chain,
-                    layer: request.intent.layer,
-                    canonicalOperationDigest,
-                    network: request.intent.network,
-                    purpose: request.intent.purpose,
-                    domain: request.intent.domain,
-                    nonce: request.intent.nonce,
-                    challenge: request.intent.challenge,
-                    audience: request.intent.audience,
-                    protocolKeyIdentity: request.custody.protocolKeyIdentity,
-                    algorithm: request.custody.algorithm,
-                    providerStatus: verification.providerStatus,
-                    evidenceStatus: verification.evidenceStatus,
-                    providerDigest: verification.providerDigest,
-                    evidenceDigest: verification.evidenceDigest,
+                    operationType: request.intent.operationType, chain: request.intent.chain, layer: request.intent.layer,
+                    canonicalOperationDigest, network: request.intent.network, purpose: request.intent.purpose,
+                    domain: request.intent.domain, nonce: request.intent.nonce, challenge: request.intent.challenge,
+                    audience: request.intent.audience, protocolKeyIdentity: request.custody.protocolKeyIdentity,
+                    algorithm: request.custody.algorithm, providerStatus: verified.providerStatus,
+                    evidenceStatus: verified.evidenceStatus, providerDigest: verified.providerDigest,
+                    evidenceDigest: verified.evidenceDigest,
                 });
             } catch {
                 return rejected('malformed_provider_evidence');
             }
-
             const envelopeDigest = digestValueOperationEnvelope(envelope);
-            if (verification.boundEnvelopeDigest !== envelopeDigest) {
-                return rejected('envelope_digest_mismatch');
-            }
+            if (verified.boundEnvelopeDigest !== envelopeDigest) return rejected('envelope_digest_mismatch');
+
+            // Conservative local containment only. Trusted verifier outcomes,
+            // not this clock, decide evidence freshness and distributed replay.
+            if (verified.localAuthorizationExpiresAtMs <= Date.now()) return rejected('expired_authorization');
 
             const capability = Object.freeze({
                 kind: 'value-operation-authorization' as const,
                 envelopeDigest,
-                expiresAtMs: verification.expiresAtMs,
+                localExpiresAtMs: verified.localAuthorizationExpiresAtMs,
             });
             capabilityRegistry.set(capability, {
-                gate: gateIdentity,
-                envelopeDigest,
-                expiresAtMs: verification.expiresAtMs,
-                consumed: false,
+                gate: gateIdentity, envelopeDigest, localExpiresAtMs: verified.localAuthorizationExpiresAtMs,
+                consumedStages: new Set(),
             });
-
             return Object.freeze({ kind: 'authorized', envelope, envelopeDigest, capability });
         },
 
-        assertAndConsumeAuthorization(capability, expectedEnvelopeDigest) {
+        assertAndConsumeStage(capability, stage, expectedEnvelopeDigest) {
             const record = capabilityRegistry.get(capability);
             if (!record || record.gate !== gateIdentity) {
                 throw new ValueOperationAuthorizationError('forged_authorization');
             }
+            if (!['sign', 'broadcast', 'settle'].includes(stage)) {
+                throw new ValueOperationAuthorizationError('mismatched_authorization');
+            }
             if (record.envelopeDigest !== expectedEnvelopeDigest || capability.envelopeDigest !== expectedEnvelopeDigest) {
                 throw new ValueOperationAuthorizationError('mismatched_authorization');
             }
-            if (record.consumed) {
+            if (record.consumedStages.has(stage)) {
                 throw new ValueOperationAuthorizationError('consumed_authorization');
             }
-            if (record.expiresAtMs <= options.now()) {
+            if (record.localExpiresAtMs <= Date.now()) {
                 throw new ValueOperationAuthorizationError('expired_authorization');
             }
-            record.consumed = true;
-        },
-
-        acceptAuthoritativeResult<T>(result: ValueOperationResult<T>, expectedEnvelopeDigest: string): T {
-            if (result.kind !== 'authoritative') {
-                throw new ValueOperationAuthorizationError('non_authoritative_provider_evidence');
-            }
-            if (result.envelopeDigest !== expectedEnvelopeDigest) {
-                throw new ValueOperationAuthorizationError('mismatched_authorization');
-            }
-            gate.assertAndConsumeAuthorization(result.authorization, expectedEnvelopeDigest);
-            return result.value;
+            record.consumedStages.add(stage);
         },
     };
-
     return Object.freeze(gate);
 }
 
-const defaultProductionVerifier: TrustedValueEvidenceVerifier = Object.freeze({
-    async verify() {
-        return Object.freeze({ kind: 'unsupported', reason: 'unsupported_provider' });
-    },
-});
-
-/** Production containment default: no provider verifier is currently available. */
+/** Production gate with no verifier or clock injection surface. */
 export function createValueOperationGate(): ValueOperationGate {
-    return createGate({ verifier: defaultProductionVerifier, now: Date.now });
+    return createGate();
 }
 
-/**
-* Test/evaluation-only injection point. It is intentionally separate from the
-* production factory and must not be used as a provider qualification claim.
-*/
-export function createTestEvaluationValueOperationGate(
-    verifier: TrustedValueEvidenceVerifier,
-    now: () => number,
-): ValueOperationGate {
-    return createGate({ verifier, now });
-}
+export type {
+    EvidenceVerificationRequest,
+    EvidenceVerificationResult,
+    VerifiedEvidenceBinding,
+} from './value-operation-evidence-verifier';
