@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { bech32 } from 'bech32';
 import {
   authorizeValueOperationSettlement,
   createValueOperationRequest,
@@ -9,7 +10,7 @@ import {
   ValueOperationSettlementAuthorization,
 } from '../services/value-operation';
 import { createAppPrivateValueOperationAuthority, resetAppPrivateValueOperationReplayCacheForTests } from '../services/app-private/value-operation-authority';
-import { payLightningInvoice, payLnurl } from '../services/lightning';
+import { payLightningInvoice, payLnurl, requireBolt11Settlement } from '../services/lightning';
 import { getLightningBackend } from '../services/lightning-backend';
 import { payLnInvoice, sendBreezOnchain } from '../services/breez';
 
@@ -37,6 +38,11 @@ vi.mock('../services/signer', () => ({ requestEnclaveSignature: mocks.requestEnc
 vi.mock('../services/value-operation-evidence', () => ({ getWalletEvidenceAdapter: mocks.getWalletEvidenceAdapter }));
 
 const now = new Date('2026-07-25T04:00:00.000Z');
+const BOLT11_MAINNET = 'lnbc20u1p3y0x3hpp5743k2g0fsqqxj7n8qzuhns5gmkk4djeejk3wkp64ppevgekvc0jsdqcve5kzar2v9nr5gpqd4hkuetesp5ez2g297jduwc20t6lmqlsg3man0vf2jfd8ar9fh8fhn2g8yttfkqxqy9gcqcqzys9qrsgqrzjqtx3k77yrrav9hye7zar2rtqlfkytl094dsp0ms5majzth6gt7ca6uhdkxl983uywgqqqqlgqqqvx5qqjqrzjqd98kxkpyw0l9tyy8r8q57k7zpy9zjmh6sez752wj6gcumqnj3yxzhdsmg6qq56utgqqqqqqqqqqqeqqjq7jd56882gtxhrjm03c93aacyfy306m4fq0tskf83c0nmet8zc2lxyyg3saz8x6vwcp26xnrlagf9semau3qm2glysp7sv95693fphvsp54l567';
+
+function invoiceWithHrp(hrp: string): string {
+  return bech32.encode(hrp, bech32.decode(BOLT11_MAINNET, 2048).words, 2048);
+}
 
 function request(provider: string, intent: unknown, nonce: string = crypto.randomUUID()): ValueOperationRequest {
   return createValueOperationRequest({
@@ -78,36 +84,47 @@ describe('Lightning settlement authorization', () => {
   });
 
   it('settles the exact native Breez invoice once', async () => {
-    const invoice = 'lnbc1exact';
-    const authorization = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice }));
-    await expect(payLightningInvoice(invoice, authorization, 'mainnet')).resolves.toBe('authoritative-payment-hash');
-    await expect(payLightningInvoice(invoice, authorization, 'mainnet')).rejects.toThrow('REPLAYED');
+    const invoice = BOLT11_MAINNET;
+    const amountSats = 2000;
+    const authorization = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice, amountSats }));
+    await expect(payLightningInvoice(invoice, amountSats, authorization, 'mainnet')).resolves.toBe('authoritative-payment-hash');
+    await expect(payLightningInvoice(invoice, amountSats, authorization, 'mainnet')).rejects.toThrow('REPLAYED');
     expect(mocks.nativePayInvoice).toHaveBeenCalledTimes(1);
   });
 
   it.each([
-    ['fabricated', () => ({ kind: 'value-operation-settlement-authorization' } as ValueOperationSettlementAuthorization), 'lnbc1exact', 'mainnet', 'INVALID'],
-    ['wrong invoice', null, 'lnbc1different', 'mainnet', 'INTENT_MISMATCH'],
-    ['wrong network', null, 'lnbc1exact', 'testnet', 'CONTEXT_MISMATCH'],
-  ])('rejects %s before native I/O', async (_name, makeAuthorization, invoice, network, code) => {
-    const genuine = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice: 'lnbc1exact' }));
+    ['fabricated', () => ({ kind: 'value-operation-settlement-authorization' } as ValueOperationSettlementAuthorization), BOLT11_MAINNET, 2000, 'mainnet', 'INVALID'],
+    ['wrong invoice', null, invoiceWithHrp('lnbc30u'), 3000, 'mainnet', 'INTENT_MISMATCH'],
+    ['wrong amount', null, BOLT11_MAINNET, 3000, 'mainnet', 'AMOUNT_MISMATCH'],
+    ['wrong network', null, BOLT11_MAINNET, 2000, 'testnet', 'NETWORK_MISMATCH'],
+  ])('rejects %s before native I/O', async (_name, makeAuthorization, invoice, amountSats, network, code) => {
+    const genuine = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice: BOLT11_MAINNET, amountSats: 2000 }));
     const authorization = makeAuthorization ? makeAuthorization() : genuine;
-    await expect(payLightningInvoice(invoice, authorization, network)).rejects.toThrow(code);
+    await expect(payLightningInvoice(invoice, amountSats, authorization, network as 'mainnet' | 'testnet')).rejects.toThrow(code);
+    expect(mocks.nativePayInvoice).not.toHaveBeenCalled();
+  });
+
+  it('rejects amountless BOLT11 invoices before authorization consumption or native I/O', async () => {
+    const amountless = invoiceWithHrp('lnbc');
+    const authorization = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice: amountless, amountSats: 2000 }));
+
+    expect(() => requireBolt11Settlement(amountless, 'mainnet')).toThrow('BOLT11_AMOUNT_REQUIRED');
+    await expect(payLightningInvoice(amountless, 2000, authorization, 'mainnet')).rejects.toThrow('BOLT11_AMOUNT_REQUIRED');
     expect(mocks.nativePayInvoice).not.toHaveBeenCalled();
   });
 
   it('rejects stale authorization before native I/O', async () => {
-    const invoice = 'lnbc1stale';
-    const authorization = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice }));
+    const invoice = BOLT11_MAINNET;
+    const authorization = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice, amountSats: 2000 }));
     vi.setSystemTime(new Date(now.getTime() + 61_000));
-    await expect(payLightningInvoice(invoice, authorization, 'mainnet')).rejects.toThrow('STALE');
+    await expect(payLightningInvoice(invoice, 2000, authorization, 'mainnet')).rejects.toThrow('STALE');
     expect(mocks.nativePayInvoice).not.toHaveBeenCalled();
   });
 
   it('rejects provider substitution before native I/O', async () => {
-    const invoice = 'lnbc1provider';
-    const authorization = await authorize(request('lnd-rest', { kind: 'bolt11', invoice }));
-    await expect(payLightningInvoice(invoice, authorization, 'mainnet')).rejects.toThrow('CONTEXT_MISMATCH');
+    const invoice = BOLT11_MAINNET;
+    const authorization = await authorize(request('lnd-rest', { kind: 'bolt11', invoice, amountSats: 2000 }));
+    await expect(payLightningInvoice(invoice, 2000, authorization, 'mainnet')).rejects.toThrow('CONTEXT_MISMATCH');
     expect(mocks.nativePayInvoice).not.toHaveBeenCalled();
   });
 

@@ -1,15 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { 
   deriveSovereignRoots, 
-  signBip322Message, 
   requestEnclaveSignature,
   parseBip322Message,
   SignRequest 
 } from '../services/signer';
-import * as bip39 from 'bip39';
 import { Capacitor } from '@capacitor/core';
 import { signNative } from '../services/enclave-storage';
-import { workerManager } from '../services/worker-manager';
 
 // Mock Capacitor
 vi.mock('@capacitor/core', () => ({ registerPlugin: vi.fn(),
@@ -26,14 +23,10 @@ vi.mock('../services/enclave-storage', () => ({
   getWalletInfoNative: vi.fn()
 }));
 
-// Mock psbt
-vi.mock('../services/psbt', () => ({
-  getPsbtSighashes: vi.fn(),
-  finalizePsbtWithSigs: vi.fn(),
-  finalizePsbtWithSigsReturnBase64: vi.fn(),
-  signPsbtBase64WithSeed: vi.fn(),
-  signPsbtBase64WithSeedReturnBase64: vi.fn(),
-  buildSbtcPegInPsbt: vi.fn() // Add this
+vi.mock('../services/app-private/native-psbt', () => ({
+  getNativePsbtSighashes: vi.fn(),
+  getNativeUnsignedTxHex: vi.fn(),
+  finalizeNativePsbt: vi.fn(),
 }));
 
 describe('signer service', () => {
@@ -104,50 +97,6 @@ describe('signer service', () => {
     });
   });
 
-  describe('signBip322Message', () => {
-    it('should sign a message and return signature', async () => {
-      const message = 'Test message to sign';
-      const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
-      const signature = await signBip322Message(message, new Uint8Array(seed));
-      
-      expect(signature).toBeDefined();
-      // BIP-322 simple is base64 encoded witness stack
-      expect(typeof signature).toBe('string');
-      expect(signature.length).toBeGreaterThan(20);
-    });
-
-    it('should produce deterministic signatures for same inputs', async () => {
-      const message = 'Deterministic test';
-      const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
-      const seedBytes = new Uint8Array(seed);
-      
-      const sig1 = await signBip322Message(message, seedBytes);
-      const sig2 = await signBip322Message(message, seedBytes);
-      
-      // Signatures should be identical for deterministic signing (RFC6979)
-      // verify functionality, but for now we check they are both valid strings
-      expect(sig1).toBeDefined();
-      expect(sig2).toBeDefined();
-    });
-
-        it('should sign a Taproot message using Schnorr in JS fallback', async () => {
-      const message = 'Taproot test message';
-      const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
-      const signature = await signBip322Message(message, new Uint8Array(seed));
-
-      expect(signature).toBeDefined();
-      expect(typeof signature).toBe('string');
-      // Taproot signature is usually smaller (64 byte sig) + length prefix
-      expect(signature.length).toBeGreaterThan(20);
-    });
-
-    it('should handle empty message', async () => {
-      const seed = await bip39.mnemonicToSeed(TEST_MNEMONIC);
-      const signature = await signBip322Message('', new Uint8Array(seed));
-      expect(signature).toBeDefined();
-    });
-  });
-
   describe('parseBip322Message', () => {
     it('should identify a valid login message', () => {
       const domain = 'test.com';
@@ -189,7 +138,6 @@ describe('signer service', () => {
     it('rejects native signing failures without falling back to the TypeScript worker', async () => {
       vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
       vi.mocked(signNative).mockRejectedValueOnce(new Error('Native signer unavailable'));
-      const derivePathSpy = vi.spyOn(workerManager, 'derivePath');
 
       const request: SignRequest = {
         type: 'message',
@@ -199,10 +147,9 @@ describe('signer service', () => {
       };
 
       await expect(requestEnclaveSignature(request, 'vault-id')).rejects.toThrow('Native signer unavailable');
-      expect(derivePathSpy).not.toHaveBeenCalled();
     });
 
-    it('should throw error when master seed is missing', async () => {
+    it('rejects non-native signing without accepting seed material', async () => {
       const request: SignRequest = {
         type: 'psbt',
         layer: 'Mainnet',
@@ -210,11 +157,10 @@ describe('signer service', () => {
         description: 'Test transaction'
       };
 
-      await expect(requestEnclaveSignature(request, undefined as any)).rejects.toThrow('Seed required for fallback signer');
+      await expect(requestEnclaveSignature(request, 'vault-id')).rejects.toThrow('NATIVE_VALUE_SIGNER_REQUIRED');
     });
 
-    it('should simulate processing delay on web platform', async () => {
-      const startTime = Date.now();
+    it('rejects Nostr signing on the web instead of deriving a software key', async () => {
       const request: SignRequest = {
         type: 'message',
         layer: 'Nostr', // Nostr doesn't require seed
@@ -222,16 +168,10 @@ describe('signer service', () => {
         description: 'Test nostr event'
       };
 
-      // Nostr requests don't require seed, but should still process
-      await requestEnclaveSignature(request, "seed");
-      
-      const elapsed = Date.now() - startTime;
-      // Should complete without error on web platform
-      expect(elapsed).toBeGreaterThanOrEqual(0);
+      await expect(requestEnclaveSignature(request, 'vault-id')).rejects.toThrow('NATIVE_VALUE_SIGNER_REQUIRED');
     });
 
-    it('should include timestamp in result', async () => {
-      const beforeTime = Date.now();
+    it('does not return a fabricated signature or pubkey on the web', async () => {
       const request: SignRequest = {
         type: 'message',
         layer: 'Nostr',
@@ -239,27 +179,7 @@ describe('signer service', () => {
         description: 'Test'
       };
 
-      const result = await requestEnclaveSignature(request, "seed");
-      const afterTime = Date.now();
-
-      expect(result.timestamp).toBeGreaterThanOrEqual(beforeTime);
-      expect(result.timestamp).toBeLessThanOrEqual(afterTime);
-    });
-
-    it('should return signature and pubkey', async () => {
-      const request: SignRequest = {
-        type: 'message',
-        layer: 'Nostr',
-        payload: { message: 'test' },
-        description: 'Test'
-      };
-
-      const result = await requestEnclaveSignature(request, "seed");
-
-      expect(result.signature).toBeDefined();
-      expect(result.pubkey).toBeDefined();
-      expect(typeof result.signature).toBe('string');
-      expect(typeof result.pubkey).toBe('string');
+      await expect(requestEnclaveSignature(request, 'vault-id')).rejects.toThrow('NATIVE_VALUE_SIGNER_REQUIRED');
     });
   });
 

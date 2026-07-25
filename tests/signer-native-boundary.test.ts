@@ -30,10 +30,10 @@ vi.mock('../services/worker-manager', () => ({
   },
 }));
 
-vi.mock('../services/psbt', () => ({
-  getPsbtSighashes: mocks.getPsbtSighashes,
-  getUnsignedTxHex: mocks.getUnsignedTxHex,
-  finalizePsbtWithSigs: mocks.finalizePsbtWithSigs,
+vi.mock('../services/app-private/native-psbt', () => ({
+  getNativePsbtSighashes: mocks.getPsbtSighashes,
+  getNativeUnsignedTxHex: mocks.getUnsignedTxHex,
+  finalizeNativePsbt: mocks.finalizePsbtWithSigs,
 }));
 
 describe('native signer security boundary', () => {

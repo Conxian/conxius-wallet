@@ -5,15 +5,44 @@ import * as ecc from 'tiny-secp256k1';
 import { Buffer } from 'buffer';
 import { Capacitor } from "@capacitor/core";
 import { signNative, signBatchNative } from "./enclave-storage";
-import { getPsbtSighashes, finalizePsbtWithSigs } from "./psbt";
-import { signSchnorr } from "./ecc";
-import { workerManager } from "./worker-manager";
+import { finalizeNativePsbt, getNativePsbtSighashes, getNativeUnsignedTxHex } from './app-private/native-psbt';
 import { getAddressFromPublicKey } from "@stacks/transactions";
 import { deriveLiquidAddress } from "./liquid";
 import { keccak_256 } from "@noble/hashes/sha3.js";
 
 bitcoin.initEccLib(ecc);
 const bip32 = BIP32Factory(ecc);
+
+const NATIVE_LAYER_PATHS: Readonly<Record<string, string>> = Object.freeze({
+  Mainnet: "m/84'/0'/0'/0/0",
+  Stacks: "m/44'/5757'/0'/0/0",
+  Rootstock: "m/44'/60'/0'/0/0",
+  Ethereum: "m/44'/60'/0'/0/0",
+  Lightning: "m/84'/0'/0'/0/0",
+  Liquid: "m/84'/1776'/0'/0/0",
+  Runes: "m/86'/0'/0'/0/0",
+  Ordinals: "m/86'/0'/0'/0/0",
+  BOB: "m/44'/60'/0'/0/0",
+  RGB: "m/86'/0'/0'/0/0",
+  Ark: "m/84'/0'/0'/1/0",
+  BitVM: "m/84'/0'/0'/4/0",
+  Maven: "m/84'/0'/0'/3/0",
+  B2: "m/44'/60'/0'/0/0",
+  Botanix: "m/44'/60'/0'/0/0",
+  Mezo: "m/44'/60'/0'/0/0",
+  Alpen: "m/44'/60'/0'/0/0",
+  Zulu: "m/44'/60'/0'/0/0",
+  Bison: "m/44'/60'/0'/0/0",
+  Hemi: "m/44'/60'/0'/0/0",
+  Nubit: "m/44'/60'/0'/0/0",
+  Lorenzo: "m/44'/60'/0'/0/0",
+  Citrea: "m/44'/60'/0'/0/0",
+  Babylon: "m/44'/60'/0'/0/0",
+  Merlin: "m/44'/60'/0'/0/0",
+  Bitlayer: "m/44'/60'/0'/0/0",
+  TaprootAssets: "m/86'/0'/0'/0/0",
+  Silent: "m/352'/0'/0'/0'/0",
+});
 
 export interface SignRequest {
   type: 'message' | 'psbt' | 'bip322';
@@ -35,24 +64,15 @@ export interface SignResult {
  */
 export const requestEnclaveSignature = async (
   request: SignRequest,
-  seedOrVault: string | Uint8Array
+  vault: string,
 ): Promise<SignResult> => {
   console.info(`[Signer] Requesting signature for layer: ${request.layer}`);
 
   if (Capacitor.isNativePlatform()) {
-    const vault = typeof seedOrVault === 'string' ? seedOrVault : 'default_vault';
     const pin = undefined; // In production, this is handled by BiometricPrompt
     const network = 'mainnet'; // Remediation: Default to mainnet for production alignment
-    let path = "m/84'/0'/0'/0/0";
-
-    if (request.layer === "Stacks") path = "m/44'/5757'/0'/0/0";
-    else if (request.layer === "Liquid") path = "m/84'/1776'/0'/0/0";
-    else if (request.layer === "Ark") path = "m/84'/0'/0'/1/0";
-    else if (request.layer === "BitVM") path = "m/84'/0'/0'/4/0";
-    else if (request.layer === "Maven") path = "m/84'/0'/0'/3/0";
-    else if (request.layer === "Silent") path = "m/352'/0'/0'/0'/0";
-    else if (request.layer === "RGB") path = "m/86'/0'/0'/0/0";
-    else if (request.layer === "StateChain") {
+    let path = NATIVE_LAYER_PATHS[request.layer] ?? NATIVE_LAYER_PATHS.Mainnet;
+    if (request.layer === "StateChain") {
         const index = request.payload?.index || 0;
         path = `m/84'/0'/0'/2/${index}`;
     }
@@ -70,9 +90,8 @@ export const requestEnclaveSignature = async (
             const pubkey = idRes.pubkey;
             const pubkeyBuf = Buffer.from(pubkey, "hex");
 
-            const hashes = getPsbtSighashes(request.payload.psbt, pubkeyBuf, network);
-            const { getUnsignedTxHex } = await import("./psbt");
-            const unsignedTx = getUnsignedTxHex(request.payload.psbt, network);
+            const hashes = getNativePsbtSighashes(request.payload.psbt, pubkeyBuf, network);
+            const unsignedTx = getNativeUnsignedTxHex(request.payload.psbt, network);
 
             const batchRes = await signBatchNative({
                 vault,
@@ -88,7 +107,7 @@ export const requestEnclaveSignature = async (
                 signature: Buffer.from(res.signature, "hex"),
             }));
 
-            const broadcastHex = finalizePsbtWithSigs(request.payload.psbt, signatures, pubkeyBuf, network);
+            const broadcastHex = finalizeNativePsbt(request.payload.psbt, signatures, pubkeyBuf, network);
 
             return {
                 signature: batchRes.signatures[0]?.signature || "",
@@ -122,119 +141,7 @@ export const requestEnclaveSignature = async (
     }
   }
 
-  // --- FALLBACK / WEB PATH (TypeScript Worker) ---
-  let seedBytes: Uint8Array;
-  if (typeof seedOrVault === "string") {
-      if (seedOrVault.length >= 32 && !seedOrVault.includes(" ")) {
-          // Hex seed
-          seedBytes = new Uint8Array(Buffer.from(seedOrVault, 'hex'));
-      } else {
-          // Mnemonic
-          const seed = await bip39.mnemonicToSeed(seedOrVault);
-          seedBytes = new Uint8Array(seed);
-      }
-  } else if (seedOrVault instanceof Uint8Array) {
-      seedBytes = seedOrVault;
-  } else {
-      if (request.layer !== 'Nostr') throw new Error("Seed required for fallback signer");
-      seedBytes = new Uint8Array(64); // Placeholder
-  }
-
-  if (typeof window !== 'undefined' && !Capacitor.isNativePlatform()) {
-      await new Promise(r => setTimeout(r, 100)); // Simulate enclave delay
-  }
-
-  try {
-      let signature = "";
-      let pubkey = "";
-      let path = "m/84'/0'/0'/0/0";
-
-      if (request.layer === "Stacks") path = "m/44'/5757'/0'/0/0";
-      else if (request.layer === "Mainnet") path = "m/84'/0'/0'/0/0";
-      else if (request.layer === "Liquid") path = "m/84'/1776'/0'/0/0";
-      else if (request.layer === "Ark") path = "m/84'/0'/0'/1/0";
-      else if (request.layer === "BitVM") path = "m/84'/0'/0'/4/0";
-      else if (request.layer === "Maven") path = "m/84'/0'/0'/3/0";
-      else if (request.layer === "BOB") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "B2") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Botanix") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Mezo") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Rootstock") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Alpen") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Zulu") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Bison") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Hemi") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Nubit") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Lorenzo") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Citrea") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Babylon") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Merlin") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Bitlayer") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Ethereum") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "RGB") path = "m/86'/0'/0'/0/0";
-      else if (request.layer === "TaprootAssets") path = "m/86'/0'/0'/0/0";
-      else if (request.layer === "Runes") path = "m/86'/0'/0'/0/0";
-      else if (request.layer === "Ordinals") path = "m/86'/0'/0'/0/0";
-      else if (request.layer === "Lightning") path = "m/84'/0'/0'/0/0";
-      else if (request.layer === "Silent") path = "m/352'/0'/0'/0'/0";
-      else if (request.layer === "StateChain") {
-          const index = request.payload?.index || 0;
-          path = `m/84'/0'/0'/2/${index}`;
-      }
-
-      if (request.layer === "Nostr") {
-          const nPath = "m/44'/1237'/0'/0/0";
-          const derived = await workerManager.derivePath(seedBytes, nPath, "mainnet");
-          return { signature: "", pubkey: Buffer.from(derived.publicKey).toString("hex"), timestamp: Date.now() };
-      }
-
-      const derived = await workerManager.derivePath(seedBytes, path, "mainnet");
-      pubkey = Buffer.from(derived.publicKey).toString("hex");
-
-      if (derived.privateKey) {
-          const privKeyBuf = Buffer.from(derived.privateKey, 'hex');
-          try {
-            const child = bip32.fromSeed(Buffer.concat([privKeyBuf, Buffer.alloc(32, 0)]));
-            let messageHash: Buffer;
-            if (request.payload?.hash) {
-                messageHash = Buffer.from(request.payload.hash, 'hex');
-            } else if (typeof request.payload === 'string') {
-                messageHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(request.payload)));
-            } else {
-                messageHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload))));
-            }
-
-            if (path.includes("86'")) {
-                signature = Buffer.from(signSchnorr(messageHash, privKeyBuf)).toString('hex');
-            } else {
-                signature = Buffer.from(child.sign(messageHash)).toString('hex');
-            }
-          } finally {
-            privKeyBuf.fill(0);
-          }
-      }
-
-      return {
-        signature,
-        pubkey,
-        timestamp: Date.now(),
-      };
-  } finally {
-    if (seedBytes instanceof Uint8Array) seedBytes.fill(0);
-  }
-};
-
-/**
- * Signs a BIP-322 message (Used by tests and login flows)
- */
-export const signBip322Message = async (message: string, seed: Uint8Array): Promise<string> => {
-    const result = await requestEnclaveSignature({
-        type: 'bip322',
-        layer: 'Mainnet',
-        payload: { hash: Buffer.from(bitcoin.crypto.sha256(Buffer.from(message))).toString('hex') },
-        description: 'Sign BIP-322 message'
-    }, seed);
-    return result.signature;
+  throw new Error('NATIVE_VALUE_SIGNER_REQUIRED: production signing is unavailable outside the native enclave');
 };
 
 /**

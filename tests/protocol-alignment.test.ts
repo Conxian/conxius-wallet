@@ -28,10 +28,12 @@ describe('Protocol and Signer Alignment', () => {
   it('should have signer logic for all supported layers', () => {
     const signerContent = fs.readFileSync(path.join(process.cwd(), 'services/signer.ts'), 'utf8');
 
-    supportedLayers.forEach(layer => {
-      // Corrected expectation string to match source literally
-      expect(signerContent).toContain('layer === "' + layer + '"');
+    supportedLayers.filter((layer) => layer !== 'StateChain').forEach(layer => {
+      expect(signerContent).toMatch(new RegExp(`\\b${layer}: ["']m/`));
     });
+    expect(signerContent).toContain('request.layer === "StateChain"');
+    expect(signerContent).toContain('NATIVE_VALUE_SIGNER_REQUIRED');
+    expect(signerContent).not.toContain('workerManager.derivePath');
   });
 
   it.skip('should have native parsePayload support for all layers', () => {

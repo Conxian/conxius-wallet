@@ -34,7 +34,7 @@ import { buildPsbt } from '../services/psbt';
 import { getRecommendedFees } from '../services/fees';
 import { endpointsFor } from '../services/network';
 import { BrowserMultiFormatReader } from '@zxing/library';
-import { decodeBolt11, isLnurl, decodeLnurl, fetchLnurlParams, payLightningInvoice, payLnurl } from '../services/lightning';
+import { decodeBolt11, isLnurl, decodeLnurl, fetchLnurlParams, payLightningInvoice, payLnurl, requireBolt11Settlement } from '../services/lightning';
 import * as bitcoin from 'bitcoinjs-lib';
 import { payjoin } from 'payjoin-client';
 import { IdentityService } from '../services/identity';
@@ -105,10 +105,16 @@ const PaymentPortal: React.FC = () => {
     try {
         let txid = '';
         if (method === 'lightning') {
-             const amountSats = Math.round(parseFloat(amount) * 100_000_000);
+             const bolt11Settlement = lnDetail?.type === 'lnurl'
+               ? null
+               : requireBolt11Settlement(recipient, network);
+             const amountSats = bolt11Settlement?.amountSats ?? Math.round(parseFloat(amount));
+             if (!Number.isSafeInteger(amountSats) || amountSats <= 0) {
+               throw new Error('Lightning amount must be a positive whole-satoshi value.');
+             }
              const settlementIntent = lnDetail?.type === 'lnurl'
                ? { kind: 'lnurl-pay', params: lnDetail.params, amountSats }
-               : { kind: 'bolt11', invoice: recipient };
+               : { kind: 'bolt11', invoice: recipient, amountSats };
              const lightningRequest = createUnverifiedValueOperationRequest({
                  operationType: 'settle',
                  chainLayer: 'Lightning',
@@ -120,14 +126,14 @@ const PaymentPortal: React.FC = () => {
                  keyIdentity: 'wallet.lightning.node',
                  algorithm: 'secp256k1-ecdsa',
                  signingType: 'message',
-                 description: `Authorize Lightning payment of ${amount} BTC`,
+                 description: `Authorize Lightning payment of ${amountSats} sats`,
                });
              const lightningOutcome = await context.authorizeValueOperation(lightningRequest);
              const settlementAuthorization = requireValueOperationSettlementAuthorization(lightningOutcome, lightningRequest);
              if (lnDetail?.type === 'lnurl') {
                  txid = await payLnurl(lnDetail.params, amountSats, settlementAuthorization, network);
              } else {
-                 txid = await payLightningInvoice(recipient, settlementAuthorization, network);
+                 txid = await payLightningInvoice(recipient, amountSats, settlementAuthorization, network);
              }
         } else {
              const fromAddress = context.state.walletConfig?.masterAddress || '';
@@ -191,6 +197,7 @@ const PaymentPortal: React.FC = () => {
 
   const fees = getFees();
   const bolt11HasAmount = lnDetail?.type === 'bolt11' && !!lnDetail.info?.amountMsat;
+  const displayAmount = bolt11HasAmount ? String(Number(lnDetail.info.amountMsat) / 1000) : amount;
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-24">
@@ -306,7 +313,7 @@ const PaymentPortal: React.FC = () => {
                       <div className="relative">
                         <input
                           type="number"
-                          value={amount}
+                          value={displayAmount}
                           onChange={(e) => setAmount(e.target.value)}
                           autoComplete="off"
                           autoCorrect="off"
