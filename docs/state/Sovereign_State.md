@@ -26,6 +26,42 @@ domain separation, and transaction/state bindings) and return typed
 non-authoritative outcomes. No input can be treated as `verified`, and
 simulation cannot authorize signing.
 
+## Wallet value-operation containment (updated 2026-07-25)
+
+Issue [#444](https://github.com/Conxian/conxius-wallet/issues/444) is
+**Implemented — fail-closed containment; production execution unsupported**.
+The deterministic, provider-neutral boundary is implemented in
+`services/value-operation-gate.ts`,
+`services/value-operation-evidence-verifier.ts`,
+`services/value-operations.ts`,
+`services/value-operation-result.ts`,
+`services/value-operation-authorization-queue.ts`,
+`services/value-signer.ts`, and `services/bitcoin-broadcast.ts`.
+
+The version-1 envelope binds schema/version, operation type, chain/layer,
+canonical operation digest, network, purpose/domain, nonce/challenge, audience,
+protocol-key identity, algorithm, provider/evidence status, and provider/
+evidence digests. Canonical encoding and domain-separated SHA-256 vectors make
+the binding deterministic without persisting or documenting sensitive payloads.
+Execution callers must supply exact `{ authorization, artifact }` requests and
+handle discriminated outcomes rather than bare txids, preimages, booleans, or
+completion strings.
+
+The concrete production verifier always returns `unsupported_provider`.
+Confirmation, provider evidence, protocol-key custody, and provider receipts
+are separate boundaries: confirmation, native selection, and debug/simulation
+status are never evidence. The App/context queue and reviewed Dashboard,
+PaymentPortal, NTTBridge, protocol-adapter, raw broadcast, and signer paths stop
+before side effects when evidence or a qualified receipt is unavailable. Stage
+tracking is process-local containment only, not durable replay prevention.
+
+No provider or hardware tier is qualified by this work. External verification,
+roots/collateral/revocation, trusted time, distributed replay, receipts/finality,
+production support, rollout, independent review, and release acceptance remain
+pending. SDK canonical rail/trust/replay work, CON-1517/CON-1543, provider
+operations, and CON-1512 remain separate. See the
+[focused evidence record](../reports/ISSUE_444_VALUE_OPERATION_GATE_CONTAINMENT.md).
+
 ## Implementation state note (updated 2026-07-20)
 
 PR #390 merged on July 20, 2026 at commit
@@ -44,7 +80,7 @@ verification, and deeper reorg recovery remain outside this merged slice.
 ## 🛡️ Security Architecture
 - **CXN Guardian**: Local privacy filtering active for all AI/Network egress.
 - **The Conclave**: Android Keystore-backed mnemonic protection, requesting StrongBox where supported with an explicit TEE fallback for existing AES storage; universal StrongBox backing and device qualification are not claimed.
-- **KeyMint / Play Integrity boundary**: The dedicated P-256 authorization evidence and Play Integrity `1.6.0` opaque-token client seams are implemented; backend verification, real-device qualification, durable replay/freshness policy, and value-operation enforcement remain open. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md).
+- **KeyMint / Play Integrity boundary**: The dedicated P-256 authorization evidence and Play Integrity `1.6.0` opaque-token client seams are implemented. The wallet-local value-operation gate now contains reviewed execution paths, but its production verifier is intentionally unsupported; backend verification, real-device qualification, durable replay/freshness policy, authoritative decisions, and release acceptance remain open. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md).
 - **Fail-Closed**: `ProductionRuntimeGuard.failClosed()` enforces release-build safety across native managers; the TypeScript signer must also reject native enclave failures without software fallback.
 - **Secret Scanning**: A checksum-verified, tokenless Gitleaks CLI plus optional
   GitGuardian are integrated in CI. `.gitleaks.toml` is narrow and
@@ -86,6 +122,11 @@ approver, and approval date. This state does not mark CON-1525 complete.
 - **Bridge/Messaging**: Trust-tier policy enforcement via `services/trust-policy.ts` (T1-T4).
 - **FDC3**: Native resolver with intent handlers (`services/fdc3.ts` → `Fdc3Plugin.kt`).
 - **BitVM2**: Research/scaffolding only; verification and dispute signing are quarantined pending a reviewed native backend.
+- **Value operations**: Reviewed Ark, RGB, StateChain, Maven, Taproot Assets,
+  Monetization, Wormhole/NTT, Lightning/backend, swap, DLC, PayJoin/CoinJoin,
+  merchant, protocol broadcast/verification, and UI execution paths are
+  contained and unavailable for production until authoritative evidence and
+  provider receipts are integrated.
 
 ## 🏗️ Infrastructure
 - **Gateway**: OData v4 synchronization for ERP/Institutional workflows.

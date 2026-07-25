@@ -9,10 +9,19 @@ permalink: /docs/state/business
 **Context:** B2B Alignment & Mainnet Readiness. COO Alignment (2026-06-30).
 **Status:** ALIGNED — Release-baseline hardening in progress; production promotion remains gated.
 
-The Android KeyMint/StrongBox and Play Integrity client boundary is implemented,
-but real-device qualification, backend verification, durable freshness/replay
-policy, centralized value-operation enforcement, staged rollout controls, and
-independent acceptance remain open. See the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md)
+The wallet-local value-operation boundary is **Implemented — fail-closed
+containment; production execution unsupported**. Reviewed App/context/UI,
+signing, broadcast, bridge, payment, swap, merchant, and protocol adapter paths
+now require exact typed authorization/artifact requests or return typed
+rejected, unsupported, or quarantined outcomes before side effects. The
+production evidence verifier always returns `unsupported_provider`.
+
+This is client-process-local containment, not a sellable production capability.
+Real-device and provider qualification, backend verification, roots/collateral/
+revocation, trusted time, durable distributed replay, provider receipts and
+finality, staged rollout, independent security review, and release acceptance
+remain open. See the [issue #444 evidence record](../reports/ISSUE_444_VALUE_OPERATION_GATE_CONTAINMENT.md),
+the [CON-1544 qualification report](../reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md),
 and the [Technical Debt Register](../operations/TECHNICAL_DEBT_REGISTER.md).
 
 ## 🎯 Market Positioning
