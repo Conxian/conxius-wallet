@@ -53,24 +53,33 @@ boundary are documented in the [CON-1544 qualification report](../reports/CON_15
 They do not by themselves authorize value operations or qualify protocol
 signing keys for StrongBox-backed production use.
 
+The wallet-local issue #444 boundary is **Implemented — fail-closed
+containment; production execution unsupported**. A versioned canonical envelope,
+typed authorization queue, exact artifact binding, native-only gate-bound PSBT
+signer, and typed adapter outcomes now prevent reviewed legacy paths from
+reporting synthetic success. The production verifier still always returns
+`unsupported_provider`; this boundary is not provider, hardware, backend,
+receipt/finality, or release qualification. See the
+[issue #444 evidence record](../reports/ISSUE_444_VALUE_OPERATION_GATE_CONTAINMENT.md).
+
 ---
 
 ## 4. Functional Requirements (v1.9.5 Alignment)
 
 | Protocol | Status | Implementation Details |
 | :--- | :--- | :--- |
-| **Bitcoin L1** | PRODUCTION | Native BDK (BIP-84/86) |
-| **Lightning** | BRIDGED | Breez SDK (TS) + Native Breez Manager |
+| **Bitcoin L1** | CONTAINED / EXECUTION UNSUPPORTED | Native BDK construction/custody surfaces remain, but reviewed wallet value signing and broadcast require the issue #444 gate; no qualified production evidence verifier or broadcast receipt exists. |
+| **Lightning** | CONTAINED / EXECUTION UNSUPPORTED | Breez/native integration exists, but reviewed payment paths return typed unsupported outcomes before payment side effects. |
 | **Stacks** | BRIDGED | Stacks.js (TS) + Native Stacks Manager |
 | **Liquid** | BRIDGED | Liquidjs (TS) + Native Liquid Manager |
 | **Babylon** | BRIDGED | TS Payload + Native Babylon Manager |
-| **DLCs** | BRIDGED | TS Offer Flow + Native DlcManager |
+| **DLCs** | CONTAINED / EXECUTION UNSUPPORTED | Acceptance/settlement artifacts require exact authorization binding; no qualified production adapter or provider receipt exists. |
 | **BOB / RSK** | BRIDGED | TS Ethers + Native EVM Manager |
-| **RGB / BitVM** | RESEARCH / QUARANTINED | Structural envelope validation only; no reviewed BitVM2 verifier or authoritative signing path |
-| **Ark / StateChain** | PRODUCTION | Native V-UTXO Logic + Stacks Bridge |
+| **RGB / BitVM** | RESEARCH / QUARANTINED | RGB value operations are contained and unavailable; BitVM2 has structural envelope validation only. No reviewed authoritative verifier/signing path exists. |
+| **Ark / StateChain** | CONTAINED / EXECUTION UNSUPPORTED | Exact artifacts and typed outcomes replace synthetic txids/completions; no qualified production adapter exists. |
 | **Web5** | BRIDGED | Web5 API (TS) + Native Web5 Manager |
-| **Yield / Insurance** | BRIDGED | TS Protocol Entry + Native Managers |
-| **Swap / B2B** | BRIDGED | TS Aggregator + Native Managers |
+| **Yield / Insurance** | CONTAINED / EXECUTION UNSUPPORTED | Reviewed value-bearing actions fail closed; discovery/non-value presentation is separate. |
+| **Swap / B2B** | CONTAINED / EXECUTION UNSUPPORTED | Reviewed swap, bridge, merchant, and settlement execution paths do not submit or claim completion without qualified evidence and receipts. |
 
 ---
 
@@ -98,3 +107,5 @@ As of v1.9.5, all Conxian Protocol interfaces (Conxius Wallet, Gateway, Explorer
 
 ### 2. Artifact Promotion Governance
 Promotion from `staged` to `main` for any production artifact requires explicit sign-off from the COO as defined in the [Operating Model](../operations/OPERATING_MODEL.md).
+Issue #444 is P0 containment work and requires the same COO review before
+promotion; its presence must not be marketed as production support.

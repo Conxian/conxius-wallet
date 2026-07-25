@@ -1,20 +1,22 @@
 # CON-1544: Android KeyMint / StrongBox authorization boundary
 
-**Status:** Client-side collection and request binding implemented; backend
-qualification, authorization enforcement, and independent release evidence
+**Status:** Client-side collection/request binding and wallet-local fail-closed
+containment implemented; backend qualification, authoritative authorization,
+durable replay, provider receipts/finality, and independent release evidence
 remain open.
 
-**Reviewed:** 2026-07-22 against current `main` commit
-`0b6757711df80824b932a32e91947064659199d6` (after merged PRs #441, #442, and
-#443).
+**Reviewed:** KeyMint boundary reviewed 2026-07-22 against `main` commit
+`0b6757711df80824b932a32e91947064659199d6`; wallet-local gate statements
+updated 2026-07-25 against issue #444 candidate
+`bf16fea0cb551bdc5c1147d19af6d42fdd32a97a`.
 
 **Canonical tracker:** [CON-1544](https://linear.app/conxian-labs/issue/CON-1544/p0-qualify-android-keymintstrongbox-authorization-and-play-integrity)
 
 This report is the public-safe boundary and qualification plan for the Android
 KeyMint/StrongBox and Google Play Integrity work. It records what the wallet
-collects and binds locally, what a trusted backend must verify, what a future
-value-operation gate must enforce, and what remains outside the delivered
-protocol-key custody boundary.
+collects and binds locally, what a trusted backend must verify, what the
+wallet-local value-operation containment gate enforces, and what remains
+outside the delivered protocol-key custody and authoritative trust boundaries.
 
 ## Executive summary
 
@@ -29,10 +31,12 @@ The merged implementation establishes two client-side seams:
 
 Those seams are **not** a hardware qualification, a backend attestation
 verifier, a production authorization decision, or proof that protocol signing
-keys are StrongBox-backed. The P0 exit gate stays open until real-device
-evidence, server verification, durable freshness/replay policy, centralized
-value-operation enforcement, privacy-minimized telemetry, staged rollout and
-rollback procedures, and independent review are complete.
+keys are StrongBox-backed. Issue #444 adds wallet-local fail-closed containment,
+but its concrete production verifier always returns `unsupported_provider`.
+The P0 exit gate stays open until real-device evidence, server verification,
+durable freshness/replay policy, authoritative provider decisions and receipts,
+privacy-minimized telemetry, staged rollout/rollback, and independent review
+are complete.
 
 ## Boundary model
 
@@ -41,7 +45,7 @@ rollback procedures, and independent review are complete.
 | **Collection** | Creates or inspects a separate non-exportable P-256 authorization key; returns public key, certificate-chain bytes, key identity, package/signing identity, and local `KeyInfo` evidence. Requests an opaque Standard API Play Integrity token. | Capture signed evidence from a real-device matrix, preserve provenance, and define retention/redaction rules. |
 | **Request binding** | Versioned, length-prefixed SHA-256 binding covers operation digest, nonce, KeyMint challenge, key identity, package name, signing-certificate identity, and policy. A URL-safe unpadded Base64 transport form is available. | Recompute the exact same canonical bytes/hash on the backend and reject mismatches, missing fields, altered package identity, stale timestamps, or challenge/operation correlation failures. |
 | **Backend verification** | None. Play Integrity tokens remain opaque on-device. | Verify Android Key Attestation chains, trust roots, revocation, challenge, app identity, security level, boot state, patch state, and policy. Decrypt/verify the Play Integrity token on a trusted server and validate its request details and verdicts. |
-| **Authorization enforcement** | Local policy evaluation rejects software, unknown, unavailable, unsupported, or non-StrongBox evidence under the applicable policy. This is evidence classification, not a wallet value-operation gate. | A centralized server-backed gate must make the allow/quarantine/reject decision for value operations, fail closed on missing or stale evidence, and prevent bypass through alternate protocol entry points. See [CON-1546](https://linear.app/conxian-labs/issue/CON-1546/p0-add-centralized-wallet-value-operation-gate-and-quarantine). |
+| **Authorization enforcement** | Local KeyMint policy evaluation classifies evidence. Separately, issue #444 implements one wallet application gate, typed queue, exact artifact binding, native-only gate-bound PSBT signing, and reviewed adapter containment. Its production verifier always returns `unsupported_provider`, so no value operation is authorized. | A trusted external verifier and provider operations must make authoritative decisions, fail closed on missing/stale/unverifiable evidence, provide durable distributed replay protection and receipts/finality, and remain bound to the exact wallet envelope. See [CON-1546](https://linear.app/conxian-labs/issue/CON-1546/p0-add-centralized-wallet-value-operation-gate-and-quarantine). |
 | **Protocol-key custody** | The new P-256 key is separate from existing AES seed/database storage and has no signing method in this slice. | Independently prove custody and authorization for each protocol signing path. Do not infer Bitcoin/Stacks/secp256k1/Schnorr hardware qualification from this P-256 evidence. |
 
 ## Implemented evidence
@@ -107,8 +111,9 @@ authorization decision from a Play Integrity token or a web fallback; the
 token remains opaque until a trusted backend verifies it.
 
 These implementation details do not close the qualification blockers, backend
-verification checklist, centralized value-operation gate, or P0 exit gate
-documented below.
+verification checklist, authoritative decision/replay/receipt boundary, or P0
+exit gate documented below. The wallet-local containment gate is described in
+[`ISSUE_444_VALUE_OPERATION_GATE_CONTAINMENT.md`](ISSUE_444_VALUE_OPERATION_GATE_CONTAINMENT.md).
 
 ### Implementation references
 
@@ -144,10 +149,12 @@ evidence, subject to future backend and release policy.
 ### Protocol signing is not hardware-qualified by this work
 
 The P-256 authorization key is not wired into wallet unlock, Bitcoin or Stacks
-signing, secp256k1/Schnorr operations, or a production value-operation gate.
-The presence of an Android Keystore certificate chain or a Play Integrity token
-does not prove that any protocol signing key is hardware-backed, authorized for
-the requested operation, or safe to use in production.
+signing, or secp256k1/Schnorr operations. The issue #444 wallet gate is
+provider-neutral and does not consume this local KeyMint/Play boundary as
+authoritative evidence. The presence of an Android Keystore certificate chain,
+a Play Integrity token, native selection, or a confirmation does not prove that
+any protocol signing key is hardware-backed, authorized for the requested
+operation, or safe to use in production.
 
 ## Qualification matrix
 
@@ -220,8 +227,12 @@ excluded or irreversibly redacted.
   submissions.
 - [ ] Recompute the canonical request hash in one audited implementation and
   maintain cross-language test vectors for every field and normalization rule.
-- [ ] Route every wallet value operation through the centralized gate tracked by
+- [x] Route reviewed in-repo wallet value-operation paths through the issue #444
+  fail-closed containment gate tracked by
   [CON-1546](https://linear.app/conxian-labs/issue/CON-1546/p0-add-centralized-wallet-value-operation-gate-and-quarantine).
+- [ ] Connect that wallet gate to a reviewed authoritative verifier/provider
+  decision without weakening exact envelope binding or introducing alternate
+  execution paths.
 - [ ] Make missing, unverifiable, stale, quarantined, and outage states fail
   closed for value operations; permit only explicitly documented non-value
   behavior.
@@ -271,8 +282,10 @@ in a reviewed change or release artifact:
    signing certificate, canonical request hash, timestamp, and required verdicts.
 4. Durable nonce/operation consumption and freshness policy prevent replay or
    cross-operation reuse.
-5. The centralized value-operation gate enforces the verified decision and
-   quarantines or rejects missing, stale, unverifiable, and outage states.
+5. The wallet-local value-operation gate enforces an externally verified,
+   exact-envelope-bound decision and quarantines or rejects missing, stale,
+   unverifiable, replayed, revoked, and outage states. The current
+   `unsupported_provider` implementation does not satisfy this criterion.
 6. Privacy-minimized telemetry, staged rollout, rollback, and outage runbooks
    are reviewed and tested.
 7. Independent evidence/review and release acceptance are recorded.
