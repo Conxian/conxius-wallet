@@ -112,6 +112,10 @@ const App: React.FC = () => {
     valueOperationQueueRef.current = createValueOperationAuthorizationQueue(setPendingValueOperation);
   }
 
+  useEffect(() => () => {
+    valueOperationQueueRef.current?.dispose();
+  }, []);
+
   const currentPinRef = useRef<string | null>(null);
 
   useEffect(() => {

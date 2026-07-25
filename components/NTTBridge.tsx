@@ -1,21 +1,20 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { BitcoinLayer } from '../types';
-import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp, ShieldCheck, Zap, Globe, Search, RefreshCw, ExternalLink, Target, Cpu, Download, Activity } from 'lucide-react';
+import { ArrowRight, Info, TrendingUp, ShieldCheck, Zap, Globe, Target, Cpu, Activity } from 'lucide-react';
 import { AppContext } from '../context';
-import { NttService, BRIDGE_STAGES, getRecommendedBridgeProtocol, NTT_CONFIGS } from '../services/ntt';
-import { fetchUtxos, broadcastTransaction, fetchSbtcWalletAddress, fetchNativePegAddress } from '../services/protocol';
+import { NttService, getRecommendedBridgeProtocol } from '../services/ntt';
+import { fetchUtxos, fetchNativePegAddress } from '../services/protocol';
 import { buildSbtcPegInPsbt, buildNativePegPsbt } from '../services/psbt';
 import { STORAGE_KEY } from '../services/enclave-storage';
 import { signAuthorizedValueOperationNative } from '../services/value-signer';
+import { broadcastAuthorizedBitcoinTransaction, createBitcoinBroadcastArtifact } from '../services/bitcoin-broadcast';
+import { formatSatoshisAsBtc, parseBtcToSatoshis, toSafeSatoshiNumber } from '../services/bitcoin-amount';
 import {
-  consumeAuthorizedValueOperationStage,
+  createBitcoinPsbtOperationPayload,
   createDeterministicValueOperationIntent,
   redactValueOperationIdentifier,
   unavailableValueOperationEvidence,
   valueOperationOutcomeMessage,
 } from '../services/value-operations';
-
-const BITCOIN_TXID_PATTERN = /^[0-9a-f]{64}$/i;
 
 const NTTBridge: React.FC = () => {
   const context = useContext(AppContext);
@@ -26,21 +25,15 @@ const NTTBridge: React.FC = () => {
   const [amount, setAmount] = useState('');
   const [isBridgeInProgress, setIsBridgeInProgress] = useState(false);
   const [bridgeStatus, setBridgeStatus] = useState<string>('IDLE');
-  const [txHash, setTxHash] = useState('');
   const [feeEstimation, setFeeEstimation] = useState<any>(null);
   const [isEstimatingFees, setIsEstimatingFees] = useState(false);
 
   useEffect(() => {
-    const savedTx = localStorage.getItem('PENDING_NTT_TX');
-    const savedLayer = localStorage.getItem('PENDING_NTT_TARGET');
-    if (savedTx && BITCOIN_TXID_PATTERN.test(savedTx)) {
-      setTimeout(() => setTxHash(savedTx), 0);
-      setTimeout(() => setIsBridgeInProgress(true), 0);
-      setTimeout(() => setStep(4), 0);
-      if (savedLayer) setTimeout(() => setTargetLayer(savedLayer), 0);
-    } else if (savedTx) {
+    try {
       localStorage.removeItem('PENDING_NTT_TX');
       localStorage.removeItem('PENDING_NTT_TARGET');
+    } catch {
+      // Legacy unbound settlement identifiers are ignored even if storage is unavailable.
     }
   }, []);
 
@@ -65,6 +58,14 @@ const NTTBridge: React.FC = () => {
     }
   }, [step, sourceLayer, targetLayer, amount, context?.state.network]);
 
+  const parsedAmountSats = (() => {
+    try {
+      return parseBtcToSatoshis(amount);
+    } catch {
+      return null;
+    }
+  })();
+
   const handleNativeBridge = async () => {
       if (!context) return;
       setIsBridgeInProgress(true);
@@ -72,12 +73,14 @@ const NTTBridge: React.FC = () => {
       try {
           const utxos = await fetchUtxos(context.state.walletConfig?.masterAddress || '', context.state.network);
           const pegInAddress = await fetchNativePegAddress(targetLayer as any, context.state.network);
-          const amountSats = Math.floor(parseFloat(amount) * 100000000);
+          const amountSats = parseBtcToSatoshis(amount);
+          const amountSatsString = amountSats.toString();
+          const amountSatsNumber = toSafeSatoshiNumber(amountSats);
 
           let psbtHex = '';
           if (targetLayer === 'Stacks') {
               psbtHex = await buildSbtcPegInPsbt({
-                  amountSats,
+                  amountSats: amountSatsNumber,
                   utxos,
                   stacksAddress: context.state.walletConfig?.stacksAddress || '',
                   changeAddress: context.state.walletConfig?.masterAddress || '',
@@ -87,7 +90,7 @@ const NTTBridge: React.FC = () => {
               });
           } else {
               psbtHex = await buildNativePegPsbt({
-                  amountSats,
+                  amountSats: amountSatsNumber,
                   utxos,
                   changeAddress: context.state.walletConfig?.masterAddress || '',
                   feeRate: 2,
@@ -100,13 +103,7 @@ const NTTBridge: React.FC = () => {
               operationType: 'bitcoin-native-peg-in',
               chain: 'bitcoin',
               layer: 'l1',
-              payload: {
-                  psbt: psbtHex,
-                  sourceLayer,
-                  targetLayer,
-                  amountSats: amountSats.toString(),
-                  pegInAddress,
-              },
+              payload: createBitcoinPsbtOperationPayload(psbtHex),
               network: context.state.network,
               purpose: 'native-peg-in',
               domain: 'conxius.wallet',
@@ -117,7 +114,7 @@ const NTTBridge: React.FC = () => {
               summary: {
                   title: 'Authorize Native Peg-In',
                   action: `Bridge Bitcoin to ${targetLayer}`,
-                  amount: `${amountSats} sats`,
+                  amount: `${amountSatsString} sats`,
                   destination: redactValueOperationIdentifier(pegInAddress),
                   network: context.state.network,
                   purpose: 'Native peg-in',
@@ -136,7 +133,6 @@ const NTTBridge: React.FC = () => {
           }
           const signed = await signAuthorizedValueOperationNative({
               authorization,
-              exactEnvelopeDigest: authorization.envelopeDigest,
               psbt: psbtHex,
               network: context.state.network,
               vault: STORAGE_KEY,
@@ -146,29 +142,18 @@ const NTTBridge: React.FC = () => {
               context.notify('error', 'Native value signing unavailable.');
               return;
           }
-          const broadcastStage = consumeAuthorizedValueOperationStage(
-              authorization,
-              'broadcast',
-              authorization.envelopeDigest,
+          const broadcast = await broadcastAuthorizedBitcoinTransaction(
+              createBitcoinBroadcastArtifact(signed.broadcastReadyHex),
           );
-          if (broadcastStage.kind !== 'consumed') {
-              setBridgeStatus('UNAVAILABLE');
-              context.notify('error', 'Broadcast authorization unavailable.');
-              return;
-          }
-          setBridgeStatus('BROADCASTING');
-          const txid = (await broadcastTransaction(signed.broadcastReadyHex, 'Mainnet', context.state.network)).trim();
-          if (!BITCOIN_TXID_PATTERN.test(txid)) {
-              setBridgeStatus('UNAVAILABLE');
-              context.notify('error', 'Broadcast provider did not return an authoritative transaction ID.');
-              return;
-          }
-          setTxHash(txid);
-          setStep(4);
-          localStorage.setItem('PENDING_NTT_TX', txid);
-          localStorage.setItem('PENDING_NTT_TARGET', targetLayer);
-          setBridgeStatus('BROADCASTED');
+          setBridgeStatus('UNAVAILABLE');
+          context.notify(
+              'error',
+              broadcast.kind === 'unsupported'
+                  ? 'Native peg-in broadcast unavailable: no qualified provider receipt is configured.'
+                  : 'Native peg-in broadcast artifact was rejected before submission.',
+          );
       } catch {
+          setBridgeStatus('UNAVAILABLE');
           context.notify('error', 'Native peg-in unavailable.', 'Bridge Failed');
       } finally {
           setIsBridgeInProgress(false);
@@ -178,7 +163,6 @@ const NTTBridge: React.FC = () => {
   const handleNttBridge = async () => {
     if (!context) return;
     setIsBridgeInProgress(false);
-    setTxHash('');
     setBridgeStatus('UNSUPPORTED');
     context.notify('error', 'NTT transfer unavailable: no authoritative execution provider is configured.');
   };
@@ -275,7 +259,7 @@ const NTTBridge: React.FC = () => {
 
                     <button
                       onClick={() => setStep(2)}
-                      disabled={!amount || parseFloat(amount) <= 0}
+                      disabled={parsedAmountSats === null}
                       className="w-full py-6 bg-accent-earth hover:bg-accent-earth/90 disabled:opacity-50 text-white font-black rounded-[2rem] text-sm uppercase tracking-widest transition-all shadow-xl shadow-orange-600/20 active:scale-[0.98] flex items-center justify-center gap-3"
                     >
                       Next: Review Bridge <ArrowRight size={18} />
@@ -305,7 +289,7 @@ const NTTBridge: React.FC = () => {
                         <div className="pt-6 border-t border-border/50 space-y-4">
                            <div className="flex justify-between text-xs">
                               <span className="text-brand-earth">Transfer Amount</span>
-                              <span className="font-bold text-brand-deep">{amount} BTC</span>
+                              <span className="font-bold text-brand-deep">{parsedAmountSats === null ? 'Invalid' : formatSatoshisAsBtc(parsedAmountSats)} BTC</span>
                            </div>
                            <div className="flex justify-between text-xs">
                               <span className="text-brand-earth">Bridge Fee</span>
@@ -313,7 +297,7 @@ const NTTBridge: React.FC = () => {
                            </div>
                            <div className="flex justify-between text-sm pt-4 font-black">
                               <span className="text-brand-deep uppercase tracking-widest">Total cost</span>
-                              <span className="text-accent-earth font-mono">{(parseFloat(amount) + 0.0001).toFixed(4)} BTC</span>
+                              <span className="text-accent-earth font-mono">{parsedAmountSats === null ? 'Unavailable' : formatSatoshisAsBtc(parsedAmountSats + 10_000n)} BTC</span>
                            </div>
                         </div>
                      </div>
@@ -335,34 +319,6 @@ const NTTBridge: React.FC = () => {
                   </div>
                 )}
 
-                {step === 4 && (
-                   <div className="py-12 flex flex-col items-center justify-center text-center space-y-8 animate-in zoom-in-95 duration-500">
-                      <div className="relative">
-                         <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                         <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center relative z-10 shadow-2xl shadow-green-500/40">
-                            <CheckCircle2 size={48} className="text-white" />
-                         </div>
-                      </div>
-
-                      <div>
-                         <h2 className="text-3xl font-black text-brand-deep tracking-tighter">Transfer Broadcast</h2>
-                         <p className="text-brand-earth mt-2 italic">Settlement on {targetLayer} is not yet authoritatively verified.</p>
-                      </div>
-
-                      <div className="w-full bg-off-white border border-border rounded-3xl p-6 font-mono text-[10px] break-all text-brand-earth flex items-center gap-3">
-                         <span className="opacity-50">TX:</span>
-                         <span className="flex-1 text-left">{txHash}</span>
-                         <button className="p-2 hover:bg-white rounded-lg transition-all"><Link size={14} /></button>
-                      </div>
-
-                      <button
-                        onClick={() => { setStep(1); setAmount(''); setIsBridgeInProgress(false); localStorage.removeItem('PENDING_NTT_TX'); }}
-                        className="w-full py-5 border-2 border-brand-deep text-brand-deep font-black rounded-[2rem] text-[10px] uppercase tracking-widest hover:bg-brand-deep hover:text-white transition-all"
-                      >
-                         Dismiss & Return to Assets
-                      </button>
-                   </div>
-                )}
               </div>
            </div>
 

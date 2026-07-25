@@ -2,15 +2,17 @@ import { Capacitor } from '@capacitor/core';
 import { Buffer } from 'buffer';
 import { getPublicKeyNative, signBatchNative } from './enclave-storage';
 import { finalizePsbtWithSigs, getPsbtSighashes, getUnsignedTxHex } from './psbt';
+import { digestValueOperationEnvelope } from './value-operation-gate';
 import {
     consumeAuthorizedValueOperationStage,
+    createBitcoinPsbtOperationPayload,
+    digestBitcoinPsbtOperation,
     type AuthorizedValueOperation,
 } from './value-operations';
 import type { Network } from '../types';
 
 export interface NativeValueSigningRequest {
     readonly authorization: AuthorizedValueOperation;
-    readonly exactEnvelopeDigest: string;
     readonly psbt: string;
     readonly network: Network;
     /** Opaque native wallet record identifier. Never pass seed or mnemonic material. */
@@ -56,12 +58,34 @@ function isValidPublicKey(value: unknown): value is string {
 export async function signAuthorizedValueOperationNative(
     request: NativeValueSigningRequest,
 ): Promise<NativeValueSigningOutcome> {
+    let normalizedPsbt: string;
+    try {
+        normalizedPsbt = createBitcoinPsbtOperationPayload(request.psbt).psbt;
+    } catch {
+        return Object.freeze({ kind: 'rejected', reason: 'invalid_native_artifact' });
+    }
+    const { authorization } = request;
+    const authorizationMatchesArtifact = (() => {
+        try {
+            return authorization.envelopeDigest === authorization.capability.envelopeDigest
+                && digestValueOperationEnvelope(authorization.envelope) === authorization.envelopeDigest
+                && digestBitcoinPsbtOperation(normalizedPsbt) === authorization.envelope.canonicalOperationDigest;
+        } catch {
+            return false;
+        }
+    })();
+    if (!authorizationMatchesArtifact) {
+        return Object.freeze({ kind: 'rejected', reason: 'mismatched_authorization' });
+    }
     if (!Capacitor.isNativePlatform()) {
         return Object.freeze({ kind: 'unsupported', reason: 'non_native_platform' });
     }
-    if (!request.vault || !request.psbt || !request.exactEnvelopeDigest) {
+    if (!request.vault) {
         return Object.freeze({ kind: 'rejected', reason: 'invalid_native_artifact' });
     }
+
+    const stage = consumeAuthorizedValueOperationStage(authorization, 'sign', authorization.envelopeDigest);
+    if (stage.kind === 'rejected') return stage;
 
     const path = request.derivationPath ?? "m/84'/0'/0'/0/0";
     let pubkey: string;
@@ -77,17 +101,14 @@ export async function signAuthorizedValueOperationNative(
         return Object.freeze({ kind: 'rejected', reason: 'invalid_native_artifact' });
     }
     try {
-        hashes = getPsbtSighashes(request.psbt, Buffer.from(pubkey, 'hex'), request.network);
-        unsignedTransaction = getUnsignedTxHex(request.psbt, request.network);
+        hashes = getPsbtSighashes(normalizedPsbt, Buffer.from(pubkey, 'hex'), request.network);
+        unsignedTransaction = getUnsignedTxHex(normalizedPsbt, request.network);
         if (hashes.length === 0 || !isValidHex(unsignedTransaction, 1)) {
             return Object.freeze({ kind: 'rejected', reason: 'invalid_native_artifact' });
         }
     } catch {
         return Object.freeze({ kind: 'rejected', reason: 'invalid_native_artifact' });
     }
-
-    const stage = consumeAuthorizedValueOperationStage(request.authorization, 'sign', request.exactEnvelopeDigest);
-    if (stage.kind === 'rejected') return stage;
 
     try {
         const nativeResult = await signBatchNative({
@@ -105,7 +126,7 @@ export async function signAuthorizedValueOperationNative(
             return { index: hashes[index].index, signature: Buffer.from(entry.signature, 'hex') };
         });
         const broadcastReadyHex = finalizePsbtWithSigs(
-            request.psbt,
+            normalizedPsbt,
             signatures,
             Buffer.from(pubkey, 'hex'),
             request.network,

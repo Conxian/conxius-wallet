@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Buffer } from 'node:buffer';
 import { signAuthorizedValueOperationNative } from '../services/value-signer';
-import type { AuthorizedValueOperation } from '../services/value-operations';
+import { digestBitcoinPsbtOperation, type AuthorizedValueOperation } from '../services/value-operations';
+import { createValueOperationEnvelope, digestValueOperationEnvelope } from '../services/value-operation-gate';
 
 const mocks = vi.hoisted(() => ({
     native: vi.fn(),
@@ -24,21 +25,29 @@ vi.mock('../services/psbt', () => ({
     getUnsignedTxHex: mocks.getUnsignedTxHex,
     finalizePsbtWithSigs: mocks.finalizePsbtWithSigs,
 }));
-vi.mock('../services/value-operations', () => ({
-    consumeAuthorizedValueOperationStage: mocks.consumeStage,
-}));
+vi.mock('../services/value-operations', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../services/value-operations')>();
+    return { ...actual, consumeAuthorizedValueOperationStage: mocks.consumeStage };
+});
 vi.mock('../services/worker-manager', () => ({ workerManager: { derivePath: mocks.workerDerive } }));
 
+const envelope = createValueOperationEnvelope({
+    operationType: 'bitcoin-transfer', chain: 'bitcoin', layer: 'l1',
+    canonicalOperationDigest: digestBitcoinPsbtOperation('psbt'), network: 'mainnet', purpose: 'test',
+    domain: 'conxius.wallet', nonce: 'operation:test', challenge: 'confirm:test', audience: 'native-value-signer',
+    protocolKeyIdentity: 'bitcoin-account-0', algorithm: 'secp256k1-ecdsa',
+    providerStatus: 'verified', evidenceStatus: 'verified', providerDigest: '11'.repeat(32), evidenceDigest: '22'.repeat(32),
+});
+const envelopeDigest = digestValueOperationEnvelope(envelope);
 const authorization = {
     kind: 'authorized',
-    envelope: {},
-    envelopeDigest: 'aa'.repeat(32),
-    capability: {},
+    envelope,
+    envelopeDigest,
+    capability: { envelopeDigest },
 } as unknown as AuthorizedValueOperation;
 
 const request = {
     authorization,
-    exactEnvelopeDigest: authorization.envelopeDigest,
     psbt: 'psbt',
     network: 'mainnet' as const,
     vault: 'conxius_vault',

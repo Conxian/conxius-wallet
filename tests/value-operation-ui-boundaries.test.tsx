@@ -19,7 +19,8 @@ const mocks = vi.hoisted(() => ({
     buildNativePegPsbt: vi.fn(),
     getRecommendedFees: vi.fn(),
     signValue: vi.fn(),
-    consumeStage: vi.fn(),
+    payLightningInvoice: vi.fn(),
+    payLnurl: vi.fn(),
     recommendedBridge: vi.fn(),
     estimateFees: vi.fn(),
 }));
@@ -42,13 +43,9 @@ vi.mock('../services/fees', () => ({ getRecommendedFees: mocks.getRecommendedFee
 vi.mock('../services/network', () => ({ endpointsFor: () => ({ BTC_API: 'https://example.invalid' }) }));
 vi.mock('../services/lightning', () => ({
     decodeBolt11: vi.fn(), isLnurl: vi.fn(() => false), decodeLnurl: vi.fn(), fetchLnurlParams: vi.fn(),
-    payLightningInvoice: vi.fn(), payLnurl: vi.fn(),
+    payLightningInvoice: mocks.payLightningInvoice, payLnurl: mocks.payLnurl,
 }));
 vi.mock('../services/value-signer', () => ({ signAuthorizedValueOperationNative: mocks.signValue }));
-vi.mock('../services/value-operations', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../services/value-operations')>();
-    return { ...actual, consumeAuthorizedValueOperationStage: mocks.consumeStage };
-});
 vi.mock('../services/ntt', () => ({
     NttService: { estimateFees: mocks.estimateFees },
     BRIDGE_STAGES: [],
@@ -82,7 +79,7 @@ describe('value UI fail-closed boundaries', () => {
         mocks.getRecommendedFees.mockResolvedValue({ fastestFee: 2 });
         mocks.estimateFees.mockResolvedValue({ totalFee: 0, integratorFee: 0 });
         mocks.recommendedBridge.mockReturnValue('Native');
-        mocks.consumeStage.mockReturnValue({ kind: 'consumed', stage: 'broadcast', envelopeDigest: 'aa'.repeat(32) });
+        mocks.signValue.mockResolvedValue({ kind: 'unsupported', reason: 'non_native_platform' });
     });
 
     it('Dashboard reports unavailable and never exposes synthetic signed/broadcast success after rejection', async () => {
@@ -109,13 +106,61 @@ describe('value UI fail-closed boundaries', () => {
 
         await user.type(screen.getByPlaceholderText('bc1q... or handle.btc'), 'bc1qdestination');
         await user.type(screen.getByPlaceholderText('0.00'), '0.0001');
-        await user.click(screen.getByRole('button', { name: 'Authorize Enclave Sign' }));
+        await user.click(screen.getByRole('button', { name: 'Review Payment Authorization' }));
 
         await waitFor(() => expect(authorization).toHaveBeenCalledOnce());
+        expect(authorization.mock.calls[0][0].intent.payload).toEqual({
+            kind: 'bitcoin-psbt', psbt: '70736274ff00',
+        });
         expect(mocks.signValue).not.toHaveBeenCalled();
         expect(mocks.broadcastTransaction).not.toHaveBeenCalled();
         expect(notify).not.toHaveBeenCalledWith('success', expect.anything());
         expect(screen.queryByText('Payment Sent')).not.toBeInTheDocument();
+    });
+
+    it('never submits a signed Bitcoin artifact or reports settlement without a qualified receipt', async () => {
+        const authorization = vi.fn().mockResolvedValue({
+            kind: 'authorized',
+            envelope: { canonicalOperationDigest: '11'.repeat(32) },
+            envelopeDigest: 'aa'.repeat(32),
+            capability: { envelopeDigest: 'aa'.repeat(32) },
+        });
+        mocks.signValue.mockResolvedValueOnce({ kind: 'signed', broadcastReadyHex: 'deadbeef' });
+        const { notify } = renderWithContext(<PaymentPortal />, authorization);
+        const user = userEvent.setup();
+
+        await user.type(screen.getByPlaceholderText('bc1q... or handle.btc'), 'bc1qdestination');
+        await user.type(screen.getByPlaceholderText('0.00'), '0.0001');
+        await user.click(screen.getByRole('button', { name: 'Review Payment Authorization' }));
+
+        await waitFor(() => expect(notify).toHaveBeenCalledWith('error', expect.stringContaining('broadcast unavailable')));
+        expect(mocks.broadcastTransaction).not.toHaveBeenCalled();
+        expect(notify).not.toHaveBeenCalledWith('success', expect.anything());
+    });
+
+    it('queues deterministic Lightning intent but never calls Lightning execution functions', async () => {
+        const authorization = vi.fn().mockResolvedValue({ kind: 'authorized' });
+        const { notify } = renderWithContext(<PaymentPortal />, authorization);
+        const user = userEvent.setup();
+
+        await user.click(screen.getByRole('button', { name: 'Lightning' }));
+        await user.type(screen.getByPlaceholderText('Invoice or lnurl...'), 'lnbc1testinvoice');
+        await user.type(screen.getByPlaceholderText('0.00'), '1250');
+        await user.click(screen.getByRole('button', { name: 'Review Payment Authorization' }));
+
+        await waitFor(() => expect(authorization).toHaveBeenCalledOnce());
+        expect(authorization.mock.calls[0][0].intent).toMatchObject({
+            operationType: 'lightning-payment',
+            layer: 'lightning',
+            purpose: 'payment-portal-lightning',
+            audience: 'qualified-lightning-adapter',
+            payload: { kind: 'lightning-payment', requestKind: 'bolt11', amountSats: '1250' },
+        });
+        expect(authorization.mock.calls[0][0].intent.payload.requestDigest).toMatch(/^[0-9a-f]{64}$/);
+        expect(mocks.payLightningInvoice).not.toHaveBeenCalled();
+        expect(mocks.payLnurl).not.toHaveBeenCalled();
+        expect(notify).toHaveBeenCalledWith('error', expect.stringContaining('Lightning execution unavailable'));
+        expect(notify).not.toHaveBeenCalledWith('success', expect.anything());
     });
 
     it('native peg-in does not sign, broadcast, or complete after unsupported authorization', async () => {
@@ -150,6 +195,17 @@ describe('value UI fail-closed boundaries', () => {
         expect(screen.queryByText('Transfer Broadcast')).not.toBeInTheDocument();
     });
 
+    it('clears legacy bare NTT txids without restoring a terminal state', async () => {
+        localStorage.setItem('PENDING_NTT_TX', 'ab'.repeat(32));
+        localStorage.setItem('PENDING_NTT_TARGET', 'Stacks');
+
+        renderWithContext(<NTTBridge />, vi.fn());
+
+        await waitFor(() => expect(localStorage.getItem('PENDING_NTT_TX')).toBeNull());
+        expect(localStorage.getItem('PENDING_NTT_TARGET')).toBeNull();
+        expect(screen.queryByText('Transfer Broadcast')).not.toBeInTheDocument();
+    });
+
     it('contains no banned production UI fallback literals', () => {
         const dashboard = fs.readFileSync(path.join(process.cwd(), 'components/Dashboard.tsx'), 'utf8');
         const bridge = fs.readFileSync(path.join(process.cwd(), 'components/NTTBridge.tsx'), 'utf8');
@@ -158,5 +214,12 @@ describe('value UI fail-closed boundaries', () => {
         }
         expect(bridge).not.toContain('Math.random');
         expect(bridge).not.toContain("setBridgeStatus('COMPLETED')");
+        expect(bridge).not.toContain('broadcastTransaction');
+        expect(bridge).not.toContain('Transfer Broadcast');
+        const payment = fs.readFileSync(path.join(process.cwd(), 'components/PaymentPortal.tsx'), 'utf8');
+        expect(payment).not.toContain('broadcastTransaction');
+        expect(payment).not.toContain('payLightningInvoice');
+        expect(payment).not.toContain('payLnurl');
+        expect(payment).not.toContain('Payment Sent');
     });
 });
