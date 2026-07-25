@@ -18,15 +18,18 @@ import {
   QrCode,
   X,
   ShieldCheck,
-  CheckCircle2,
-  Network,
   Loader2
 } from 'lucide-react';
 import { AppContext } from '../context';
 import { Asset, BitcoinLayer } from '../types';
-import { SignRequest } from '../services/signer';
 import { getTranslation } from '../services/i18n';
 import { generateRandomString } from '../services/random';
+import {
+  createDeterministicValueOperationIntent,
+  redactValueOperationIdentifier,
+  unavailableValueOperationEvidence,
+  valueOperationOutcomeMessage,
+} from '../services/value-operations';
 import AssetDetailModal from './AssetDetailModal';
 import UTXOManager from './UTXOManager';
 import SilentPayments from './SilentPayments';
@@ -35,7 +38,7 @@ const Dashboard: React.FC = () => {
   const appContext = useContext(AppContext);
   const [showSend, setShowSend] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
-  const [sendStep, setSendStep] = useState<'form' | 'sign' | 'broadcast'>('form');
+  const [sendStep, setSendStep] = useState<'form' | 'sign'>('form');
   const [sendAddress, setSendAddress] = useState('');
   const [sendAmount, setSendAmount] = useState('');
   const [receiveLayer, setReceiveLayer] = useState<BitcoinLayer>('Mainnet');
@@ -43,11 +46,7 @@ const Dashboard: React.FC = () => {
   const [qrSrc, setQrSrc] = useState('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=bc1q_owner_address');
   const [qrError, setQrError] = useState(false);
   const [selectedUtxos, setSelectedUtxos] = useState<any[]>([]);
-  const [psbtBase64, setPsbtBase64] = useState('');
   const [isSigning, setIsSigning] = useState(false);
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
-  const [signedHex, setSignedHex] = useState('');
-  const [broadcastResult, setBroadcastResult] = useState('');
 
   if (!appContext) return null;
   const { state } = appContext;
@@ -62,10 +61,6 @@ const Dashboard: React.FC = () => {
   const network = state.network;
 
   const handleQrError = () => setQrError(true);
-
-  const broadcastBtcTx = async (hex: string, net: string) => {
-    return "txid_" + generateRandomString(12);
-  };
 
   return (
     <div className="p-6 md:p-8 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -215,7 +210,7 @@ const Dashboard: React.FC = () => {
               
               <div className="text-center space-y-2">
                  <h3 className="text-2xl font-black italic uppercase tracking-tighter text-brand-deep">Disburse Assets</h3>
-                 <p className="text-xs text-brand-earth">Hardware-signed transaction via Secure Enclave.</p>
+                 <p className="text-xs text-brand-earth">Native-only signing and authoritative evidence are required.</p>
               </div>
 
               {sendStep === 'form' && (
@@ -242,15 +237,11 @@ const Dashboard: React.FC = () => {
                           </div>
                       </div>
                       <button
-                        onClick={() => {
-                          const psbt = "dGhpcyBpcyBhIG1vY2sgcHlidA==";
-                          setPsbtBase64(psbt);
-                          setSendStep('sign');
-                        }}
+                        onClick={() => setSendStep('sign')}
                         disabled={!sendAddress || !sendAmount}
                         className="w-full bg-brand-deep text-white font-black py-5 rounded-2xl uppercase tracking-widest hover:bg-ivory transition-all disabled:opacity-50 shadow-lg"
                       >
-                        Construct PSBT
+                        Review Transfer
                       </button>
                   </div>
               )}
@@ -271,17 +262,41 @@ const Dashboard: React.FC = () => {
                         onClick={async () => {
                             setIsSigning(true);
                             try {
-                                const signReq: SignRequest = {
-                                    type: 'psbt',
-                                    layer: 'Mainnet',
-                                    payload: { psbt: psbtBase64, network },
-                                    description: `Sign PSBT`
-                                };
-                                const result = await appContext.authorizeSignature(signReq);
-                                setSignedHex(result.broadcastReadyHex || 'mock_hex_abc123');
-                                setSendStep('broadcast');
-                            } catch (e) {
-                                appContext?.notify('error', 'Signing Failed');
+                                const amountSats = sendAmount.trim();
+                                const intent = createDeterministicValueOperationIntent({
+                                  operationType: 'bitcoin-transfer',
+                                  chain: 'bitcoin',
+                                  layer: 'l1',
+                                  payload: {
+                                    asset: 'BTC',
+                                    destination: sendAddress.trim(),
+                                    amountSats,
+                                  },
+                                  network,
+                                  purpose: 'dashboard-send',
+                                  domain: 'conxius.wallet',
+                                  audience: 'native-value-signer',
+                                });
+                                const authorization = await appContext.requestValueOperationAuthorization({
+                                  intent,
+                                  summary: {
+                                    title: 'Authorize Bitcoin Transfer',
+                                    action: 'Send Bitcoin',
+                                    amount: `${amountSats} sats`,
+                                    destination: redactValueOperationIdentifier(sendAddress),
+                                    network,
+                                    purpose: 'Dashboard send',
+                                  },
+                                  custody: {
+                                    boundary: 'wallet-native-enclave',
+                                    protocolKeyIdentity: 'bitcoin-account-0',
+                                    algorithm: 'secp256k1-ecdsa',
+                                  },
+                                  evidence: unavailableValueOperationEvidence('dashboard-psbt-provider'),
+                                });
+                                appContext.notify('error', valueOperationOutcomeMessage(authorization));
+                            } catch {
+                                appContext.notify('error', 'Value operation unavailable.');
                             } finally {
                                 setIsSigning(false);
                             }
@@ -295,36 +310,6 @@ const Dashboard: React.FC = () => {
                   </div>
               )}
 
-              {sendStep === 'broadcast' && (
-                  <div className="space-y-6 text-center">
-                      <div className="w-20 h-20 bg-success/10 rounded-full flex items-center justify-center mx-auto text-success mb-2 shadow-sm">
-                          <CheckCircle2 size={40} />
-                      </div>
-                      <h4 className="text-xl font-black italic uppercase text-brand-deep">Signed & Ready</h4>
-                      <p className="text-xs text-brand-earth font-mono break-all px-4">{signedHex.substring(0, 32)}...</p>
-                      
-                      <button 
-                        onClick={async () => {
-                            setIsBroadcasting(true);
-                            try {
-                                const txid = await broadcastBtcTx(signedHex, network);
-                                setBroadcastResult(txid);
-                                appContext?.notify('success', 'Transaction Broadcasted!');
-                                setTimeout(() => { setShowSend(false); setSendStep('form'); }, 2000);
-                            } catch (e) {
-                                appContext?.notify('error', 'Broadcast Failed');
-                            } finally {
-                                setIsBroadcasting(false);
-                            }
-                        }}
-                        disabled={isBroadcasting}
-                        className="w-full bg-success text-white font-black py-5 rounded-2xl uppercase tracking-widest hover:bg-success/90 transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg"
-                      >
-                         {isBroadcasting ? <Loader2 className="animate-spin" /> : <Network size={20} />}
-                         {isBroadcasting ? 'Propagating...' : 'Broadcast to Mempool'}
-                      </button>
-                  </div>
-              )}
            </div>
         </div>
       )}
