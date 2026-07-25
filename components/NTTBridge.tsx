@@ -3,7 +3,7 @@ import { BitcoinLayer } from '../types';
 import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp, ShieldCheck, Zap, Globe, Search, RefreshCw, ExternalLink, Target, Cpu, Download, Activity } from 'lucide-react';
 import { AppContext } from '../context';
 import { NttService, BRIDGE_STAGES, getRecommendedBridgeProtocol, NTT_CONFIGS } from '../services/ntt';
-import { fetchUtxos, broadcastAuthorizedTransaction, fetchSbtcWalletAddress, monitorSbtcPegIn, fetchNativePegAddress } from '../services/protocol';
+import { fetchUtxos, broadcastAuthorizedTransaction, monitorSbtcPegIn, fetchNativePegAddress } from '../services/protocol';
 import {
   createUnverifiedValueOperationRequest,
   createValueOperationNonce,
