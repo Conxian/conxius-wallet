@@ -1,234 +1,121 @@
-import * as bitcoin from 'bitcoinjs-lib';
+import { Buffer } from 'buffer';
 import { bech32m } from 'bech32';
-import { notificationService } from './notifications';
+import { type Network } from '../types';
 import { getTransactionStatus } from './protocol';
-import { requestEnclaveSignature } from './signer';
+import { digestCanonicalPayload, type CanonicalObject } from './value-operation-gate';
+import {
+    knownUnsupportedValueOperation,
+    type AuthorizedValueOperationExecution,
+    type ValueOperationExecutionOutcome,
+} from './value-operation-result';
 
 export type RgbSchema = 'RGB20' | 'RGB21' | 'RGB25' | 'NIA';
+export interface RgbAsset { id: string; name: string; symbol: string; precision: number; totalSupply: number; schema: RgbSchema; issuedAt: number; initialSeal: string; description?: string; }
+export interface RgbAnchor { txid: string; vout: number; amount: number; }
+export interface Consignment { id: string; assetId: string; vouts: number[]; anchor?: RgbAnchor; witness: string; endpoints: string[]; }
+export interface RgbInvoice { assetId: string; amount: number; beneficiary: string; expiry?: number; }
 
-export interface RgbAsset {
-    id: string;
-    name: string;
-    symbol: string;
-    precision: number;
-    totalSupply: number;
-    schema: RgbSchema;
-    issuedAt: number;
-    initialSeal: string; // txid:vout
-    description?: string;
+export interface RgbIssuanceArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.rgb-issuance.v1'; readonly chain: 'bitcoin'; readonly layer: 'rgb';
+    readonly operation: 'issue-asset'; readonly network: string; readonly name: string; readonly symbol: string;
+    readonly totalSupply: string; readonly precision: string; readonly schema: RgbSchema; readonly initialSeal: string;
+    readonly description: string | null; readonly validatorConfigurationDigest: string;
+}
+export interface RgbTransferArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.rgb-transfer.v1'; readonly chain: 'bitcoin'; readonly layer: 'rgb';
+    readonly operation: 'transfer-asset'; readonly network: string; readonly assetId: string; readonly amount: string;
+    readonly beneficiary: string; readonly transitionCommitment: string; readonly anchorTxid: string | null;
+    readonly anchorVout: string | null; readonly proofDigest: string | null; readonly validatorConfigurationDigest: string;
+}
+export type RgbIssuanceRequest = AuthorizedValueOperationExecution<RgbIssuanceArtifact>;
+export type RgbTransferRequest = AuthorizedValueOperationExecution<RgbTransferArtifact>;
+
+const RGB_VALIDATOR_CONFIGURATION_DIGEST = digestCanonicalPayload(Object.freeze({ kind: 'conxius.wallet.unavailable-rgb-validator.v1' }));
+function canonicalNonNegativeInteger(value: number, field: string): string {
+    if (!Number.isSafeInteger(value) || value < 0) throw new Error(`Invalid ${field}.`);
+    return String(value);
+}
+function canonicalAmount(value: string): string {
+    const normalized = value.trim();
+    if (!/^(0|[1-9][0-9]*)$/.test(normalized)) throw new Error('Invalid RGB amount.');
+    return normalized;
 }
 
-export interface RgbAnchor {
-    txid: string;
-    vout: number;
-    amount: number;
+export function createRgbIssuanceArtifact(fields: {
+    name: string; symbol: string; totalSupply: string; precision: number; schema: RgbSchema;
+    initialSeal: string; description?: string; network?: string;
+}): RgbIssuanceArtifact {
+    if (!/^[a-fA-F0-9]{64}:[0-9]+$/.test(fields.initialSeal) || !fields.name.trim() || !fields.symbol.trim()) {
+        throw new Error('Invalid RGB issuance request.');
+    }
+    return Object.freeze({
+        kind: 'conxius.wallet.rgb-issuance.v1', chain: 'bitcoin', layer: 'rgb', operation: 'issue-asset',
+        network: fields.network ?? 'mainnet', name: fields.name.trim(), symbol: fields.symbol.trim(),
+        totalSupply: canonicalAmount(fields.totalSupply), precision: canonicalNonNegativeInteger(fields.precision, 'precision'),
+        schema: fields.schema, initialSeal: fields.initialSeal, description: fields.description?.trim() || null,
+        validatorConfigurationDigest: RGB_VALIDATOR_CONFIGURATION_DIGEST,
+    });
 }
 
-export interface Consignment {
-    id: string;
-    assetId: string;
-    vouts: number[];
-    anchor?: RgbAnchor; // The on-chain anchor for the state transition
-    witness: string; // Hex string of the witness/proof
-    endpoints: string[]; // Storm/Bitmask endpoints
+export function createRgbTransferArtifact(fields: {
+    assetId: string; amount: string; beneficiary: string; transitionCommitment: string; anchorTxid?: string;
+    anchorVout?: number; proofDigest?: string; network?: string;
+}): RgbTransferArtifact {
+    if (!fields.assetId.startsWith('rgb:') || !fields.beneficiary.trim() || !fields.transitionCommitment.trim()) {
+        throw new Error('Invalid RGB transfer request.');
+    }
+    return Object.freeze({
+        kind: 'conxius.wallet.rgb-transfer.v1', chain: 'bitcoin', layer: 'rgb', operation: 'transfer-asset',
+        network: fields.network ?? 'mainnet', assetId: fields.assetId, amount: canonicalAmount(fields.amount),
+        beneficiary: fields.beneficiary.trim(), transitionCommitment: fields.transitionCommitment.trim(),
+        anchorTxid: fields.anchorTxid ?? null,
+        anchorVout: fields.anchorVout === undefined ? null : canonicalNonNegativeInteger(fields.anchorVout, 'anchor output'),
+        proofDigest: fields.proofDigest ?? null, validatorConfigurationDigest: RGB_VALIDATOR_CONFIGURATION_DIGEST,
+    });
 }
 
-export interface RgbInvoice {
-    assetId: string;
-    amount: number;
-    beneficiary: string; // Blinded UTXO or Address
-    expiry?: number;
-}
+export const issueRgbAsset = async (request: RgbIssuanceRequest): Promise<ValueOperationExecutionOutcome> =>
+    knownUnsupportedValueOperation(request, {
+        artifactKind: 'conxius.wallet.rgb-issuance.v1', operationType: 'issue-asset', layer: 'rgb', chain: 'bitcoin',
+    });
+export const createRgbTransfer = async (request: RgbTransferRequest): Promise<ValueOperationExecutionOutcome> =>
+    knownUnsupportedValueOperation(request, {
+        artifactKind: 'conxius.wallet.rgb-transfer.v1', operationType: 'transfer-asset', layer: 'rgb', chain: 'bitcoin',
+    });
 
-/**
- * RGB Asset Issuance
- * In a real implementation, this would use rgb-lib or a similar native bridge.
- */
-export const issueRgbAsset = async (
-    name: string,
-    symbol: string,
-    totalSupply: number,
-    precision: number,
-    schema: RgbSchema,
-    initialSeal: string,
-    description?: string
-): Promise<RgbAsset> => {
-    // Structural validation of initial seal
-    const sealRegex = /^[a-fA-F0-9]{64}:[0-9]+$/;
-    if (!sealRegex.test(initialSeal)) {
-        throw new Error("Invalid Initial Seal format. Expected txid:vout");
-    }
-
-    // Simulate contract creation (Contract ID is usually SHA256 of genesis)
-    const contractId = Buffer.from(bitcoin.crypto.sha256(Buffer.from(name + symbol + Date.now().toString()))).toString("hex").substring(0, 32);
-
-    const asset: RgbAsset = {
-        id: `rgb:${contractId}`,
-        name,
-        symbol,
-        precision,
-        totalSupply,
-        schema,
-        issuedAt: Date.now(),
-        initialSeal,
-        description
-    };
-
-    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'RGB Asset Issued', message: `Successfully issued ${totalSupply} ${symbol}` });
-
-    return asset;
-};
-
-/**
- * Client-side Validation (CSV)
- * Verifies the validity of an RGB consignment against the genesis and transition rules.
- * 
- * In Production: This would pass the consignment blob to `rgb-lib-wasm` or `rgb-node` to verify the DAG.
- */
-export const validateConsignment = async (consignment: Consignment, network: any = 'mainnet'): Promise<boolean> => {
-    notificationService.notify({ category: 'SYSTEM', type: 'info', title: 'RGB', message: 'Validating RGB Consignment...' });
-
-    // 1. Structural checks
-    if (!consignment.id || !consignment.assetId || !consignment.witness) {
-        console.warn('Incomplete consignment data');
-        return false;
-    }
-
-    if (!consignment.assetId.startsWith('rgb:')) {
-        console.warn('Invalid RGB Asset ID format');
-        return false;
-    }
-
-    if (consignment.vouts.length === 0) {
-        console.warn('Consignment must have at least one vout');
-        return false;
-    }
-
-    // 2. Anchor Validation
+export const validateConsignment = async (consignment: Consignment, network: Network = 'mainnet'): Promise<boolean> => {
+    if (
+        typeof consignment !== 'object'
+        || consignment === null
+        || typeof consignment.id !== 'string'
+        || typeof consignment.assetId !== 'string'
+        || !consignment.assetId.startsWith('rgb:')
+        || typeof consignment.witness !== 'string'
+        || !Array.isArray(consignment.vouts)
+        || consignment.vouts.length === 0
+    ) return false;
     if (consignment.anchor) {
-        if (consignment.anchor.amount < 546) {
-             console.warn('Anchor amount below dust limit');
-        }
-
-        // Real on-chain check
+        if (consignment.anchor.amount < 546) return false;
         const status = await getTransactionStatus(consignment.anchor.txid, 'Mainnet', network);
-        if (status.status !== "completed") {
-            console.warn('Anchor transaction not confirmed on-chain');
-            notificationService.notify({ category: 'SYSTEM', type: 'info', title: 'RGB', message: 'RGB Anchor Pending Confirmation' });
-        }
+        if (status.status !== 'completed') return false;
     }
-
-    // 3. Cryptographic Validation (WASM Bridge)
-    try {
-        const isValid = await verifyRgbProofWasm(consignment.witness);
-        
-        if (isValid) {
-            notificationService.notify({ category: 'SYSTEM', type: 'success', title: 'RGB', message: 'RGB Consignment Validated (CSV)' });
-        } else {
-            notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'RGB', message: 'RGB Validation Failed: Invalid Witness' });
-        }
-        return isValid;
-    } catch (e) {
-        console.warn('RGB WASM validation failed, falling back to structural check', e);
-        // Fallback: Witness must be a hex string of at least 64 chars (32 bytes)
-        const hexRegex = /^[a-fA-F0-9]{64,}$/;
-        return hexRegex.test(consignment.witness);
-    }
+    try { return await verifyRgbProofWasm(consignment.witness); } catch { return false; }
 };
 
-/**
- * Creates an RGB Transfer Consignment.
- */
-export const createRgbTransfer = async (
-    assetId: string,
-    amount: number,
-    beneficiary: string,
-    vault: string
-): Promise<Consignment> => {
-    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'RGB Transfer', message: `Preparing consignment for ${amount} ${assetId.slice(0,8)}...` });
+/** Authoritative RGB WASM validation is not linked in this build. */
+export async function verifyRgbProofWasm(witness: string): Promise<boolean> { void witness; return false; }
 
-    try {
-        // 1. Prepare State Transition Hash
-        const transitionHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(assetId + amount + beneficiary))).toString("hex");
-
-        // 2. Request Enclave Signature (Taproot Tweak)
-        const signResult = await requestEnclaveSignature({
-            type: 'message',
-            layer: 'RGB',
-            payload: { hash: transitionHash },
-            description: `Transfer ${amount} RGB units to ${beneficiary.slice(0,12)}...`
-        }, vault);
-
-        // 3. Construct Consignment
-        const consignment: Consignment = {
-            id: `consignment:${Date.now()}`,
-            assetId,
-            vouts: [0],
-            anchor: {
-                txid: 'pending_on_chain_txid',
-                vout: 0,
-                amount: 1000 // sats for anchor
-            },
-            witness: signResult.signature,
-            endpoints: ['https://storm.conxianlabs.com']
-        };
-
-        return consignment;
-
-    } catch (e: any) {
-        notificationService.notify({ category: 'SYSTEM', type: 'error', title: 'RGB', message: `RGB Transfer Failed: ${e.message}` });
-        throw e;
-    }
-};
-
-/**
- * Placeholder for the actual WASM bindgen call.
- */
-async function verifyRgbProofWasm(witness: string): Promise<boolean> {
-    // Simulate async WASM operation
-    await new Promise(r => setTimeout(r, 100));
-    // Check AluVM script and state transitions (simplified check for demo)
-    return witness.length >= 64 && !witness.includes('invalid');
-}
-
-/**
- * Parse an RGB Invoice (Bech32m encoded usually)
- * Refined implementation using bech32m decoding.
- */
 export const parseRgbInvoice = (invoice: string): RgbInvoice | null => {
     try {
         if (!invoice.startsWith('rgb:')) return null;
-
-        // Remove prefix
-        const encoded = invoice.slice(4);
-        const decoded = bech32m.decode(encoded);
-
+        const decoded = bech32m.decode(invoice.slice(4));
         if (decoded.prefix !== 'rgb') return null;
-
-        const data = bech32m.fromWords(decoded.words);
-        const hexData = Buffer.from(data).toString('hex');
-
-        // In a real RGB invoice, the data would contain:
-        // - Asset ID (32 bytes)
-        // - Amount (up to 8 bytes)
-        // - Beneficiary (Blinded UTXO hash, 32 bytes)
-
-        return {
-            assetId: 'rgb:' + hexData.substring(0, 32),
-            amount: parseInt(hexData.substring(32, 48), 16) || 0,
-            beneficiary: hexData.substring(48) || 'blinded_utxo'
-        };
-    } catch (e) {
-        console.warn('[RGB] Invoice parsing failed:', e);
-        return null;
-    }
+        const hexData = Buffer.from(bech32m.fromWords(decoded.words)).toString('hex');
+        return { assetId: `rgb:${hexData.substring(0, 32)}`, amount: parseInt(hexData.substring(32, 48), 16) || 0, beneficiary: hexData.substring(48) || 'blinded_utxo' };
+    } catch { return null; }
 };
 
-/**
- * Sync Local Stash with Remote Proxy
- */
 export const syncStash = async (address: string): Promise<number> => {
-    // Communicates with an RGB proxy (e.g., Storm or Bitmask backend)
-    const randomValue = globalThis.crypto.getRandomValues(new Uint8Array(1))[0];
-    return randomValue % 3;
+    void address;
+    return 0;
 };

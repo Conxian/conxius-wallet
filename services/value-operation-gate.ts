@@ -159,6 +159,11 @@ export type ValueOperationGateOutcome =
 
 export interface ValueOperationGate {
     authorize(request: unknown): Promise<ValueOperationGateOutcome>;
+    /** Verifies a live capability from this gate without consuming a stage. */
+    assertAuthorization(
+        capability: ValueOperationAuthorizationCapability,
+        expectedEnvelopeDigest: string,
+    ): void;
     /**
      * Gate-owned wrappers call this immediately before the named irreversible
      * stage. Stage consumption is process-local replay defense only.
@@ -528,6 +533,22 @@ function validateVerifiedBinding(result: unknown): VerifiedEvidenceBinding | nul
 
 function createGate(): ValueOperationGate {
     const gateIdentity = Object.freeze({});
+    const assertRegisteredAuthorization = (
+        capability: ValueOperationAuthorizationCapability,
+        expectedEnvelopeDigest: string,
+    ): CapabilityRecord => {
+        const record = capabilityRegistry.get(capability);
+        if (!record || record.gate !== gateIdentity) {
+            throw new ValueOperationAuthorizationError('forged_authorization');
+        }
+        if (record.envelopeDigest !== expectedEnvelopeDigest || capability.envelopeDigest !== expectedEnvelopeDigest) {
+            throw new ValueOperationAuthorizationError('mismatched_authorization');
+        }
+        if (record.localExpiresAtMs <= Date.now()) {
+            throw new ValueOperationAuthorizationError('expired_authorization');
+        }
+        return record;
+    };
     const gate: ValueOperationGate = {
         async authorize(untrustedRequest) {
             let request: ValueOperationRequest;
@@ -597,22 +618,17 @@ function createGate(): ValueOperationGate {
             return Object.freeze({ kind: 'authorized', envelope, envelopeDigest, capability });
         },
 
+        assertAuthorization(capability, expectedEnvelopeDigest) {
+            assertRegisteredAuthorization(capability, expectedEnvelopeDigest);
+        },
+
         assertAndConsumeStage(capability, stage, expectedEnvelopeDigest) {
-            const record = capabilityRegistry.get(capability);
-            if (!record || record.gate !== gateIdentity) {
-                throw new ValueOperationAuthorizationError('forged_authorization');
-            }
             if (!['sign', 'broadcast', 'settle'].includes(stage)) {
                 throw new ValueOperationAuthorizationError('mismatched_authorization');
             }
-            if (record.envelopeDigest !== expectedEnvelopeDigest || capability.envelopeDigest !== expectedEnvelopeDigest) {
-                throw new ValueOperationAuthorizationError('mismatched_authorization');
-            }
+            const record = assertRegisteredAuthorization(capability, expectedEnvelopeDigest);
             if (record.consumedStages.has(stage)) {
                 throw new ValueOperationAuthorizationError('consumed_authorization');
-            }
-            if (record.localExpiresAtMs <= Date.now()) {
-                throw new ValueOperationAuthorizationError('expired_authorization');
             }
             record.consumedStages.add(stage);
         },

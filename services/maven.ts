@@ -1,11 +1,33 @@
-import { requestEnclaveSignature } from './signer';
-import { notificationService } from './notifications';
 import { endpointsFor, fetchWithRetry } from './network';
 import { Network, Asset } from '../types';
-import * as bitcoin from 'bitcoinjs-lib';
+import { digestCanonicalPayload, type CanonicalObject } from './value-operation-gate';
+import { knownUnsupportedValueOperation, type AuthorizedValueOperationExecution, type ValueOperationExecutionOutcome } from './value-operation-result';
 
 export interface MavenAsset extends Asset {
     mavenId: string;
+}
+
+export interface MavenTransferArtifact extends CanonicalObject {
+    readonly kind: 'conxius.wallet.maven-transfer.v1'; readonly chain: 'bitcoin'; readonly layer: 'maven';
+    readonly operation: 'transfer-asset'; readonly network: Network; readonly assetId: string;
+    readonly amount: string; readonly recipient: string; readonly authorityCommitment: string;
+    readonly sequencerConfigurationDigest: string;
+}
+export type MavenTransferRequest = AuthorizedValueOperationExecution<MavenTransferArtifact>;
+const MAVEN_SEQUENCER_CONFIGURATION_DIGEST = digestCanonicalPayload(Object.freeze({ kind: 'conxius.wallet.unqualified-maven-sequencer.v1' }));
+
+export function createMavenTransferArtifact(fields: {
+    assetId: string; amount: string; recipient: string; authorityCommitment: string; network?: Network;
+}): MavenTransferArtifact {
+    const amount = fields.amount.trim();
+    if (!fields.assetId.trim() || !/^(0|[1-9][0-9]*)$/.test(amount) || !fields.recipient.trim() || !fields.authorityCommitment.trim()) {
+        throw new Error('Invalid Maven transfer request.');
+    }
+    return Object.freeze({
+        kind: 'conxius.wallet.maven-transfer.v1', chain: 'bitcoin', layer: 'maven', operation: 'transfer-asset',
+        network: fields.network ?? 'mainnet', assetId: fields.assetId.trim(), amount, recipient: fields.recipient.trim(),
+        authorityCommitment: fields.authorityCommitment.trim(), sequencerConfigurationDigest: MAVEN_SEQUENCER_CONFIGURATION_DIGEST,
+    });
 }
 
 /**
@@ -44,61 +66,7 @@ export const fetchMavenAssets = async (address: string, network: Network = 'main
 /**
  * Prepares and signs a Maven asset transfer.
  */
-export const createMavenTransfer = async (
-    assetId: string,
-    amount: number,
-    recipient: string,
-    vault: string,
-    network: Network = 'mainnet'
-): Promise<string> => {
-    notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'Maven Transfer', message: `Preparing transfer for ${amount} units...` });
-
-    try {
-        // 1. Construct Maven-specific transfer payload
-        const payload = {
-            assetId,
-            amount,
-            recipient,
-            timestamp: Date.now()
-        };
-
-        const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(JSON.stringify(payload)))).toString("hex");
-
-        // 2. Request Enclave Signature
-        const signResult = await requestEnclaveSignature({
-            type: 'psbt',
-            layer: 'Maven',
-            payload: { hash: msgHash, ...payload },
-            description: `Maven Transfer: ${amount} units`
-        }, vault);
-
-        // 3. Broadcast to Maven Indexer/Sequencer
-        const { MAVEN_API } = endpointsFor(network);
-        if (MAVEN_API) {
-            const response = await fetchWithRetry(`${MAVEN_API}/v1/transfer`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...payload,
-                    signature: signResult.signature,
-                    pubkey: signResult.pubkey
-                })
-            });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.message || 'Maven Node rejected transfer');
-            }
-
-            const data = await response.json();
-            notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'Maven Transfer', message: 'Transfer successful' });
-            return data.txid;
-        }
-
-        return "maven_sim_txid_" + Date.now();
-
-    } catch (e: any) {
-        notificationService.notify({ category: 'TRANSACTION', type: 'error', title: 'Maven Transfer', message: `Transfer failed: ${e.message}` });
-        throw e;
-    }
-};
+export const createMavenTransfer = async (request: MavenTransferRequest): Promise<ValueOperationExecutionOutcome> =>
+    knownUnsupportedValueOperation(request, {
+        artifactKind: 'conxius.wallet.maven-transfer.v1', operationType: 'transfer-asset', layer: 'maven', chain: 'bitcoin',
+    });

@@ -1,67 +1,37 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { transferStateChainUtxo, withdrawStateChainUtxo } from '../services/statechain';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { authorizeAdapterArtifact, forgedAuthorization } from './value-operation-adapter-test-helpers';
+import {
+    createStateChainTransferArtifact,
+    createStateChainWithdrawalArtifact,
+    transferStateChainUtxo,
+    withdrawStateChainUtxo,
+} from '../services/statechain';
 
-// Mock dependencies
-vi.mock('../services/notifications', () => ({
-    notificationService: {
-        notify: vi.fn()
-    }
-}));
+const fetchMock = vi.fn();
+vi.stubGlobal('fetch', fetchMock);
+beforeEach(() => { fetchMock.mockReset(); vi.clearAllMocks(); });
 
-vi.mock('../services/signer', () => ({
-    requestEnclaveSignature: vi.fn().mockResolvedValue({
-        signature: 'mock_schnorr_signature_hex',
-        pubkey: 'mock_pubkey',
-        timestamp: Date.now()
-    })
-}));
-
-vi.mock('../services/network', () => ({
-    endpointsFor: () => ({ STATE_CHAIN_API: 'https://mock.statechains.api' }),
-    fetchWithRetry: async (url: string, options: any) => global.fetch(url, options)
-}));
-
-// Mock fetch globally
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
-
-describe('StateChain Service', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockFetch.mockReset();
+describe('StateChain gate-bound production adapters', () => {
+    it('returns unsupported for exact transfer and withdrawal artifacts with no fetch', async () => {
+        const transfer = createStateChainTransferArtifact({ utxoId: 'sc:utxo-1', recipientPubkey: '03newowner', currentIndex: 0 });
+        const withdrawal = createStateChainWithdrawalArtifact({
+            utxoId: 'sc:utxo-1', destination: 'bc1qdestination', currentIndex: 0, withdrawalCommitment: 'unsigned-withdrawal-commitment',
+        });
+        await expect(transferStateChainUtxo({ authorization: await authorizeAdapterArtifact(transfer), artifact: transfer }))
+            .resolves.toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        const outcome = await withdrawStateChainUtxo({ authorization: await authorizeAdapterArtifact(withdrawal), artifact: withdrawal });
+        expect(outcome).toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        expect(JSON.stringify(outcome)).not.toContain('unsigned-withdrawal-commitment');
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('should transfer a StateChain UTXO using Enclave', async () => {
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({ txid: 'statechain_txid_123' })
-        });
-
-        const result = await transferStateChainUtxo(
-            'sc:utxo-1', 
-            '03newowner',
-            0,
-            'mock-vault-data'
-        );
-        
-        expect(result.nextIndex).toBe(1);
-        expect(result.signature).toBe('mock_schnorr_signature_hex');
-        expect(result.txid).toBe('statechain_txid_123');
-    });
-
-    it('should withdraw a StateChain UTXO to L1', async () => {
-        mockFetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({ txid: 'withdrawal_txid_456' })
-        });
-
-        const txid = await withdrawStateChainUtxo(
-            'sc:utxo-1',
-            'bc1q_dest',
-            'mock-vault-data'
-        );
-
-        expect(txid).toBeDefined();
-        expect(txid).toContain('txid_withdrawal_');
+    it('rejects mismatched and forged requests', async () => {
+        const artifact = createStateChainTransferArtifact({ utxoId: 'sc:utxo-1', recipientPubkey: '03newowner', currentIndex: 0 });
+        const authorization = await authorizeAdapterArtifact(artifact);
+        await expect(transferStateChainUtxo({ authorization, artifact: { ...artifact, currentIndex: '1' } }))
+            .resolves.toMatchObject({ kind: 'rejected', reason: 'artifact_digest_mismatch' });
+        await expect(transferStateChainUtxo({ authorization: forgedAuthorization(), artifact }))
+            .resolves.toMatchObject({ kind: 'rejected' });
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 });

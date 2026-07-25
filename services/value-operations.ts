@@ -1,6 +1,7 @@
 import {
     createValueOperationGate,
     digestCanonicalPayload,
+    digestValueOperationEnvelope,
     digestValueOperationIntent,
     ValueOperationAuthorizationError,
     type AuthorizedValueOperation,
@@ -45,6 +46,11 @@ export type ValueOperationStageOutcome =
     | Readonly<{ kind: 'consumed'; stage: ValueOperationStage; envelopeDigest: string }>
     | Readonly<{ kind: 'rejected'; reason: Extract<ValueOperationReasonCode,
         'expired_authorization' | 'forged_authorization' | 'mismatched_authorization' | 'consumed_authorization'> }>;
+
+export type ValueOperationAuthorizationInspectionOutcome =
+    | Readonly<{ kind: 'validated'; envelopeDigest: string }>
+    | Readonly<{ kind: 'rejected'; reason: Extract<ValueOperationReasonCode,
+        'expired_authorization' | 'forged_authorization' | 'mismatched_authorization'> }>;
 
 export function createDeterministicValueOperationIntent(
     fields: Omit<ValueOperationIntent, 'nonce' | 'challenge'>,
@@ -107,6 +113,34 @@ export function consumeAuthorizedValueOperationStage(
     } catch (error) {
         if (error instanceof ValueOperationAuthorizationError) {
             return Object.freeze({ kind: 'rejected', reason: error.reason });
+        }
+        return Object.freeze({ kind: 'rejected', reason: 'forged_authorization' });
+    }
+}
+
+/** Non-consuming registry inspection for known unsupported application adapters. */
+export function inspectAuthorizedValueOperation(
+    authorization: AuthorizedValueOperation,
+): ValueOperationAuthorizationInspectionOutcome {
+    try {
+        if (
+            authorization.kind !== 'authorized'
+            || authorization.envelopeDigest !== authorization.capability.envelopeDigest
+            || digestValueOperationEnvelope(authorization.envelope) !== authorization.envelopeDigest
+        ) {
+            return Object.freeze({ kind: 'rejected', reason: 'mismatched_authorization' });
+        }
+        applicationValueOperationGate.assertAuthorization(
+            authorization.capability,
+            authorization.envelopeDigest,
+        );
+        return Object.freeze({ kind: 'validated', envelopeDigest: authorization.envelopeDigest });
+    } catch (error) {
+        if (error instanceof ValueOperationAuthorizationError) {
+            const reason = error.reason === 'consumed_authorization'
+                ? 'mismatched_authorization'
+                : error.reason;
+            return Object.freeze({ kind: 'rejected', reason });
         }
         return Object.freeze({ kind: 'rejected', reason: 'forged_authorization' });
     }
