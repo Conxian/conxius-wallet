@@ -5,8 +5,8 @@ import * as bitcoin from 'bitcoinjs-lib';
 import {
     createUnverifiedValueOperationRequest,
     createValueOperationNonce,
-    executeValueOperation,
-    requireValueOperationSignature,
+    ValueOperationAuthorizer,
+    authorizeValueOperationSignature,
 } from './value-operation';
 
 export interface MavenAsset extends Asset {
@@ -53,7 +53,7 @@ export const createMavenTransfer = async (
     assetId: string,
     amount: number,
     recipient: string,
-    vault: string,
+    authorizeValueOperation: ValueOperationAuthorizer,
     network: Network = 'mainnet'
 ): Promise<string> => {
     notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'Maven Transfer', message: `Preparing transfer for ${amount} units...` });
@@ -69,15 +69,14 @@ export const createMavenTransfer = async (
         const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(JSON.stringify(payload)))).toString("hex");
 
         // 2. Request Enclave Signature
-        const signResult = requireValueOperationSignature(await executeValueOperation(
-            createUnverifiedValueOperationRequest({
+        const request = createUnverifiedValueOperationRequest({
                 operationType: 'transfer', chainLayer: 'Maven', payload: { hash: msgHash, ...payload },
                 network, purpose: 'maven.transfer', nonce: createValueOperationNonce(),
                 audience: 'conxius-wallet', keyIdentity: 'wallet.maven.account-0',
                 algorithm: 'secp256k1-ecdsa', signingType: 'psbt',
                 description: `Maven Transfer: ${amount} units`,
-            }), vault, { userConfirmed: true },
-        ));
+            });
+        const signResult = await authorizeValueOperationSignature(authorizeValueOperation, request);
 
         // 3. Broadcast to Maven Indexer/Sequencer
         const { MAVEN_API } = endpointsFor(network);

@@ -2,8 +2,8 @@ import { Network, AppState } from '../types';
 import {
     createUnverifiedValueOperationRequest,
     createValueOperationNonce,
-    executeValueOperation,
-    requireValueOperationSignature,
+    ValueOperationAuthorizer,
+    authorizeValueOperationSignature,
 } from './value-operation';
 
 /**
@@ -38,18 +38,17 @@ export const signB2bInvoice = async (
     invoiceId: string,
     amount: number,
     currency: string,
-    vault: string
+    authorizeValueOperation: ValueOperationAuthorizer
 ): Promise<string> => {
     const payload = { invoiceId, amount, currency };
-    const signResult = requireValueOperationSignature(await executeValueOperation(
-        createUnverifiedValueOperationRequest({
+    const request = createUnverifiedValueOperationRequest({
             operationType: 'sign', chainLayer: 'Mainnet', payload, network: 'mainnet',
             purpose: 'b2b.invoice-value-authorization', nonce: createValueOperationNonce(),
             audience: 'conxian-gateway', keyIdentity: 'wallet.bitcoin.account-0',
             algorithm: 'secp256k1-ecdsa', signingType: 'message',
             description: `Authorize B2B Payment: ${amount} ${currency}`,
-        }), vault, { userConfirmed: true },
-    ));
+        });
+    const signResult = await authorizeValueOperationSignature(authorizeValueOperation, request);
 
     return signResult.signature;
 };

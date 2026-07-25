@@ -23,14 +23,13 @@ SHA-256. The exact signable payload, signing type, layer, and confirmation text
 are immutable and rebound immediately before native signing.
 
 The gate returns discriminated `allowed`, `rejected`, `quarantined`,
-`simulated`, or `unsupported` outcomes. Only `allowed` carries a production
-authorization. The evaluator rejects or quarantines:
+`simulated`, or `unsupported` outcomes. Only `allowed` carries a wallet-gate
+registered authorization. The evaluator rejects or quarantines:
 
 - user rejection and envelope mutation;
 - missing, stale, malformed, revoked, mismatched, unsupported, or
   non-authoritative evidence;
-- request-digest, nonce, audience, key-identity, algorithm, or evidence-digest
-  mismatches;
+- request-digest, nonce, audience, key-identity, or algorithm mismatches;
 - malformed/expired validity windows; and
 - locally detected replay of a consumed audience/nonce pair.
 
@@ -43,8 +42,23 @@ exposes a generic caller-classified signing escape hatch.
 
 ## Quarantined callers
 
-The React authorization queue now accepts a typed `ValueOperationRequest` and
-resolves a typed gate outcome instead of a boolean or conflicting `SignResult`.
+The React authorization queue now owns a `WalletValueOperationGate` instance,
+accepts a typed `ValueOperationRequest`, and invokes the gate's confirm or
+reject path after the application modal resolves. Feature services receive an
+authorizer callback rather than a vault plus caller-supplied confirmation
+boolean. A plain object or raw `true` value cannot become a registered
+authorization, and fabricated `allowed` results are rejected before their
+signature can be consumed.
+
+For PSBT operations, successful native signing additionally creates an opaque
+module-registered broadcast authorization bound to the exact signed hex,
+chain/layer, network, and a validity window no longer than 60 seconds. The
+wallet broadcaster validates this capability before network I/O, consumes it
+once even if submission fails, and rejects fabricated, mismatched, stale, or
+replayed capabilities. Dashboard send, Payment Portal, and native-peg bridge
+carry the capability from signing to this hardened submission boundary; the
+former raw public broadcast function is no longer exported.
+
 Dashboard send, Payment Portal on-chain/Lightning send, native-peg bridge, and
 Wormhole signing use this boundary. Current callers intentionally construct
 **unverified** requests. The wallet-owned adapter hook is intentionally unwired
@@ -73,11 +87,13 @@ broadcast/anchor adapters exist.
 
 The wallet accepts authoritative evidence decisions only through a
 `ValueOperationEvidenceAdapter`. The wallet-owned adapter hook is currently
-`null`; `executeValueOperation()` does not accept a caller-provided adapter.
+`null`; the application gate does not accept a caller-provided adapter.
 UI/service request objects cannot carry or
 self-assert `verified`/`authoritative` state. The adapter receives an immutable
 request-binding digest and returns only public, non-secret binding data and
-evidence digests. The wallet does not decode Play Integrity tokens, verify
+adapter-reported evidence digests. Those digests are recorded in the envelope;
+this change does not define an expected digest set or independently validate
+their semantic contents. The wallet does not decode Play Integrity tokens, verify
 Android attestation chains, or invent provider verdicts. The external verifier
 must bind its decision to the exact request digest, nonce, audience, key
 identity, algorithm, and validity window.
@@ -92,8 +108,8 @@ This change does **not** claim:
 - StrongBox, KeyMint, Play Integrity, device, provider, protocol-key, or release
   qualification;
 - backend token/attestation verification or trust-root/revocation handling;
-- durable replay protection across processes/devices (the delivered replay
-  cache is local and process-scoped);
+- durable replay protection across processes/devices (the delivered signing
+  nonce and broadcast-capability stores are local and process-scoped);
 - authoritative Ark/RGB/StateChain/Maven/Taproot Assets/Wormhole provider
   behavior; or
 - successful production broadcast or settlement without a real provider
@@ -109,6 +125,8 @@ staged rollout/rollback controls, and COO review for this P0 change.
 ## Regression evidence
 
 Focused tests cover deterministic canonicalization, mutation binding, stale and
-non-authoritative evidence, request/evidence mismatch, native-only execution,
-single-use replay, and protocol callers that cannot sign/broadcast/settle or
-return synthetic success while evidence is unqualified.
+non-authoritative evidence, request/evidence mismatch, app-owned confirmation,
+native-only execution, fabricated authorization rejection, and exact-hex,
+context, expiry, and single-use broadcast checks before network I/O. Protocol
+callers cannot sign, broadcast, settle, or return synthetic success when the
+central queue rejects or evidence is unqualified.

@@ -2,6 +2,10 @@ import { Network, BitcoinLayer, Asset, UTXO } from '../types';
 import { fetchWithRetry, endpointsFor } from './network';
 import { generateRandomString } from './random';
 import * as bitcoin from 'bitcoinjs-lib';
+import {
+    consumeValueOperationBroadcastAuthorization,
+    ValueOperationBroadcastAuthorization,
+} from './value-operation';
 
 // Re-export for backward compatibility
 export { endpointsFor, fetchWithRetry };
@@ -45,7 +49,13 @@ export const fetchUtxos = async (address: string, network: Network = 'mainnet'):
 
 export { fetchUtxos as fetchBtcUtxos };
 
-export const broadcastTransaction = async (hex: string, layer: BitcoinLayer, network: Network = 'mainnet'): Promise<string> => {
+export const broadcastAuthorizedTransaction = async (
+    hex: string,
+    authorization: ValueOperationBroadcastAuthorization,
+    layer: BitcoinLayer,
+    network: Network = 'mainnet'
+): Promise<string> => {
+    consumeValueOperationBroadcastAuthorization(authorization, { signedHex: hex, layer, network });
     const endpoints = endpointsFor(network) as any;
     let url = '';
     if (layer === 'Mainnet') url = `${endpoints.BTC_API}/tx`;

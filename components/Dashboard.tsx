@@ -26,13 +26,14 @@ import { AppContext } from '../context';
 import { Asset, BitcoinLayer } from '../types';
 import { getTranslation } from '../services/i18n';
 import { generateRandomString } from '../services/random';
-import { broadcastTransaction, fetchUtxos } from '../services/protocol';
+import { broadcastAuthorizedTransaction, fetchUtxos } from '../services/protocol';
 import { buildPsbt } from '../services/psbt';
 import { getRecommendedFees } from '../services/fees';
 import { endpointsFor } from '../services/network';
 import {
   createUnverifiedValueOperationRequest,
   createValueOperationNonce,
+  ValueOperationBroadcastAuthorization,
   valueOperationOutcomeMessage,
 } from '../services/value-operation';
 import AssetDetailModal from './AssetDetailModal';
@@ -55,6 +56,7 @@ const Dashboard: React.FC = () => {
   const [isSigning, setIsSigning] = useState(false);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [signedHex, setSignedHex] = useState('');
+  const [broadcastAuthorization, setBroadcastAuthorization] = useState<ValueOperationBroadcastAuthorization | null>(null);
   const [broadcastResult, setBroadcastResult] = useState('');
 
   if (!appContext) return null;
@@ -316,11 +318,12 @@ const Dashboard: React.FC = () => {
                                   appContext.notify('error', valueOperationOutcomeMessage(result), 'Signing Quarantined');
                                   return;
                                 }
-                                if (!result.signature?.broadcastReadyHex) {
+                                if (!result.signature?.broadcastReadyHex || !result.broadcastAuthorization) {
                                   appContext.notify('error', 'Native signer returned no broadcast-ready transaction.', 'Signing Failed');
                                   return;
                                 }
                                 setSignedHex(result.signature.broadcastReadyHex);
+                                setBroadcastAuthorization(result.broadcastAuthorization);
                                 setSendStep('broadcast');
                             } catch (e) {
                                 appContext?.notify('error', 'Signing Failed');
@@ -349,7 +352,8 @@ const Dashboard: React.FC = () => {
                         onClick={async () => {
                             setIsBroadcasting(true);
                             try {
-                                const txid = await broadcastTransaction(signedHex, 'Mainnet', network);
+                                if (!broadcastAuthorization) throw new Error('Broadcast authorization unavailable');
+                                const txid = await broadcastAuthorizedTransaction(signedHex, broadcastAuthorization, 'Mainnet', network);
                                 setBroadcastResult(txid);
                                 appContext?.notify('success', 'Transaction Broadcasted!');
                                 setTimeout(() => { setShowSend(false); setSendStep('form'); }, 2000);

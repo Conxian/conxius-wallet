@@ -50,8 +50,7 @@ import { getEnclaveBlob, persistState, removeEnclaveBlob, STORAGE_KEY } from './
 import { getTranslation } from './services/i18n';
 import { AppState, WalletConfig, AppMode, Asset, SilentPaymentScanOptions, SilentPaymentScanState, SilentPaymentUtxo } from './types';
 import {
-  evaluateValueOperation,
-  executeValueOperation,
+  createWalletValueOperationGate,
   ValueOperationOutcome,
   ValueOperationRequest,
 } from './services/value-operation';
@@ -113,6 +112,7 @@ const App: React.FC = () => {
   } | null>(null);
 
   const currentPinRef = useRef<string | null>(null);
+  const valueOperationGateRef = useRef(createWalletValueOperationGate(STORAGE_KEY));
 
   useEffect(() => {
     async function checkEnclave() {
@@ -273,8 +273,8 @@ const App: React.FC = () => {
     setPendingValueOperation(null);
 
     const outcome = userConfirmed
-      ? await executeValueOperation(pending.request, STORAGE_KEY, { userConfirmed: true })
-      : evaluateValueOperation(pending.request, { userConfirmed: false });
+      ? await valueOperationGateRef.current.confirm(pending.request)
+      : valueOperationGateRef.current.reject(pending.request);
     pending.resolve(outcome);
   };
 

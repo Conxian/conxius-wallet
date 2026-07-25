@@ -23,7 +23,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import { AppContext } from '../context';
-import { fetchUtxos, broadcastTransaction } from '../services/protocol';
+import { fetchUtxos, broadcastAuthorizedTransaction } from '../services/protocol';
 import {
   createUnverifiedValueOperationRequest,
   createValueOperationNonce,
@@ -162,10 +162,15 @@ const PaymentPortal: React.FC = () => {
              if (outcome.status !== 'allowed') {
                throw new Error(valueOperationOutcomeMessage(outcome));
              }
-             if (!outcome.signature?.broadcastReadyHex) {
+             if (!outcome.signature?.broadcastReadyHex || !outcome.broadcastAuthorization) {
                throw new Error('Native signer returned no broadcast-ready transaction.');
              }
-             txid = await broadcastTransaction(outcome.signature.broadcastReadyHex, 'Mainnet', network);
+             txid = await broadcastAuthorizedTransaction(
+               outcome.signature.broadcastReadyHex,
+               outcome.broadcastAuthorization,
+               'Mainnet',
+               network,
+             );
         }
 
         if (!txid) throw new Error('Payment provider returned no authoritative receipt.');

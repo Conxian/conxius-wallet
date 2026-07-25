@@ -5,8 +5,8 @@ import * as bitcoin from 'bitcoinjs-lib';
 import {
     createUnverifiedValueOperationRequest,
     createValueOperationNonce,
-    executeValueOperation,
-    requireValueOperationSignature,
+    ValueOperationAuthorizer,
+    authorizeValueOperationSignature,
 } from './value-operation';
 
 export interface StateChainUtxo {
@@ -35,7 +35,7 @@ export const transferStateChainUtxo = async (
     utxoId: string,
     recipientPubkey: string,
     currentIndex: number,
-    vault: string,
+    authorizeValueOperation: ValueOperationAuthorizer,
     network: Network = 'mainnet'
 ): Promise<StateChainTransferResult> => {
     notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'StateChain Transfer', message: `Initiating transfer for UTXO ${utxoId.slice(0, 8)}...` });
@@ -45,16 +45,15 @@ export const transferStateChainUtxo = async (
         const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(utxoId + recipientPubkey + currentIndex))).toString("hex");
 
         // 2. Request Enclave Signature (Sequential Key Rotation Path)
-        const signResult = requireValueOperationSignature(await executeValueOperation(
-            createUnverifiedValueOperationRequest({
+        const request = createUnverifiedValueOperationRequest({
                 operationType: 'transfer', chainLayer: 'StateChain',
                 payload: { hash: msgHash, utxoId, recipientPubkey, index: currentIndex },
                 network, purpose: 'statechain.transfer', nonce: createValueOperationNonce(),
                 audience: 'conxius-wallet', keyIdentity: `wallet.statechain.index-${currentIndex}`,
                 algorithm: 'secp256k1-schnorr', signingType: 'message',
                 description: `Transfer StateChain UTXO to ${recipientPubkey.slice(0,12)}...`,
-            }), vault, { userConfirmed: true },
-        ));
+            });
+        const signResult = await authorizeValueOperationSignature(authorizeValueOperation, request);
 
         // 3. Notify Coordinator
         const { STATE_CHAIN_API } = endpointsFor(network);
@@ -87,7 +86,7 @@ export const transferStateChainUtxo = async (
 export const withdrawStateChainUtxo = async (
     utxoId: string,
     destAddress: string,
-    vault: string,
+    authorizeValueOperation: ValueOperationAuthorizer,
     network: Network = 'mainnet'
 ): Promise<string> => {
     notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'StateChain Withdrawal', message: 'Initiating exit to L1...' });
@@ -95,16 +94,15 @@ export const withdrawStateChainUtxo = async (
     try {
         const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from("withdraw:" + utxoId + destAddress))).toString("hex");
 
-        const signResult = requireValueOperationSignature(await executeValueOperation(
-            createUnverifiedValueOperationRequest({
+        const request = createUnverifiedValueOperationRequest({
                 operationType: 'withdraw', chainLayer: 'StateChain',
                 payload: { hash: msgHash, utxoId, destAddress }, network,
                 purpose: 'statechain.withdraw', nonce: createValueOperationNonce(),
                 audience: 'conxius-wallet', keyIdentity: 'wallet.statechain.current',
                 algorithm: 'secp256k1-schnorr', signingType: 'message',
                 description: `Withdraw StateChain UTXO to ${destAddress}`,
-            }), vault, { userConfirmed: true },
-        ));
+            });
+        const signResult = await authorizeValueOperationSignature(authorizeValueOperation, request);
 
         const { STATE_CHAIN_API } = endpointsFor(network);
         if (!STATE_CHAIN_API) throw new Error('STATECHAIN_WITHDRAWAL_UNSUPPORTED: authoritative endpoint unavailable');

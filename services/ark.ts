@@ -8,8 +8,8 @@ import { estimateVbytes } from './psbt';
 import {
     createUnverifiedValueOperationRequest,
     createValueOperationNonce,
-    executeValueOperation,
-    requireValueOperationSignature,
+    ValueOperationAuthorizer,
+    authorizeValueOperationSignature,
 } from './value-operation';
 
 export interface VTXO {
@@ -155,7 +155,7 @@ export const syncVtxos = async (address: string, network: Network = 'mainnet'): 
  * Forfeits a VTXO back to L1 or to another user (Off-chain Transfer).
  * This broadcasts a signed forfeit transaction via the ASP.
  */
-export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network: Network, vault?: string): Promise<string> => {
+export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network: Network, authorizeValueOperation: ValueOperationAuthorizer): Promise<string> => {
     notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'Ark Transfer', message: `Preparing VTXO ${vtxo.txid.slice(0,8)} forfeit...` });
     
     if (!vtxo.txid || !recipientAddress) throw new Error("Invalid VTXO or Recipient");
@@ -163,20 +163,18 @@ export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network:
     try {
         const { ARK_API } = endpointsFor(network);
 
-        if (!vault) throw new Error("Vault required for production Ark forfeit");
         if (!ARK_API) throw new Error('ARK_BROADCAST_UNSUPPORTED: authoritative ASP endpoint unavailable');
 
         const msgHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(vtxo.txid + recipientAddress))).toString("hex");
-        const signResult = requireValueOperationSignature(await executeValueOperation(
-            createUnverifiedValueOperationRequest({
+        const request = createUnverifiedValueOperationRequest({
                 operationType: 'transfer', chainLayer: 'Ark',
                 payload: { hash: msgHash, vtxoId: vtxo.txid, recipient: recipientAddress },
                 network, purpose: 'ark.forfeit-vtxo', nonce: createValueOperationNonce(),
                 audience: 'conxius-wallet', keyIdentity: 'wallet.ark.account-0',
                 algorithm: 'secp256k1-schnorr', signingType: 'psbt',
                 description: `Forfeit VTXO to ${recipientAddress}`,
-            }), vault, { userConfirmed: true },
-        ));
+            });
+        const signResult = await authorizeValueOperationSignature(authorizeValueOperation, request);
 
         const response = await fetchWithRetry(`${ARK_API}/v1/forfeit`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -197,7 +195,7 @@ export const forfeitVtxo = async (vtxo: VTXO, recipientAddress: string, network:
  * Redeems a VTXO (Unilateral Exit).
  * This creates a transaction that spends the VTXO and broadcasts it to Bitcoin L1.
  */
-export const redeemVtxo = async (vtxo: VTXO, vault: string, network: Network): Promise<string> => {
+export const redeemVtxo = async (vtxo: VTXO, authorizeValueOperation: ValueOperationAuthorizer, network: Network): Promise<string> => {
     notificationService.notify({ category: 'TRANSACTION', type: 'info', title: 'Ark Redemption', message: `Preparing unilateral exit for ${vtxo.txid.slice(0,8)}...` });
 
     try {
@@ -205,15 +203,14 @@ export const redeemVtxo = async (vtxo: VTXO, vault: string, network: Network): P
 
         const { ARK_API } = endpointsFor(network);
         if (!ARK_API) throw new Error('ARK_REDEMPTION_UNSUPPORTED: authoritative ASP endpoint unavailable');
-        const signResult = requireValueOperationSignature(await executeValueOperation(
-            createUnverifiedValueOperationRequest({
+        const request = createUnverifiedValueOperationRequest({
                 operationType: 'withdraw', chainLayer: 'Ark', payload: { hash: msgHash, vtxoId: vtxo.txid },
                 network, purpose: 'ark.redeem-vtxo', nonce: createValueOperationNonce(),
                 audience: 'conxius-wallet', keyIdentity: 'wallet.ark.account-0',
                 algorithm: 'secp256k1-schnorr', signingType: 'message',
                 description: `Redeem VTXO ${vtxo.txid.slice(0,8)}`,
-            }), vault, { userConfirmed: true },
-        ));
+            });
+        const signResult = await authorizeValueOperationSignature(authorizeValueOperation, request);
 
         const response = await fetchWithRetry(`${ARK_API}/v1/redeem`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },

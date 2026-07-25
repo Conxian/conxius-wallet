@@ -3,7 +3,7 @@ import { BitcoinLayer } from '../types';
 import { ArrowRight, Info, AlertCircle, CheckCircle2, Loader2, Link, TrendingUp, ShieldCheck, Zap, Globe, Search, RefreshCw, ExternalLink, Target, Cpu, Download, Activity } from 'lucide-react';
 import { AppContext } from '../context';
 import { NttService, BRIDGE_STAGES, getRecommendedBridgeProtocol, NTT_CONFIGS } from '../services/ntt';
-import { fetchUtxos, broadcastTransaction, fetchSbtcWalletAddress, monitorSbtcPegIn, fetchNativePegAddress } from '../services/protocol';
+import { fetchUtxos, broadcastAuthorizedTransaction, fetchSbtcWalletAddress, monitorSbtcPegIn, fetchNativePegAddress } from '../services/protocol';
 import {
   createUnverifiedValueOperationRequest,
   createValueOperationNonce,
@@ -105,12 +105,17 @@ const NTTBridge: React.FC = () => {
           if (outcome.status !== 'allowed') {
               throw new Error(valueOperationOutcomeMessage(outcome));
           }
-          if (!outcome.signature?.broadcastReadyHex) {
+          if (!outcome.signature?.broadcastReadyHex || !outcome.broadcastAuthorization) {
               throw new Error('Native signer returned no broadcast-ready transaction.');
           }
           {
               setBridgeStatus('BROADCASTING');
-              const txid = await broadcastTransaction(outcome.signature.broadcastReadyHex, 'Mainnet', context.state.network);
+              const txid = await broadcastAuthorizedTransaction(
+                outcome.signature.broadcastReadyHex,
+                outcome.broadcastAuthorization,
+                'Mainnet',
+                context.state.network,
+              );
               setTxHash(txid);
               setStep(4);
               localStorage.setItem('PENDING_NTT_TX', txid);
