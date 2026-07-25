@@ -228,12 +228,23 @@ function workflowSteps(job) {
   }
 
   const stepsIndent = indentation(lines[stepsIndex]);
-  const stepIndent = stepsIndent + 2;
+  const stepsLines = lines.slice(stepsIndex + 1);
+  const firstStepLine = stepsLines.find((line) => line.trim() && !/^\s*#/.test(line));
+  if (
+    !firstStepLine ||
+    indentation(firstStepLine) <= stepsIndent ||
+    !/^\s*-\s+/.test(firstStepLine)
+  ) {
+    return [];
+  }
+
+  const stepIndent = indentation(firstStepLine);
   const steps = [];
   let current = null;
 
-  for (const line of lines.slice(stepsIndex + 1)) {
-    if (line.trim() && indentation(line) <= stepsIndent) {
+  for (const line of stepsLines) {
+    const isCommentOrBlank = !line.trim() || /^\s*#/.test(line);
+    if (!isCommentOrBlank && indentation(line) <= stepsIndent) {
       break;
     }
     if (indentation(line) === stepIndent && /^\s*-\s+/.test(line)) {
@@ -241,6 +252,8 @@ function workflowSteps(job) {
         steps.push(current);
       }
       current = { indent: stepIndent, lines: [line] };
+    } else if (!isCommentOrBlank && indentation(line) < stepIndent) {
+      return [];
     } else if (current) {
       current.lines.push(line);
     }
@@ -306,7 +319,10 @@ function yamlScalar(value) {
 
 function javaVersions(job, errors) {
   const setupJavaSteps = workflowSteps(job).filter((step) =>
-    directStepFieldValues(step, 'uses').some((value) => /^actions\/setup-java@[^\s#]+/.test(value)),
+    directStepFieldValues(step, 'uses').some((value) => {
+      const action = yamlScalar(value);
+      return action !== null && /^actions\/setup-java@[^\s#]+$/.test(action);
+    }),
   );
   const requiredUpdate =
     `Update ${job.path} job ${job.name} to contain one actions/setup-java step with exactly ` +

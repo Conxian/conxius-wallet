@@ -104,6 +104,40 @@ describe('Android toolchain matrix contract', () => {
     );
   });
 
+  it('accepts a valid steps sequence indented more deeply than two spaces', () => {
+    const ciWorkflow = workflowFixture(
+      job('android-lint').replace(/^      /gm, '        '),
+    );
+
+    expect(validateAndroidToolchainMatrix(fixture({ ciWorkflow })).errors).toEqual([]);
+  });
+
+  it.each(["'actions/setup-java@v5'", '"actions/setup-java@v5"'])(
+    'accepts quoted setup-java uses scalar %s',
+    (uses) => {
+      const ciWorkflow = workflowFixture(
+        job('android-lint').replace('actions/setup-java@fixture', uses),
+      );
+
+      expect(validateAndroidToolchainMatrix(fixture({ ciWorkflow })).errors).toEqual([]);
+    },
+  );
+
+  it('keeps comments and blank lines from merging the following step into setup-java', () => {
+    const ciWorkflow = workflowFixture(
+      job('android-lint')
+        .replace("          java-version: '21'\n", '')
+        .replace(
+          '      - run: sdkmanager',
+          "\n      # The next action is a distinct step.\n      - uses: example/unrelated-action@fixture\n        with:\n          java-version: '21'\n      - run: sdkmanager",
+        ),
+    );
+
+    expect(diagnostics({ ciWorkflow })).toMatch(
+      /job android-lint actions\/setup-java must declare with\.java-version exactly once; found 0/,
+    );
+  });
+
   it('does not allow an unrelated action to mask setup-java missing java-version', () => {
     const ciWorkflow = workflowFixture(
       job('android-lint')
