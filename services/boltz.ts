@@ -137,7 +137,8 @@ export class BoltzService {
         };
 
         if (toLayer === 'Lightning') {
-            body.invoice = destination;
+            void destination;
+            throw new Error('BOLTZ_LIGHTNING_SETTLEMENT_QUARANTINED: exact BOLT11 capability binding is unavailable');
         } else {
             body.toAddress = destination;
             body.expectedAmount = amountSats; // For Liquid, we specify amount

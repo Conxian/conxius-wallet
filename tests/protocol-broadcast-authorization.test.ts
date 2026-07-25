@@ -20,7 +20,7 @@ vi.mock('../services/network', () => ({
   endpointsFor: () => ({ BTC_API: 'https://bitcoin.example', STX_API: 'https://stacks.example' }),
   fetchWithRetry: mocks.fetchWithRetry,
 }));
-vi.mock('../services/signer', () => ({ requestEnclaveSignature: mocks.requestEnclaveSignature }));
+vi.mock('../services/app-private/value-operation-signer', () => ({ signAuthorizedValueOperation: mocks.requestEnclaveSignature }));
 vi.mock('../services/value-operation-evidence', () => ({
   getWalletEvidenceAdapter: mocks.getWalletEvidenceAdapter,
 }));

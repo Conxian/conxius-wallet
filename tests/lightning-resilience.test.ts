@@ -60,6 +60,7 @@ describe('Lightning Resilience SRL-1 & SRL-2', () => {
 
      await expect(backend.payInvoice(
        'invoice',
+       1,
        { kind: 'value-operation-settlement-authorization' } as ValueOperationSettlementAuthorization,
        'mainnet',
        key,

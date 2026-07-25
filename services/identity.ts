@@ -1,4 +1,4 @@
-import { signNative, getPublicKeyNative } from './enclave-storage';
+import { getPublicKeyNative } from './enclave-storage';
 import { Network } from '../types';
 import * as bitcoin from 'bitcoinjs-lib';
 import { enforcePhase6Guard } from "./security-constants";
@@ -48,27 +48,11 @@ export class IdentityService {
      const path = this.network === 'mainnet' ? "m/84'/0'/0'/0/0" : "m/84'/0'/0'/0/0";
 
      try {
-         let pubkey: string;
-         try {
-            // Optimization: Try to get public key directly without signing
-            const res = await getPublicKeyNative({
-                vault: this.vaultName,
-                path,
-                network: this.network
-            });
-            pubkey = res.pubkey;
-         } catch (e) {
-             // Fallback to legacy dummy signature if native method fails
-             console.warn("Native getPublicKey failed, falling back to signNative", e);
-             const dummyHash = "IDENTITY_PUBKEY_DERIVATION_HASH";
-             const res = await signNative({
-                 vault: this.vaultName,
-                 path,
-                 messageHash: dummyHash,
-                 network: this.network
-             });
-             pubkey = res.pubkey;
-         }
+         const { pubkey } = await getPublicKeyNative({
+             vault: this.vaultName,
+             path,
+             network: this.network
+         });
 
          const pubkeyBuffer = Buffer.from(pubkey, 'hex');
 
@@ -119,22 +103,8 @@ export class IdentityService {
 
       const message = `${domain} wants you to sign in with your Conxius Identity:\n${didInfo.address}\n\nURI: ${didInfo.did}\nWeb5: ${didInfo.web5Did || 'N/A'}\nNonce: ${challenge}\nIssued At: ${timestamp}`;
 
-      const messageHash = Buffer.from(
-        bitcoin.crypto.sha256(Buffer.from(message)),
-      ).toString("hex");
-      const path = this.network === 'mainnet' ? "m/84'/0'/0'/0/0" : "m/84'/0'/0'/0/0";
-
-      const sigRes = await signNative({
-          vault: this.vaultName,
-          path,
-          messageHash,
-          network: this.network
-      });
-
-      return {
-          signature: sigRes.signature,
-          message
-      };
+      void message;
+      throw new Error('IDENTITY_SIGNING_QUARANTINED: generic native signing is restricted to the App-private value-operation authority');
   }
 
   /**

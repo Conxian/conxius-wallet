@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import * as protocol from '../services/protocol';
-import * as signer from '../services/signer';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -26,13 +25,14 @@ describe('Protocol and Signer Alignment', () => {
   });
 
   it('should have signer logic for all supported layers', () => {
-    const signerContent = fs.readFileSync(path.join(process.cwd(), 'services/signer.ts'), 'utf8');
+    const signerContent = fs.readFileSync(path.join(process.cwd(), 'services/app-private/value-operation-signer.ts'), 'utf8');
+    const nativeSignerContent = fs.readFileSync(path.join(process.cwd(), 'services/app-private/native-value-signing.ts'), 'utf8');
 
     supportedLayers.filter((layer) => layer !== 'StateChain').forEach(layer => {
       expect(signerContent).toMatch(new RegExp(`\\b${layer}: ["']m/`));
     });
-    expect(signerContent).toContain('request.layer === "StateChain"');
-    expect(signerContent).toContain('NATIVE_VALUE_SIGNER_REQUIRED');
+    expect(signerContent).toContain("request.layer === 'StateChain'");
+    expect(nativeSignerContent).toContain('NATIVE_VALUE_SIGNER_REQUIRED');
     expect(signerContent).not.toContain('workerManager.derivePath');
   });
 

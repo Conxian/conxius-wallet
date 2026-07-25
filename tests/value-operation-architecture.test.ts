@@ -11,7 +11,7 @@ const excludedDirectories = new Set([
 ]);
 const excludedRootFiles = /(?:^|\/)(?:playwright|vite|eslint|postcss|tailwind)\.config\.[cm]?[jt]s$/;
 
-type Edge = { from: string; to: string; kind: 'import' | 're-export' };
+type Edge = { from: string; to: string; kind: 'import' | 'dynamic-import' | 'require' | 're-export' | 'unsafe-loader' };
 
 function normalized(path: string, base = root): string {
   return relative(base, path).replaceAll('\\', '/');
@@ -34,18 +34,44 @@ function productionFiles(base = root, directory = base): string[] {
 
 function moduleSpecifiers(source: ts.SourceFile): Array<{ text: string; kind: Edge['kind'] }> {
   const specifiers: Array<{ text: string; kind: Edge['kind'] }> = [];
-  source.forEachChild((node) => {
+  const importedBindings = new Map<string, string>();
+  const visit = (node: ts.Node) => {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-      specifiers.push({ text: node.moduleSpecifier.text, kind: 'import' });
+      const moduleText = node.moduleSpecifier.text;
+      specifiers.push({ text: moduleText, kind: 'import' });
+      const clause = node.importClause;
+      if (clause?.name) importedBindings.set(clause.name.text, moduleText);
+      if (clause?.namedBindings && ts.isNamespaceImport(clause.namedBindings)) {
+        importedBindings.set(clause.namedBindings.name.text, moduleText);
+      } else if (clause?.namedBindings && ts.isNamedImports(clause.namedBindings)) {
+        clause.namedBindings.elements.forEach((element) => importedBindings.set(element.name.text, moduleText));
+      }
     } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
       specifiers.push({ text: node.moduleSpecifier.text, kind: 're-export' });
+    } else if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
+      node.exportClause.elements.forEach((element) => {
+        const origin = importedBindings.get((element.propertyName ?? element.name).text);
+        if (origin) specifiers.push({ text: origin, kind: 're-export' });
+      });
     } else if (ts.isImportEqualsDeclaration(node)
       && ts.isExternalModuleReference(node.moduleReference)
       && node.moduleReference.expression
       && ts.isStringLiteral(node.moduleReference.expression)) {
       specifiers.push({ text: node.moduleReference.expression.text, kind: 'import' });
+    } else if (ts.isCallExpression(node)
+      && (node.expression.kind === ts.SyntaxKind.ImportKeyword
+        || (ts.isIdentifier(node.expression) && node.expression.text === 'require'))) {
+      const kind = node.expression.kind === ts.SyntaxKind.ImportKeyword ? 'dynamic-import' : 'require';
+      const argument = node.arguments[0];
+      if (argument && (ts.isStringLiteral(argument) || ts.isNoSubstitutionTemplateLiteral(argument))) {
+        specifiers.push({ text: argument.text, kind });
+      } else {
+        specifiers.push({ text: '<non-literal>', kind: 'unsafe-loader' });
+      }
     }
-  });
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
   return specifiers;
 }
 
@@ -56,6 +82,10 @@ function buildEdges(base: string, files: string[], compilerOptions: ts.CompilerO
     const absolute = join(base, from);
     const source = ts.createSourceFile(from, readFileSync(absolute, 'utf8'), ts.ScriptTarget.Latest, true);
     for (const specifier of moduleSpecifiers(source)) {
+      if (specifier.kind === 'unsafe-loader') {
+        edges.push({ from, to: specifier.text, kind: specifier.kind });
+        continue;
+      }
       const resolution = ts.resolveModuleName(specifier.text, absolute, compilerOptions, ts.sys).resolvedModule;
       if (!resolution) continue;
       const to = normalized(resolve(resolution.resolvedFileName), base).replace(/\.d\.ts$/, '.ts');
@@ -84,7 +114,8 @@ function boundaryViolations(target: string, allowedImporters: string[], edges: E
   const exposed = exposedModules(target, edges);
   const publicReExports = [...exposed].filter((path) => path !== target).sort();
   const importers = edges
-    .filter((edge) => edge.kind === 'import' && exposed.has(edge.to) && !allowedImporters.includes(edge.from))
+    .filter((edge) => ['import', 'dynamic-import', 'require'].includes(edge.kind)
+      && exposed.has(edge.to) && !allowedImporters.includes(edge.from))
     .map((edge) => edge.from)
     .sort();
   return { importers: [...new Set(importers)], publicReExports };
@@ -109,6 +140,7 @@ describe('App-private value-operation authority architecture', () => {
     const files = productionFiles();
     expect(files).toEqual(expect.arrayContaining(['App.tsx', 'index.tsx', 'context.tsx', 'constants.tsx']));
     const edges = buildEdges(root, files, compilerOptions);
+    expect(edges.filter((edge) => edge.kind === 'unsafe-loader').map((edge) => edge.from)).toEqual([]);
 
     expect(boundaryViolations(
       'services/app-private/value-operation-authority.ts',
@@ -121,8 +153,18 @@ describe('App-private value-operation authority architecture', () => {
       edges,
     )).toEqual({ importers: [], publicReExports: [] });
     expect(boundaryViolations(
+      'services/app-private/value-operation-signer.ts',
+      ['services/app-private/value-operation-authority.ts'],
+      edges,
+    )).toEqual({ importers: [], publicReExports: [] });
+    expect(boundaryViolations(
+      'services/app-private/native-value-signing.ts',
+      ['services/app-private/value-operation-signer.ts'],
+      edges,
+    )).toEqual({ importers: [], publicReExports: [] });
+    expect(boundaryViolations(
       'services/app-private/native-psbt.ts',
-      ['services/signer.ts'],
+      ['services/app-private/value-operation-signer.ts'],
       edges,
     )).toEqual({ importers: [], publicReExports: [] });
   });
@@ -137,6 +179,9 @@ describe('App-private value-operation authority architecture', () => {
       'components/alias-bypass.ts': "import { createAuthority } from '@/services/app-private/value-operation-authority'; void createAuthority;",
       'components/normalized-bypass.ts': "import { issue } from '../services/other/../app-private/value-operation-capability-registry'; void issue;",
       'root-bypass.ts': "import { createAuthority } from './services/barrel'; void createAuthority;",
+      'components/dynamic-bypass.ts': "export async function bypass() { return import('@/services/app-private/value-operation-authority'); }",
+      'components/require-bypass.ts': "const authority = require('../services/app-private/value-operation-authority'); void authority;",
+      'components/runtime-wrapper.ts': "import { createAuthority } from '@/services/app-private/value-operation-authority'; export { createAuthority };",
     };
     for (const [path, contents] of Object.entries(fixtures)) {
       mkdirSync(dirname(join(base, path)), { recursive: true });
@@ -146,8 +191,8 @@ describe('App-private value-operation authority architecture', () => {
     const edges = buildEdges(base, files, { ...compilerOptions, baseUrl: base, paths: { '@/*': ['./*'] } });
 
     expect(boundaryViolations('services/app-private/value-operation-authority.ts', [], edges)).toEqual({
-      importers: ['components/alias-bypass.ts', 'root-bypass.ts'],
-      publicReExports: ['services/barrel.ts'],
+      importers: ['components/alias-bypass.ts', 'components/dynamic-bypass.ts', 'components/require-bypass.ts', 'components/runtime-wrapper.ts', 'root-bypass.ts'],
+      publicReExports: ['components/runtime-wrapper.ts', 'services/barrel.ts'],
     });
     expect(boundaryViolations('services/app-private/value-operation-capability-registry.ts', [], edges)).toEqual({
       importers: ['components/normalized-bypass.ts'],
@@ -159,6 +204,24 @@ describe('App-private value-operation authority architecture', () => {
     const shared = readFileSync(join(root, 'services/value-operation.ts'), 'utf8');
     expect(shared).not.toMatch(/createWalletValueOperationGate|createAppPrivateValueOperationAuthority/);
     expect(shared).not.toMatch(/export\s+(?:async\s+)?function\s+\w*(?:confirm|issue)\w*/i);
+  });
+
+  it('fails closed on non-literal dynamic import and require loaders', () => {
+    const base = mkdtempSync(join(tmpdir(), 'conxius-loader-boundary-'));
+    temporaryDirectories.push(base);
+    const fixtures = {
+      'components/dynamic.ts': 'export const load = (path: string) => import(path);',
+      'components/require.ts': 'export const load = (path: string) => require(path);',
+    };
+    for (const [path, contents] of Object.entries(fixtures)) {
+      mkdirSync(dirname(join(base, path)), { recursive: true });
+      writeFileSync(join(base, path), contents);
+    }
+    const edges = buildEdges(base, Object.keys(fixtures), { ...compilerOptions, baseUrl: base });
+    expect(edges.filter((edge) => edge.kind === 'unsafe-loader').map((edge) => edge.from).sort()).toEqual([
+      'components/dynamic.ts',
+      'components/require.ts',
+    ]);
   });
 
   it('removes production mnemonic/seed PSBT signing APIs', () => {
@@ -177,5 +240,12 @@ describe('App-private value-operation authority architecture', () => {
     expect(portal).toContain('requireValueOperationSettlementAuthorization(lightningOutcome, lightningRequest)');
     expect(portal).toContain('payLightningInvoice(recipient, amountSats, settlementAuthorization, network)');
     expect(portal).toContain('payLnurl(lnDetail.params, amountSats, settlementAuthorization, network)');
+  });
+
+  it('keeps signing and PSBT finalization off shared production APIs', () => {
+    const signer = readFileSync(join(root, 'services/signer.ts'), 'utf8');
+    const enclave = readFileSync(join(root, 'services/enclave-storage.ts'), 'utf8');
+    expect(signer).not.toMatch(/requestEnclaveSignature|signNative|finalizeNativePsbt/);
+    expect(enclave).not.toMatch(/export\s+\{\s*SecureEnclave|export\s+(?:async\s+)?function\s+sign/);
   });
 });

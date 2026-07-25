@@ -20,13 +20,6 @@ type SecureEnclavePlugin = {
     durationSeconds?: number;
   }): Promise<{ authenticated: boolean; validUntilMs?: number }>;
   clearBiometricSession(): Promise<void>;
-  signBatch(options: { vault: string; pin?: string; path: string; hashes: string[]; network?: string; payload?: string; }): Promise<{ signatures: { signature: string; pubkey: string }[] }>; signTransaction(options: {
-    vault: string;
-    pin?: string; // Made optional as per instruction
-    path: string;
-    messageHash: string; payload?: string;
-    network?: string;
-  }): Promise<{ signature: string; pubkey: string }>;
   unlockSession(options: {
     vault: string;
     pin: string;
@@ -50,8 +43,6 @@ type SecureEnclavePlugin = {
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
-
-export { SecureEnclave }; // Export the plugin instance for direct access if needed
 
 async function hasNativeSecureEnclave() {
   if (!Capacitor.isNativePlatform()) return false;
@@ -141,17 +132,11 @@ export async function clearEnclaveBiometricSession(): Promise<void> {
   }
 }
 
-export async function signNative(options: {
-  vault: string;
-  pin?: string;
-  path: string;
-  messageHash: string; payload?: string;
-  network?: string;
-}): Promise<{ signature: string; pubkey: string }> {
+export async function authenticateEnclaveBiometric(durationSeconds = 300): Promise<boolean> {
   if (await hasNativeSecureEnclave()) {
-    return await SecureEnclave.signTransaction(options);
+    return !!(await SecureEnclave.authenticate({ durationSeconds })).authenticated;
   }
-  throw new Error("Native Enclave not available");
+  return false;
 }
 
 export async function getPublicKeyNative(options: {
@@ -183,20 +168,6 @@ export async function getWalletInfoNative(options: {
 }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.getWalletInfo(options);
-  }
-  throw new Error("Native Enclave not available");
-}
-
-export async function signBatchNative(options: {
-  vault: string;
-  pin?: string;
-  path: string;
-  hashes: string[];
-  network?: string;
-  payload?: string;
-}): Promise<{ signatures: { signature: string; pubkey: string }[] }> {
-  if (await hasNativeSecureEnclave()) {
-    return await SecureEnclave.signBatch(options);
   }
   throw new Error("Native Enclave not available");
 }

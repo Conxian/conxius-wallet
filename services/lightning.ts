@@ -1,6 +1,5 @@
 import { Capacitor } from "@capacitor/core";
 import { bech32 } from 'bech32';
-import bolt11 from 'light-bolt11-decoder';
 import { Buffer } from 'buffer';
 import { fetchWithRetry } from './network';
 import {
@@ -8,6 +7,9 @@ import {
   ValueOperationSettlementAuthorization,
 } from './value-operation';
 import type { Network } from '../types';
+import { requireBolt11Settlement } from './bolt11-settlement';
+
+export { decodeBolt11, requireBolt11Settlement } from './bolt11-settlement';
 
 /**
  * Lightning Service
@@ -50,50 +52,6 @@ export async function fetchLnurlParams(url: string): Promise<LnurlPayParams | Ln
   return await res.json();
 }
 
-export function decodeBolt11(invoice: string) {
-  try {
-    const decoded: any = bolt11.decode(invoice);
-    const amountMsat = decoded.sections?.find((s: any) => s.name === 'amount')?.value || null;
-    const networkPrefix = decoded.sections?.find((s: any) => s.name === 'coin_network')?.letters || null;
-    const payee = decoded.payeeNodeKey || decoded.payeeNode || null;
-    const description = decoded.sections?.find((s: any) => s.name === 'description')?.value || null;
-    const expiry = decoded.expiry || 3600;
-
-    return {
-        valid: true,
-        amountMsat,
-        network: networkPrefix === 'bc' ? 'mainnet'
-          : networkPrefix === 'tb' ? 'testnet'
-          : networkPrefix === 'bcrt' ? 'regtest'
-          : null,
-        payee,
-        description,
-        expiry,
-        timestamp: decoded.timestamp
-    };
-  } catch {
-    return { valid: false };
-  }
-}
-
-export function requireBolt11Settlement(invoice: string, network: Network): { amountSats: number } {
-  const decoded = decodeBolt11(invoice);
-  if (!decoded.valid || !decoded.network) {
-    throw new Error('BOLT11_INVALID: invoice could not be decoded with a recognized Bitcoin network');
-  }
-  if (decoded.network !== network) {
-    throw new Error('BOLT11_NETWORK_MISMATCH: invoice network differs from the selected wallet network');
-  }
-  if (!decoded.amountMsat) {
-    throw new Error('BOLT11_AMOUNT_REQUIRED: amountless invoices are quarantined because the native provider API cannot bind an explicit amount');
-  }
-  const amountMsat = Number(decoded.amountMsat);
-  if (!Number.isSafeInteger(amountMsat) || amountMsat <= 0 || amountMsat % 1000 !== 0) {
-    throw new Error('BOLT11_AMOUNT_INVALID: invoice amount must be a positive whole-satoshi value');
-  }
-  return { amountSats: amountMsat / 1000 };
-}
-
 /**
  * Native Bridge: Breez SDK Interaction
  */
@@ -103,10 +61,7 @@ export async function payLightningInvoice(
     authorization: ValueOperationSettlementAuthorization,
     network: Network,
 ): Promise<string> {
-    const decoded = requireBolt11Settlement(invoice, network);
-    if (decoded.amountSats !== amountSats) {
-      throw new Error('BOLT11_AMOUNT_MISMATCH: submitted amount differs from the encoded invoice amount');
-    }
+    requireBolt11Settlement(invoice, amountSats, network);
     consumeValueOperationSettlementAuthorization({
       authorization,
       layer: 'Lightning',

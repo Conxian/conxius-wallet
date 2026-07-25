@@ -20,8 +20,11 @@ Production confirmation lives in
 `services/app-private/value-operation-authority.ts`; `App.tsx` is its only
 allowed production importer. A repository architecture test enumerates
 production TypeScript modules and fails if a component, service, or core module
-imports that authority or its capability-issuer registry. Tests may import the
-private authority to exercise the boundary.
+imports that authority or its capability-issuer registry. The resolver-aware
+graph includes static imports/re-exports, import-equals, string-literal dynamic
+`import()`, CommonJS `require()`, and import-then-runtime-re-export wrappers;
+non-literal production loaders fail closed. Tests may import private modules to
+exercise the boundary.
 
 Its versioned, provider-neutral envelope binds the operation type, chain/layer,
 canonical payload digest, network, purpose, nonce, audience, key identity,
@@ -43,11 +46,21 @@ registered authorization. The evaluator rejects or quarantines:
 - locally detected replay of a consumed audience/nonce pair.
 
 Production value signing additionally requires `Capacitor.isNativePlatform()`.
-The web/worker signer is not invoked for a value operation. Native rejection,
-absence, empty output, or error returns a non-allowed outcome and cannot select
-the TypeScript worker fallback. Existing direct login/message helpers remain
-outside the value-operation interface; the application context no longer
-exposes a generic caller-classified signing escape hatch.
+The complete signing/finalization entrypoint now lives in
+`services/app-private/value-operation-signer.ts`, whose only production
+importer is the App-private authority. Its raw native plugin adapter and PSBT
+assembly modules are separately import-restricted to that private signer.
+`services/signer.ts` retains derivation/parsing and signing result types only;
+`services/enclave-storage.ts` no longer exports the raw plugin or generic
+single/batch signing wrappers. Native rejection, absence, empty output, or
+error returns a non-allowed outcome and cannot select a TypeScript worker
+fallback. Legacy identity and Web5 generic signing routes are quarantined
+rather than retaining alternate raw-native bypasses.
+
+Capability issuance also requires the registry-backed authorization from the
+exact allowed outcome and rechecks its immutable envelope against the exact
+request before issuing broadcast or settlement authority; an arbitrary request
+alone is insufficient.
 
 ## Quarantined callers
 
@@ -80,9 +93,13 @@ wrong-invoice, wrong-provider/network, stale, replayed, denied, quarantined, or
 wrong-request callback outcomes fail before settlement I/O. Payment Portal now
 carries this capability from its queue outcome into the final native Breez
 submission instead of discarding the queue result. Direct native Breez, Breez
-plugin, and LND methods require the capability; legacy Breez backend settlement
-and LNURL methods are explicitly quarantined until a reviewed adapter can own
-the capability consumption.
+plugin, and direct LND BOLT11 methods require the exact encoded amount and
+capability. Canonical BOLT11 decoding and validation is centralized and runs
+before capability consumption and before plugin/HTTP I/O at every enabled
+entrypoint. LND LNURL-pay and Boltz Lightning-destination settlement are
+explicitly quarantined because their current contracts cannot pre-bind a
+provider-returned or forwarded invoice to an exact BOLT11 capability. Legacy
+Breez backend settlement and LNURL methods remain quarantined.
 
 Dashboard send, Payment Portal on-chain/Lightning send, native-peg bridge, and
 Wormhole signing use this boundary. Current callers intentionally construct
@@ -152,9 +169,11 @@ staged rollout/rollback controls, and COO review for this P0 change.
 
 Focused tests cover deterministic canonicalization, mutation binding, stale and
 non-authoritative evidence, request/evidence mismatch, App-private import
-enforcement, native-only execution, fabricated and wrong-request authorization
+enforcement (including dynamic import, CommonJS require, runtime wrappers, and
+non-literal loaders), native-only execution, fabricated and wrong-request authorization
 rejection, exact-hex broadcast binding, and exact-intent Lightning/Breez/LND
 provider/network/expiry/single-use checks. Mock native plugin and HTTP calls
-verify zero settlement I/O on rejection. Protocol callers cannot sign,
+verify zero settlement I/O on semantic rejection and prove the capability
+remains unconsumed for a corrected Breez/LND retry. Protocol callers cannot sign,
 broadcast, settle, or return synthetic success when the central queue rejects
 or evidence is unqualified.

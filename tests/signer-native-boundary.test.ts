@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Buffer } from 'node:buffer';
-import { requestEnclaveSignature, SignRequest } from '../services/signer';
+import type { SignRequest } from '../services/signer';
+import { signAuthorizedValueOperation as requestEnclaveSignature } from '../services/app-private/value-operation-signer';
 
 const mocks = vi.hoisted(() => ({
   isNativePlatform: vi.fn(() => true),

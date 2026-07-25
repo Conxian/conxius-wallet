@@ -3,6 +3,8 @@ import {
   consumeValueOperationSettlementAuthorization,
   ValueOperationSettlementAuthorization,
 } from './value-operation';
+import { requireBolt11Settlement } from './bolt11-settlement';
+import type { Network } from '../types';
 
 export interface BreezPluginDef {
   start(options: {
@@ -59,15 +61,17 @@ export async function createLnInvoice(amountMsat: number, description: string) {
 
 export async function payLnInvoice(
   bolt11: string,
+  amountSats: number,
   authorization: ValueOperationSettlementAuthorization,
-  network: string,
+  network: Network,
 ) {
+  requireBolt11Settlement(bolt11, amountSats, network);
   consumeValueOperationSettlementAuthorization({
     authorization,
     layer: 'Lightning',
     provider: 'breez-plugin',
     network,
-    intent: { kind: 'bolt11', invoice: bolt11 },
+    intent: { kind: 'bolt11', invoice: bolt11, amountSats },
   });
   return Breez.pay({ bolt11 });
 }

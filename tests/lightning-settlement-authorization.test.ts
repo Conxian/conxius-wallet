@@ -34,7 +34,7 @@ vi.mock('@capacitor/core', () => ({
     start: vi.fn(), nodeInfo: vi.fn(), invoice: vi.fn(), lnurlAuth: vi.fn(), receiveOnchain: vi.fn(), stop: vi.fn(),
   }),
 }));
-vi.mock('../services/signer', () => ({ requestEnclaveSignature: mocks.requestEnclaveSignature }));
+vi.mock('../services/app-private/value-operation-signer', () => ({ signAuthorizedValueOperation: mocks.requestEnclaveSignature }));
 vi.mock('../services/value-operation-evidence', () => ({ getWalletEvidenceAdapter: mocks.getWalletEvidenceAdapter }));
 
 const now = new Date('2026-07-25T04:00:00.000Z');
@@ -108,7 +108,7 @@ describe('Lightning settlement authorization', () => {
     const amountless = invoiceWithHrp('lnbc');
     const authorization = await authorize(request('native-breez-manager', { kind: 'bolt11', invoice: amountless, amountSats: 2000 }));
 
-    expect(() => requireBolt11Settlement(amountless, 'mainnet')).toThrow('BOLT11_AMOUNT_REQUIRED');
+    expect(() => requireBolt11Settlement(amountless, 2000, 'mainnet')).toThrow('BOLT11_AMOUNT_REQUIRED');
     await expect(payLightningInvoice(amountless, 2000, authorization, 'mainnet')).rejects.toThrow('BOLT11_AMOUNT_REQUIRED');
     expect(mocks.nativePayInvoice).not.toHaveBeenCalled();
   });
@@ -153,8 +153,9 @@ describe('Lightning settlement authorization', () => {
   });
 
   it('binds Breez plugin invoice and on-chain settlement before plugin I/O', async () => {
-    const invoiceAuthorization = await authorize(request('breez-plugin', { kind: 'bolt11', invoice: 'lnbc1plugin' }));
-    await expect(payLnInvoice('lnbc1plugin', invoiceAuthorization, 'mainnet')).resolves.toMatchObject({ paymentHash: 'breez-payment-hash' });
+    const invoice = BOLT11_MAINNET;
+    const invoiceAuthorization = await authorize(request('breez-plugin', { kind: 'bolt11', invoice, amountSats: 2000 }));
+    await expect(payLnInvoice(invoice, 2000, invoiceAuthorization, 'mainnet')).resolves.toMatchObject({ paymentHash: 'breez-payment-hash' });
 
     const onchainIntent = { kind: 'breez-onchain', address: 'bc1qexact', amountSats: 50_000, feeRateSatsPerVbyte: 3 };
     const onchainAuthorization = await authorize(request('breez-plugin', onchainIntent));
@@ -165,31 +166,51 @@ describe('Lightning settlement authorization', () => {
     expect(mocks.breezSendOnchain).toHaveBeenCalledTimes(1);
   });
 
+  it('preserves the Breez capability when BOLT11 semantics fail before plugin I/O', async () => {
+    const invoice = BOLT11_MAINNET;
+    const amountless = invoiceWithHrp('lnbc');
+    const authorization = await authorize(request('breez-plugin', { kind: 'bolt11', invoice, amountSats: 2000 }));
+
+    await expect(payLnInvoice(amountless, 2000, authorization, 'mainnet')).rejects.toThrow('BOLT11_AMOUNT_REQUIRED');
+    expect(mocks.breezPay).not.toHaveBeenCalled();
+    await expect(payLnInvoice(invoice, 2000, authorization, 'mainnet')).resolves.toMatchObject({ paymentHash: 'breez-payment-hash' });
+    expect(mocks.breezPay).toHaveBeenCalledTimes(1);
+  });
+
   it('binds LND invoice settlement before HTTP I/O', async () => {
-    const invoice = 'lnbc1lnd';
+    const invoice = BOLT11_MAINNET;
     const backend = getLightningBackend({ type: 'LND', endpoint: 'https://lnd.example', apiKey: 'test-macaroon' });
-    const authorization = await authorize(request('lnd-rest', { kind: 'bolt11', invoice }));
-    await expect(backend.payInvoice(invoice, authorization, 'mainnet')).resolves.toEqual({ preimage: 'lnd-preimage' });
+    const authorization = await authorize(request('lnd-rest', { kind: 'bolt11', invoice, amountSats: 2000 }));
+    await expect(backend.payInvoice(invoice, 2000, authorization, 'mainnet')).resolves.toEqual({ preimage: 'lnd-preimage' });
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
 
-    const wrongAuthorization = await authorize(request('lnd-rest', { kind: 'bolt11', invoice }));
-    await expect(backend.payInvoice('lnbc1wrong', wrongAuthorization, 'mainnet')).rejects.toThrow('INTENT_MISMATCH');
+    const wrongAuthorization = await authorize(request('lnd-rest', { kind: 'bolt11', invoice, amountSats: 2000 }));
+    await expect(backend.payInvoice(invoiceWithHrp('lnbc30u'), 3000, wrongAuthorization, 'mainnet')).rejects.toThrow('INTENT_MISMATCH');
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
 
-  it('binds LND LNURL amount and callback before either HTTP request', async () => {
+  it('preserves the LND capability when BOLT11 semantics fail before HTTP I/O', async () => {
+    const invoice = BOLT11_MAINNET;
+    const amountless = invoiceWithHrp('lnbc');
+    const backend = getLightningBackend({ type: 'LND', endpoint: 'https://lnd.example', apiKey: 'test-macaroon' });
+    const authorization = await authorize(request('lnd-rest', { kind: 'bolt11', invoice, amountSats: 2000 }));
+
+    await expect(backend.payInvoice(amountless, 2000, authorization, 'mainnet')).rejects.toThrow('BOLT11_AMOUNT_REQUIRED');
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    await expect(backend.payInvoice(invoice, 2000, authorization, 'mainnet')).resolves.toEqual({ preimage: 'lnd-preimage' });
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('quarantines LND LNURL pay before callback or payment HTTP I/O', async () => {
     const callback = 'https://lnurl.example/pay';
     const backend = getLightningBackend({ type: 'LND', endpoint: 'https://lnd.example', apiKey: 'test-macaroon' });
     const authorization = await authorize(request('lnd-rest', { kind: 'lnurl-pay', callback, amountMsat: 2500 }));
 
-    await expect(backend.lnurlPay(callback, 2000, authorization, 'mainnet')).rejects.toThrow('INTENT_MISMATCH');
+    await expect(backend.lnurlPay(callback, 2000, authorization, 'mainnet')).rejects.toThrow('LND_LNURL_PAY_QUARANTINED');
     expect(mocks.fetch).not.toHaveBeenCalled();
 
-    mocks.fetch
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ pr: 'lnbc1derived' }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ payment_preimage: 'lnurl-preimage' }) });
-    await expect(backend.lnurlPay(callback, 2500, authorization, 'mainnet')).resolves.toEqual({ status: 'paid' });
-    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+    await expect(backend.lnurlPay(callback, 2500, authorization, 'mainnet')).rejects.toThrow('LND_LNURL_PAY_QUARANTINED');
+    expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
   it('binds LND LNURL withdrawal callback, k1, and invoice before HTTP I/O', async () => {
@@ -209,7 +230,7 @@ describe('Lightning settlement authorization', () => {
   it('keeps legacy Breez backend invoice and LNURL settlement explicitly quarantined with zero I/O', async () => {
     const backend = getLightningBackend({ type: 'Breez' });
     const fabricated = { kind: 'value-operation-settlement-authorization' } as ValueOperationSettlementAuthorization;
-    await expect(backend.payInvoice('lnbc1legacy', fabricated, 'mainnet')).rejects.toThrow('BREEZ_BACKEND_SETTLEMENT_QUARANTINED');
+    await expect(backend.payInvoice('lnbc1legacy', 1, fabricated, 'mainnet')).rejects.toThrow('BREEZ_BACKEND_SETTLEMENT_QUARANTINED');
     await expect(backend.lnurlPay('https://lnurl.example/pay', 1000, fabricated, 'mainnet')).rejects.toThrow('BREEZ_BACKEND_LNURL_QUARANTINED');
     await expect(backend.lnurlWithdraw('https://lnurl.example/withdraw', 'k1', 'lnbc1legacy', fabricated, 'mainnet')).rejects.toThrow('BREEZ_BACKEND_LNURL_QUARANTINED');
     expect(mocks.breezPay).not.toHaveBeenCalled();
