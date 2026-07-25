@@ -4,7 +4,7 @@
 
 **Issue:** [GitHub #444](https://github.com/Conxian/conxius-wallet/issues/444)
 
-**Code evidence reviewed:** `bf16fea0cb551bdc5c1147d19af6d42fdd32a97a`
+**Code evidence reviewed:** `c970e76324d298b1f7360af6289b45ad16c6cf1f`
 on `charlie/issue-444-value-operation-gate`
 
 **Status:** **Implemented — fail-closed containment; production execution
@@ -241,7 +241,10 @@ The code candidate's latest reported validation is:
 | Runtime contamination | `bash scripts/ci/check_runtime_contamination.sh` and `bash scripts/ci/test_check_runtime_contamination.sh` | Passed. |
 | Documentation version drift | `python3 scripts/check_docs_sync.py` | Passed. |
 | Diff hygiene | `git diff --check` | Passed. |
-| Web production build | `pnpm run build` | TypeScript completed and Vite reached chunk rendering, then the process was killed in the constrained 3.8 GiB environment. Completion remains pending final/CI validation; this is an environment block, not an implementation failure. |
+| Web production build | `pnpm run build` | Passed in an isolated local run: TypeScript completed and Vite transformed 4,594 modules, rendered chunks, and emitted final chunk/gzip output. This is local evidence, not a hosted CI result. |
+| Focused repaired Playwright flows | `pnpm exec playwright test e2e/bridge.spec.ts e2e/cxn-privacy.spec.ts e2e/full_system_strict.spec.ts e2e/full_wallet_system.spec.ts --project=chromium --project=mobile-chrome` | Passed: 12 tests across Chromium and mobile Chrome. |
+| Full Playwright E2E | `pnpm run test:e2e` | Passed: 36 tests across Chromium and mobile Chrome. This is local evidence, not a hosted CI result. |
+| Focused Marketplace/UI/value-operation tests | `pnpm exec vitest run tests/marketplace-boundary.test.tsx tests/value-operation-ui-boundaries.test.tsx tests/value-operation-authorization-queue.test.ts tests/value-operation-gate.test.ts` | Passed: 4 files, 71 tests. |
 | Android app unit tests | `cd android && ./gradlew --no-daemon :app:testDebugUnitTest` | Blocked before execution because the local environment has no Android SDK and no `ANDROID_HOME`/`ANDROID_SDK_ROOT`. Pending CI; this is not recorded as a pass or implementation failure. |
 | Android release lint | `cd android && ./gradlew --no-daemon :app:lintRelease` | Blocked by the same missing-SDK environment. Pending CI; not recorded as a pass or implementation failure. |
 
@@ -266,10 +269,10 @@ pnpm exec vitest run \
   tests/real-world.test.ts tests/yield.test.ts
 ```
 
-Required final CI before promotion:
+Required hosted/release validation before promotion:
 
-- successful web production build;
-- Playwright E2E;
+- hosted CI confirmation of the web production build and Playwright E2E; no
+  hosted CI pass is claimed by this local evidence record;
 - Android app unit tests;
 - Android release lint;
 - relevant Android module compilation and tests.

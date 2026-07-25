@@ -17,14 +17,18 @@ test.describe('CXN Guardian AI: Privacy Boundary Verification', () => {
         await expect(page.getByRole('heading', { name: 'Satoshi AI: Privacy Audit', exact: true })).toBeVisible();
     });
 
-    test('should keep the sovereign marketplace gated until its privacy rail is active', async ({ page }) => {
+    test('should contain the sovereign marketplace to a non-transactional preview', async ({ page }) => {
         await page.goto('/');
         await waitForWalletShell(page);
         await openFeature(page, 'Marketplace & Services', 'Bazaar');
 
         await expect(page.getByRole('heading', { name: 'Sovereign Bazaar', exact: true })).toBeVisible();
-        await expect(page.getByText('Marketplace Offline', { exact: true })).toBeVisible();
-        await expect(page.getByText(/requires active tor circuit/i)).toBeVisible();
+        await expect(page.getByText('Catalog preview only. Checkout and fulfillment are unavailable.', { exact: true })).toBeVisible();
+        await expect(page.getByText('Preview only / No transactions', { exact: true })).toBeVisible();
+        await expect(page.getByText('Catalog Preview Unavailable', { exact: true })).toBeVisible();
+        await expect(page.getByText('No live marketplace connection, checkout, or fulfillment is available.', { exact: true })).toBeVisible();
         await expect(page.getByText('Global Ghost eSIM', { exact: true })).toHaveCount(0);
+        await expect(page.getByText(/Purchase successful|Code delivered|Payment Verified|Redemption Code/i)).toHaveCount(0);
+        await expect(page.getByRole('button', { name: /^(Buy|Purchase|Checkout)(\b| )/i })).toHaveCount(0);
     });
 });
