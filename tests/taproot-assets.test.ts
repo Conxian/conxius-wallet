@@ -1,31 +1,32 @@
-import { describe, it, expect, vi } from "vitest";
-import { discoverTaprootAssets, transferTaprootAsset } from "../services/taproot-assets";
-import { requestEnclaveSignature } from "../services/signer";
+import { describe, expect, it, vi } from 'vitest';
+import { authorizeAdapterArtifact, forgedAuthorization } from './value-operation-adapter-test-helpers';
+import { createTaprootAssetTransferArtifact, discoverTaprootAssets, transferTaprootAsset } from '../services/taproot-assets';
 
-vi.mock("../services/signer", () => ({
-    requestEnclaveSignature: vi.fn().mockResolvedValue({
-        signature: "taproot_sig_1234567890abcdef",
-        pubkey: "02abcdef",
-        timestamp: Date.now()
-    })
-}));
+const fetchMock = vi.fn();
+vi.stubGlobal('fetch', fetchMock);
 
-describe("Taproot Assets Service", () => {
-    it("should discover assets", async () => {
-        const assets = await discoverTaprootAssets();
-        expect(assets.length).toBeGreaterThan(0);
-        expect(assets[0].name).toBe("Citadel Credits");
+describe('Taproot Assets service', () => {
+    it('preserves read-only discovery', async () => {
+        expect(await discoverTaprootAssets()).toEqual([]);
     });
 
-    it("should initiate a transfer and call the enclave", async () => {
-        const transfer = {
-            assetId: "tap:123",
-            amount: 100n,
-            recipientAddr: "taproot_addr_abc"
-        };
-        const txid = await transferTaprootAsset(transfer, "test_vault");
+    it('returns unsupported for an exact transfer with no side effects', async () => {
+        const artifact = createTaprootAssetTransferArtifact({
+            assetId: 'tap:123', amount: 100n, recipient: 'taproot:recipient', virtualTransactionCommitment: 'virtual-tx-commitment',
+        });
+        const outcome = await transferTaprootAsset({ authorization: await authorizeAdapterArtifact(artifact), artifact });
+        expect(outcome).toMatchObject({ kind: 'unsupported', reason: 'qualified_adapter_unavailable' });
+        expect(JSON.stringify(outcome)).not.toContain('virtual-tx-commitment');
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
 
-        expect(txid).toContain("taproot_txid_");
-        expect(requestEnclaveSignature).toHaveBeenCalled();
+    it('rejects mismatched and forged requests', async () => {
+        const artifact = createTaprootAssetTransferArtifact({ assetId: 'tap:123', amount: '100', recipient: 'tap:r', virtualTransactionCommitment: 'commitment' });
+        const authorization = await authorizeAdapterArtifact(artifact);
+        await expect(transferTaprootAsset({ authorization, artifact: { ...artifact, amount: '101' } }))
+            .resolves.toMatchObject({ kind: 'rejected', reason: 'artifact_digest_mismatch' });
+        await expect(transferTaprootAsset({ authorization: forgedAuthorization(), artifact }))
+            .resolves.toMatchObject({ kind: 'rejected' });
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 });
