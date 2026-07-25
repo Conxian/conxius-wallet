@@ -156,7 +156,9 @@ removed:
 
 Additional exact gaps are now fail-closed before success material or I/O:
 
-- Ark `createLiftPsbt` throws before ASP/UTXO fetch or unsigned PSBT output;
+- both Ark lift entry points are quarantined: `createLiftPsbt` throws before
+  ASP/UTXO fetch or unsigned PSBT output, and the compatibility `liftToArk`
+  wrapper throws before its former synthetic VTXO success object;
 - RGB `issueRgbAsset` throws before time/randomness-derived contract IDs or a
   success notification;
 - DLC `acceptDLCOffer` throws before mock CET/funding signatures or accepted
@@ -241,23 +243,22 @@ consumer objects cannot POST arbitrary broadcast hex, submit forged Ark
 signatures, invoke LND HTTP, or drive monetization/Maven generic-authorizer
 paths. They also prove a genuine authority consumer remains accepted while
 cross-authority capabilities remain invalid. Separate regressions cover the
-Wormhole forged-callback result, Ark lift no-I/O quarantine, RGB issuance, and
-DLC acceptance.
+Wormhole forged-callback result, both Ark lift entry-point quarantines (including
+the compatibility wrapper's former synthetic VTXO), RGB issuance, and DLC
+acceptance.
 
 Final follow-up verification on July 25, 2026:
 
-- focused provenance/architecture/authority/broadcast/Lightning/Ark/Maven/
-  StateChain/monetization/Taproot/B2B/Wormhole/RGB/DLC/quarantine suite:
-  16 files, 83 tests passed;
+- focused Ark/quarantine/architecture suite: 3 files, 20 tests passed;
 - `pnpm exec vitest run`: 83 files, 457 passed, 1 skipped;
 - `pnpm run typecheck`: TypeScript 6 and 7 toolchains passed;
-- `pnpm run lint`: 0 errors, 573 baseline warnings;
+- `pnpm run lint`: 0 errors, 571 baseline warnings;
 - `pnpm run build`: passed;
 - `pnpm run check:android-security`: passed;
 - `pnpm exec node scripts/ci/audit_with_exceptions.mjs --evidence
-  /tmp/conxius-dependency-audit-con1546-20260725T081800Z.json`: default policy
+  /tmp/conxius-dependency-audit-con1546-lift-quarantine.json`: default policy
   passed with three advisory findings and the existing pending-approval
   `bigint-buffer` and `elliptic` warnings; evidence SHA-256
-  `23db3dfbc47e60a43a1cd6d458bddeb003360f72f6ce5269d4f7c6988320ac58`;
+  `b6ab1da96ed68f5603fff22e5ae7ade0e8181c2ec054313b393ce702a02ea13c`;
   and
 - `git diff --check` plus production boundary/synthetic-success scans: passed.
