@@ -216,23 +216,134 @@ function workflowJobs(workflow, path, errors) {
   }));
 }
 
-function javaVersions(job) {
-  return sortedUnique(
-    [...job.text.matchAll(/^\s+java-version:\s*['"]?([^'"\s]+)['"]?\s*$/gm)].map(
-      (match) => match[1],
-    ),
+function indentation(line) {
+  return line.match(/^ */)?.[0].length ?? 0;
+}
+
+function workflowSteps(job) {
+  const lines = job.text.split(/\r?\n/);
+  const stepsIndex = lines.findIndex((line) => /^\s+steps:\s*(?:#.*)?$/.test(line));
+  if (stepsIndex < 0) {
+    return [];
+  }
+
+  const stepsIndent = indentation(lines[stepsIndex]);
+  const stepIndent = stepsIndent + 2;
+  const steps = [];
+  let current = null;
+
+  for (const line of lines.slice(stepsIndex + 1)) {
+    if (line.trim() && indentation(line) <= stepsIndent) {
+      break;
+    }
+    if (indentation(line) === stepIndent && /^\s*-\s+/.test(line)) {
+      if (current) {
+        steps.push(current);
+      }
+      current = { indent: stepIndent, lines: [line] };
+    } else if (current) {
+      current.lines.push(line);
+    }
+  }
+
+  if (current) {
+    steps.push(current);
+  }
+  return steps;
+}
+
+function directStepFieldValues(step, field) {
+  const fieldIndent = step.indent + 2;
+  const escapedField = field.replaceAll('-', '\\-');
+  const pattern = new RegExp(`^\\s{${fieldIndent}}${escapedField}:\\s*(.*?)\\s*$`);
+  const values = [];
+
+  const firstLine = step.lines[0].slice(step.indent).replace(/^-\s+/, '');
+  const firstMatch = firstLine.match(new RegExp(`^${escapedField}:\\s*(.*?)\\s*$`));
+  if (firstMatch) {
+    values.push(firstMatch[1]);
+  }
+
+  for (const line of step.lines.slice(1)) {
+    const match = line.match(pattern);
+    if (match) {
+      values.push(match[1]);
+    }
+  }
+  return values;
+}
+
+function setupJavaVersionValues(step) {
+  const fieldIndent = step.indent + 2;
+  const valueIndent = fieldIndent + 2;
+  const values = [];
+
+  for (let index = 0; index < step.lines.length; index += 1) {
+    if (!new RegExp(`^\\s{${fieldIndent}}with:\\s*(?:#.*)?$`).test(step.lines[index])) {
+      continue;
+    }
+
+    for (const line of step.lines.slice(index + 1)) {
+      if (line.trim() && indentation(line) <= fieldIndent) {
+        break;
+      }
+      const match = line.match(new RegExp(`^\\s{${valueIndent}}java-version:\\s*(.*?)\\s*$`));
+      if (match) {
+        values.push(match[1]);
+      }
+    }
+  }
+  return values;
+}
+
+function yamlScalar(value) {
+  const quoted = value.match(/^(['"])(.*?)\1\s*(?:#.*)?$/);
+  if (quoted) {
+    return quoted[2];
+  }
+  return value.match(/^([^\s#]+)\s*(?:#.*)?$/)?.[1] ?? null;
+}
+
+function javaVersions(job, errors) {
+  const setupJavaSteps = workflowSteps(job).filter((step) =>
+    directStepFieldValues(step, 'uses').some((value) => /^actions\/setup-java@[^\s#]+/.test(value)),
   );
+  const requiredUpdate =
+    `Update ${job.path} job ${job.name} to contain one actions/setup-java step with exactly ` +
+    `one literal with.java-version: '21', then rerun check:android-toolchain and preserve the hosted Android CI evidence.`;
+
+  if (setupJavaSteps.length !== 1) {
+    errors.push(
+      `${job.path} job ${job.name} must contain exactly one actions/setup-java step; found ${setupJavaSteps.length}. ${requiredUpdate}`,
+    );
+    return [];
+  }
+
+  const values = setupJavaVersionValues(setupJavaSteps[0]);
+  if (values.length !== 1) {
+    errors.push(
+      `${job.path} job ${job.name} actions/setup-java must declare with.java-version exactly once; found ${values.length}. ${requiredUpdate}`,
+    );
+    return [];
+  }
+
+  const version = yamlScalar(values[0]);
+  if (version === null || /\$\{\{/.test(version)) {
+    errors.push(
+      `${job.path} job ${job.name} actions/setup-java with.java-version must be the literal value 21; found nonliteral value ${JSON.stringify(values[0])}. ${requiredUpdate}`,
+    );
+    return [];
+  }
+  if (version !== '21') {
+    errors.push(
+      `${job.path} job ${job.name} actions/setup-java with.java-version must be the literal value 21; found ${JSON.stringify(version)}. ${requiredUpdate}`,
+    );
+  }
+  return [version];
 }
 
 function parseRelevantWorkflowJobs(workflows, errors) {
   const allJobs = workflows.flatMap(({ path, content }) => workflowJobs(content, path, errors));
-  for (const job of allJobs.filter((candidate) => /actions\/setup-java@/.test(candidate.text))) {
-    const versions = javaVersions(job);
-    if (versions.length !== 1 || versions[0] !== '21') {
-      errors.push(`${job.path} job ${job.name} must configure setup-java with Java 21; found ${describeSet(versions)}.`);
-    }
-  }
-
   const relevantJobs = allJobs.filter(
     (job) =>
       /^\s{4}runs-on:\s*(?:ubuntu|macos|windows)-/m.test(job.text) &&
@@ -248,7 +359,7 @@ function parseRelevantWorkflowJobs(workflows, errors) {
       [...job.text.matchAll(/platforms;android-(\d+)/g)].map((match) => Number(match[1])),
     );
     const ndks = sortedUnique([...job.text.matchAll(/ndk;([0-9.]+)/g)].map((match) => match[1]));
-    const configuredJavaVersions = javaVersions(job);
+    const configuredJavaVersions = javaVersions(job, errors);
 
     if (platforms.length === 0) {
       errors.push(`${job.path} job ${job.name} does not explicitly provision an Android SDK platform.`);
@@ -256,12 +367,6 @@ function parseRelevantWorkflowJobs(workflows, errors) {
     if (ndks.length === 0) {
       errors.push(`${job.path} job ${job.name} does not explicitly provision an Android NDK.`);
     }
-    if (configuredJavaVersions.length !== 1 || configuredJavaVersions[0] !== '21') {
-      errors.push(
-        `${job.path} job ${job.name} must use Java 21 exactly once; found ${describeSet(configuredJavaVersions)}.`,
-      );
-    }
-
     return { ...job, platforms, ndks, javaVersions: configuredJavaVersions };
   });
 }
