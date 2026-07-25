@@ -4,8 +4,9 @@
 
 **Issue:** [GitHub #444](https://github.com/Conxian/conxius-wallet/issues/444)
 
-**Code evidence reviewed:** `c970e76324d298b1f7360af6289b45ad16c6cf1f`
-on `charlie/issue-444-value-operation-gate`
+**Baseline code evidence:** merged wallet PRs #451/#452 on `main` at
+`e9e37d0fe0782ddf537547437da35d51b8985d8e`. This report includes the focused
+CON-1546 Bitcoin authorization-lineage follow-up.
 
 **Status:** **Implemented — fail-closed containment; production execution
 unsupported.**
@@ -26,8 +27,12 @@ The design is deterministic and provider-neutral:
 4. Execution callers supply an exact `{ authorization, artifact }` request and
    handle a discriminated outcome.
 5. The native PSBT signer consumes the exact `sign` stage immediately before
-   its module-private native call. Broadcast and settlement require their own
-   authoritative boundaries and receipts.
+   its module-private native call. A successful signer result is a frozen
+   `SignedBitcoinValueOperation` registered in a module-private `WeakMap`.
+6. Bitcoin broadcast requires the exact live authorization and exact registered
+   signed object. It validates PSBT-to-final-transaction lineage, consumes the
+   `broadcast` stage once, and then returns typed unsupported because no
+   qualified broadcast provider exists.
 
 Primary implementation surfaces:
 
@@ -146,13 +151,42 @@ adapter. It always returns:
 ```
 
 Therefore no production value operation is authorized by this change. The
-reviewed sign, broadcast, payment, bridge, swap, settlement, merchant, and
-protocol adapter paths return typed rejected, unsupported, or quarantined
-outcomes before irreversible side effects. `services/bitcoin-broadcast.ts`
-checks the exact transaction artifact but performs no network submission because
-there is no qualified provider receipt. The native-only PSBT signer has no
-browser/software fallback and is not reachable with a production authorization
-while the verifier remains unsupported.
+reviewed sign, payment, bridge, swap, settlement, merchant, and protocol adapter
+paths return typed rejected, unsupported, or quarantined outcomes before
+irreversible side effects. A fully validated Bitcoin broadcast attempt is the
+one containment exception: it consumes the process-local `broadcast` stage as
+the final boundary action, then returns
+`unsupported: qualified_provider_unavailable` without network or provider I/O.
+Rejected Bitcoin requests do not consume that stage. The native-only PSBT
+signer has no browser/software fallback and is not reachable with a production
+authorization while the verifier remains unsupported.
+
+## Bitcoin PSBT-to-final-transaction lineage repair
+
+The follow-up repair removes the public final-hex reconstruction API. Production
+callers now pass `{ authorization, signed }`, where `signed` must be the exact
+object returned by `services/value-signer.ts`; copied, spread, lookalike, or
+caller-created objects are not registered and fail closed.
+
+The signer-private provenance record binds:
+
+- the exact authorization object and capability;
+- the envelope digest and authorized canonical PSBT digest;
+- the retained normalized PSBT;
+- the unsigned transaction intent and its digest;
+- the final transaction digest; and
+- the Bitcoin network.
+
+At broadcast, the wallet independently revalidates the live capability and
+exact envelope, artifact registration, authorization identity, retained PSBT
+digest, recomputed unsigned transaction, final transaction digest, network, and
+ordered transaction intent. The preserved intent includes version, locktime,
+input outpoints/indexes/sequences, and output scripts/amounts. Finalization-only
+`scriptSig` and witness data are intentionally excluded from the comparison.
+
+This is local-process lineage containment only. It does not provide a qualified
+provider, provider receipt, hardware qualification, durable/distributed replay,
+submission evidence, finality, or settlement support.
 
 ## Migration inventory
 
@@ -233,18 +267,18 @@ The code candidate's latest reported validation is:
 
 | Check | Command | Status |
 | --- | --- | --- |
-| Focused value-operation and migrated-adapter tests | Exact command below | Passed: 24 files, 167 tests. |
-| Full Vitest | `pnpm test --run` | Passed: 91 files, 515 passed, 1 skipped. The count is evidence for this branch run, not a permanent repository invariant. |
+| Focused value-operation and migrated-adapter tests | Exact command below | Passed: 25 files, 176 tests, including Bitcoin authorization-lineage substitution/replay coverage. |
+| Full Vitest | `pnpm test --run` | Passed: 91 files, 520 passed, 1 skipped. The count is evidence for this branch run, not a permanent repository invariant. |
 | TypeScript 6/7 | `pnpm run typecheck` | Passed. |
 | Compatibility boundary | `pnpm run check:typescript-compat` and `pnpm run check:typescript-toolchain` | Passed. |
-| Lint | `pnpm run lint` | Passed with 0 errors and 476 existing warnings. |
+| Lint | `pnpm run lint` | Passed with 0 errors and 475 existing warnings. |
 | Runtime contamination | `bash scripts/ci/check_runtime_contamination.sh` and `bash scripts/ci/test_check_runtime_contamination.sh` | Passed. |
 | Documentation version drift | `python3 scripts/check_docs_sync.py` | Passed. |
 | Diff hygiene | `git diff --check` | Passed. |
-| Web production build | `pnpm run build` | Passed in an isolated local run: TypeScript completed and Vite transformed 4,594 modules, rendered chunks, and emitted final chunk/gzip output. This is local evidence, not a hosted CI result. |
+| Web production build | `pnpm run build` | Passed in an isolated local run: TypeScript completed and Vite transformed 4,593 modules, rendered chunks, and emitted final chunk/gzip output. This is local evidence, not a hosted CI result. |
 | Focused repaired Playwright flows | `pnpm exec playwright test e2e/bridge.spec.ts e2e/cxn-privacy.spec.ts e2e/full_system_strict.spec.ts e2e/full_wallet_system.spec.ts --project=chromium --project=mobile-chrome` | Passed: 12 tests across Chromium and mobile Chrome. |
 | Full Playwright E2E | `pnpm run test:e2e` | Passed: 36 tests across Chromium and mobile Chrome. This is local evidence, not a hosted CI result. |
-| Focused Marketplace/UI/value-operation tests | `pnpm exec vitest run tests/marketplace-boundary.test.tsx tests/value-operation-ui-boundaries.test.tsx tests/value-operation-authorization-queue.test.ts tests/value-operation-gate.test.ts` | Passed: 4 files, 71 tests. |
+| Focused Marketplace/UI/value-operation tests | `pnpm exec vitest run tests/marketplace-boundary.test.tsx tests/value-operation-ui-boundaries.test.tsx tests/value-operation-authorization-queue.test.ts tests/value-operation-gate.test.ts` | Passed: 4 files, 72 tests. |
 | Android app unit tests | `cd android && ./gradlew --no-daemon :app:testDebugUnitTest` | Blocked before execution because the local environment has no Android SDK and no `ANDROID_HOME`/`ANDROID_SDK_ROOT`. Pending CI; this is not recorded as a pass or implementation failure. |
 | Android release lint | `cd android && ./gradlew --no-daemon :app:lintRelease` | Blocked by the same missing-SDK environment. Pending CI; not recorded as a pass or implementation failure. |
 
@@ -266,7 +300,8 @@ pnpm exec vitest run \
   tests/rgb.test.ts tests/statechain.test.ts tests/maven.test.ts \
   tests/taproot-assets.test.ts tests/monetization.test.ts \
   tests/wormhole-signer.test.ts tests/protocol.test.ts \
-  tests/real-world.test.ts tests/yield.test.ts
+  tests/real-world.test.ts tests/yield.test.ts \
+  tests/value-signer.test.ts
 ```
 
 Required hosted/release validation before promotion:

@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
     buildNativePegPsbt: vi.fn(),
     getRecommendedFees: vi.fn(),
     signValue: vi.fn(),
+    broadcastValue: vi.fn(),
     payLightningInvoice: vi.fn(),
     payLnurl: vi.fn(),
     recommendedBridge: vi.fn(),
@@ -46,6 +47,9 @@ vi.mock('../services/lightning', () => ({
     payLightningInvoice: mocks.payLightningInvoice, payLnurl: mocks.payLnurl,
 }));
 vi.mock('../services/value-signer', () => ({ signAuthorizedValueOperationNative: mocks.signValue }));
+vi.mock('../services/bitcoin-broadcast', () => ({
+    broadcastAuthorizedBitcoinTransaction: mocks.broadcastValue,
+}));
 vi.mock('../services/ntt', () => ({
     NttService: { estimateFees: mocks.estimateFees },
     BRIDGE_STAGES: [],
@@ -82,6 +86,7 @@ describe('value UI fail-closed boundaries', () => {
         mocks.estimateFees.mockResolvedValue({ totalFee: 0, integratorFee: 0 });
         mocks.recommendedBridge.mockReturnValue('Native');
         mocks.signValue.mockResolvedValue({ kind: 'unsupported', reason: 'non_native_platform' });
+        mocks.broadcastValue.mockResolvedValue({ kind: 'unsupported', reason: 'qualified_provider_unavailable' });
     });
 
     it('Dashboard reports unavailable and never exposes synthetic signed/broadcast success after rejection', async () => {
@@ -121,13 +126,18 @@ describe('value UI fail-closed boundaries', () => {
     });
 
     it('never submits a signed Bitcoin artifact or reports settlement without a qualified receipt', async () => {
-        const authorization = vi.fn().mockResolvedValue({
+        const exactAuthorization = {
             kind: 'authorized',
             envelope: { canonicalOperationDigest: '11'.repeat(32) },
             envelopeDigest: 'aa'.repeat(32),
             capability: { envelopeDigest: 'aa'.repeat(32) },
+        };
+        const authorization = vi.fn().mockResolvedValue(exactAuthorization);
+        const exactSigned = Object.freeze({
+            kind: 'signed-bitcoin-value-operation', transactionHex: 'deadbeef',
+            transactionDigest: 'bb'.repeat(32), network: 'mainnet',
         });
-        mocks.signValue.mockResolvedValueOnce({ kind: 'signed', broadcastReadyHex: 'deadbeef' });
+        mocks.signValue.mockResolvedValueOnce({ kind: 'signed', signed: exactSigned });
         const { notify } = renderWithContext(<PaymentPortal />, authorization);
         const user = userEvent.setup();
 
@@ -136,6 +146,7 @@ describe('value UI fail-closed boundaries', () => {
         await user.click(screen.getByRole('button', { name: 'Review Payment Authorization' }));
 
         await waitFor(() => expect(notify).toHaveBeenCalledWith('error', expect.stringContaining('broadcast unavailable')));
+        expect(mocks.broadcastValue).toHaveBeenCalledWith({ authorization: exactAuthorization, signed: exactSigned });
         expect(mocks.broadcastTransaction).not.toHaveBeenCalled();
         expect(notify).not.toHaveBeenCalledWith('success', expect.anything());
     });
@@ -200,6 +211,30 @@ describe('value UI fail-closed boundaries', () => {
         expect(mocks.signValue).not.toHaveBeenCalled();
     });
 
+    it('native peg-in preserves exact authorization and signed artifact but never reports submission', async () => {
+        const exactAuthorization = {
+            kind: 'authorized', envelope: { canonicalOperationDigest: '11'.repeat(32) },
+            envelopeDigest: 'aa'.repeat(32), capability: { envelopeDigest: 'aa'.repeat(32) },
+        };
+        const exactSigned = Object.freeze({
+            kind: 'signed-bitcoin-value-operation', transactionHex: 'deadbeef',
+            transactionDigest: 'bb'.repeat(32), network: 'mainnet',
+        });
+        const authorization = vi.fn().mockResolvedValue(exactAuthorization);
+        mocks.signValue.mockResolvedValueOnce({ kind: 'signed', signed: exactSigned });
+        const { notify } = renderWithContext(<NTTBridge />, authorization);
+        const user = userEvent.setup();
+
+        await user.type(screen.getByLabelText('Amount to Bridge'), '0.001');
+        await user.click(screen.getByRole('button', { name: /Next: Review Bridge/i }));
+        await user.click(screen.getByRole('button', { name: /Initiate Sovereign Transfer/i }));
+
+        await waitFor(() => expect(notify).toHaveBeenCalledWith('error', expect.stringContaining('broadcast unavailable')));
+        expect(mocks.broadcastValue).toHaveBeenCalledWith({ authorization: exactAuthorization, signed: exactSigned });
+        expect(notify).not.toHaveBeenCalledWith('success', expect.anything());
+        expect(screen.queryByText('Transfer Broadcast')).not.toBeInTheDocument();
+    });
+
     it('NTT simulation remains explicitly unsupported with no completion identifier', async () => {
         mocks.recommendedBridge.mockReturnValue('NTT');
         const authorization = vi.fn();
@@ -242,5 +277,7 @@ describe('value UI fail-closed boundaries', () => {
         expect(payment).not.toContain('payLightningInvoice');
         expect(payment).not.toContain('payLnurl');
         expect(payment).not.toContain('Payment Sent');
+        expect(payment).not.toContain('createBitcoinBroadcastArtifact');
+        expect(bridge).not.toContain('createBitcoinBroadcastArtifact');
     });
 });

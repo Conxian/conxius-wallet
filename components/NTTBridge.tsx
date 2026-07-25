@@ -6,7 +6,7 @@ import { fetchUtxos, fetchNativePegAddress } from '../services/protocol';
 import { buildSbtcPegInPsbt, buildNativePegPsbt } from '../services/psbt';
 import { STORAGE_KEY } from '../services/enclave-storage';
 import { signAuthorizedValueOperationNative } from '../services/value-signer';
-import { broadcastAuthorizedBitcoinTransaction, createBitcoinBroadcastArtifact } from '../services/bitcoin-broadcast';
+import { broadcastAuthorizedBitcoinTransaction } from '../services/bitcoin-broadcast';
 import { formatSatoshisAsBtc, parseBtcToSatoshis, toSafeSatoshiNumber } from '../services/bitcoin-amount';
 import {
   createBitcoinPsbtOperationPayload,
@@ -148,9 +148,7 @@ const NTTBridge: React.FC = () => {
               context.notify('error', 'Native value signing unavailable.');
               return;
           }
-          const broadcast = await broadcastAuthorizedBitcoinTransaction(
-              createBitcoinBroadcastArtifact(signed.broadcastReadyHex),
-          );
+          const broadcast = await broadcastAuthorizedBitcoinTransaction({ authorization, signed: signed.signed });
           setBridgeStatus('UNAVAILABLE');
           context.notify(
               'error',
