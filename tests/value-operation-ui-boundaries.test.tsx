@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
     buildNativePegPsbt: vi.fn(),
     getRecommendedFees: vi.fn(),
     signValue: vi.fn(),
+    broadcastBitcoin: vi.fn(),
     payLightningInvoice: vi.fn(),
     payLnurl: vi.fn(),
     recommendedBridge: vi.fn(),
@@ -46,6 +47,9 @@ vi.mock('../services/lightning', () => ({
     payLightningInvoice: mocks.payLightningInvoice, payLnurl: mocks.payLnurl,
 }));
 vi.mock('../services/value-signer', () => ({ signAuthorizedValueOperationNative: mocks.signValue }));
+vi.mock('../services/bitcoin-broadcast', () => ({
+    broadcastAuthorizedBitcoinTransaction: mocks.broadcastBitcoin,
+}));
 vi.mock('../services/ntt', () => ({
     NttService: { estimateFees: mocks.estimateFees },
     BRIDGE_STAGES: [],
@@ -82,6 +86,7 @@ describe('value UI fail-closed boundaries', () => {
         mocks.estimateFees.mockResolvedValue({ totalFee: 0, integratorFee: 0 });
         mocks.recommendedBridge.mockReturnValue('Native');
         mocks.signValue.mockResolvedValue({ kind: 'unsupported', reason: 'non_native_platform' });
+        mocks.broadcastBitcoin.mockResolvedValue({ kind: 'unsupported', reason: 'qualified_provider_unavailable' });
     });
 
     it('Dashboard reports unavailable and never exposes synthetic signed/broadcast success after rejection', async () => {
@@ -127,7 +132,12 @@ describe('value UI fail-closed boundaries', () => {
             envelopeDigest: 'aa'.repeat(32),
             capability: { envelopeDigest: 'aa'.repeat(32) },
         });
-        mocks.signValue.mockResolvedValueOnce({ kind: 'signed', broadcastReadyHex: 'deadbeef' });
+        const broadcastArtifact = Object.freeze({ kind: 'test-signer-issued-artifact' });
+        mocks.signValue.mockResolvedValueOnce({
+            kind: 'signed',
+            broadcastReadyHex: 'deadbeef',
+            broadcastArtifact,
+        });
         const { notify } = renderWithContext(<PaymentPortal />, authorization);
         const user = userEvent.setup();
 
@@ -136,6 +146,10 @@ describe('value UI fail-closed boundaries', () => {
         await user.click(screen.getByRole('button', { name: 'Review Payment Authorization' }));
 
         await waitFor(() => expect(notify).toHaveBeenCalledWith('error', expect.stringContaining('broadcast unavailable')));
+        expect(mocks.broadcastBitcoin).toHaveBeenCalledWith({
+            authorization: await authorization.mock.results[0].value,
+            artifact: broadcastArtifact,
+        });
         expect(mocks.broadcastTransaction).not.toHaveBeenCalled();
         expect(notify).not.toHaveBeenCalledWith('success', expect.anything());
     });

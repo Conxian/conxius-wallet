@@ -1,42 +1,55 @@
-import { digestCanonicalPayload } from './value-operation-gate';
+import { digestValueOperationEnvelope } from './value-operation-gate';
+import { inspectAuthorizedValueOperation, type AuthorizedValueOperation } from './value-operations';
+import {
+    inspectSignerIssuedBitcoinBroadcastArtifact,
+    type SignerIssuedBitcoinBroadcastArtifact,
+} from './value-signer';
 
-export interface BitcoinBroadcastArtifact {
-    readonly kind: 'bitcoin-transaction';
-    readonly transactionHex: string;
-    readonly digest: string;
+export interface AuthorizedBitcoinBroadcastRequest {
+    readonly authorization: AuthorizedValueOperation;
+    readonly artifact: SignerIssuedBitcoinBroadcastArtifact;
 }
 
 export type BitcoinBroadcastOutcome =
     | Readonly<{ kind: 'unsupported'; reason: 'qualified_provider_unavailable' }>
-    | Readonly<{ kind: 'rejected'; reason: 'invalid_broadcast_artifact' | 'broadcast_digest_mismatch' }>;
-
-const HEX_PATTERN = /^[0-9a-f]+$/;
-
-export function createBitcoinBroadcastArtifact(transactionHex: string): BitcoinBroadcastArtifact {
-    const normalized = transactionHex.trim().toLowerCase();
-    if (!normalized || normalized.length % 2 !== 0 || !HEX_PATTERN.test(normalized)) {
-        throw new Error('Invalid Bitcoin transaction artifact.');
-    }
-    const payload = Object.freeze({ kind: 'bitcoin-transaction' as const, transactionHex: normalized });
-    return Object.freeze({ ...payload, digest: digestCanonicalPayload(payload) });
-}
+    | Readonly<{ kind: 'rejected'; reason:
+        | 'invalid_broadcast_request'
+        | 'forged_authorization'
+        | 'mismatched_authorization'
+        | 'expired_authorization'
+        | 'forged_broadcast_artifact'
+        | 'broadcast_digest_mismatch' }>;
 
 /**
-* Wallet-owned containment boundary. The artifact digest is checked exactly,
-* but phase 2 has no qualified provider receipt and therefore performs no
-* network submission and consumes no broadcast authorization stage.
+* Wallet-owned containment boundary. It requires the exact live authorization
+* and the identity-registered signer artifact that records the authorized
+* PSBT→final-transaction transition. Phase 2 has no qualified provider receipt,
+* so it performs no network submission and does not consume the broadcast
+* stage. A future qualified provider must consume that stage immediately before
+* its irreversible I/O call.
 */
 export async function broadcastAuthorizedBitcoinTransaction(
-    artifact: BitcoinBroadcastArtifact,
+    request: AuthorizedBitcoinBroadcastRequest,
 ): Promise<BitcoinBroadcastOutcome> {
-    let expected: BitcoinBroadcastArtifact;
+    if (typeof request !== 'object' || request === null || !request.authorization || !request.artifact) {
+        return Object.freeze({ kind: 'rejected', reason: 'invalid_broadcast_request' });
+    }
+    const { authorization, artifact } = request;
     try {
-        expected = createBitcoinBroadcastArtifact(artifact.transactionHex);
+        if (
+            authorization.kind !== 'authorized'
+            || authorization.envelopeDigest !== authorization.capability.envelopeDigest
+            || digestValueOperationEnvelope(authorization.envelope) !== authorization.envelopeDigest
+            || authorization.envelope.canonicalOperationDigest !== artifact.sourceOperationDigest
+        ) {
+            return Object.freeze({ kind: 'rejected', reason: 'mismatched_authorization' });
+        }
     } catch {
-        return Object.freeze({ kind: 'rejected', reason: 'invalid_broadcast_artifact' });
+        return Object.freeze({ kind: 'rejected', reason: 'mismatched_authorization' });
     }
-    if (artifact.kind !== expected.kind || artifact.digest !== expected.digest) {
-        return Object.freeze({ kind: 'rejected', reason: 'broadcast_digest_mismatch' });
-    }
+    const authorizationInspection = inspectAuthorizedValueOperation(authorization);
+    if (authorizationInspection.kind === 'rejected') return authorizationInspection;
+    const provenance = inspectSignerIssuedBitcoinBroadcastArtifact(authorization, artifact);
+    if (provenance.kind === 'rejected') return provenance;
     return Object.freeze({ kind: 'unsupported', reason: 'qualified_provider_unavailable' });
 }

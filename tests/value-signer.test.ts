@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Buffer } from 'node:buffer';
-import { signAuthorizedValueOperationNative } from '../services/value-signer';
+import {
+    digestBitcoinTransactionHex,
+    inspectSignerIssuedBitcoinBroadcastArtifact,
+    signAuthorizedValueOperationNative,
+} from '../services/value-signer';
 import { digestBitcoinPsbtOperation, type AuthorizedValueOperation } from '../services/value-operations';
 import { createValueOperationEnvelope, digestValueOperationEnvelope } from '../services/value-operation-gate';
 
@@ -79,7 +83,24 @@ describe('native value signer', () => {
     });
 
     it('consumes the exact sign stage immediately before native signing', async () => {
-        await expect(signAuthorizedValueOperationNative(request)).resolves.toMatchObject({ kind: 'signed' });
+        const signed = await signAuthorizedValueOperationNative(request);
+        expect(signed).toMatchObject({ kind: 'signed' });
+        if (signed.kind !== 'signed') throw new Error('Expected signed result.');
+        expect(signed.broadcastArtifact).toEqual({
+            kind: 'signer-issued-bitcoin-broadcast',
+            transactionHex: 'deadbeef',
+            envelopeDigest: authorization.envelopeDigest,
+            sourceOperationDigest: authorization.envelope.canonicalOperationDigest,
+            transactionHexDigest: digestBitcoinTransactionHex('deadbeef'),
+            finalizedTransactionDigest: expect.stringMatching(/^[0-9a-f]{64}$/),
+            authorizedTransitionDigest: expect.stringMatching(/^[0-9a-f]{64}$/),
+        });
+        expect(signed.broadcastArtifact.finalizedTransactionDigest)
+            .not.toBe(signed.broadcastArtifact.sourceOperationDigest);
+        expect(signed.broadcastArtifact.authorizedTransitionDigest)
+            .not.toBe(signed.broadcastArtifact.finalizedTransactionDigest);
+        expect(inspectSignerIssuedBitcoinBroadcastArtifact(authorization, signed.broadcastArtifact))
+            .toMatchObject({ kind: 'validated', transactionHex: 'deadbeef' });
         expect(mocks.consumeStage).toHaveBeenCalledWith(authorization, 'sign', authorization.envelopeDigest);
         expect(mocks.consumeStage.mock.invocationCallOrder[0]).toBeLessThan(mocks.signBatchNative.mock.invocationCallOrder[0]);
         expect(mocks.getUnsignedTxHex.mock.invocationCallOrder[0]).toBeLessThan(mocks.consumeStage.mock.invocationCallOrder[0]);

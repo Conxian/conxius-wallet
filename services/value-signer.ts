@@ -3,7 +3,7 @@ import { Buffer } from 'buffer';
 import * as bitcoin from 'bitcoinjs-lib';
 import { getPublicKeyNative } from './enclave-storage';
 import { finalizePsbtWithSigs, getPsbtSighashes, getUnsignedTxHex } from './psbt';
-import { digestValueOperationEnvelope } from './value-operation-gate';
+import { digestCanonicalPayload, digestValueOperationEnvelope } from './value-operation-gate';
 import {
     consumeAuthorizedValueOperationStage,
     createBitcoinPsbtOperationPayload,
@@ -21,12 +21,46 @@ export interface NativeValueSigningRequest {
     readonly derivationPath?: string;
 }
 
+export interface SignerIssuedBitcoinBroadcastArtifact {
+    readonly kind: 'signer-issued-bitcoin-broadcast';
+    readonly transactionHex: string;
+    readonly envelopeDigest: string;
+    readonly sourceOperationDigest: string;
+    readonly transactionHexDigest: string;
+    readonly finalizedTransactionDigest: string;
+    readonly authorizedTransitionDigest: string;
+}
+
+interface BitcoinBroadcastProvenanceRecord {
+    readonly authorization: AuthorizedValueOperation;
+    readonly capability: AuthorizedValueOperation['capability'];
+    readonly envelopeDigest: string;
+    readonly sourceOperationDigest: string;
+    readonly transactionHex: string;
+    readonly transactionHexDigest: string;
+    readonly finalizedTransactionDigest: string;
+    readonly authorizedTransitionDigest: string;
+}
+
+export type BitcoinBroadcastProvenanceInspection =
+    | Readonly<{
+        kind: 'validated';
+        transactionHex: string;
+        envelopeDigest: string;
+        sourceOperationDigest: string;
+        transactionHexDigest: string;
+        finalizedTransactionDigest: string;
+        authorizedTransitionDigest: string;
+    }>
+    | Readonly<{ kind: 'rejected'; reason: 'forged_broadcast_artifact' | 'mismatched_authorization' | 'broadcast_digest_mismatch' }>;
+
 export type NativeValueSigningOutcome =
     | Readonly<{
         kind: 'signed';
         signature: string;
         pubkey: string;
         broadcastReadyHex: string;
+        broadcastArtifact: SignerIssuedBitcoinBroadcastArtifact;
         timestamp: number;
     }>
     | Readonly<{ kind: 'rejected'; reason:
@@ -39,6 +73,7 @@ export type NativeValueSigningOutcome =
     | Readonly<{ kind: 'unsupported'; reason: 'non_native_platform' | 'native_enclave_unavailable' }>;
 
 const HEX_PATTERN = /^[0-9a-f]+$/i;
+const bitcoinBroadcastProvenance = new WeakMap<object, BitcoinBroadcastProvenanceRecord>();
 
 type GateBoundValueSignerPlugin = {
     signBatch(options: {
@@ -62,6 +97,132 @@ function isValidHex(value: unknown, minimumBytes: number): value is string {
 
 function isValidPublicKey(value: unknown): value is string {
     return isValidHex(value, 32) && [64, 66, 130].includes(value.length);
+}
+
+function normalizeTransactionHex(transactionHex: string): string {
+    const normalized = transactionHex.trim().toLowerCase();
+    if (!isValidHex(normalized, 1)) throw new Error('invalid transaction hex');
+    return normalized;
+}
+
+export function digestBitcoinTransactionHex(transactionHex: string): string {
+    const normalized = normalizeTransactionHex(transactionHex);
+    return digestCanonicalPayload(Object.freeze({
+        kind: 'bitcoin-transaction-hex' as const,
+        transactionHex: normalized,
+    }));
+}
+
+function digestFinalizedBitcoinTransaction(
+    transactionHexDigest: string,
+): string {
+    return digestCanonicalPayload(Object.freeze({
+        kind: 'bitcoin-finalized-transaction' as const,
+        transactionHexDigest,
+    }));
+}
+
+function digestAuthorizedPsbtFinalization(
+    envelopeDigest: string,
+    sourceOperationDigest: string,
+    finalizedTransactionDigest: string,
+): string {
+    return digestCanonicalPayload(Object.freeze({
+        kind: 'authorized-bitcoin-psbt-finalization' as const,
+        envelopeDigest,
+        sourceOperationDigest,
+        finalizedTransactionDigest,
+    }));
+}
+
+function issueBitcoinBroadcastArtifact(
+    authorization: AuthorizedValueOperation,
+    transactionHex: string,
+): SignerIssuedBitcoinBroadcastArtifact {
+    const normalizedTransactionHex = normalizeTransactionHex(transactionHex);
+    const sourceOperationDigest = authorization.envelope.canonicalOperationDigest;
+    const transactionHexDigest = digestBitcoinTransactionHex(normalizedTransactionHex);
+    const finalizedTransactionDigest = digestFinalizedBitcoinTransaction(transactionHexDigest);
+    const authorizedTransitionDigest = digestAuthorizedPsbtFinalization(
+        authorization.envelopeDigest,
+        sourceOperationDigest,
+        finalizedTransactionDigest,
+    );
+    const artifact = Object.freeze({
+        kind: 'signer-issued-bitcoin-broadcast' as const,
+        transactionHex: normalizedTransactionHex,
+        envelopeDigest: authorization.envelopeDigest,
+        sourceOperationDigest,
+        transactionHexDigest,
+        finalizedTransactionDigest,
+        authorizedTransitionDigest,
+    });
+    bitcoinBroadcastProvenance.set(artifact, Object.freeze({
+        authorization,
+        capability: authorization.capability,
+        envelopeDigest: authorization.envelopeDigest,
+        sourceOperationDigest,
+        transactionHex: normalizedTransactionHex,
+        transactionHexDigest,
+        finalizedTransactionDigest,
+        authorizedTransitionDigest,
+    }));
+    return artifact;
+}
+
+/**
+* Validates signer-issued PSBT→final-transaction lineage. This function can
+* inspect provenance but cannot create it; issuance remains module-private.
+*/
+export function inspectSignerIssuedBitcoinBroadcastArtifact(
+    authorization: AuthorizedValueOperation,
+    artifact: SignerIssuedBitcoinBroadcastArtifact,
+): BitcoinBroadcastProvenanceInspection {
+    if (typeof artifact !== 'object' || artifact === null) {
+        return Object.freeze({ kind: 'rejected', reason: 'forged_broadcast_artifact' });
+    }
+    const record = bitcoinBroadcastProvenance.get(artifact);
+    if (!record) return Object.freeze({ kind: 'rejected', reason: 'forged_broadcast_artifact' });
+    if (record.authorization !== authorization || record.capability !== authorization.capability) {
+        return Object.freeze({ kind: 'rejected', reason: 'mismatched_authorization' });
+    }
+    try {
+        const transactionHex = normalizeTransactionHex(artifact.transactionHex);
+        const transactionHexDigest = digestBitcoinTransactionHex(transactionHex);
+        const finalizedTransactionDigest = digestFinalizedBitcoinTransaction(transactionHexDigest);
+        const authorizedTransitionDigest = digestAuthorizedPsbtFinalization(
+            artifact.envelopeDigest,
+            artifact.sourceOperationDigest,
+            finalizedTransactionDigest,
+        );
+        if (
+            artifact.kind !== 'signer-issued-bitcoin-broadcast'
+            || artifact.envelopeDigest !== record.envelopeDigest
+            || artifact.envelopeDigest !== authorization.envelopeDigest
+            || artifact.sourceOperationDigest !== record.sourceOperationDigest
+            || artifact.sourceOperationDigest !== authorization.envelope.canonicalOperationDigest
+            || artifact.transactionHex !== record.transactionHex
+            || artifact.transactionHexDigest !== record.transactionHexDigest
+            || artifact.transactionHexDigest !== transactionHexDigest
+            || artifact.finalizedTransactionDigest !== record.finalizedTransactionDigest
+            || artifact.finalizedTransactionDigest !== finalizedTransactionDigest
+            || artifact.authorizedTransitionDigest !== record.authorizedTransitionDigest
+            || artifact.authorizedTransitionDigest !== authorizedTransitionDigest
+        ) {
+            return Object.freeze({ kind: 'rejected', reason: 'broadcast_digest_mismatch' });
+        }
+        return Object.freeze({
+            kind: 'validated',
+            transactionHex,
+            envelopeDigest: record.envelopeDigest,
+            sourceOperationDigest: record.sourceOperationDigest,
+            transactionHexDigest: record.transactionHexDigest,
+            finalizedTransactionDigest: record.finalizedTransactionDigest,
+            authorizedTransitionDigest: record.authorizedTransitionDigest,
+        });
+    } catch {
+        return Object.freeze({ kind: 'rejected', reason: 'broadcast_digest_mismatch' });
+    }
 }
 
 /**
@@ -153,11 +314,13 @@ export async function signAuthorizedValueOperationNative(
         if (!isValidHex(broadcastReadyHex, 1)) {
             return Object.freeze({ kind: 'rejected', reason: 'invalid_native_artifact' });
         }
+        const broadcastArtifact = issueBitcoinBroadcastArtifact(authorization, broadcastReadyHex);
         return Object.freeze({
             kind: 'signed',
             signature: nativeResult.signatures[0].signature,
             pubkey,
-            broadcastReadyHex,
+            broadcastReadyHex: broadcastArtifact.transactionHex,
+            broadcastArtifact,
             timestamp: Date.now(),
         });
     } catch {

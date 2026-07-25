@@ -19,7 +19,7 @@ import { BrowserMultiFormatReader } from '@zxing/library';
 import { decodeBolt11, isLnurl, decodeLnurl, fetchLnurlParams } from '../services/lightning';
 import { STORAGE_KEY } from '../services/enclave-storage';
 import { signAuthorizedValueOperationNative } from '../services/value-signer';
-import { broadcastAuthorizedBitcoinTransaction, createBitcoinBroadcastArtifact } from '../services/bitcoin-broadcast';
+import { broadcastAuthorizedBitcoinTransaction } from '../services/bitcoin-broadcast';
 import { parseBtcToSatoshis, parseSatoshiAmount, toSafeSatoshiNumber } from '../services/bitcoin-amount';
 import { digestCanonicalPayload } from '../services/value-operation-gate';
 import {
@@ -193,9 +193,10 @@ const PaymentPortal: React.FC = () => {
                  return;
              }
 
-             const broadcast = await broadcastAuthorizedBitcoinTransaction(
-                 createBitcoinBroadcastArtifact(signed.broadcastReadyHex),
-             );
+             const broadcast = await broadcastAuthorizedBitcoinTransaction({
+                 authorization,
+                 artifact: signed.broadcastArtifact,
+             });
              if (broadcast.kind === 'unsupported') {
                  context.notify('error', 'Bitcoin broadcast unavailable: no qualified provider receipt is configured.');
                  return;

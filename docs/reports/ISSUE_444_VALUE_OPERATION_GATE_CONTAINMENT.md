@@ -26,8 +26,16 @@ The design is deterministic and provider-neutral:
 4. Execution callers supply an exact `{ authorization, artifact }` request and
    handle a discriminated outcome.
 5. The native PSBT signer consumes the exact `sign` stage immediately before
-   its module-private native call. Broadcast and settlement require their own
-   authoritative boundaries and receipts.
+   its module-private native call. Only after successful PSBT finalization does
+   it issue an identity-registered broadcast artifact binding the exact
+   authorization object/capability, envelope digest, authorized canonical PSBT
+   digest, finalized transaction digest, transaction-hex self-digest, and an
+   explicit authorized-transition digest over those distinct stages.
+6. Bitcoin broadcast requires the same authorization plus that genuine
+   signer-issued artifact. A structurally identical caller-created object,
+   cross-authorization pairing, or substituted transaction is rejected before
+   any provider seam. Broadcast and settlement still require their own
+   authoritative provider boundaries and receipts.
 
 Primary implementation surfaces:
 
@@ -51,11 +59,14 @@ bypasses, replay of a process-local stage, and adapters that previously returned
 plausible txids, preimages, booleans, or completion state without an
 authoritative provider result.
 
-This implementation is not an authoritative trust service. The capability
-registry and `sign`/`broadcast`/`settle` stage consumption are local to one
-client process. They are defense in depth against in-process reuse, not durable
-or distributed replay prevention. The local expiry is not trusted evidence
-freshness or trusted time.
+This implementation is not an authoritative trust service. The capability and
+signer-artifact provenance registries are local to one client process. Stage
+consumption is also process-local defense in depth against in-process reuse,
+not durable or distributed replay prevention. The local expiry is not trusted
+evidence freshness or trusted time. Because the current Bitcoin broadcaster
+performs no irreversible provider call, it deliberately does not consume the
+`broadcast` stage; a future qualified provider integration must consume that
+stage immediately before network/provider I/O.
 
 ## Canonical schema and digest contract
 
@@ -149,10 +160,12 @@ Therefore no production value operation is authorized by this change. The
 reviewed sign, broadcast, payment, bridge, swap, settlement, merchant, and
 protocol adapter paths return typed rejected, unsupported, or quarantined
 outcomes before irreversible side effects. `services/bitcoin-broadcast.ts`
-checks the exact transaction artifact but performs no network submission because
-there is no qualified provider receipt. The native-only PSBT signer has no
-browser/software fallback and is not reachable with a production authorization
-while the verifier remains unsupported.
+checks the live authorization and genuine signer-issued PSBT→final-transaction
+lineage artifact, including distinct source-PSBT and finalized-transaction
+digests. It performs no network submission and consumes no `broadcast` stage
+because there is no qualified provider or provider receipt. The native-only
+PSBT signer has no browser/software fallback and is not reachable with a
+production authorization while the verifier remains unsupported.
 
 ## Migration inventory
 
@@ -215,6 +228,8 @@ do not:
 - accept forged capabilities, swapped artifacts, changed amounts/routes,
   malformed envelopes, wrong digests, repeated stages, debug/simulated/
   synthetic evidence, or caller-fabricated verified results;
+- accept a caller-created Bitcoin broadcast lookalike, a genuine artifact paired
+  with another authorization, or a mutated/substituted finalized transaction;
 - invoke signers, broadcasters, payment adapters, or settlement functions after
   unsupported/rejected authorization;
 - restore legacy bare NTT txids as completed work;
@@ -233,7 +248,7 @@ The code candidate's latest reported validation is:
 
 | Check | Command | Status |
 | --- | --- | --- |
-| Focused value-operation and migrated-adapter tests | Exact command below | Passed: 24 files, 167 tests. |
+| Focused value-operation and migrated-adapter tests | Exact command below | Passed on the broadcast-lineage follow-up: 25 files, 173 tests. |
 | Full Vitest | `pnpm test --run` | Passed: 91 files, 515 passed, 1 skipped. The count is evidence for this branch run, not a permanent repository invariant. |
 | TypeScript 6/7 | `pnpm run typecheck` | Passed. |
 | Compatibility boundary | `pnpm run check:typescript-compat` and `pnpm run check:typescript-toolchain` | Passed. |
@@ -256,6 +271,7 @@ pnpm exec vitest run \
   tests/value-operation-authorization-queue.test.ts \
   tests/value-operation-result.test.ts \
   tests/value-operation-ui-boundaries.test.tsx \
+  tests/value-signer.test.ts \
   tests/value-signer-artifact-binding.test.ts \
   tests/value-operation-adapter-source.test.ts \
   tests/bitcoin-broadcast.test.ts \
@@ -288,6 +304,7 @@ Required hosted/release validation before promotion:
 | Roots/collateral/revocation | Not operationalized; CON-1543 remains separate. |
 | Trusted time/freshness | Not established. Local expiry is defense in depth only. |
 | Replay prevention | Stage tracking is client-process-local, not durable or distributed replay protection. |
+| Bitcoin PSBT→transaction lineage | Signer-issued and identity-registered in-process; binds exact authorization/capability, envelope, authorized PSBT digest, finalized transaction digest, transaction-hex digest, and an explicit authorized-transition digest. This is containment provenance, not a provider receipt. |
 | Provider receipts/finality | Not implemented or qualified; no submitted/settled production claim is supported. |
 | SDK canonical rail/trust/replay | Not reimplemented in the wallet; remains a dependency boundary. |
 | CON-1512 / CON-1517 | Not closed by this wallet containment change. |
