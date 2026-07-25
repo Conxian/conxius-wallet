@@ -1,9 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { signB2bInvoice } from "../services/monetization";
-import { requestEnclaveSignature } from "../services/signer";
+import { requestNonValueMessageSignature } from "../services/signer";
 
 vi.mock("../services/signer", () => ({
-    requestEnclaveSignature: vi.fn().mockResolvedValue({
+    requestNonValueMessageSignature: vi.fn().mockResolvedValue({
         signature: "b2b_sig_enclave_hex",
         pubkey: "02instit",
         timestamp: Date.now()
@@ -13,18 +12,19 @@ vi.mock("../services/signer", () => ({
 describe("B2B Gateway Integration", () => {
     it("should sign a corporate invoice via enclave", async () => {
         const id = "inv_corporate_001";
-        const amount = 1000000;
-
         // Mocking the behavior since we didn't add signB2bInvoice to monetization.ts yet
         // or we use the existing ones. Actually, let's verify if we should add it.
-        const result = await requestEnclaveSignature({
+        const result = await requestNonValueMessageSignature({
+            intentClass: 'non-value-message',
             type: 'message',
-            layer: 'B2B',
-            payload: { id, amount },
-            description: 'Sign B2B Invoice'
+            layer: 'Mainnet',
+            domain: 'conxius.wallet.message',
+            purpose: 'wallet-message',
+            payload: { message: `B2B invoice reference ${id}` },
+            description: 'Sign non-value B2B invoice reference'
         }, 'corporate_vault');
 
         expect(result.signature).toBe("b2b_sig_enclave_hex");
-        expect(requestEnclaveSignature).toHaveBeenCalled();
+        expect(requestNonValueMessageSignature).toHaveBeenCalled();
     });
 });

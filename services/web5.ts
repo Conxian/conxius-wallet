@@ -1,6 +1,6 @@
 import * as ecc from "tiny-secp256k1";
 import { Web5 } from "@web5/api";
-import { getDerivedSecretNative, signNative, getEnclaveBlob } from "./enclave-storage";
+import { getDerivedSecretNative, signNonValueMessageNative, getEnclaveBlob } from "./enclave-storage";
 
 /**
  * EnclaveKeyManager - Delegates Web5 key operations to the Secure Enclave.
@@ -49,20 +49,19 @@ export class EnclaveKeyManager {
 
     async sign(params: { keyAlias: string; data: Uint8Array }) {
         await this.ensureVault();
-        const path = "m/84'/0'/0'/6/0";
-
         // Web5 passes raw bytes. Native Enclave expects SHA-256 hash.
         const hashBuffer = await crypto.subtle.digest("SHA-256", params.data as any);
         const hashHex = Array.from(new Uint8Array(hashBuffer))
             .map(b => b.toString(16).padStart(2, "0"))
             .join("");
 
-        const { signature } = await signNative({
+        const { signature } = await signNonValueMessageNative({
+            intentClass: 'non-value-message',
+            purpose: 'web5-identity',
+            domain: 'conxius.web5.identity',
             vault: this.vault!,
-            path,
             messageHash: hashHex,
             network: "web5",
-            payload: "Web5 Identity Authentication"
         });
 
         return new Uint8Array(Buffer.from(signature, "hex"));

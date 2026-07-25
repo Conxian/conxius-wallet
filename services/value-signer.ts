@@ -1,6 +1,7 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Buffer } from 'buffer';
-import { getPublicKeyNative, signBatchNative } from './enclave-storage';
+import * as bitcoin from 'bitcoinjs-lib';
+import { getPublicKeyNative } from './enclave-storage';
 import { finalizePsbtWithSigs, getPsbtSighashes, getUnsignedTxHex } from './psbt';
 import { digestValueOperationEnvelope } from './value-operation-gate';
 import {
@@ -38,6 +39,19 @@ export type NativeValueSigningOutcome =
     | Readonly<{ kind: 'unsupported'; reason: 'non_native_platform' | 'native_enclave_unavailable' }>;
 
 const HEX_PATTERN = /^[0-9a-f]+$/i;
+
+type GateBoundValueSignerPlugin = {
+    signBatch(options: {
+        vault: string;
+        path: string;
+        hashes: string[];
+        network: string;
+        payload: string;
+    }): Promise<{ signatures: { signature: string; pubkey?: string }[] }>;
+};
+
+// Module-private: no production caller can obtain a raw native batch signer.
+const GateBoundValueSigner = registerPlugin<GateBoundValueSignerPlugin>('SecureEnclave');
 
 function isValidHex(value: unknown, minimumBytes: number): value is string {
     return typeof value === 'string'
@@ -84,9 +98,6 @@ export async function signAuthorizedValueOperationNative(
         return Object.freeze({ kind: 'rejected', reason: 'invalid_native_artifact' });
     }
 
-    const stage = consumeAuthorizedValueOperationStage(authorization, 'sign', authorization.envelopeDigest);
-    if (stage.kind === 'rejected') return stage;
-
     const path = request.derivationPath ?? "m/84'/0'/0'/0/0";
     let pubkey: string;
     let hashes: ReturnType<typeof getPsbtSighashes>;
@@ -106,18 +117,26 @@ export async function signAuthorizedValueOperationNative(
         if (hashes.length === 0 || !isValidHex(unsignedTransaction, 1)) {
             return Object.freeze({ kind: 'rejected', reason: 'invalid_native_artifact' });
         }
+        const parsedTransaction = bitcoin.Transaction.fromHex(unsignedTransaction);
+        if (parsedTransaction.ins.length === 0 || parsedTransaction.outs.length === 0) {
+            return Object.freeze({ kind: 'rejected', reason: 'invalid_native_artifact' });
+        }
     } catch {
         return Object.freeze({ kind: 'rejected', reason: 'invalid_native_artifact' });
     }
 
+    const nativeRequest = Object.freeze({
+        vault: request.vault,
+        path,
+        hashes: hashes.map(({ hash }) => hash.toString('hex')),
+        network: request.network,
+        payload: unsignedTransaction,
+    });
+    const stage = consumeAuthorizedValueOperationStage(authorization, 'sign', authorization.envelopeDigest);
+    if (stage.kind === 'rejected') return stage;
+
     try {
-        const nativeResult = await signBatchNative({
-            vault: request.vault,
-            path,
-            hashes: hashes.map(({ hash }) => hash.toString('hex')),
-            network: request.network,
-            payload: unsignedTransaction,
-        });
+        const nativeResult = await GateBoundValueSigner.signBatch(nativeRequest);
         if (nativeResult.signatures.length !== hashes.length) {
             return Object.freeze({ kind: 'rejected', reason: 'invalid_native_artifact' });
         }

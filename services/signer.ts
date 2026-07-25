@@ -4,8 +4,7 @@ import BIP32Factory from 'bip32';
 import * as ecc from 'tiny-secp256k1';
 import { Buffer } from 'buffer';
 import { Capacitor } from "@capacitor/core";
-import { signNative, signBatchNative } from "./enclave-storage";
-import { getPsbtSighashes, finalizePsbtWithSigs } from "./psbt";
+import { signNonValueMessageNative } from "./enclave-storage";
 import { signSchnorr } from "./ecc";
 import { workerManager } from "./worker-manager";
 import { getAddressFromPublicKey } from "@stacks/transactions";
@@ -15,18 +14,9 @@ import { keccak_256 } from "@noble/hashes/sha3.js";
 bitcoin.initEccLib(ecc);
 const bip32 = BIP32Factory(ecc);
 
-/** @deprecated Legacy non-value/evaluation signer request. Do not use for value operations. */
-export interface SignRequest {
-  type: 'message' | 'psbt' | 'bip322';
-  layer: string;
-  payload: any;
-  description: string;
-}
-
 export interface SignResult {
   signature: string;
   pubkey: string;
-  broadcastReadyHex?: string;
   timestamp: number;
 }
 
@@ -34,7 +24,9 @@ export interface SignResult {
 export interface NonValueMessageSignRequest {
   readonly intentClass: 'non-value-message';
   readonly type: 'message' | 'bip322';
-  readonly layer: string;
+  readonly layer: 'Mainnet' | 'Nostr';
+  readonly domain: 'conxius.wallet.message' | 'conxius.wallet.bip322' | 'conxius.nostr.evaluation';
+  readonly purpose: 'wallet-message' | 'wallet-bip322' | 'nostr-evaluation';
   readonly payload: unknown;
   readonly description: string;
 }
@@ -61,8 +53,12 @@ function containsValueOperationShape(value: unknown, seen = new Set<object>()): 
   if (Array.isArray(value)) return value.some((entry) => containsValueOperationShape(entry, seen));
   if (!isPlainRecord(value)) return true;
   const keys = Object.keys(value);
-  if (keys.some((key) => key.toLowerCase() === 'psbt')) return true;
-  if (keys.includes('operationType') || keys.includes('canonicalOperationDigest') || keys.includes('broadcastReadyHex')) {
+  const normalizedKeys = keys.map((key) => key.toLowerCase().replace(/[_-]/g, ''));
+  if (normalizedKeys.some((key) => [
+    'psbt', 'rawtx', 'rawtransaction', 'transaction', 'tx', 'valueartifact', 'valueenvelope',
+    'operationtype', 'canonicaloperationdigest', 'broadcastreadyhex', 'broadcast', 'settlement', 'settle',
+    'recipient', 'destination', 'amount',
+  ].includes(key))) {
     return true;
   }
   return Object.values(value).some((entry) => containsValueOperationShape(entry, seen));
@@ -71,28 +67,37 @@ function containsValueOperationShape(value: unknown, seen = new Set<object>()): 
 function assertNonValueMessageRequest(request: unknown): asserts request is NonValueMessageSignRequest {
   if (!isPlainRecord(request)) throw new LegacyValueSigningBlockedError('Malformed non-value signing request.');
   const keys = Object.keys(request).sort();
-  const expected = ['description', 'intentClass', 'layer', 'payload', 'type'];
+  const expected = ['description', 'domain', 'intentClass', 'layer', 'payload', 'purpose', 'type'];
   if (keys.length !== expected.length || keys.some((key, index) => key !== expected[index])) {
     throw new LegacyValueSigningBlockedError('Malformed non-value signing request.');
   }
   if (
     request.intentClass !== 'non-value-message'
     || (request.type !== 'message' && request.type !== 'bip322')
-    || typeof request.layer !== 'string' || request.layer.length === 0
+    || (request.layer !== 'Mainnet' && request.layer !== 'Nostr')
     || typeof request.description !== 'string' || request.description.length === 0
     || containsValueOperationShape(request.payload)
   ) {
     throw new LegacyValueSigningBlockedError('Non-value signing accepts message-compatible payloads only.');
   }
   const payload = request.payload;
-  if (typeof payload === 'string') return;
-  if (!isPlainRecord(payload)) throw new LegacyValueSigningBlockedError('Non-value signing accepts message-compatible payloads only.');
-  const payloadKeys = Object.keys(payload);
-  if (payloadKeys.length !== 1 || !['hash', 'message'].includes(payloadKeys[0]) || typeof payload[payloadKeys[0]] !== 'string') {
-    throw new LegacyValueSigningBlockedError('Non-value signing accepts a string, message, or 32-byte hash payload only.');
+  if (typeof payload !== 'string') {
+    if (!isPlainRecord(payload)) throw new LegacyValueSigningBlockedError('Non-value signing accepts message-compatible payloads only.');
+    const payloadKeys = Object.keys(payload);
+    if (payloadKeys.length !== 1 || !['hash', 'message'].includes(payloadKeys[0]) || typeof payload[payloadKeys[0]] !== 'string') {
+      throw new LegacyValueSigningBlockedError('Non-value signing accepts a string, message, or 32-byte hash payload only.');
+    }
+    if (payloadKeys[0] === 'hash' && !/^[0-9a-f]{64}$/i.test(payload.hash as string)) {
+      throw new LegacyValueSigningBlockedError('Non-value hash payload must be exactly 32 bytes.');
+    }
   }
-  if (payloadKeys[0] === 'hash' && !/^[0-9a-f]{64}$/i.test(payload.hash as string)) {
-    throw new LegacyValueSigningBlockedError('Non-value hash payload must be exactly 32 bytes.');
+  const expectedDomain = request.purpose === 'wallet-message' ? 'conxius.wallet.message'
+    : request.purpose === 'wallet-bip322' ? 'conxius.wallet.bip322'
+      : request.purpose === 'nostr-evaluation' ? 'conxius.nostr.evaluation' : undefined;
+  if (!expectedDomain || request.domain !== expectedDomain
+    || (request.type === 'bip322') !== (request.purpose === 'wallet-bip322')
+    || (request.layer === 'Nostr') !== (request.purpose === 'nostr-evaluation')) {
+    throw new LegacyValueSigningBlockedError('Non-value signing domain, purpose, type, and layer must match.');
   }
 }
 
@@ -100,82 +105,29 @@ function assertNonValueMessageRequest(request: unknown): asserts request is NonV
  * High-level signing interface. Routes to Native Enclave (StrongBox)
  * or secure TypeScript worker based on environment.
  */
-export const requestEnclaveSignature = async (
-  request: SignRequest,
+const requestEnclaveSignature = async (
+  request: NonValueMessageSignRequest,
   seedOrVault: string | Uint8Array
 ): Promise<SignResult> => {
-  if (!request || request.type === 'psbt') throw new LegacyValueSigningBlockedError();
   console.info(`[Signer] Requesting signature for layer: ${request.layer}`);
 
   if (Capacitor.isNativePlatform()) {
     const vault = typeof seedOrVault === 'string' ? seedOrVault : 'default_vault';
-    const pin = undefined; // In production, this is handled by BiometricPrompt
-    const network = 'mainnet'; // Remediation: Default to mainnet for production alignment
-    let path = "m/84'/0'/0'/0/0";
-
-    if (request.layer === "Stacks") path = "m/44'/5757'/0'/0/0";
-    else if (request.layer === "Liquid") path = "m/84'/1776'/0'/0/0";
-    else if (request.layer === "Ark") path = "m/84'/0'/0'/1/0";
-    else if (request.layer === "BitVM") path = "m/84'/0'/0'/4/0";
-    else if (request.layer === "Maven") path = "m/84'/0'/0'/3/0";
-    else if (request.layer === "Silent") path = "m/352'/0'/0'/0'/0";
-    else if (request.layer === "RGB") path = "m/86'/0'/0'/0/0";
-    else if (request.layer === "StateChain") {
-        const index = request.payload?.index || 0;
-        path = `m/84'/0'/0'/2/${index}`;
-    }
 
     try {
-        // Handle PSBT Batch Signing
-        if (request.payload?.psbt) {
-            const idRes = await signNative({
-                vault,
-                pin,
-                path,
-                messageHash: "PUBKEY_DERIVATION",
-                network
-            });
-            const pubkey = idRes.pubkey;
-            const pubkeyBuf = Buffer.from(pubkey, "hex");
-
-            const hashes = getPsbtSighashes(request.payload.psbt, pubkeyBuf, network);
-            const { getUnsignedTxHex } = await import("./psbt");
-            const unsignedTx = getUnsignedTxHex(request.payload.psbt, network);
-
-            const batchRes = await signBatchNative({
-                vault,
-                pin,
-                path,
-                hashes: hashes.map(h => h.hash.toString("hex")),
-                network,
-                payload: unsignedTx
-            });
-
-            const signatures = batchRes.signatures.map((res: any, i: number) => ({
-                index: hashes[i].index,
-                signature: Buffer.from(res.signature, "hex"),
-            }));
-
-            const broadcastHex = finalizePsbtWithSigs(request.payload.psbt, signatures, pubkeyBuf, network);
-
-            return {
-                signature: batchRes.signatures[0]?.signature || "",
-                pubkey,
-                broadcastReadyHex: broadcastHex,
-                timestamp: Date.now()
-            };
-        }
-
-        // Standard Message/Transaction Signing
-        const messageHash = request.payload?.hash || Buffer.from(bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload)))).toString('hex');
-
-        const res = await signNative({
+        const payload = request.payload as string | { hash: string } | { message: string };
+        const messageHash = typeof payload === 'string'
+          ? Buffer.from(bitcoin.crypto.sha256(Buffer.from(payload))).toString('hex')
+          : 'hash' in payload
+            ? payload.hash
+            : Buffer.from(bitcoin.crypto.sha256(Buffer.from(payload.message))).toString('hex');
+        const res = await signNonValueMessageNative({
+            intentClass: 'non-value-message',
+            purpose: request.purpose,
+            domain: request.domain,
             vault,
-            pin,
-            path,
             messageHash,
-            network: request.layer === "RGB" ? "rgb" : request.layer === "StateChain" ? "statechain" : network,
-            payload: JSON.stringify(request.payload)
+            network: 'mainnet',
         });
 
         return {
@@ -215,40 +167,7 @@ export const requestEnclaveSignature = async (
   try {
       let signature = "";
       let pubkey = "";
-      let path = "m/84'/0'/0'/0/0";
-
-      if (request.layer === "Stacks") path = "m/44'/5757'/0'/0/0";
-      else if (request.layer === "Mainnet") path = "m/84'/0'/0'/0/0";
-      else if (request.layer === "Liquid") path = "m/84'/1776'/0'/0/0";
-      else if (request.layer === "Ark") path = "m/84'/0'/0'/1/0";
-      else if (request.layer === "BitVM") path = "m/84'/0'/0'/4/0";
-      else if (request.layer === "Maven") path = "m/84'/0'/0'/3/0";
-      else if (request.layer === "BOB") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "B2") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Botanix") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Mezo") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Rootstock") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Alpen") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Zulu") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Bison") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Hemi") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Nubit") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Lorenzo") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Citrea") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Babylon") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Merlin") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Bitlayer") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "Ethereum") path = "m/44'/60'/0'/0/0";
-      else if (request.layer === "RGB") path = "m/86'/0'/0'/0/0";
-      else if (request.layer === "TaprootAssets") path = "m/86'/0'/0'/0/0";
-      else if (request.layer === "Runes") path = "m/86'/0'/0'/0/0";
-      else if (request.layer === "Ordinals") path = "m/86'/0'/0'/0/0";
-      else if (request.layer === "Lightning") path = "m/84'/0'/0'/0/0";
-      else if (request.layer === "Silent") path = "m/352'/0'/0'/0'/0";
-      else if (request.layer === "StateChain") {
-          const index = request.payload?.index || 0;
-          path = `m/84'/0'/0'/2/${index}`;
-      }
+      const path = request.layer === 'Nostr' ? "m/44'/1237'/0'/0/0" : "m/84'/0'/0'/0/0";
 
       if (request.layer === "Nostr") {
           const nPath = "m/44'/1237'/0'/0/0";
@@ -264,10 +183,11 @@ export const requestEnclaveSignature = async (
           try {
             const child = bip32.fromSeed(Buffer.concat([privKeyBuf, Buffer.alloc(32, 0)]));
             let messageHash: Buffer;
-            if (request.payload?.hash) {
-                messageHash = Buffer.from(request.payload.hash, 'hex');
-            } else if (typeof request.payload === 'string') {
-                messageHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(request.payload)));
+            const payload = request.payload as string | { hash: string } | { message: string };
+            if (typeof payload !== 'string' && 'hash' in payload) {
+                messageHash = Buffer.from(payload.hash, 'hex');
+            } else if (typeof payload === 'string') {
+                messageHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(payload)));
             } else {
                 messageHash = Buffer.from(bitcoin.crypto.sha256(Buffer.from(JSON.stringify(request.payload))));
             }
@@ -312,6 +232,8 @@ export const signBip322Message = async (message: string, seed: Uint8Array): Prom
         intentClass: 'non-value-message',
         type: 'bip322',
         layer: 'Mainnet',
+        domain: 'conxius.wallet.bip322',
+        purpose: 'wallet-bip322',
         payload: { hash: Buffer.from(bitcoin.crypto.sha256(Buffer.from(message))).toString('hex') },
         description: 'Sign BIP-322 message'
     }, seed);

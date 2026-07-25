@@ -20,7 +20,7 @@ type SecureEnclavePlugin = {
     durationSeconds?: number;
   }): Promise<{ authenticated: boolean; validUntilMs?: number }>;
   clearBiometricSession(): Promise<void>;
-  signBatch(options: { vault: string; pin?: string; path: string; hashes: string[]; network?: string; payload?: string; }): Promise<{ signatures: { signature: string; pubkey: string }[] }>; signTransaction(options: {
+  signTransaction(options: {
     vault: string;
     pin?: string; // Made optional as per instruction
     path: string;
@@ -50,8 +50,6 @@ type SecureEnclavePlugin = {
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
-
-export { SecureEnclave }; // Export the plugin instance for direct access if needed
 
 async function hasNativeSecureEnclave() {
   if (!Capacitor.isNativePlatform()) return false;
@@ -141,15 +139,72 @@ export async function clearEnclaveBiometricSession(): Promise<void> {
   }
 }
 
-export async function signNative(options: {
-  vault: string;
-  pin?: string;
-  path: string;
-  messageHash: string; payload?: string;
-  network?: string;
-}): Promise<{ signature: string; pubkey: string }> {
+export async function authenticateEnclaveBiometricSession(durationSeconds = 300): Promise<boolean> {
+  if (!await hasNativeSecureEnclave()) return false;
+  const result = await SecureEnclave.authenticate({ durationSeconds });
+  return result.authenticated;
+}
+
+const NON_VALUE_SIGNING_PROFILES = Object.freeze({
+  'wallet-message': Object.freeze({ domain: 'conxius.wallet.message', path: "m/84'/0'/0'/0/0", networks: ['mainnet'] as const }),
+  'wallet-bip322': Object.freeze({ domain: 'conxius.wallet.bip322', path: "m/84'/0'/0'/0/0", networks: ['mainnet'] as const }),
+  'identity-login': Object.freeze({ domain: 'conxius.identity.login', path: "m/84'/0'/0'/0/0", networks: ['mainnet', 'testnet'] as const }),
+  'web5-identity': Object.freeze({ domain: 'conxius.web5.identity', path: "m/84'/0'/0'/6/0", networks: ['web5'] as const }),
+  'nostr-evaluation': Object.freeze({ domain: 'conxius.nostr.evaluation', path: "m/44'/1237'/0'/0/0", networks: ['mainnet'] as const }),
+} as const);
+
+export type NonValueNativeSigningPurpose = keyof typeof NON_VALUE_SIGNING_PROFILES;
+
+export interface NonValueNativeSigningRequest {
+  readonly intentClass: 'non-value-message';
+  readonly purpose: NonValueNativeSigningPurpose;
+  readonly domain: typeof NON_VALUE_SIGNING_PROFILES[NonValueNativeSigningPurpose]['domain'];
+  readonly vault: string;
+  readonly messageHash: string;
+  readonly network?: string;
+}
+
+function assertNonValueNativeSigningRequest(value: unknown): asserts value is NonValueNativeSigningRequest {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('Malformed non-value native signing request.');
+  }
+  const request = value as Record<string, unknown>;
+  const keys = Object.keys(request).sort();
+  const allowed = ['domain', 'intentClass', 'messageHash', 'network', 'purpose', 'vault'];
+  if (keys.some((key) => !allowed.includes(key))) {
+    throw new Error('Value-shaped native signing input is not allowed.');
+  }
+  if (request.intentClass !== 'non-value-message'
+    || typeof request.purpose !== 'string'
+    || !(request.purpose in NON_VALUE_SIGNING_PROFILES)
+    || typeof request.vault !== 'string'
+    || request.vault.length === 0
+    || typeof request.messageHash !== 'string'
+    || !/^[0-9a-f]{64}$/i.test(request.messageHash)) {
+    throw new Error('Malformed non-value native signing request.');
+  }
+  const profile = NON_VALUE_SIGNING_PROFILES[request.purpose as NonValueNativeSigningPurpose];
+  if (request.domain !== profile.domain) {
+    throw new Error('Non-value native signing domain does not match its purpose.');
+  }
+  if (request.network !== undefined && !(profile.networks as readonly string[]).includes(request.network as string)) {
+    throw new Error('Non-value native signing network does not match its purpose.');
+  }
+}
+
+/** Narrow native signing boundary for domain-separated, non-value message hashes only. */
+export async function signNonValueMessageNative(
+  request: NonValueNativeSigningRequest,
+): Promise<{ signature: string; pubkey: string }> {
+  assertNonValueNativeSigningRequest(request);
   if (await hasNativeSecureEnclave()) {
-    return await SecureEnclave.signTransaction(options);
+    const profile = NON_VALUE_SIGNING_PROFILES[request.purpose];
+    return await SecureEnclave.signTransaction({
+      vault: request.vault,
+      path: profile.path,
+      messageHash: request.messageHash,
+      network: request.network ?? profile.networks[0],
+    });
   }
   throw new Error("Native Enclave not available");
 }
@@ -183,20 +238,6 @@ export async function getWalletInfoNative(options: {
 }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.getWalletInfo(options);
-  }
-  throw new Error("Native Enclave not available");
-}
-
-export async function signBatchNative(options: {
-  vault: string;
-  pin?: string;
-  path: string;
-  hashes: string[];
-  network?: string;
-  payload?: string;
-}): Promise<{ signatures: { signature: string; pubkey: string }[] }> {
-  if (await hasNativeSecureEnclave()) {
-    return await SecureEnclave.signBatch(options);
   }
   throw new Error("Native Enclave not available");
 }

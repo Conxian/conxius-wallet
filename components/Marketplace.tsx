@@ -1,8 +1,7 @@
 
 import React, { useState, useContext } from 'react';
-import { ShoppingBag, Wifi, Gift, Zap, Globe, Smartphone, Search, Filter, Loader2, CheckCircle2, ShieldCheck, Ticket, Plane, Copy, QrCode, Tag, Lock } from 'lucide-react';
+import { ShoppingBag, Wifi, Gift, Zap, Globe, Smartphone, Search, Filter, ShieldCheck, Plane, Tag, Lock } from 'lucide-react';
 import { AppContext } from '../context';
-import { Breez } from '../services/breez';
 
 type Category = 'Airtime' | 'Data' | 'Vouchers' | 'eSIM';
 
@@ -33,8 +32,6 @@ const Marketplace: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [purchaseStep, setPurchaseStep] = useState<'select' | 'invoice' | 'success'>('select');
   const [regionFilter, setRegionFilter] = useState('All');
   
   // Advanced Filters
@@ -69,48 +66,10 @@ const Marketplace: React.FC = () => {
 
   const handleBuy = (product: Product) => {
     setSelectedProduct(product);
-    setPurchaseStep('invoice');
-  };
-
-  const handlePayment = async () => {
-    if (appContext?.state.lnBackend?.type === 'Breez') {
-      setIsProcessing(true);
-      try {
-        // In a real scenario, we would fetch a real invoice from the provider here.
-        // For now, since we don't have the Marketplace API keys, we still simulate
-        // but we verify the Breez node is at least capable of paying.
-        const info = await Breez.nodeInfo();
-        if (info.maxPayableMsat < (selectedProduct?.priceSats || 0) * 1000) {
-           appContext.notify('error', 'Insufficient Lightning Balance');
-           setIsProcessing(false);
-           return;
-        }
-
-        // Simulation of a real Breez.pay call if we had a real invoice
-        // await Breez.pay({ bolt11: '...' });
-
-        setTimeout(() => {
-          setIsProcessing(false);
-          setPurchaseStep('success');
-          appContext.notify('success', 'Purchase successful! Code delivered.');
-        }, 2000);
-      } catch (e) {
-        appContext.notify('error', 'Lightning Payment Failed');
-        setIsProcessing(false);
-      }
-    } else {
-      // Fallback/Simulation for users without Breez active
-      setIsProcessing(true);
-      setTimeout(() => {
-        setIsProcessing(false);
-        setPurchaseStep('success');
-      }, 3000);
-    }
   };
 
   const closePurchase = () => {
     setSelectedProduct(null);
-    setPurchaseStep('select');
   };
 
   return (
@@ -121,7 +80,7 @@ const Marketplace: React.FC = () => {
             <ShoppingBag className="text-accent-earth" />
             Sovereign Bazaar
           </h2>
-          <p className="text-brand-earth text-sm italic">Live on Bitcoin. Buy airtime, data, and essentials privately via Lightning.</p>
+          <p className="text-brand-earth text-sm italic">Catalog preview only. Checkout and fulfillment are unavailable.</p>
         </div>
         
         <div className="flex gap-4">
@@ -281,6 +240,7 @@ const Marketplace: React.FC = () => {
                      <button 
                         key={product.id}
                         onClick={() => handleBuy(product)}
+                        aria-label={`Preview ${product.name}`}
                         className="bg-off-white/20 border border-border rounded-[2.5rem] p-6 text-left hover:bg-off-white/40 hover:border-orange-500/30 transition-all group flex flex-col h-full"
                         type="button"
                      >
@@ -315,73 +275,23 @@ const Marketplace: React.FC = () => {
       {selectedProduct && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-deep/80 backdrop-blur-md animate-in fade-in duration-300">
             <div className="w-full max-w-md bg-white border border-border rounded-[3rem] p-8 space-y-6 relative shadow-2xl overflow-hidden">
-               
-               {purchaseStep === 'invoice' && (
-                  <>
-                     <div className="text-center space-y-2">
-                        <h3 className="text-2xl font-black italic uppercase tracking-tighter text-brand-deep">Pay Invoice</h3>
-                        <p className="text-xs text-brand-earth">Scan via Lightning to receive your code instantly.</p>
-                     </div>
-
-                     <div className="bg-white p-6 rounded-3xl mx-auto w-48 h-48 flex items-center justify-center relative overflow-hidden group cursor-pointer" onClick={handlePayment}>
-                        <QrCode size={120} className="text-ivory" />
-                        {isProcessing && (
-                           <div className="absolute inset-0 bg-white/90 flex items-center justify-center flex-col gap-2">
-                              <Loader2 size={32} className="animate-spin text-orange-600" />
-                              <span className="text-[10px] font-black uppercase tracking-widest text-ivory">{appContext?.state.lnBackend?.type === 'Breez' ? 'Paying...' : 'Detecting...'}</span>
-                           </div>
-                        )}
-                        <div className="absolute inset-0 bg-brand-deep/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                           <span className="text-[10px] font-black text-off-white uppercase">{appContext?.state.lnBackend?.type === 'Breez' ? 'Tap to Pay via Lightning' : 'Click to Simulate'}</span>
-                        </div>
-                     </div>
-
-                     <div className="bg-off-white/50 rounded-2xl p-4 border border-border flex items-center justify-between">
-                        <div className="space-y-1">
-                           <p className="text-[9px] font-black uppercase text-brand-earth">Total Due</p>
-                           <p className="text-lg font-mono font-bold text-accent-earth">{selectedProduct.priceSats.toLocaleString()} sats</p>
-                        </div>
-                        <button type="button" className="p-2 bg-border rounded-xl text-brand-earth hover:text-white transition-colors" aria-label="Copy Total Due">
-                           <Copy size={16} />
-                        </button>
-                     </div>
-
-                     <button onClick={closePurchase} className="w-full py-4 text-brand-earth hover:text-brand-earth font-bold text-xs uppercase tracking-widest transition-all">
-                        Cancel Purchase
-                     </button>
-                  </>
-               )}
-
-               {purchaseStep === 'success' && (
-                  <div className="text-center space-y-6 py-4 animate-in zoom-in duration-300">
-                     <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto text-green-500 border border-green-500/20">
-                        <CheckCircle2 size={40} />
-                     </div>
-                     <div>
-                        <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Payment Verified</h3>
-                        <p className="text-xs text-brand-earth mt-2">Your sovereign goods are ready.</p>
-                     </div>
-
-                     <div className="bg-off-white border border-border rounded-2xl p-6 text-left space-y-2">
-                        <p className="text-[9px] font-black uppercase text-brand-earth">Redemption Code</p>
-                        <div className="flex items-center justify-between">
-                           <p className="text-xl font-mono font-bold text-brand-deep tracking-wider">XT92-4B8A-CODE</p>
-                           <Copy size={16} className="text-brand-earth cursor-pointer hover:text-white" />
-                        </div>
-                        <p className="text-[9px] text-brand-earth italic border-t border-border pt-2 mt-2">
-                           Sent by {selectedProduct.provider}. No refund on digital goods.
-                        </p>
-                     </div>
-
-                     <button 
-                        onClick={closePurchase}
-                        className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all"
-                        type="button"
-                     >
-                        Done
-                     </button>
+               <div className="text-center space-y-4 py-4">
+                  <div className="w-16 h-16 bg-off-white rounded-2xl flex items-center justify-center mx-auto text-brand-earth border border-border">
+                     <Lock size={28} />
                   </div>
-               )}
+                  <div>
+                     <p className="text-[10px] font-black uppercase tracking-widest text-accent-earth">Preview item</p>
+                     <h3 className="text-2xl font-black text-brand-deep">{selectedProduct.name}</h3>
+                     <p className="text-xs text-brand-earth mt-2">Checkout, payment, and code fulfillment are unavailable.</p>
+                  </div>
+                  <div className="bg-off-white/50 rounded-2xl p-4 border border-border">
+                     <p className="text-[9px] font-black uppercase text-brand-earth">Reference price</p>
+                     <p className="text-lg font-mono font-bold text-accent-earth">{selectedProduct.priceSats.toLocaleString()} sats</p>
+                  </div>
+                  <button onClick={closePurchase} className="w-full py-4 bg-brand-deep text-white font-black rounded-2xl text-[10px] uppercase tracking-widest" type="button">
+                     Close preview
+                  </button>
+               </div>
             </div>
          </div>
       )}
