@@ -33,6 +33,17 @@ import * as bitcoin from 'bitcoinjs-lib';
 import { payjoin } from 'payjoin-client';
 import { IdentityService } from '../services/identity';
 import { signB2bInvoice } from '../services/monetization';
+import { STORAGE_KEY } from '../services/enclave-storage';
+import { signAuthorizedValueOperationNative } from '../services/value-signer';
+import {
+  consumeAuthorizedValueOperationStage,
+  createDeterministicValueOperationIntent,
+  redactValueOperationIdentifier,
+  unavailableValueOperationEvidence,
+  valueOperationOutcomeMessage,
+} from '../services/value-operations';
+
+const BITCOIN_TXID_PATTERN = /^[0-9a-f]{64}$/i;
 
 const PaymentPortal: React.FC = () => {
   const context = useContext(AppContext);
@@ -119,16 +130,70 @@ const PaymentPortal: React.FC = () => {
                  network
              });
 
-             const signed = await context.authorizeSignature({
-                 type: 'psbt',
-                 layer: 'Mainnet',
-                 payload: { psbt: psbtHex },
-                 description: `Send ${amount} BTC to ${recipient}`
+             const intent = createDeterministicValueOperationIntent({
+                 operationType: 'bitcoin-transfer',
+                 chain: 'bitcoin',
+                 layer: 'l1',
+                 payload: {
+                     psbt: psbtHex,
+                     destination: recipient.trim(),
+                     amountSats: amountSats.toString(),
+                     feeRateSatsPerVbyte: feeRate.toString(),
+                 },
+                 network,
+                 purpose: 'payment-portal-onchain',
+                 domain: 'conxius.wallet',
+                 audience: 'native-value-signer',
              });
-
-             if (signed.broadcastReadyHex) {
-                 txid = await broadcastTransaction(signed.broadcastReadyHex, 'Mainnet', network);
+             const authorization = await context.requestValueOperationAuthorization({
+                 intent,
+                 summary: {
+                     title: 'Authorize Bitcoin Payment',
+                     action: 'Send Bitcoin on-chain',
+                     amount: `${amountSats} sats`,
+                     destination: redactValueOperationIdentifier(recipient),
+                     network,
+                     purpose: 'Citadel Pay',
+                 },
+                 custody: {
+                     boundary: 'wallet-native-enclave',
+                     protocolKeyIdentity: 'bitcoin-account-0',
+                     algorithm: 'secp256k1-ecdsa',
+                 },
+                 evidence: unavailableValueOperationEvidence('payment-portal-psbt-provider'),
+             });
+             if (authorization.kind !== 'authorized') {
+                 context.notify('error', valueOperationOutcomeMessage(authorization));
+                 return;
              }
+
+             const signed = await signAuthorizedValueOperationNative({
+                 authorization,
+                 exactEnvelopeDigest: authorization.envelopeDigest,
+                 psbt: psbtHex,
+                 network,
+                 vault: STORAGE_KEY,
+             });
+             if (signed.kind !== 'signed') {
+                 context.notify('error', 'Native value signing unavailable.');
+                 return;
+             }
+
+             const broadcastStage = consumeAuthorizedValueOperationStage(
+                 authorization,
+                 'broadcast',
+                 authorization.envelopeDigest,
+             );
+             if (broadcastStage.kind !== 'consumed') {
+                 context.notify('error', 'Broadcast authorization unavailable.');
+                 return;
+             }
+             const providerTxid = (await broadcastTransaction(signed.broadcastReadyHex, 'Mainnet', network)).trim();
+             if (!BITCOIN_TXID_PATTERN.test(providerTxid)) {
+                 context.notify('error', 'Broadcast provider did not return an authoritative transaction ID.');
+                 return;
+             }
+             txid = providerTxid;
         }
 
         if (txid) {
@@ -200,7 +265,7 @@ const PaymentPortal: React.FC = () => {
 
                     <div>
                        <h2 className="text-3xl font-black text-brand-deep tracking-tighter">Payment Sent</h2>
-                       <p className="text-brand-earth mt-2 italic">Computational integrity verified by Enclave.</p>
+                       <p className="text-brand-earth mt-2 italic">Authorized native signing and broadcast completed.</p>
                     </div>
 
                     <div className="w-full bg-off-white border border-border rounded-3xl p-6 font-mono text-[10px] break-all text-brand-earth flex items-center gap-3">
@@ -342,7 +407,7 @@ const PaymentPortal: React.FC = () => {
                     </div>
                     <div>
                        <p className="text-[10px] font-bold text-brand-deep">Hardware Key Ready</p>
-                       <p className="text-[9px] text-brand-earth">StrongBox Attested</p>
+                       <p className="text-[9px] text-brand-earth">Native key path configured</p>
                     </div>
                  </div>
               </div>

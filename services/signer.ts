@@ -15,6 +15,7 @@ import { keccak_256 } from "@noble/hashes/sha3.js";
 bitcoin.initEccLib(ecc);
 const bip32 = BIP32Factory(ecc);
 
+/** @deprecated Legacy non-value/evaluation signer request. Do not use for value operations. */
 export interface SignRequest {
   type: 'message' | 'psbt' | 'bip322';
   layer: string;
@@ -27,6 +28,15 @@ export interface SignResult {
   pubkey: string;
   broadcastReadyHex?: string;
   timestamp: number;
+}
+
+/** Explicitly non-value message signing request for login and proof flows. */
+export interface NonValueMessageSignRequest {
+  readonly intentClass: 'non-value-message';
+  readonly type: 'message' | 'bip322';
+  readonly layer: string;
+  readonly payload: unknown;
+  readonly description: string;
 }
 
 /**
@@ -225,10 +235,20 @@ export const requestEnclaveSignature = async (
 };
 
 /**
+* Non-value compatibility boundary. Value-operation callers must use
+* signAuthorizedValueOperationNative from value-signer.ts instead.
+*/
+export const requestNonValueMessageSignature = async (
+  request: NonValueMessageSignRequest,
+  seedOrVault: string | Uint8Array,
+): Promise<SignResult> => requestEnclaveSignature(request, seedOrVault);
+
+/**
  * Signs a BIP-322 message (Used by tests and login flows)
  */
 export const signBip322Message = async (message: string, seed: Uint8Array): Promise<string> => {
-    const result = await requestEnclaveSignature({
+    const result = await requestNonValueMessageSignature({
+        intentClass: 'non-value-message',
         type: 'bip322',
         layer: 'Mainnet',
         payload: { hash: Buffer.from(bitcoin.crypto.sha256(Buffer.from(message))).toString('hex') },
@@ -319,3 +339,6 @@ export function parseBip322Message(message: string): {
         timestamp: timestampMatch ? timestampMatch[1].trim() : undefined
     };
 }
+
+export { signAuthorizedValueOperationNative } from './value-signer';
+export type { NativeValueSigningOutcome, NativeValueSigningRequest } from './value-signer';
