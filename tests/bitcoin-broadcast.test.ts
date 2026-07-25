@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EvidenceVerificationRequest, EvidenceVerificationResult } from '../services/value-operation-gate';
 
 const mocks = vi.hoisted(() => ({
@@ -116,6 +116,10 @@ describe('wallet-owned Bitcoin broadcast containment', () => {
         mocks.signBatchNative.mockResolvedValue({ signatures: [{ signature: '22'.repeat(64) }] });
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
     it('rejects a missing authorization before any provider seam', async () => {
         const { signed } = await authorizeAndSign('70736274ff0001', 'deadbeef');
         await expect(broadcastAuthorizedBitcoinTransaction({
@@ -151,9 +155,36 @@ describe('wallet-owned Bitcoin broadcast containment', () => {
         })).resolves.toEqual({ kind: 'rejected', reason: 'forged_broadcast_artifact' });
     });
 
+    it('rejects a genuine signer artifact after authorization expiry without provider I/O or stage consumption', async () => {
+        vi.useFakeTimers();
+        const authorizedAtMs = Date.UTC(2026, 6, 25, 12, 0, 0);
+        vi.setSystemTime(authorizedAtMs);
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        const { authorization, signed } = await authorizeAndSign('70736274ff0006', 'deadbeef');
+
+        vi.setSystemTime(authorizedAtMs + 10_001);
+        await expect(broadcastAuthorizedBitcoinTransaction({
+            authorization,
+            artifact: signed.broadcastArtifact,
+        })).resolves.toEqual({ kind: 'rejected', reason: 'expired_authorization' });
+        expect(fetchSpy).not.toHaveBeenCalled();
+
+        vi.setSystemTime(authorizedAtMs + 9_999);
+        expect(consumeAuthorizedValueOperationStage(
+            authorization,
+            'broadcast',
+            authorization.envelopeDigest,
+        )).toEqual({
+            kind: 'consumed',
+            stage: 'broadcast',
+            envelopeDigest: authorization.envelopeDigest,
+        });
+        fetchSpy.mockRestore();
+    });
+
     it('keeps a genuine lineage unsupported without provider I/O or broadcast-stage consumption', async () => {
         const fetchSpy = vi.spyOn(globalThis, 'fetch');
-        const { authorization, signed } = await authorizeAndSign('70736274ff0006', 'DEADBEEF');
+        const { authorization, signed } = await authorizeAndSign('70736274ff0007', 'DEADBEEF');
 
         expect(signed.broadcastArtifact).toMatchObject({
             kind: 'signer-issued-bitcoin-broadcast',
