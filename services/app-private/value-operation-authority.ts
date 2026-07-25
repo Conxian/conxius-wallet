@@ -86,7 +86,7 @@ function evaluateConfirmedValueOperation(
 
 async function confirmValueOperation(
   request: ValueOperationRequest,
-  vault: string | Uint8Array,
+  vault: string,
   options: { now?: Date } = {},
 ): Promise<ValueOperationOutcome> {
   const preflight = evaluateConfirmedValueOperation(request, { now: options.now });
@@ -146,7 +146,7 @@ export interface AppPrivateValueOperationAuthority {
   reject(request: ValueOperationRequest): ValueOperationOutcome;
 }
 
-export function createAppPrivateValueOperationAuthority(vault: string | Uint8Array): AppPrivateValueOperationAuthority {
+export function createAppPrivateValueOperationAuthority(vault: string): AppPrivateValueOperationAuthority {
   return Object.freeze({
     confirm: (request: ValueOperationRequest) => confirmValueOperation(request, vault),
     reject: (request: ValueOperationRequest) => createDeniedValueOperationOutcome(

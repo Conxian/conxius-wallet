@@ -60,9 +60,10 @@ export const acceptDLCOffer = async (offer: DLCOffer, state: AppState): Promise<
 /**
  * Settles a DLC based on oracle attestation.
  */
-export const settleDLC = async (contract: DLCContract, oracleAttestation: string): Promise<string> => {
-    // Reveal secret and broadcast the winning CET
-    return 'cet_txid_' + generateRandomString(12);
+export const settleDLC = async (contract: DLCContract, oracleAttestation: string): Promise<never> => {
+    void contract;
+    void oracleAttestation;
+    throw new Error('DLC_SETTLEMENT_QUARANTINED: authoritative oracle verification, enclave signing, and CET broadcast are unavailable');
 };
 
 /**
