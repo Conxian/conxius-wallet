@@ -3,6 +3,7 @@ import { LightningPaymentState } from './lightning';
 import { createLnInvoice } from "./breez";
 import { ValueOperationSettlementAuthorization } from './value-operation';
 import type { ValueOperationCapabilityConsumer } from './value-operation-capability-consumer';
+import { assertTrustedValueOperationCapabilityConsumer } from './app-private/value-operation-authority';
 import { requireBolt11Settlement } from './bolt11-settlement';
 
 export interface LightningBackend {
@@ -21,6 +22,7 @@ class NoneBackend implements LightningBackend {
     throw new Error('Lightning backend not configured');
   }
   async payInvoice(_invoice: string, _amountSats: number, _authorization: ValueOperationSettlementAuthorization, _network: Network, _consumer: ValueOperationCapabilityConsumer): Promise<{ preimage?: string }> {
+    assertTrustedValueOperationCapabilityConsumer(_consumer);
     void _invoice;
     void _amountSats;
     void _authorization;
@@ -42,6 +44,7 @@ class NoneBackend implements LightningBackend {
     void _invoice;
     void _authorization;
     void _network;
+    assertTrustedValueOperationCapabilityConsumer(_consumer);
     void _consumer;
     throw new Error('Lightning backend not configured');
   }
@@ -85,6 +88,7 @@ class LndBackend implements LightningBackend {
     return { preimage: data.payment_preimage };
   }
   async payInvoice(invoice: string, amountSats: number, authorization: ValueOperationSettlementAuthorization, network: Network, consumer: ValueOperationCapabilityConsumer) {
+    assertTrustedValueOperationCapabilityConsumer(consumer);
     requireBolt11Settlement(invoice, amountSats, network);
     consumer.consumeSettlementAuthorization({
       authorization,
@@ -104,6 +108,7 @@ class LndBackend implements LightningBackend {
     throw new Error('LND_LNURL_PAY_QUARANTINED: provider-returned BOLT11 cannot be pre-bound to an exact settlement capability');
   }
   async lnurlWithdraw(callback: string, k1: string, invoice: string, authorization: ValueOperationSettlementAuthorization, network: string, consumer: ValueOperationCapabilityConsumer): Promise<never> {
+    assertTrustedValueOperationCapabilityConsumer(consumer);
     void callback;
     void k1;
     void invoice;
@@ -134,6 +139,7 @@ class BreezBackend implements LightningBackend {
     _idempotencyKey?: string,
     _fingerprint?: string,
   ): Promise<{ preimage?: string, state?: LightningPaymentState }> {
+    assertTrustedValueOperationCapabilityConsumer(_consumer);
     void _invoice;
     void _amountSats;
     void _authorization;
@@ -159,6 +165,7 @@ class BreezBackend implements LightningBackend {
     void _invoice;
     void _authorization;
     void _network;
+    assertTrustedValueOperationCapabilityConsumer(_consumer);
     void _consumer;
     throw new Error('BREEZ_BACKEND_LNURL_QUARANTINED: authoritative settlement adapter unavailable');
   }

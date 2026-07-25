@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fetchMavenAssets, createMavenTransfer } from '../services/maven';
-import { ValueOperationAuthorizer } from '../services/value-operation';
+import { ValueOperationAuthorizer, ValueOperationRequest } from '../services/value-operation';
 import { createAppPrivateValueOperationAuthority } from '../services/app-private/value-operation-authority';
 
-const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
-    createAppPrivateValueOperationAuthority('test-vault').reject(request);
+const rejectionAuthority = createAppPrivateValueOperationAuthority('test-vault');
+const rejectAuthorization: ValueOperationAuthorizer = Object.assign(
+    async (request: ValueOperationRequest) => rejectionAuthority.reject(request),
+    { consumer: rejectionAuthority.consumer },
+);
 
 // Mock dependencies
 const mockFetch = vi.fn();

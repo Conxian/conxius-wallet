@@ -6,6 +6,7 @@ import {
     ValueOperationBroadcastAuthorization,
 } from './value-operation';
 import type { ValueOperationCapabilityConsumer } from './value-operation-capability-consumer';
+import { assertTrustedValueOperationCapabilityConsumer } from './app-private/value-operation-authority';
 
 // Re-export for backward compatibility
 export { endpointsFor, fetchWithRetry };
@@ -56,6 +57,7 @@ export const broadcastAuthorizedTransaction = async (
     network: Network,
     consumer: ValueOperationCapabilityConsumer,
 ): Promise<string> => {
+    assertTrustedValueOperationCapabilityConsumer(consumer);
     consumer.consumeBroadcastAuthorization(authorization, { signedHex: hex, layer, network });
     const endpoints = endpointsFor(network) as any;
     let url = '';

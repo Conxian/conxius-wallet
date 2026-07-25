@@ -1,10 +1,8 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { notificationService } from './notifications';
 import { endpointsFor, fetchWithRetry } from './network';
-import { fetchUtxos } from './protocol';
 import { fetchBtcPrice } from './prices';
-import { Network, UTXO } from '../types';
-import { estimateVbytes } from './psbt';
+import { Network } from '../types';
 import {
     createUnverifiedValueOperationRequest,
     createValueOperationNonce,
@@ -41,82 +39,8 @@ export interface LiftRequest {
  * Moves L1 BTC -> Ark Boarding Address.
  */
 export const createLiftPsbt = async (req: LiftRequest): Promise<{ psbtBase64: string, boardingAddress: string }> => {
-    try {
-        const { ARK_API } = endpointsFor(req.network);
-        
-        // 1. Fetch ASP Info (Boarding Address & Server Pubkey)
-        const response = await fetchWithRetry(`${ARK_API}/v1/info`, {}, 2, 500);
-        let boardingAddress = '';
-        if (response.ok) {
-            const info = await response.json();
-            boardingAddress = info.boardingAddress || info.address;
-        }
-
-        if (!boardingAddress) {
-            // Deterministic Fallback based on ASP ID (Standard Ark Boarding Path)
-            boardingAddress = req.network === 'mainnet'
-                ? 'bc1p8arkaspboardingmainnet'
-                : 'bc1q_ark_asp_prod';
-        }
-
-        // 2. Fetch User UTXOs
-        const utxos = await fetchUtxos(req.senderAddress, req.network);
-        if (utxos.length === 0) throw new Error('No UTXOs available for lifting');
-
-        // 3. Build PSBT
-        const net = req.network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
-        const psbt = new bitcoin.Psbt({ network: net });
-        let totalIn = 0;
-        const feeRate = req.feeRate || 5; // sats/vbyte
-
-        // Coin Selection (Simple)
-        const selectedUtxos: UTXO[] = [];
-        for (const utxo of utxos) {
-            selectedUtxos.push(utxo);
-            totalIn += utxo.amount;
-            if (totalIn >= req.amountSats + 500) break; // Buffer for fees
-        }
-
-        if (totalIn < req.amountSats) throw new Error(`Insufficient funds: Have ${totalIn}, Need ${req.amountSats}`);
-
-        // Add Inputs
-        for (const utxo of selectedUtxos) {
-            psbt.addInput({
-                hash: utxo.txid,
-                index: utxo.vout,
-                witnessUtxo: {
-                    script: bitcoin.payments.p2wpkh({ address: req.senderAddress, network: net })!.output!,
-                    value: BigInt(utxo.amount)
-                }
-            });
-        }
-
-        // Output 1: Boarding Address (The Lift)
-        psbt.addOutput({ address: boardingAddress, value: BigInt(req.amountSats) });
-
-        // Calculate Change
-        const vbytes = estimateVbytes(selectedUtxos.length, 2);
-        const fee = Math.ceil(vbytes * feeRate);
-        const change = totalIn - req.amountSats - fee;
-
-        if (change > 546) { // Dust limit
-            psbt.addOutput({ address: req.senderAddress, value: BigInt(change) });
-        }
-
-        return {
-            psbtBase64: psbt.toBase64(),
-            boardingAddress
-        };
-
-    } catch (e: any) {
-        notificationService.notify({
-            type: 'error',
-            title: 'Ark Lifting Failed',
-            message: e.message || 'Unknown error',
-            category: 'SYSTEM'
-        });
-        throw e;
-    }
+    void req;
+    throw new Error('ARK_LIFT_PSBT_QUARANTINED: exact request-bound ASP and UTXO construction authority is unavailable');
 };
 
 /**

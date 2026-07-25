@@ -23,6 +23,19 @@ import { digestValueOperationValue } from '../value-operation';
 import type { ValueOperationCapabilityConsumer } from '../value-operation-capability-consumer';
 
 const replayCaches = new Set<Set<string>>();
+const trustedConsumers = new WeakSet<object>();
+
+/**
+* Assert-only runtime provenance boundary for capability consumers.
+* Registration remains module-private so callers cannot mint or bless one.
+*/
+export function assertTrustedValueOperationCapabilityConsumer(
+  consumer: ValueOperationCapabilityConsumer | undefined,
+): asserts consumer is ValueOperationCapabilityConsumer {
+  if (!consumer || !trustedConsumers.has(consumer)) {
+    throw new Error('VALUE_OPERATION_CONSUMER_UNTRUSTED: capability consumer was not created by the App-private authority');
+  }
+}
 
 function authorizationMatchesRequest(
   authorization: ValueOperationAuthorization,
@@ -205,6 +218,7 @@ function createAuthorityState() {
     },
   };
   Object.freeze(consumer);
+  trustedConsumers.add(consumer);
 
   return {
     consumedAuthorizations,

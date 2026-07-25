@@ -48,13 +48,9 @@ export const createDLCOffer = (
  * Returns the Accept message data.
  */
 export const acceptDLCOffer = async (offer: DLCOffer, state: AppState): Promise<any> => {
-    // In a real implementation, this would generate signatures for CETs
-    // (Contract Execution Transactions) and the Funding Transaction.
-    return {
-        contractId: offer.id,
-        acceptTime: Date.now(),
-        signatures: ['sig1', 'sig2'] // Mocked
-    };
+    void offer;
+    void state;
+    throw new Error('DLC_ACCEPT_QUARANTINED: authoritative funding/CET construction and enclave signatures are unavailable');
 };
 
 /**

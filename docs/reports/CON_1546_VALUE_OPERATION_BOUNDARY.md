@@ -17,15 +17,24 @@ and [GitHub #444](https://github.com/Conxian/conxius-wallet/issues/444).
 value-operation contract. It exposes request builders, data types, and opaque
 capability consumers, but no production confirmer or constructible gate.
 Production confirmation lives in
-`services/app-private/value-operation-authority.ts`; `App.tsx` is its only
-allowed production importer. A repository architecture test enumerates
-production TypeScript modules and fails if a component, service, or core module
-imports that authority. Capability registration, issuance, and replay state now
-live only inside the authority factory closure. The type-only
+`services/app-private/value-operation-authority.ts`; `App.tsx` is the only
+production importer allowed to use its authority factory. A small audited set
+of receiving services imports only the authority's assert-only consumer
+provenance validator. A repository architecture test enumerates production
+TypeScript modules, rejects other importers, and verifies that those receiving
+services do not import the factory. Capability registration, issuance, replay
+state, and trusted-consumer registration live only inside the authority module
+and factory closure. The type-only
 `services/value-operation-capability-consumer.ts` module has no runtime exports;
 feature code receives only the authority-owned consume/validate closure through
-the App-owned authorizer callback. A consumer from a separately instantiated
-authority rejects capabilities issued by another authority. The resolver-aware
+the App-owned authorizer callback. A module-private `WeakSet` authenticates each
+consumer object created by the authority. The only exported provenance API is
+`assertTrustedValueOperationCapabilityConsumer`; there is no exported
+registration, issuer, minting, or trusted-consumer blessing function. Receiving
+helpers validate provenance before invoking an authorizer, consuming a
+capability, or performing network/plugin I/O. A consumer from a separately
+instantiated authority is genuine but still rejects capabilities issued by
+another authority. The resolver-aware
 graph includes static imports/re-exports, import-equals, string-literal dynamic
 `import()`, CommonJS `require()`, and import-then-runtime-re-export wrappers;
 non-literal production loaders fail closed. Tests may import private modules to
@@ -63,7 +72,9 @@ exports no raw handle or generic single/batch signing wrappers. Raw
 `services/app-private/secure-enclave-non-signing.ts`; the latter exposes only
 narrow storage, biometric, wallet-info, and derivation functions. Repository
 AST policy rejects raw plugin registration aliases, dynamic/destructured
-registration, `Capacitor.Plugins.SecureEnclave`, element access,
+registration, computed constant names (including concatenation and array
+`join`), unknown/non-literal plugin names, every non-allowlisted
+`Capacitor.Plugins` access regardless of key, computed or direct
 `signTransaction`/`signBatch` calls or extraction, and public re-exports outside
 that minimum allowlist. Native rejection, absence, empty output, or
 error returns a non-allowed outcome and cannot select a TypeScript worker
@@ -122,7 +133,10 @@ I/O; the software `ECPair`/WIF path was removed. Boltz fee output is explicitly
 typed as a non-authoritative estimate.
 
 Dashboard send, Payment Portal on-chain/Lightning send, native-peg bridge, and
-Wormhole signing use this boundary. Current callers intentionally construct
+the enabled protocol signers use this boundary. Wormhole signing is explicitly
+quarantined before transaction iteration, callback invocation, signing, or a
+result because exact canonical Wormhole transaction/native-signing semantics
+are not yet implemented. Current callers intentionally construct
 **unverified** requests. The wallet-owned adapter hook is intentionally unwired
 and cannot be injected by feature callers; therefore current paths cannot
 display or broadcast a production success.
@@ -139,6 +153,16 @@ removed:
 - no Boltz or gas-swap timestamp-derived transaction ID;
 - no Wormhole raw-signature fallback when a complete signed transaction is
   absent.
+
+Additional exact gaps are now fail-closed before success material or I/O:
+
+- Ark `createLiftPsbt` throws before ASP/UTXO fetch or unsigned PSBT output;
+- RGB `issueRgbAsset` throws before time/randomness-derived contract IDs or a
+  success notification;
+- DLC `acceptDLCOffer` throws before mock CET/funding signatures or accepted
+  contract output; and
+- Wormhole `sign()` accepts a typed App authorizer but rejects forged consumer
+  provenance and remains quarantined before invoking it.
 
 The closure audit also quarantined exact analogues that remained outside the
 gate: public-callback NTT execution, Changelly swap initiation, Yield provider
@@ -212,16 +236,28 @@ NTT, Changelly, Yield, merchant invoice, and Babylon quarantines. Protocol
 callers cannot sign, broadcast, settle, construct a value transaction, or return
 synthetic success when the central queue rejects or evidence is unqualified.
 
+The structural-consumer exploit regressions specifically prove that forged
+consumer objects cannot POST arbitrary broadcast hex, submit forged Ark
+signatures, invoke LND HTTP, or drive monetization/Maven generic-authorizer
+paths. They also prove a genuine authority consumer remains accepted while
+cross-authority capabilities remain invalid. Separate regressions cover the
+Wormhole forged-callback result, Ark lift no-I/O quarantine, RGB issuance, and
+DLC acceptance.
+
 Final follow-up verification on July 25, 2026:
 
-- focused architecture/authority/broadcast/Lightning/PayJoin/Boltz suite:
-  5 files, 48 tests passed;
-- `pnpm exec vitest run`: 81 files, 448 passed, 1 skipped;
+- focused provenance/architecture/authority/broadcast/Lightning/Ark/Maven/
+  StateChain/monetization/Taproot/B2B/Wormhole/RGB/DLC/quarantine suite:
+  16 files, 83 tests passed;
+- `pnpm exec vitest run`: 83 files, 457 passed, 1 skipped;
 - `pnpm run typecheck`: TypeScript 6 and 7 toolchains passed;
-- `pnpm run lint`: 0 errors, 575 baseline warnings;
+- `pnpm run lint`: 0 errors, 573 baseline warnings;
 - `pnpm run build`: passed;
 - `pnpm run check:android-security`: passed;
-- `pnpm exec node scripts/ci/audit_with_exceptions.mjs --evidence <fresh-path>`:
-  default policy passed with the existing pending-approval `bigint-buffer` and
-  `elliptic` warnings; and
+- `pnpm exec node scripts/ci/audit_with_exceptions.mjs --evidence
+  /tmp/conxius-dependency-audit-con1546-20260725T081800Z.json`: default policy
+  passed with three advisory findings and the existing pending-approval
+  `bigint-buffer` and `elliptic` warnings; evidence SHA-256
+  `23db3dfbc47e60a43a1cd6d458bddeb003360f72f6ce5269d4f7c6988320ac58`;
+  and
 - `git diff --check` plus production boundary/synthetic-success scans: passed.

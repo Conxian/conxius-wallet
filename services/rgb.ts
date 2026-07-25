@@ -58,30 +58,14 @@ export const issueRgbAsset = async (
     initialSeal: string,
     description?: string
 ): Promise<RgbAsset> => {
-    // Structural validation of initial seal
-    const sealRegex = /^[a-fA-F0-9]{64}:[0-9]+$/;
-    if (!sealRegex.test(initialSeal)) {
-        throw new Error("Invalid Initial Seal format. Expected txid:vout");
-    }
-
-    // Simulate contract creation (Contract ID is usually SHA256 of genesis)
-    const contractId = Buffer.from(bitcoin.crypto.sha256(Buffer.from(name + symbol + Date.now().toString()))).toString("hex").substring(0, 32);
-
-    const asset: RgbAsset = {
-        id: `rgb:${contractId}`,
-        name,
-        symbol,
-        precision,
-        totalSupply,
-        schema,
-        issuedAt: Date.now(),
-        initialSeal,
-        description
-    };
-
-    notificationService.notify({ category: 'TRANSACTION', type: 'success', title: 'RGB Asset Issued', message: `Successfully issued ${totalSupply} ${symbol}` });
-
-    return asset;
+    void name;
+    void symbol;
+    void totalSupply;
+    void precision;
+    void schema;
+    void initialSeal;
+    void description;
+    throw new Error('RGB_ASSET_ISSUANCE_QUARANTINED: authoritative RGB genesis construction and contract ID derivation are unavailable');
 };
 
 /**

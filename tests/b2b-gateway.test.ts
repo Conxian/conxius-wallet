@@ -1,11 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { signB2bInvoice } from "../services/monetization";
 import { signAuthorizedValueOperation } from "../services/app-private/value-operation-signer";
-import { ValueOperationAuthorizer } from '../services/value-operation';
+import { ValueOperationAuthorizer, ValueOperationRequest } from '../services/value-operation';
 import { createAppPrivateValueOperationAuthority } from '../services/app-private/value-operation-authority';
 
-const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
-    createAppPrivateValueOperationAuthority('test-vault').reject(request);
+const rejectionAuthority = createAppPrivateValueOperationAuthority('test-vault');
+const rejectAuthorization: ValueOperationAuthorizer = Object.assign(
+    async (request: ValueOperationRequest) => rejectionAuthority.reject(request),
+    { consumer: rejectionAuthority.consumer },
+);
 
 vi.mock("../services/app-private/value-operation-signer", () => ({
     signAuthorizedValueOperation: vi.fn().mockResolvedValue({

@@ -8,6 +8,7 @@ import {
 } from '../services/lightning';
 import { getLightningBackend } from '../services/lightning-backend';
 import { ValueOperationSettlementAuthorization } from '../services/value-operation';
+import { createAppPrivateValueOperationAuthority } from '../services/app-private/value-operation-authority';
 
 describe('Lightning Resilience SRL-1 & SRL-2', () => {
   it('validates state transitions strictly', () => {
@@ -63,7 +64,7 @@ describe('Lightning Resilience SRL-1 & SRL-2', () => {
        1,
        { kind: 'value-operation-settlement-authorization' } as ValueOperationSettlementAuthorization,
        'mainnet',
-       {} as never,
+       createAppPrivateValueOperationAuthority('test-vault').consumer,
        key,
        fingerprint,
      )).rejects.toThrow('BREEZ_BACKEND_SETTLEMENT_QUARANTINED');
