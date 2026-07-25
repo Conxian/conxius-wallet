@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { liftToArk, forfeitVtxo, syncVtxos, VTXO } from '../services/ark';
-import { ValueOperationAuthorizer } from '../services/value-operation';
+import { createLiftPsbt, liftToArk, forfeitVtxo, syncVtxos, VTXO } from '../services/ark';
+import { ValueOperationAuthorizer, ValueOperationRequest } from '../services/value-operation';
 import { createAppPrivateValueOperationAuthority } from '../services/app-private/value-operation-authority';
 
-const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
-    createAppPrivateValueOperationAuthority('test-vault').reject(request);
+const rejectionAuthority = createAppPrivateValueOperationAuthority('test-vault');
+const rejectAuthorization: ValueOperationAuthorizer = Object.assign(
+    async (request: ValueOperationRequest) => rejectionAuthority.reject(request),
+    { consumer: rejectionAuthority.consumer },
+);
 
 // Mock signer
 vi.mock('../services/app-private/value-operation-signer', () => ({
@@ -26,6 +29,16 @@ describe('Ark Service', () => {
         expect(vtxo.id).toContain('vtxo:');
         expect(vtxo.amount).toBe(100000);
         expect(vtxo.status).toBe('lifting');
+    });
+
+    it('quarantines lift PSBT construction before provider or UTXO I/O', async () => {
+        await expect(createLiftPsbt({
+            amountSats: 1000,
+            senderAddress: 'bc1qsender',
+            senderPubkey: '02sender',
+            network: 'mainnet',
+        })).rejects.toThrow('ARK_LIFT_PSBT_QUARANTINED');
+        expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it('quarantines forfeit before signing or ASP broadcast without authoritative evidence', async () => {

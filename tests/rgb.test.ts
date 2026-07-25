@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { issueRgbAsset, validateConsignment, createRgbTransfer, Consignment } from '../services/rgb';
-import { ValueOperationAuthorizer } from '../services/value-operation';
+import { ValueOperationAuthorizer, ValueOperationRequest } from '../services/value-operation';
 import { createAppPrivateValueOperationAuthority } from '../services/app-private/value-operation-authority';
 
-const rejectAuthorization: ValueOperationAuthorizer = async (request) =>
-  createAppPrivateValueOperationAuthority('test-vault').reject(request);
+const rejectionAuthority = createAppPrivateValueOperationAuthority('test-vault');
+const rejectAuthorization: ValueOperationAuthorizer = Object.assign(
+  async (request: ValueOperationRequest) => rejectionAuthority.reject(request),
+  { consumer: rejectionAuthority.consumer },
+);
 
 // Mock dependencies
 vi.mock('../services/notifications', () => ({
@@ -27,11 +30,10 @@ vi.mock('../services/app-private/value-operation-signer', () => ({
 }));
 
 describe('RGB Service', () => {
-  it('should issue an RGB asset correctly', async () => {
+  it('quarantines RGB issuance before fabricating an asset ID or success', async () => {
     const mockTxid = 'a'.repeat(64);
-    const asset = await issueRgbAsset('Test Token', 'TST', 1000, 8, 'RGB20', `${mockTxid}:0`);
-    expect(asset.symbol).toBe('TST');
-    expect(asset.totalSupply).toBe(1000);
+    await expect(issueRgbAsset('Test Token', 'TST', 1000, 8, 'RGB20', `${mockTxid}:0`))
+      .rejects.toThrow('RGB_ASSET_ISSUANCE_QUARANTINED');
   });
 
   it('should validate a consignment (CSV)', async () => {

@@ -28,11 +28,13 @@ vi.mock('@capacitor/core', () => ({
     isNativePlatform: () => true,
     Plugins: { BreezManager: { payInvoice: mocks.nativePayInvoice } },
   },
-  registerPlugin: () => ({
-    pay: mocks.breezPay,
-    sendOnchain: mocks.breezSendOnchain,
-    start: vi.fn(), nodeInfo: vi.fn(), invoice: vi.fn(), lnurlAuth: vi.fn(), receiveOnchain: vi.fn(), stop: vi.fn(),
-  }),
+  registerPlugin: (name: string) => name === 'BreezManager'
+    ? { payInvoice: mocks.nativePayInvoice }
+    : ({
+        pay: mocks.breezPay,
+        sendOnchain: mocks.breezSendOnchain,
+        start: vi.fn(), nodeInfo: vi.fn(), invoice: vi.fn(), lnurlAuth: vi.fn(), receiveOnchain: vi.fn(), stop: vi.fn(),
+      }),
 }));
 vi.mock('../services/app-private/value-operation-signer', () => ({ signAuthorizedValueOperation: mocks.requestEnclaveSignature }));
 vi.mock('../services/value-operation-evidence', () => ({ getWalletEvidenceAdapter: mocks.getWalletEvidenceAdapter }));
@@ -145,8 +147,8 @@ describe('Lightning settlement authorization', () => {
     const wrongOutcome = await authority.confirm(wrong);
 
     await expect(authorizeValueOperationSettlement(Object.assign(async () => wrongOutcome, { consumer: authority.consumer }), exact)).rejects.toThrow('does not match the service request');
-    await expect(authorizeValueOperationSettlement(async () => ({ status: 'rejected', code: 'NO', reason: 'no' }), exact)).rejects.toThrow('NO');
-    await expect(authorizeValueOperationSettlement(async () => ({ status: 'quarantined', code: 'NO_EVIDENCE', reason: 'no' }), exact)).rejects.toThrow('NO_EVIDENCE');
+    await expect(authorizeValueOperationSettlement(Object.assign(async () => ({ status: 'rejected', code: 'NO', reason: 'no' } as const), { consumer: authority.consumer }), exact)).rejects.toThrow('NO');
+    await expect(authorizeValueOperationSettlement(Object.assign(async () => ({ status: 'quarantined', code: 'NO_EVIDENCE', reason: 'no' } as const), { consumer: authority.consumer }), exact)).rejects.toThrow('NO_EVIDENCE');
     await expect(authorizeValueOperationSettlement(Object.assign(async () => ({
       status: 'allowed', authorization: { kind: 'value-operation-authorization' },
       settlementAuthorization: { kind: 'value-operation-settlement-authorization' },

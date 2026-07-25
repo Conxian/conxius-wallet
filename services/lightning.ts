@@ -1,13 +1,20 @@
-import { Capacitor } from "@capacitor/core";
+import { registerPlugin } from "@capacitor/core";
 import { bech32 } from 'bech32';
 import { Buffer } from 'buffer';
 import { fetchWithRetry } from './network';
 import { ValueOperationSettlementAuthorization } from './value-operation';
 import type { ValueOperationCapabilityConsumer } from './value-operation-capability-consumer';
+import { assertTrustedValueOperationCapabilityConsumer } from './app-private/value-operation-authority';
 import type { Network } from '../types';
 import { requireBolt11Settlement } from './bolt11-settlement';
 
 export { decodeBolt11, requireBolt11Settlement } from './bolt11-settlement';
+
+interface BreezManagerPlugin {
+  payInvoice(options: { bolt11: string }): Promise<string | { paymentHash?: string; preimage?: string }>;
+}
+
+const BreezManager = registerPlugin<BreezManagerPlugin>('BreezManager');
 
 /**
  * Lightning Service
@@ -60,6 +67,7 @@ export async function payLightningInvoice(
     network: Network,
     consumer: ValueOperationCapabilityConsumer,
 ): Promise<string> {
+    assertTrustedValueOperationCapabilityConsumer(consumer);
     requireBolt11Settlement(invoice, amountSats, network);
     consumer.consumeSettlementAuthorization({
       authorization,
@@ -68,15 +76,10 @@ export async function payLightningInvoice(
       network,
       intent: { kind: 'bolt11', invoice, amountSats },
     });
-    // @ts-ignore: Android bridge call
-    if (Capacitor && Capacitor.Plugins.BreezManager) {
-        // @ts-ignore
-        const result = await Capacitor.Plugins.BreezManager.payInvoice({ bolt11: invoice });
-        const receipt = typeof result === 'string' ? result : result?.paymentHash ?? result?.preimage;
-        if (typeof receipt !== 'string' || !receipt) throw new Error('Lightning provider returned no authoritative receipt');
-        return receipt;
-    }
-    throw new Error('LIGHTNING_PAYMENT_UNSUPPORTED: native Breez provider unavailable');
+    const result = await BreezManager.payInvoice({ bolt11: invoice });
+    const receipt = typeof result === 'string' ? result : result?.paymentHash ?? result?.preimage;
+    if (typeof receipt !== 'string' || !receipt) throw new Error('Lightning provider returned no authoritative receipt');
+    return receipt;
 }
 
 export async function payLnurl(
@@ -86,6 +89,7 @@ export async function payLnurl(
     network: string,
     consumer: ValueOperationCapabilityConsumer,
 ): Promise<string> {
+    assertTrustedValueOperationCapabilityConsumer(consumer);
     consumer.consumeSettlementAuthorization({
       authorization,
       layer: 'Lightning',

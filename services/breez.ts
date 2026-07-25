@@ -1,6 +1,7 @@
 import { registerPlugin } from '@capacitor/core';
 import { ValueOperationSettlementAuthorization } from './value-operation';
 import type { ValueOperationCapabilityConsumer } from './value-operation-capability-consumer';
+import { assertTrustedValueOperationCapabilityConsumer } from './app-private/value-operation-authority';
 import { requireBolt11Settlement } from './bolt11-settlement';
 import type { Network } from '../types';
 
@@ -64,6 +65,7 @@ export async function payLnInvoice(
   network: Network,
   consumer: ValueOperationCapabilityConsumer,
 ) {
+  assertTrustedValueOperationCapabilityConsumer(consumer);
   requireBolt11Settlement(bolt11, amountSats, network);
   consumer.consumeSettlementAuthorization({
     authorization,
@@ -91,6 +93,7 @@ export async function sendBreezOnchain(
   network: string,
   consumer: ValueOperationCapabilityConsumer,
 ) {
+  assertTrustedValueOperationCapabilityConsumer(consumer);
   consumer.consumeSettlementAuthorization({
     authorization,
     layer: 'Lightning',

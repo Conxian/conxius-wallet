@@ -133,8 +133,103 @@ function rawSecureEnclaveViolations(base: string, files: string[]): RawPluginVio
     if (rawSecureEnclaveAllowlist.has(path)) continue;
     const source = ts.createSourceFile(path, readFileSync(join(base, path), 'utf8'), ts.ScriptTarget.Latest, true);
     const kinds = new Set<RawPluginViolation['kind']>();
+    const constStrings = new Map<string, string>();
+    const registerPluginAliases = new Set<string>();
+    const capacitorAliases = new Set<string>();
+    const capacitorNamespaceAliases = new Set<string>();
+
+    const stringValue = (node: ts.Expression | undefined): string | undefined => {
+      if (!node) return undefined;
+      if (ts.isParenthesizedExpression(node)) return stringValue(node.expression);
+      if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+      if (ts.isIdentifier(node)) return constStrings.get(node.text);
+      if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.PlusToken) {
+        const left = stringValue(node.left);
+        const right = stringValue(node.right);
+        return left === undefined || right === undefined ? undefined : left + right;
+      }
+      if (ts.isCallExpression(node)
+        && ts.isPropertyAccessExpression(node.expression)
+        && node.expression.name.text === 'join'
+        && ts.isArrayLiteralExpression(node.expression.expression)) {
+        const separator = node.arguments.length === 0 ? ',' : stringValue(node.arguments[0]);
+        const values = node.expression.expression.elements.map((element) => stringValue(element as ts.Expression));
+        return separator === undefined || values.some((value) => value === undefined)
+          ? undefined
+          : (values as string[]).join(separator);
+      }
+      return undefined;
+    };
+
+    for (const statement of source.statements) {
+      if (ts.isImportDeclaration(statement)
+        && ts.isStringLiteral(statement.moduleSpecifier)
+        && statement.moduleSpecifier.text === '@capacitor/core') {
+        const bindings = statement.importClause?.namedBindings;
+        if (bindings && ts.isNamespaceImport(bindings)) capacitorNamespaceAliases.add(bindings.name.text);
+        if (bindings && ts.isNamedImports(bindings)) {
+          for (const element of bindings.elements) {
+            const imported = (element.propertyName ?? element.name).text;
+            if (imported === 'registerPlugin') registerPluginAliases.add(element.name.text);
+            if (imported === 'Capacitor') capacitorAliases.add(element.name.text);
+          }
+        }
+      }
+      if (ts.isVariableStatement(statement)
+        && (statement.declarationList.flags & ts.NodeFlags.Const) !== 0) {
+        for (const declaration of statement.declarationList.declarations) {
+          if (ts.isIdentifier(declaration.name)) {
+            const value = stringValue(declaration.initializer);
+            if (value !== undefined) constStrings.set(declaration.name.text, value);
+          }
+        }
+      }
+    }
+
+    const isCapacitor = (node: ts.Expression): boolean => {
+      if (ts.isIdentifier(node)) return capacitorAliases.has(node.text);
+      return (ts.isPropertyAccessExpression(node) || ts.isPropertyAccessChain(node))
+        && node.name.text === 'Capacitor'
+        && ts.isIdentifier(node.expression)
+        && capacitorNamespaceAliases.has(node.expression.text);
+    };
+    const isCapacitorPlugins = (node: ts.Expression): boolean => {
+      if ((ts.isPropertyAccessExpression(node) || ts.isPropertyAccessChain(node))
+        && node.name.text === 'Plugins') return isCapacitor(node.expression);
+      if ((ts.isElementAccessExpression(node) || ts.isElementAccessChain(node))
+        && stringValue(node.argumentExpression) === 'Plugins') return isCapacitor(node.expression);
+      return false;
+    };
     const visit = (node: ts.Node) => {
+      if (ts.isVariableDeclaration(node)
+        && ts.isObjectBindingPattern(node.name)
+        && node.initializer
+        && ts.isAwaitExpression(node.initializer)
+        && ts.isCallExpression(node.initializer.expression)
+        && node.initializer.expression.expression.kind === ts.SyntaxKind.ImportKeyword
+        && stringValue(node.initializer.expression.arguments[0]) === '@capacitor/core') {
+        for (const element of node.name.elements) {
+          const imported = element.propertyName ?? element.name;
+          if (ts.isIdentifier(imported) && imported.text === 'registerPlugin' && ts.isIdentifier(element.name)) {
+            registerPluginAliases.add(element.name.text);
+          }
+        }
+      }
+      if (ts.isCallExpression(node)
+        && ts.isIdentifier(node.expression)
+        && registerPluginAliases.has(node.expression.text)) {
+        const pluginName = stringValue(node.arguments[0]);
+        if (pluginName === undefined || pluginName === 'SecureEnclave') kinds.add('secure-enclave-access');
+      }
       if ((ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) && node.text === 'SecureEnclave') {
+        kinds.add('secure-enclave-access');
+      }
+      if ((ts.isPropertyAccessExpression(node) || ts.isPropertyAccessChain(node))
+        && isCapacitorPlugins(node.expression)) {
+        kinds.add('secure-enclave-access');
+      }
+      if ((ts.isElementAccessExpression(node) || ts.isElementAccessChain(node))
+        && isCapacitorPlugins(node.expression)) {
         kinds.add('secure-enclave-access');
       }
       if ((ts.isPropertyAccessExpression(node) || ts.isPropertyAccessChain(node))
@@ -153,8 +248,7 @@ function rawSecureEnclaveViolations(base: string, files: string[]): RawPluginVio
       }
       if ((ts.isElementAccessExpression(node) || ts.isElementAccessChain(node))
         && node.argumentExpression
-        && (ts.isStringLiteral(node.argumentExpression) || ts.isNoSubstitutionTemplateLiteral(node.argumentExpression))
-        && ['signTransaction', 'signBatch'].includes(node.argumentExpression.text)) {
+        && ['signTransaction', 'signBatch'].includes(stringValue(node.argumentExpression) ?? '')) {
         kinds.add('raw-signing-method');
       }
       if (ts.isBindingElement(node)) {
@@ -194,7 +288,15 @@ describe('App-private value-operation authority architecture', () => {
 
     expect(boundaryViolations(
       'services/app-private/value-operation-authority.ts',
-      ['App.tsx'],
+      [
+        'App.tsx',
+        'services/breez.ts',
+        'services/lightning-backend.ts',
+        'services/lightning.ts',
+        'services/protocol.ts',
+        'services/value-operation.ts',
+        'services/wormhole-signer.ts',
+      ],
       edges,
     )).toEqual({ importers: [], publicReExports: [] });
     expect(boundaryViolations(
@@ -256,6 +358,11 @@ describe('App-private value-operation authority architecture', () => {
       'components/dynamic-destructured.ts': "export async function load() { const { registerPlugin: raw } = await import('@capacitor/core'); return raw('SecureEnclave'); }",
       'components/capacitor-property.ts': "import { Capacitor as C } from '@capacitor/core'; void C.Plugins.SecureEnclave;",
       'components/capacitor-element.ts': "import * as core from '@capacitor/core'; void core.Capacitor['Plugins']['SecureEnclave'];",
+      'components/computed-register.ts': "import { registerPlugin } from '@capacitor/core'; const n = ['Secure', 'Enclave'].join(''); registerPlugin(n);",
+      'components/unknown-register.ts': "import { registerPlugin } from '@capacitor/core'; export const load = (n: string) => registerPlugin(n);",
+      'components/computed-capacitor.ts': "import { Capacitor } from '@capacitor/core'; const n = ['Secure', 'Enclave'].join(''); void Capacitor.Plugins[n];",
+      'components/computed-method.ts': "const method = 'sign' + 'Transaction'; export const call = (plugin: any) => plugin[method]({});",
+      'components/computed-method-extraction.ts': "const method = `signBatch`; export const take = (plugin: any) => { const fn = plugin[method]; return fn; };",
       'components/method-call.ts': 'export const call = (plugin: any) => plugin.signTransaction({});',
       'components/method-extraction.ts': 'export const take = (plugin: any) => { const { signBatch: batch } = plugin; return batch; };',
       'services/raw-barrel.ts': "export * from './app-private/native-value-signing';",
@@ -268,11 +375,16 @@ describe('App-private value-operation authority architecture', () => {
     expect(rawSecureEnclaveViolations(base, files)).toEqual([
       { path: 'components/capacitor-element.ts', kind: 'secure-enclave-access' },
       { path: 'components/capacitor-property.ts', kind: 'secure-enclave-access' },
+      { path: 'components/computed-capacitor.ts', kind: 'secure-enclave-access' },
+      { path: 'components/computed-method-extraction.ts', kind: 'raw-signing-method' },
+      { path: 'components/computed-method.ts', kind: 'raw-signing-method' },
+      { path: 'components/computed-register.ts', kind: 'secure-enclave-access' },
       { path: 'components/direct.ts', kind: 'secure-enclave-access' },
       { path: 'components/dynamic-destructured.ts', kind: 'secure-enclave-access' },
       { path: 'components/imported-alias.ts', kind: 'secure-enclave-access' },
       { path: 'components/method-call.ts', kind: 'raw-signing-method' },
       { path: 'components/method-extraction.ts', kind: 'raw-signing-method' },
+      { path: 'components/unknown-register.ts', kind: 'secure-enclave-access' },
     ]);
     const edges = buildEdges(base, files, { ...compilerOptions, baseUrl: base });
     expect(boundaryViolations('services/app-private/native-value-signing.ts', [], edges).publicReExports)
@@ -286,6 +398,25 @@ describe('App-private value-operation authority architecture', () => {
   it('exports no runtime registration, issuer, factory, or minting surface from the consume-side module', async () => {
     const consumerModule = await import('../services/value-operation-capability-consumer');
     expect(Object.keys(consumerModule)).toEqual([]);
+  });
+
+  it('exposes only assert access to authority consumers and no consumer-registration surface', () => {
+    const authority = readFileSync(join(root, 'services/app-private/value-operation-authority.ts'), 'utf8');
+    expect(authority).toContain('export function assertTrustedValueOperationCapabilityConsumer');
+    expect(authority).not.toMatch(/export\s+(?:function|const)\s+\w*(?:register|mint|issue)\w*Consumer/i);
+
+    for (const path of [
+      'services/breez.ts',
+      'services/lightning-backend.ts',
+      'services/lightning.ts',
+      'services/protocol.ts',
+      'services/value-operation.ts',
+      'services/wormhole-signer.ts',
+    ]) {
+      const source = readFileSync(join(root, path), 'utf8');
+      expect(source, path).toMatch(/import\s*{\s*assertTrustedValueOperationCapabilityConsumer\s*}\s*from\s*['"].*app-private\/value-operation-authority['"]/);
+      expect(source, path).not.toMatch(/import\s*{[^}]*createAppPrivateValueOperationAuthority[^}]*}\s*from\s*['"].*app-private\/value-operation-authority['"]/);
+    }
   });
 
   it('does not expose a constructible confirmer from the shared feature API', () => {

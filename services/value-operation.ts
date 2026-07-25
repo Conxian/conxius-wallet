@@ -2,6 +2,7 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
 import { SignRequest, SignResult } from './signer';
 import type { ValueOperationCapabilityConsumer } from './value-operation-capability-consumer';
+import { assertTrustedValueOperationCapabilityConsumer } from './app-private/value-operation-authority';
 
 export const VALUE_OPERATION_VERSION = 'conxius.value-operation.v1' as const;
 
@@ -323,6 +324,7 @@ export function requireValueOperationSignature(
   outcome: ValueOperationOutcome,
   request?: ValueOperationRequest,
 ): SignResult {
+  assertTrustedValueOperationCapabilityConsumer(consumer);
   if (outcome.status !== 'allowed') throw new ValueOperationDeniedError(outcome);
   return consumer.requireSignature(outcome, request);
 }
@@ -332,6 +334,7 @@ export function requireValueOperationSettlementAuthorization(
   outcome: ValueOperationOutcome,
   request: ValueOperationRequest,
 ): ValueOperationSettlementAuthorization {
+  assertTrustedValueOperationCapabilityConsumer(consumer);
   if (outcome.status !== 'allowed') throw new ValueOperationDeniedError(outcome);
   return consumer.requireSettlementAuthorization(outcome, request);
 }
@@ -340,9 +343,9 @@ export async function authorizeValueOperationSettlement(
   authorize: ValueOperationAuthorizer,
   request: ValueOperationRequest,
 ): Promise<ValueOperationSettlementAuthorization> {
+  assertTrustedValueOperationCapabilityConsumer(authorize.consumer);
   const outcome = await authorize(request);
   if (outcome.status !== 'allowed') throw new ValueOperationDeniedError(outcome);
-  if (!authorize.consumer) throw new Error('Value operation authorizer has no App-private capability consumer.');
   return requireValueOperationSettlementAuthorization(authorize.consumer, outcome, request);
 }
 
@@ -350,9 +353,9 @@ export async function authorizeValueOperationSignature(
   authorize: ValueOperationAuthorizer,
   request: ValueOperationRequest,
 ): Promise<SignResult> {
+  assertTrustedValueOperationCapabilityConsumer(authorize.consumer);
   const outcome = await authorize(request);
   if (outcome.status !== 'allowed') throw new ValueOperationDeniedError(outcome);
-  if (!authorize.consumer) throw new Error('Value operation authorizer has no App-private capability consumer.');
   return requireValueOperationSignature(authorize.consumer, outcome, request);
 }
 
