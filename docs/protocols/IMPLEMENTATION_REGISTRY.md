@@ -10,7 +10,7 @@ permalink: /docs/implementation-registry
 
 | Feature | Status | Notes |
 | :--- | :--- | :--- |
-| **Bitcoin L1 value execution** | 🛑 CONTAINED / UNAVAILABLE | Construction and native custody surfaces exist, but issue #444 requires exact gate-bound authorization and the qualified broadcast provider/receipt is unavailable. No production submission is supported. |
+| **Bitcoin L1 value execution** | 🛑 CONTAINED / UNAVAILABLE | Construction and native custody surfaces exist. Signer-produced artifacts have process-local PSBT→final-transaction provenance and exact authorization binding; a valid attempt consumes `broadcast` once, then returns unsupported. No provider I/O, receipt, submission, finality, or settlement is supported. |
 | **BIP-110 client-side fee alignment** | 🟡 IN PROGRESS | `services/bitcoin-fee-oracle.ts` samples bounded confirmed blocks, excludes narrowly detected inscription envelopes, and falls back to the existing fee endpoint. This is client-side policy, not consensus compliance; see [BIP-110 alignment](../operations/BIP110_COMPLIANCE.md). |
 | **BIP-352 Silent Payments** | 🟡 IN PROGRESS | Merged PR #390 implements bounded Rust/JNI scanning, Kotlin Esplora ingestion with cursor/persistence and shallow reorg fail-closed checks, plus a public-only Compose scan card. Pending release validation, mobile evidence, compact-filter discovery, spending/tweak recovery, native address encoding, authoritative spentness, and raw/merkle proof coverage. |
 | **Lightning payments** | 🛑 CONTAINED / UNAVAILABLE | Reviewed Breez/TS/backend payment paths return typed unsupported outcomes before payment; no synthetic preimage or txid can satisfy success. |
@@ -75,6 +75,16 @@ or return unsupported/quarantined outcomes before side effects. No bare txid,
 preimage, boolean, local completion flag, confirmation, native selection, debug
 status, or synthetic artifact is authoritative evidence or a provider receipt.
 Stage consumption is process-local only and is not durable replay protection.
+
+Bitcoin broadcast additionally requires the exact frozen
+`SignedBitcoinValueOperation` registered by the native signer. Its private
+record binds the authorization/capability, envelope and PSBT digests, retained
+PSBT, unsigned transaction intent, final transaction digest, and network.
+Broadcast recomputes and compares ordered inputs/outputs plus version and
+locktime, ignoring only finalization-added scriptSig/witness fields. Valid local
+attempts consume `broadcast` and return
+`unsupported: qualified_provider_unavailable`; rejected attempts do not consume
+the stage and no network/provider call exists.
 
 See the [issue #444 evidence record](../reports/ISSUE_444_VALUE_OPERATION_GATE_CONTAINMENT.md)
 for migration and negative-regression inventory.

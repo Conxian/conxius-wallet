@@ -44,6 +44,7 @@ import {
 import { signAuthorizedValueOperationNative } from '../services/value-signer';
 
 const VALID_UNSIGNED_TX = '020000000100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff010000000000000000016a00000000';
+const VALID_FINAL_TX = '02000000010000000000000000000000000000000000000000000000000000000000000000000000000151ffffffff010000000000000000016a00000000';
 
 function verifiedBinding(request: EvidenceVerificationRequest): EvidenceVerificationResult {
     const envelope = createValueOperationEnvelope({
@@ -100,7 +101,7 @@ describe('authorized PSBT artifact binding', () => {
         mocks.getPsbtSighashes.mockReturnValue([{ hash: Buffer.alloc(32), index: 0 }]);
         mocks.getUnsignedTxHex.mockReturnValue(VALID_UNSIGNED_TX);
         mocks.signBatchNative.mockResolvedValue({ signatures: [{ signature: '22'.repeat(64) }] });
-        mocks.finalizePsbtWithSigs.mockReturnValue('deadbeef');
+        mocks.finalizePsbtWithSigs.mockReturnValue(VALID_FINAL_TX);
     });
 
     it('rejects swapping PSBT B beside a genuine authorization for PSBT A without native calls or stage consumption', async () => {
