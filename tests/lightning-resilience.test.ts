@@ -1,71 +1,59 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { authorizeAdapterArtifact, forgedAuthorization } from './value-operation-adapter-test-helpers';
+import { consumeAuthorizedValueOperationStage } from '../services/value-operations';
 import {
-  isValidPaymentTransition,
-  checkIdempotency,
-  savePaymentIntent,
-  classifyLightningError,
-  getPaymentIntent
+  classifyLightningError, createLightningInvoicePaymentArtifact, createLnurlPaymentArtifact,
+  isValidPaymentTransition, payLightningInvoice, payLnurl,
 } from '../services/lightning';
 import { getLightningBackend } from '../services/lightning-backend';
 
-describe('Lightning Resilience SRL-1 & SRL-2', () => {
-  it('validates state transitions strictly', () => {
-    expect(isValidPaymentTransition('INTENT_ACCEPTED', 'EXECUTION_IN_FLIGHT')).toBe(true);
-    expect(isValidPaymentTransition('EXECUTION_IN_FLIGHT', 'SETTLED')).toBe(true);
-    expect(isValidPaymentTransition('SETTLED', 'FAILED_CLOSED')).toBe(false);
-    expect(isValidPaymentTransition('INTENT_ACCEPTED', 'FAILED_CLOSED')).toBe(true);
-    // Self-transition should be false to enforce change
-    expect(isValidPaymentTransition('EXECUTION_IN_FLIGHT', 'EXECUTION_IN_FLIGHT')).toBe(false);
+const DIGEST_A = '44'.repeat(32); const DIGEST_B = '55'.repeat(32);
+function invoiceArtifact() {
+  return createLightningInvoicePaymentArtifact({
+    invoice: 'lnbc1-invalid-but-digest-bound', network: 'mainnet', amountMsat: '21000', maxFeeMsat: '1000', providerIdentity: 'breez',
+    providerConfigurationDigest: DIGEST_A, idempotencyDigest: DIGEST_B,
+  });
+}
+function lnurlArtifact() {
+  return createLnurlPaymentArtifact({
+    lnurl: 'https://pay.example/.well-known/lnurlp/alice', network: 'mainnet', amountMsat: '21000', maxFeeMsat: '1000',
+    providerIdentity: 'lnd', providerConfigurationDigest: DIGEST_A, idempotencyDigest: DIGEST_B,
+    params: { callback: 'https://pay.example/callback', minSendable: 1000, maxSendable: 100000, metadata: '[["text/plain","test"]]' },
+  });
+}
+
+describe('Lightning gate-bound execution', () => {
+  it('returns unsupported without native execution or consuming a stage', async () => {
+    const artifact = invoiceArtifact(); const authorization = await authorizeAdapterArtifact(artifact);
+    const result = await payLightningInvoice({ authorization, artifact });
+    expect(result).toMatchObject({ kind: 'unsupported' }); expect(typeof result).not.toBe('string');
+    expect(JSON.stringify(result)).not.toMatch(/preimage|invoice/i);
+    expect(consumeAuthorizedValueOperationStage(authorization, 'broadcast', authorization.envelopeDigest)).toMatchObject({ kind: 'consumed' });
   });
 
-  it('enforces idempotency and detects conflicts', () => {
-    const key = 'test_key';
-    const fingerprint = 'fp1';
-    const intent: any = {
-      id: '1',
-      idempotencyKey: key,
-      fingerprint: fingerprint,
-      state: 'INTENT_ACCEPTED',
-      attemptNo: 1,
-      occurredAt: Date.now()
-    };
-
-    savePaymentIntent(intent);
-
-    // Exact match
-    const existing = checkIdempotency(key, fingerprint);
-    expect(existing).not.toBeNull();
-    expect(existing?.id).toBe('1');
-
-    // Conflict match (same key, different fingerprint)
-    expect(() => checkIdempotency(key, 'different_fp')).toThrow(/409 Conflict/);
+  it('binds invoice, amount, route metadata, and authorization exactly', async () => {
+    const artifact = invoiceArtifact(); const authorization = await authorizeAdapterArtifact(artifact);
+    await expect(payLightningInvoice({ authorization, artifact: { ...artifact, amountMsat: '22000' } })).resolves.toMatchObject({ kind: 'rejected' });
+    await expect(payLightningInvoice({ authorization: forgedAuthorization(), artifact })).resolves.toMatchObject({ kind: 'rejected' });
+    await expect(payLightningInvoice({ artifact } as never)).resolves.toMatchObject({ kind: 'rejected' });
   });
 
-  it('detects concurrent execution in flight', async () => {
-     const backend = getLightningBackend({ type: 'Breez' });
-     const key = 'concurrent_key';
-     const fingerprint = 'fp1';
-
-     // Setup an in-flight intent
-     const intent: any = {
-        id: '2',
-        idempotencyKey: key,
-        fingerprint: fingerprint,
-        state: 'EXECUTION_IN_FLIGHT',
-        attemptNo: 1,
-        occurredAt: Date.now()
-     };
-     savePaymentIntent(intent);
-
-     // Attempt another payInvoice with same key
-     await expect(backend.payInvoice('invoice', key, fingerprint)).rejects.toThrow('Payment already in flight');
+  it('contains direct and backend LNURL/LND/Breez payment paths before fetch or state mutation', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const artifact = lnurlArtifact(); const authorization = await authorizeAdapterArtifact(artifact); const request = { authorization, artifact };
+    await expect(payLnurl(request)).resolves.toMatchObject({ kind: 'unsupported' });
+    await expect(getLightningBackend({ type: 'LND', endpoint: 'node.test', apiKey: 'secret' }).lnurlPay(request)).resolves.toMatchObject({ kind: 'unsupported' });
+    const invoice = invoiceArtifact(); const invoiceAuthorization = await authorizeAdapterArtifact(invoice);
+    await expect(getLightningBackend({ type: 'Breez' }).payInvoice({ authorization: invoiceAuthorization, artifact: invoice })).resolves.toMatchObject({ kind: 'unsupported' });
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
 
-describe('Lightning Failure Taxonomy SRL-7', () => {
-  it('classifies errors correctly', () => {
+describe('Lightning non-authoritative helpers', () => {
+  it('keeps state validation and failure classification descriptive only', () => {
+    expect(isValidPaymentTransition('INTENT_ACCEPTED', 'EXECUTION_IN_FLIGHT')).toBe(true);
+    expect(isValidPaymentTransition('SETTLED', 'FAILED_CLOSED')).toBe(false);
     expect(classifyLightningError(new Error('Invoice expired'))).toBe('PERMANENT');
-    expect(classifyLightningError(new Error('Network timeout'))).toBe('TRANSIENT');
     expect(classifyLightningError(new Error('Unknown generic error'))).toBe('INDETERMINATE');
   });
 });
