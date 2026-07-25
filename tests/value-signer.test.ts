@@ -55,6 +55,7 @@ const request = {
     vault: 'conxius_vault',
 };
 const VALID_UNSIGNED_TX = '020000000100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff010000000000000000016a00000000';
+const VALID_FINAL_TX = '02000000010000000000000000000000000000000000000000000000000000000000000000000000000151ffffffff010000000000000000016a00000000';
 
 describe('native value signer', () => {
     beforeEach(() => {
@@ -65,7 +66,7 @@ describe('native value signer', () => {
         mocks.getUnsignedTxHex.mockReturnValue(VALID_UNSIGNED_TX);
         mocks.consumeStage.mockReturnValue({ kind: 'consumed', stage: 'sign', envelopeDigest: authorization.envelopeDigest });
         mocks.signBatchNative.mockResolvedValue({ signatures: [{ signature: '22'.repeat(64), pubkey: `02${'11'.repeat(32)}` }] });
-        mocks.finalizePsbtWithSigs.mockReturnValue('deadbeef');
+        mocks.finalizePsbtWithSigs.mockReturnValue(VALID_FINAL_TX);
     });
 
     it('never invokes native or worker signing on web', async () => {
@@ -79,7 +80,16 @@ describe('native value signer', () => {
     });
 
     it('consumes the exact sign stage immediately before native signing', async () => {
-        await expect(signAuthorizedValueOperationNative(request)).resolves.toMatchObject({ kind: 'signed' });
+        const outcome = await signAuthorizedValueOperationNative(request);
+        expect(outcome).toMatchObject({
+            kind: 'signed',
+            signed: {
+                kind: 'signed-bitcoin-value-operation',
+                transactionHex: VALID_FINAL_TX,
+                network: 'mainnet',
+            },
+        });
+        if (outcome.kind === 'signed') expect(Object.isFrozen(outcome.signed)).toBe(true);
         expect(mocks.consumeStage).toHaveBeenCalledWith(authorization, 'sign', authorization.envelopeDigest);
         expect(mocks.consumeStage.mock.invocationCallOrder[0]).toBeLessThan(mocks.signBatchNative.mock.invocationCallOrder[0]);
         expect(mocks.getUnsignedTxHex.mock.invocationCallOrder[0]).toBeLessThan(mocks.consumeStage.mock.invocationCallOrder[0]);
