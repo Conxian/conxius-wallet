@@ -1,42 +1,77 @@
-import { digestCanonicalPayload } from './value-operation-gate';
+import { digestValueOperationEnvelope } from './value-operation-gate';
+import {
+    consumeAuthorizedValueOperationStage,
+    inspectAuthorizedValueOperation,
+    type AuthorizedValueOperation,
+} from './value-operations';
+import {
+    validateSignedBitcoinValueOperationLineage,
+    type SignedBitcoinLineageRejectionReason,
+    type SignedBitcoinValueOperation,
+} from './value-signer';
 
-export interface BitcoinBroadcastArtifact {
-    readonly kind: 'bitcoin-transaction';
-    readonly transactionHex: string;
-    readonly digest: string;
+export interface BitcoinBroadcastRequest {
+    readonly authorization: AuthorizedValueOperation;
+    readonly signed: SignedBitcoinValueOperation;
 }
 
 export type BitcoinBroadcastOutcome =
     | Readonly<{ kind: 'unsupported'; reason: 'qualified_provider_unavailable' }>
-    | Readonly<{ kind: 'rejected'; reason: 'invalid_broadcast_artifact' | 'broadcast_digest_mismatch' }>;
+    | Readonly<{ kind: 'rejected'; reason:
+        | 'invalid_broadcast_request'
+        | 'expired_authorization'
+        | 'forged_authorization'
+        | 'mismatched_authorization'
+        | 'consumed_authorization'
+        | SignedBitcoinLineageRejectionReason }>;
 
-const HEX_PATTERN = /^[0-9a-f]+$/;
-
-export function createBitcoinBroadcastArtifact(transactionHex: string): BitcoinBroadcastArtifact {
-    const normalized = transactionHex.trim().toLowerCase();
-    if (!normalized || normalized.length % 2 !== 0 || !HEX_PATTERN.test(normalized)) {
-        throw new Error('Invalid Bitcoin transaction artifact.');
-    }
-    const payload = Object.freeze({ kind: 'bitcoin-transaction' as const, transactionHex: normalized });
-    return Object.freeze({ ...payload, digest: digestCanonicalPayload(payload) });
+function isExactBroadcastRequest(value: unknown): value is BitcoinBroadcastRequest {
+    if (!value || typeof value !== 'object' || Object.getPrototypeOf(value) !== Object.prototype) return false;
+    const keys = Reflect.ownKeys(value);
+    return keys.length === 2
+        && keys.every((key) => typeof key === 'string')
+        && Object.hasOwn(value, 'authorization')
+        && Object.hasOwn(value, 'signed');
 }
 
 /**
-* Wallet-owned containment boundary. The artifact digest is checked exactly,
-* but phase 2 has no qualified provider receipt and therefore performs no
-* network submission and consumes no broadcast authorization stage.
+* One-shot wallet-owned containment boundary. A fully validated request
+* consumes the exact broadcast capability, then returns unsupported because
+* no qualified provider exists. No network or provider call is performed.
 */
 export async function broadcastAuthorizedBitcoinTransaction(
-    artifact: BitcoinBroadcastArtifact,
+    request: BitcoinBroadcastRequest,
 ): Promise<BitcoinBroadcastOutcome> {
-    let expected: BitcoinBroadcastArtifact;
+    if (!isExactBroadcastRequest(request)) {
+        return Object.freeze({ kind: 'rejected', reason: 'invalid_broadcast_request' });
+    }
+    const { authorization, signed } = request;
     try {
-        expected = createBitcoinBroadcastArtifact(artifact.transactionHex);
+        if (
+            authorization.kind !== 'authorized'
+            || authorization.envelopeDigest !== authorization.capability.envelopeDigest
+            || digestValueOperationEnvelope(authorization.envelope) !== authorization.envelopeDigest
+        ) {
+            return Object.freeze({ kind: 'rejected', reason: 'mismatched_authorization' });
+        }
     } catch {
-        return Object.freeze({ kind: 'rejected', reason: 'invalid_broadcast_artifact' });
+        return Object.freeze({ kind: 'rejected', reason: 'forged_authorization' });
     }
-    if (artifact.kind !== expected.kind || artifact.digest !== expected.digest) {
-        return Object.freeze({ kind: 'rejected', reason: 'broadcast_digest_mismatch' });
+
+    const inspection = inspectAuthorizedValueOperation(authorization);
+    if (inspection.kind === 'rejected') return inspection;
+
+    const lineage = validateSignedBitcoinValueOperationLineage(authorization, signed);
+    if (lineage.kind === 'rejected') return lineage;
+    if (lineage.envelopeDigest !== authorization.envelopeDigest) {
+        return Object.freeze({ kind: 'rejected', reason: 'mismatched_authorization' });
     }
+
+    const consumed = consumeAuthorizedValueOperationStage(
+        authorization,
+        'broadcast',
+        authorization.envelopeDigest,
+    );
+    if (consumed.kind === 'rejected') return consumed;
     return Object.freeze({ kind: 'unsupported', reason: 'qualified_provider_unavailable' });
 }
