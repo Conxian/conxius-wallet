@@ -67,4 +67,31 @@ describe('production adapter source contamination', () => {
         const source = readFileSync(file, 'utf8');
         for (const literal of banned) expect(source).not.toContain(literal);
     });
+
+    it('contains raw enclave, Breez, Marketplace, and Android bypass surfaces', () => {
+        const signer = readFileSync('services/signer.ts', 'utf8');
+        const enclave = readFileSync('services/enclave-storage.ts', 'utf8');
+        const valueSigner = readFileSync('services/value-signer.ts', 'utf8');
+        const breez = readFileSync('services/breez.ts', 'utf8');
+        const marketplace = readFileSync('components/Marketplace.tsx', 'utf8');
+        const bdk = readFileSync('android/core-bitcoin/src/main/kotlin/com/conxius/wallet/bitcoin/BdkManager.kt', 'utf8');
+
+        expect(signer).not.toMatch(/export\s+(?:const|function)\s+requestEnclaveSignature/);
+        expect(signer).not.toContain('signBatchNative');
+        expect(signer).not.toMatch(/payload\??\.psbt/);
+        expect(enclave).not.toMatch(/export\s*\{\s*SecureEnclave\s*\}/);
+        expect(enclave).not.toMatch(/export\s+(?:async\s+)?function\s+signNative/);
+        expect(enclave).not.toMatch(/export\s+(?:async\s+)?function\s+signBatchNative/);
+        expect(valueSigner).toContain("registerPlugin<GateBoundValueSignerPlugin>('SecureEnclave')");
+        expect(valueSigner).not.toMatch(/export\s+(?:const|type|interface)\s+GateBoundValueSigner/);
+        expect(breez).not.toMatch(/export\s*\{\s*Breez\s*\}/);
+        expect(breez).not.toMatch(/export\s+(?:async\s+)?function\s+(?:payLnInvoice|sendBreezOnchain)/);
+        expect(marketplace).not.toContain("from '../services/breez'");
+        expect(marketplace).not.toContain('setTimeout');
+        for (const claim of ['Purchase successful', 'Code delivered', 'Live on Bitcoin', 'Payment Verified', 'Redemption Code']) {
+            expect(marketplace).not.toContain(claim);
+        }
+        expect(bdk).not.toMatch(/fun\s+signPsbt\s*\(/);
+        expect(bdk).not.toContain('EphemeralSeed');
+    });
 });

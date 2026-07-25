@@ -15,10 +15,12 @@ const mocks = vi.hoisted(() => ({
     workerDerive: vi.fn(),
 }));
 
-vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: mocks.native } }));
+vi.mock('@capacitor/core', () => ({
+    Capacitor: { isNativePlatform: mocks.native },
+    registerPlugin: vi.fn(() => ({ signBatch: mocks.signBatchNative })),
+}));
 vi.mock('../services/enclave-storage', () => ({
     getPublicKeyNative: mocks.getPublicKeyNative,
-    signBatchNative: mocks.signBatchNative,
 }));
 vi.mock('../services/psbt', () => ({
     getPsbtSighashes: mocks.getPsbtSighashes,
@@ -52,6 +54,7 @@ const request = {
     network: 'mainnet' as const,
     vault: 'conxius_vault',
 };
+const VALID_UNSIGNED_TX = '020000000100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff010000000000000000016a00000000';
 
 describe('native value signer', () => {
     beforeEach(() => {
@@ -59,7 +62,7 @@ describe('native value signer', () => {
         mocks.native.mockReturnValue(true);
         mocks.getPublicKeyNative.mockResolvedValue({ pubkey: `02${'11'.repeat(32)}` });
         mocks.getPsbtSighashes.mockReturnValue([{ hash: Buffer.alloc(32), index: 0 }]);
-        mocks.getUnsignedTxHex.mockReturnValue('00');
+        mocks.getUnsignedTxHex.mockReturnValue(VALID_UNSIGNED_TX);
         mocks.consumeStage.mockReturnValue({ kind: 'consumed', stage: 'sign', envelopeDigest: authorization.envelopeDigest });
         mocks.signBatchNative.mockResolvedValue({ signatures: [{ signature: '22'.repeat(64), pubkey: `02${'11'.repeat(32)}` }] });
         mocks.finalizePsbtWithSigs.mockReturnValue('deadbeef');
@@ -79,6 +82,8 @@ describe('native value signer', () => {
         await expect(signAuthorizedValueOperationNative(request)).resolves.toMatchObject({ kind: 'signed' });
         expect(mocks.consumeStage).toHaveBeenCalledWith(authorization, 'sign', authorization.envelopeDigest);
         expect(mocks.consumeStage.mock.invocationCallOrder[0]).toBeLessThan(mocks.signBatchNative.mock.invocationCallOrder[0]);
+        expect(mocks.getUnsignedTxHex.mock.invocationCallOrder[0]).toBeLessThan(mocks.consumeStage.mock.invocationCallOrder[0]);
+        expect(mocks.getPublicKeyNative.mock.invocationCallOrder[0]).toBeLessThan(mocks.consumeStage.mock.invocationCallOrder[0]);
         expect(mocks.workerDerive).not.toHaveBeenCalled();
     });
 
