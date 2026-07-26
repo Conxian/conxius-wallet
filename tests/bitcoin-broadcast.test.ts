@@ -17,10 +17,7 @@ vi.mock('@capacitor/core', () => ({
 }));
 vi.mock('../services/value-operation-evidence-verifier', async (importOriginal) => {
     const actual = await importOriginal<typeof import('../services/value-operation-evidence-verifier')>();
-    return {
-        ...actual,
-        verifyValueOperationEvidence: (request: EvidenceVerificationRequest) => mocks.verifier!(request),
-    };
+    return { ...actual, verifyValueOperationEvidence: (request: EvidenceVerificationRequest) => mocks.verifier!(request) };
 });
 vi.mock('../services/enclave-storage', () => ({ getPublicKeyNative: mocks.getPublicKeyNative }));
 vi.mock('../services/psbt', () => ({
@@ -29,191 +26,183 @@ vi.mock('../services/psbt', () => ({
     finalizePsbtWithSigs: mocks.finalizePsbtWithSigs,
 }));
 
-import { broadcastAuthorizedBitcoinTransaction } from '../services/bitcoin-broadcast';
-import { createValueOperationEnvelope, digestValueOperationEnvelope } from '../services/value-operation-gate';
+import {
+    createValueOperationEnvelope,
+    createValueOperationGate,
+    digestValueOperationEnvelope,
+} from '../services/value-operation-gate';
 import {
     consumeAuthorizedValueOperationStage,
     createBitcoinPsbtOperationPayload,
     createDeterministicValueOperationIntent,
     prepareValueOperationAuthorization,
     requestValueOperationAuthorization,
+    type AuthorizedValueOperation,
 } from '../services/value-operations';
-import { signAuthorizedValueOperationNative } from '../services/value-signer';
+import { signAuthorizedValueOperationNative, type SignedBitcoinValueOperation } from '../services/value-signer';
+import { broadcastAuthorizedBitcoinTransaction } from '../services/bitcoin-broadcast';
 
 const VALID_UNSIGNED_TX = '020000000100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff010000000000000000016a00000000';
+const CHANGED_UNSIGNED_TX = '020000000100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff010100000000000000016a00000000';
+const VALID_FINAL_TX = '02000000010000000000000000000000000000000000000000000000000000000000000000000000000151ffffffff010000000000000000016a00000000';
 
-function verifiedBinding(request: EvidenceVerificationRequest): EvidenceVerificationResult {
+function verifiedBinding(request: EvidenceVerificationRequest, expiresAt = Date.now() + 60_000): EvidenceVerificationResult {
     const envelope = createValueOperationEnvelope({
-        operationType: request.intent.operationType,
-        chain: request.intent.chain,
-        layer: request.intent.layer,
-        canonicalOperationDigest: request.canonicalOperationDigest,
-        network: request.intent.network,
-        purpose: request.intent.purpose,
-        domain: request.intent.domain,
-        nonce: request.intent.nonce,
-        challenge: request.intent.challenge,
-        audience: request.intent.audience,
-        protocolKeyIdentity: request.custody.protocolKeyIdentity,
-        algorithm: request.custody.algorithm,
-        providerStatus: 'verified',
-        evidenceStatus: 'verified',
-        providerDigest: '11'.repeat(32),
-        evidenceDigest: '22'.repeat(32),
+        operationType: request.intent.operationType, chain: request.intent.chain, layer: request.intent.layer,
+        canonicalOperationDigest: request.canonicalOperationDigest, network: request.intent.network,
+        purpose: request.intent.purpose, domain: request.intent.domain, nonce: request.intent.nonce,
+        challenge: request.intent.challenge, audience: request.intent.audience,
+        protocolKeyIdentity: request.custody.protocolKeyIdentity, algorithm: request.custody.algorithm,
+        providerStatus: 'verified', evidenceStatus: 'verified', providerDigest: '11'.repeat(32), evidenceDigest: '22'.repeat(32),
     });
     return {
-        kind: 'verified',
-        resultClass: 'authoritative',
-        providerStatus: 'verified',
-        evidenceStatus: 'verified',
-        providerDigest: '11'.repeat(32),
-        evidenceDigest: '22'.repeat(32),
-        boundEnvelopeDigest: digestValueOperationEnvelope(envelope),
-        localAuthorizationExpiresAtMs: Date.now() + 10_000,
+        kind: 'verified', resultClass: 'authoritative', providerStatus: 'verified', evidenceStatus: 'verified',
+        providerDigest: '11'.repeat(32), evidenceDigest: '22'.repeat(32),
+        boundEnvelopeDigest: digestValueOperationEnvelope(envelope), localAuthorizationExpiresAtMs: expiresAt,
     };
 }
 
-async function authorizeAndSign(psbt: string, finalizedTransactionHex: string) {
-    const prepared = prepareValueOperationAuthorization({
+function preparedPsbt(psbt: string) {
+    return prepareValueOperationAuthorization({
         intent: createDeterministicValueOperationIntent({
-            operationType: 'bitcoin-transfer',
-            chain: 'bitcoin',
-            layer: 'l1',
-            payload: createBitcoinPsbtOperationPayload(psbt),
-            network: 'testnet',
-            purpose: `broadcast-binding-${psbt}`,
-            domain: 'conxius.wallet',
-            audience: 'native-value-signer',
+            operationType: 'bitcoin-transfer', chain: 'bitcoin', layer: 'l1',
+            payload: createBitcoinPsbtOperationPayload(psbt), network: 'testnet', purpose: `broadcast-${psbt}`,
+            domain: 'conxius.wallet', audience: 'native-value-signer',
         }),
-        summary: { title: 'Authorize transfer', action: 'Send Bitcoin', network: 'testnet', purpose: 'Test' },
-        custody: {
-            boundary: 'wallet-native-enclave',
-            protocolKeyIdentity: 'bitcoin-account-0',
-            algorithm: 'secp256k1-ecdsa',
-        },
+        summary: { title: 'Authorize', action: 'Send', network: 'testnet', purpose: 'Test' },
+        custody: { boundary: 'wallet-native-enclave', protocolKeyIdentity: 'bitcoin-account-0', algorithm: 'secp256k1-ecdsa' },
         evidence: { opaqueEvidence: { test: 'verified' } },
     });
-    const authorization = await requestValueOperationAuthorization(prepared, 'confirmed');
-    if (authorization.kind !== 'authorized') throw new Error('Expected test authorization.');
-    mocks.finalizePsbtWithSigs.mockReturnValueOnce(finalizedTransactionHex);
-    const signed = await signAuthorizedValueOperationNative({
-        authorization,
-        psbt,
-        network: 'testnet',
-        vault: 'test-vault',
-    });
-    if (signed.kind !== 'signed') throw new Error('Expected signer-issued artifact.');
-    return { authorization, signed };
 }
 
-describe('wallet-owned Bitcoin broadcast containment', () => {
+async function authorizePsbt(psbt: string): Promise<AuthorizedValueOperation> {
+    const outcome = await requestValueOperationAuthorization(preparedPsbt(psbt), 'confirmed');
+    if (outcome.kind !== 'authorized') throw new Error(`Expected authorization, received ${outcome.kind}.`);
+    return outcome;
+}
+
+async function authorizePsbtFromIndependentGate(psbt: string): Promise<AuthorizedValueOperation> {
+    const prepared = preparedPsbt(psbt);
+    const outcome = await createValueOperationGate().authorize({
+        intent: prepared.intent,
+        confirmation: { status: 'confirmed', confirmationId: `test:${prepared.intentDigest}`, intentDigest: prepared.intentDigest },
+        custody: prepared.custody,
+        evidence: prepared.evidence,
+    });
+    if (outcome.kind !== 'authorized') throw new Error(`Expected independent authorization, received ${outcome.kind}.`);
+    return outcome;
+}
+
+async function sign(psbt: string, authorization: AuthorizedValueOperation): Promise<SignedBitcoinValueOperation> {
+    const outcome = await signAuthorizedValueOperationNative({ authorization, psbt, network: 'testnet', vault: 'test-vault' });
+    if (outcome.kind !== 'signed') throw new Error(`Expected signed artifact, received ${outcome.kind}.`);
+    return outcome.signed;
+}
+
+function expectBroadcastStillAvailable(authorization: AuthorizedValueOperation) {
+    expect(consumeAuthorizedValueOperationStage(authorization, 'broadcast', authorization.envelopeDigest))
+        .toMatchObject({ kind: 'consumed' });
+}
+
+describe('wallet-owned Bitcoin broadcast authorization lineage', () => {
     beforeEach(() => {
+        vi.restoreAllMocks();
         vi.clearAllMocks();
         mocks.verifier = async (request) => verifiedBinding(request);
         mocks.getPublicKeyNative.mockResolvedValue({ pubkey: `02${'11'.repeat(32)}` });
         mocks.getPsbtSighashes.mockReturnValue([{ hash: Buffer.alloc(32), index: 0 }]);
         mocks.getUnsignedTxHex.mockReturnValue(VALID_UNSIGNED_TX);
         mocks.signBatchNative.mockResolvedValue({ signatures: [{ signature: '22'.repeat(64) }] });
+        mocks.finalizePsbtWithSigs.mockReturnValue(VALID_FINAL_TX);
+        vi.stubGlobal('fetch', vi.fn());
     });
 
     afterEach(() => {
-        vi.useRealTimers();
+        expect(fetch).not.toHaveBeenCalled();
+        vi.unstubAllGlobals();
     });
 
-    it('rejects a missing authorization before any provider seam', async () => {
-        const { signed } = await authorizeAndSign('70736274ff0001', 'deadbeef');
+    it('consumes broadcast exactly once only after full validation and returns unsupported without I/O', async () => {
+        const authorization = await authorizePsbt('70736274ff0011');
+        const signed = await sign('70736274ff0011', authorization);
+        await expect(broadcastAuthorizedBitcoinTransaction({ authorization, signed })).resolves.toEqual({
+            kind: 'unsupported', reason: 'qualified_provider_unavailable',
+        });
+        await expect(broadcastAuthorizedBitcoinTransaction({ authorization, signed })).resolves.toEqual({
+            kind: 'rejected', reason: 'consumed_authorization',
+        });
+        expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('rejects swapped or mutated final transactions and copied/lookalike artifacts without consuming', async () => {
+        const authorization = await authorizePsbt('70736274ff0022');
+        const signed = await sign('70736274ff0022', authorization);
+        for (const forged of [
+            { ...signed, transactionHex: CHANGED_UNSIGNED_TX },
+            { ...signed, transactionDigest: 'aa'.repeat(32) },
+            { ...signed, network: 'mainnet' as const },
+            Object.freeze({ ...signed }),
+        ]) {
+            await expect(broadcastAuthorizedBitcoinTransaction({ authorization, signed: forged })).resolves.toMatchObject({
+                kind: 'rejected', reason: 'unregistered_signed_artifact',
+            });
+        }
+        expectBroadcastStillAvailable(authorization);
+        expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('rejects authorization A with signed artifact B and preserves A broadcast capability', async () => {
+        const authorizationA = await authorizePsbt('70736274ff0033');
+        const authorizationB = await authorizePsbt('70736274ff0044');
+        const signedB = await sign('70736274ff0044', authorizationB);
+        await expect(broadcastAuthorizedBitcoinTransaction({ authorization: authorizationA, signed: signedB })).resolves.toEqual({
+            kind: 'rejected', reason: 'mismatched_authorization',
+        });
+        expectBroadcastStillAvailable(authorizationA);
+        expectBroadcastStillAvailable(authorizationB);
+    });
+
+    it('rejects copied, forged, and cross-gate authorizations without consuming the signer authorization', async () => {
+        const authorization = await authorizePsbt('70736274ff0055');
+        const signed = await sign('70736274ff0055', authorization);
+        const copied = Object.freeze({ ...authorization });
+        const forged = Object.freeze({ ...authorization, capability: Object.freeze({ ...authorization.capability }) });
+        const crossGate = await authorizePsbtFromIndependentGate('70736274ff0055');
+        for (const candidate of [copied, forged, crossGate]) {
+            await expect(broadcastAuthorizedBitcoinTransaction({ authorization: candidate, signed })).resolves.toMatchObject({
+                kind: 'rejected',
+            });
+        }
+        expectBroadcastStillAvailable(authorization);
+    });
+
+    it('rejects stale authorization without consuming broadcast', async () => {
+        const authorization = await authorizePsbt('70736274ff0066');
+        const signed = await sign('70736274ff0066', authorization);
+        vi.spyOn(Date, 'now').mockReturnValue(authorization.capability.localExpiresAtMs + 1);
+        await expect(broadcastAuthorizedBitcoinTransaction({ authorization, signed })).resolves.toEqual({
+            kind: 'rejected', reason: 'expired_authorization',
+        });
+        vi.restoreAllMocks();
+        expectBroadcastStillAvailable(authorization);
+    });
+
+    it('rejects retained PSBT/unsigned-intent mismatch without consuming broadcast', async () => {
+        const authorization = await authorizePsbt('70736274ff0077');
+        const signed = await sign('70736274ff0077', authorization);
+        mocks.getUnsignedTxHex.mockReturnValue(CHANGED_UNSIGNED_TX);
+        await expect(broadcastAuthorizedBitcoinTransaction({ authorization, signed })).resolves.toEqual({
+            kind: 'rejected', reason: 'psbt_digest_mismatch',
+        });
+        expectBroadcastStillAvailable(authorization);
+    });
+
+    it('rejects malformed legacy/final-hex-only requests with no stage consumption or I/O', async () => {
+        const authorization = await authorizePsbt('70736274ff0088');
         await expect(broadcastAuthorizedBitcoinTransaction({
-            artifact: signed.broadcastArtifact,
+            authorization, transactionHex: VALID_FINAL_TX,
         } as never)).resolves.toEqual({ kind: 'rejected', reason: 'invalid_broadcast_request' });
-    });
-
-    it('rejects a structurally identical caller-created lookalike', async () => {
-        const { authorization, signed } = await authorizeAndSign('70736274ff0002', 'deadbeef');
-        const forged = { ...signed.broadcastArtifact };
-        await expect(broadcastAuthorizedBitcoinTransaction({
-            authorization,
-            artifact: forged,
-        })).resolves.toEqual({ kind: 'rejected', reason: 'forged_broadcast_artifact' });
-    });
-
-    it('rejects cross-authorization pairing', async () => {
-        const first = await authorizeAndSign('70736274ff0003', 'deadbeef');
-        const second = await authorizeAndSign('70736274ff0004', 'cafebabe');
-        await expect(broadcastAuthorizedBitcoinTransaction({
-            authorization: second.authorization,
-            artifact: first.signed.broadcastArtifact,
-        })).resolves.toEqual({ kind: 'rejected', reason: 'mismatched_authorization' });
-    });
-
-    it('rejects a substituted transaction even when copied beside genuine digests', async () => {
-        const { authorization, signed } = await authorizeAndSign('70736274ff0005', 'deadbeef');
-        expect(Object.isFrozen(signed.broadcastArtifact)).toBe(true);
-        const substituted = { ...signed.broadcastArtifact, transactionHex: 'cafebabe' };
-        await expect(broadcastAuthorizedBitcoinTransaction({
-            authorization,
-            artifact: substituted,
-        })).resolves.toEqual({ kind: 'rejected', reason: 'forged_broadcast_artifact' });
-    });
-
-    it('rejects a genuine signer artifact after authorization expiry without provider I/O or stage consumption', async () => {
-        vi.useFakeTimers();
-        const authorizedAtMs = Date.UTC(2026, 6, 25, 12, 0, 0);
-        vi.setSystemTime(authorizedAtMs);
-        const fetchSpy = vi.spyOn(globalThis, 'fetch');
-        const { authorization, signed } = await authorizeAndSign('70736274ff0006', 'deadbeef');
-
-        vi.setSystemTime(authorizedAtMs + 10_001);
-        await expect(broadcastAuthorizedBitcoinTransaction({
-            authorization,
-            artifact: signed.broadcastArtifact,
-        })).resolves.toEqual({ kind: 'rejected', reason: 'expired_authorization' });
-        expect(fetchSpy).not.toHaveBeenCalled();
-
-        vi.setSystemTime(authorizedAtMs + 9_999);
-        expect(consumeAuthorizedValueOperationStage(
-            authorization,
-            'broadcast',
-            authorization.envelopeDigest,
-        )).toEqual({
-            kind: 'consumed',
-            stage: 'broadcast',
-            envelopeDigest: authorization.envelopeDigest,
-        });
-        fetchSpy.mockRestore();
-    });
-
-    it('keeps a genuine lineage unsupported without provider I/O or broadcast-stage consumption', async () => {
-        const fetchSpy = vi.spyOn(globalThis, 'fetch');
-        const { authorization, signed } = await authorizeAndSign('70736274ff0007', 'DEADBEEF');
-
-        expect(signed.broadcastArtifact).toMatchObject({
-            kind: 'signer-issued-bitcoin-broadcast',
-            transactionHex: 'deadbeef',
-            envelopeDigest: authorization.envelopeDigest,
-            sourceOperationDigest: authorization.envelope.canonicalOperationDigest,
-        });
-        expect(signed.broadcastArtifact.finalizedTransactionDigest)
-            .not.toBe(signed.broadcastArtifact.sourceOperationDigest);
-        expect(signed.broadcastArtifact.authorizedTransitionDigest)
-            .not.toBe(signed.broadcastArtifact.finalizedTransactionDigest);
-        await expect(broadcastAuthorizedBitcoinTransaction({
-            authorization,
-            artifact: signed.broadcastArtifact,
-        })).resolves.toEqual({ kind: 'unsupported', reason: 'qualified_provider_unavailable' });
-        await expect(broadcastAuthorizedBitcoinTransaction({
-            authorization,
-            artifact: signed.broadcastArtifact,
-        })).resolves.toEqual({ kind: 'unsupported', reason: 'qualified_provider_unavailable' });
-        expect(fetchSpy).not.toHaveBeenCalled();
-        expect(consumeAuthorizedValueOperationStage(
-            authorization,
-            'broadcast',
-            authorization.envelopeDigest,
-        )).toEqual({
-            kind: 'consumed',
-            stage: 'broadcast',
-            envelopeDigest: authorization.envelopeDigest,
-        });
-        fetchSpy.mockRestore();
+        expectBroadcastStillAvailable(authorization);
+        expect(fetch).not.toHaveBeenCalled();
     });
 });

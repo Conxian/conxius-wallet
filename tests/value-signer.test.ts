@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Buffer } from 'node:buffer';
-import {
-    digestBitcoinTransactionHex,
-    inspectSignerIssuedBitcoinBroadcastArtifact,
-    signAuthorizedValueOperationNative,
-} from '../services/value-signer';
+import { signAuthorizedValueOperationNative } from '../services/value-signer';
 import { digestBitcoinPsbtOperation, type AuthorizedValueOperation } from '../services/value-operations';
 import { createValueOperationEnvelope, digestValueOperationEnvelope } from '../services/value-operation-gate';
 
@@ -59,6 +55,7 @@ const request = {
     vault: 'conxius_vault',
 };
 const VALID_UNSIGNED_TX = '020000000100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff010000000000000000016a00000000';
+const VALID_FINAL_TX = '02000000010000000000000000000000000000000000000000000000000000000000000000000000000151ffffffff010000000000000000016a00000000';
 
 describe('native value signer', () => {
     beforeEach(() => {
@@ -69,7 +66,7 @@ describe('native value signer', () => {
         mocks.getUnsignedTxHex.mockReturnValue(VALID_UNSIGNED_TX);
         mocks.consumeStage.mockReturnValue({ kind: 'consumed', stage: 'sign', envelopeDigest: authorization.envelopeDigest });
         mocks.signBatchNative.mockResolvedValue({ signatures: [{ signature: '22'.repeat(64), pubkey: `02${'11'.repeat(32)}` }] });
-        mocks.finalizePsbtWithSigs.mockReturnValue('deadbeef');
+        mocks.finalizePsbtWithSigs.mockReturnValue(VALID_FINAL_TX);
     });
 
     it('never invokes native or worker signing on web', async () => {
@@ -83,24 +80,16 @@ describe('native value signer', () => {
     });
 
     it('consumes the exact sign stage immediately before native signing', async () => {
-        const signed = await signAuthorizedValueOperationNative(request);
-        expect(signed).toMatchObject({ kind: 'signed' });
-        if (signed.kind !== 'signed') throw new Error('Expected signed result.');
-        expect(signed.broadcastArtifact).toEqual({
-            kind: 'signer-issued-bitcoin-broadcast',
-            transactionHex: 'deadbeef',
-            envelopeDigest: authorization.envelopeDigest,
-            sourceOperationDigest: authorization.envelope.canonicalOperationDigest,
-            transactionHexDigest: digestBitcoinTransactionHex('deadbeef'),
-            finalizedTransactionDigest: expect.stringMatching(/^[0-9a-f]{64}$/),
-            authorizedTransitionDigest: expect.stringMatching(/^[0-9a-f]{64}$/),
+        const outcome = await signAuthorizedValueOperationNative(request);
+        expect(outcome).toMatchObject({
+            kind: 'signed',
+            signed: {
+                kind: 'signed-bitcoin-value-operation',
+                transactionHex: VALID_FINAL_TX,
+                network: 'mainnet',
+            },
         });
-        expect(signed.broadcastArtifact.finalizedTransactionDigest)
-            .not.toBe(signed.broadcastArtifact.sourceOperationDigest);
-        expect(signed.broadcastArtifact.authorizedTransitionDigest)
-            .not.toBe(signed.broadcastArtifact.finalizedTransactionDigest);
-        expect(inspectSignerIssuedBitcoinBroadcastArtifact(authorization, signed.broadcastArtifact))
-            .toMatchObject({ kind: 'validated', transactionHex: 'deadbeef' });
+        if (outcome.kind === 'signed') expect(Object.isFrozen(outcome.signed)).toBe(true);
         expect(mocks.consumeStage).toHaveBeenCalledWith(authorization, 'sign', authorization.envelopeDigest);
         expect(mocks.consumeStage.mock.invocationCallOrder[0]).toBeLessThan(mocks.signBatchNative.mock.invocationCallOrder[0]);
         expect(mocks.getUnsignedTxHex.mock.invocationCallOrder[0]).toBeLessThan(mocks.consumeStage.mock.invocationCallOrder[0]);

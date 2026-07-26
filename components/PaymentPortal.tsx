@@ -193,10 +193,7 @@ const PaymentPortal: React.FC = () => {
                  return;
              }
 
-             const broadcast = await broadcastAuthorizedBitcoinTransaction({
-                 authorization,
-                 artifact: signed.broadcastArtifact,
-             });
+             const broadcast = await broadcastAuthorizedBitcoinTransaction({ authorization, signed: signed.signed });
              if (broadcast.kind === 'unsupported') {
                  context.notify('error', 'Bitcoin broadcast unavailable: no qualified provider receipt is configured.');
                  return;

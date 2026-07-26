@@ -148,10 +148,7 @@ const NTTBridge: React.FC = () => {
               context.notify('error', 'Native value signing unavailable.');
               return;
           }
-          const broadcast = await broadcastAuthorizedBitcoinTransaction({
-              authorization,
-              artifact: signed.broadcastArtifact,
-          });
+          const broadcast = await broadcastAuthorizedBitcoinTransaction({ authorization, signed: signed.signed });
           setBridgeStatus('UNAVAILABLE');
           context.notify(
               'error',
