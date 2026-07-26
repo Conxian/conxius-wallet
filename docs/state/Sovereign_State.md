@@ -55,17 +55,6 @@ PaymentPortal, NTTBridge, protocol-adapter, raw broadcast, and signer paths stop
 before side effects when evidence or a qualified receipt is unavailable. Stage
 tracking is process-local containment only, not durable replay prevention.
 
-The Bitcoin signer now models an explicit authorized PSBT→final-transaction
-transition rather than treating the PSBT digest as the final transaction digest.
-After successful native finalization it issues an identity-registered artifact
-bound to the exact authorization/capability, envelope digest, authorized PSBT
-digest, finalized transaction digest, transaction-hex digest, and a distinct
-authorized-transition digest. Broadcast
-rejects missing, forged, cross-authorization, or transaction-substituted inputs.
-It remains `qualified_provider_unavailable`, performs no provider/network I/O,
-and does not consume the `broadcast` stage; future qualified integration must
-consume immediately before irreversible I/O.
-
 No provider or hardware tier is qualified by this work. External verification,
 roots/collateral/revocation, trusted time, distributed replay, receipts/finality,
 production support, rollout, independent review, and release acceptance remain
