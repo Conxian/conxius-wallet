@@ -2,6 +2,7 @@
   "name": "conxius-wallet",
   "private": true,
   "version": "1.9.5",
+  "license": "MIT",
   "packageManager": "pnpm@11.13.0",
   "type": "module",
   "scripts": {
