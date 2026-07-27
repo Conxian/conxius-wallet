@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.conxius.wallet.bitcoin"
-    compileSdk = 36
+    compileSdk = 37
 
     buildFeatures {
         buildConfig = true
