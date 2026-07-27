@@ -241,7 +241,7 @@ stages:
 1. **Release Verification and Build** validates the expected `1.9.5` version/tag,
    runs lint, typecheck, unit tests, E2E, web build, dependency audit, Android
    security policy, Android lint, and Android unit tests, installs
-   `platforms;android-36` for the modules' `compileSdk = 36`, then builds the
+   `platforms;android-37.0` for the modules' `compileSdk = 37`, then builds the
    signed APK and AAB once.
 2. **Release Artifact Attestation** downloads the uploaded payload and creates
    provenance for every subject listed in `SHA256SUMS`.
