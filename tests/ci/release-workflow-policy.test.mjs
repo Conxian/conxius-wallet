@@ -18,7 +18,7 @@ function jobSection(jobId) {
 describe('Android release workflow policy', () => {
   it('installs the compile SDK used by every Android release module', () => {
     const verification = jobSection('release-verify');
-    expect(verification).toContain('platforms;android-36');
+    expect(verification).toContain('platforms;android-37.0');
     expect(verification).not.toContain('platforms;android-35');
   });
 
