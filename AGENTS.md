@@ -177,6 +177,38 @@ managers handle security-critical signing and protocol coordination.
 - **Signing**: All final signatures MUST be routed through the native enclave
   via `WalletViewModel` or `SecureEnclavePlugin`.
 
+## 🔐 SDK Integration (Session 47 — Aug 2026)
+
+### Enclave SDK Path
+
+The `conxius-silent-payments` Rust crate (`native/silent-payments/`) has an
+optional `enclave` feature gate for hardware-backed signing through
+`conxius-enclave-sdk`. Enable in production builds:
+
+```toml
+[dependencies]
+conxius-silent-payments = { features = ["enclave"] }
+```
+
+When enabled, the crate re-exports:
+- `EnclaveManager` — Android StrongBox operations
+- `SignRequest` / `SignResponse` — enclave signing primitives
+- `AttestationReport` — hardware attestation verification
+- `ReplayGuard` — nonce replay protection
+- `musig2` — MuSig2 multisig protocol
+- `bitcoin` — Bitcoin protocol primitives
+
+### JNI Integration Path
+
+The Android JNI layer (`native/silent-payments-jni/`) is the next target for
+enclave integration. Route key operations through `silent_payments::EnclaveManager`
+before calling `silent_payments::scan_transaction`.
+
+### Current Branch
+
+Enclave changes are on `feat/enclave-sdk-wiring`. Merge to main after JNI
+integration is complete and tested on API 28+ devices.
+
 ## 🤖 Sovereign AI & Zero-Leak Privacy
 
 Conxius implements a strict AI security layer to ensure no sensitive
