@@ -70,6 +70,9 @@ pnpm test
 
 # Android Tests
 cd android && ./gradlew :app:testDebugUnitTest
+
+# Run Conxian Baseline Hygiene Scanner (automates Baseline Review checks)
+python3 scripts/ci/baseline_hygiene_scanner.py
 ```
 
 ---
