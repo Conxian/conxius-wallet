@@ -11,7 +11,7 @@ working with the Conxius Wallet codebase and its B2B enhancement, the Conxian
 Gateway.
 
 **Last Updated:** 2026-06-30
-**Context:** Production Operational State (v1.9.5) — COO Alignment Complete
+**Context:** Production Operational State (v1.9.2) — COO Alignment Complete
 
 ---
 
@@ -70,6 +70,9 @@ pnpm test
 
 # Android Tests
 cd android && ./gradlew :app:testDebugUnitTest
+
+# Run Conxian Baseline Hygiene Scanner (automates Baseline Review checks)
+python3 scripts/ci/baseline_hygiene_scanner.py
 ```
 
 ---
@@ -79,11 +82,11 @@ cd android && ./gradlew :app:testDebugUnitTest
 Ensure the following files are synced:
 
 - `docs/archive/PROJECT_CONTEXT.md`: Current state and session notes.
-- `docs/business/PRD.md`: The high-authority source of truth (v1.9.5).
+- `docs/business/PRD.md`: The high-authority source of truth (v1.9.2).
 - `docs/state/Business_State.md`: Business alignment and market fit.
 - `docs/state/Sovereign_State.md`: Technical implementation status.
 - `docs/operations/ROADMAP.md`: Technical and business milestones.
-- `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status (v1.9.5).
+- `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status (v1.9.2).
 
 ---
 
@@ -110,7 +113,62 @@ The `.jules/` directory contains a hardening journal documenting discovered
 vulnerabilities, root causes, and prevention patterns. Reference these before
 implementing new security-sensitive code paths.
 
-## 🚀 Native Bridge Alignment (v1.9.5)
+## Protocol Coverage — SDK → Wallet Alignment
+
+The Conxius Enclave SDK (`lib-conclave-sdk` v0.2.5) defines the canonical **41-chain AssetRegistry** and **33 protocol modules**. The wallet must provide user-facing protocol support for every chain where Conxian users hold or transact assets.
+
+### Native Manager → SDK Chain Map
+
+| Native Manager | SDK Chain | Status | Notes |
+|---------------|-----------|--------|-------|
+| `BdkManager` | Bitcoin | ✅ Production | BDK wallet core |
+| `LightningManager` | Lightning | ✅ Production | LND/Breez integration |
+| `LiquidManager` | Liquid | ✅ Production | Elements/Liquid |
+| `BabylonManager` | Babylon | ✅ Production | BTC staking |
+| `DlcManager` | DLC | ✅ Production | Discreet Log Contracts |
+| `ArkManager` | Ark | ✅ Production | Ark protocol |
+| `EvmManager` | Ethereum + 20 L2s | ✅ Production | EVM-compatible chains |
+| `NwcManager` | Lightning (NWC) | ✅ Production | Nostr Wallet Connect |
+| `StateChainManager` | StateChain | ✅ Production | Mercury StateChain |
+| `MavenManager` | Maven | ✅ Production | Maven protocol |
+| `BreezManager` | Lightning | ✅ Production | Breez SDK |
+| `YieldManager` | Multi-chain | ✅ Production | Yield aggregation |
+
+### TypeScript Protocol Services
+
+| Service | SDK Module | Status |
+|---------|-----------|--------|
+| `services/bitvm.ts` | bitvm | ✅ Active |
+| `services/ntt.ts` | NTT rail | ✅ Active |
+| `services/lightning.ts` | lightning | ✅ Active |
+| `services/wormhole-signer.ts` | Wormhole rail | ✅ Active |
+| `services/web5.ts` | identity | ✅ Active |
+| `services/gemini.ts` | AI/automation | ✅ Active |
+| `services/eth-adapter.ts` | ethereum | ✅ Active |
+| `services/signer.ts` | musig2/frost | ✅ Active |
+| `services/ai-security.ts` | security | ✅ Active |
+
+### Protocol Gap Analysis — Wallet
+
+| SDK Protocol | Wallet Status | Priority | Notes |
+|-------------|--------------|----------|-------|
+| RGB | ❌ No manager | P2 | RGB asset display/send |
+| Fedimint | ❌ No manager | P2 | Fedimint ecash |
+| Citrea | ❌ No manager | P3 | ZK-rollup assets |
+| Strata | ❌ No manager | P3 | Strata assets |
+| Rootstock | ⚠️ Via EVM | P3 | RBTC via EVM manager |
+| BOB | ⚠️ Via EVM | P3 | BOB via EVM manager |
+| Botanix | ❌ No manager | P3 | Spiderchain |
+| Mezo | ❌ No manager | P3 | Bitcoin L2 |
+| Solana | ❌ No manager | P2 | Solana via Wormhole |
+| Nostr | ✅ `services/web5.ts` | Done | Nostr integration |
+| Web5 | ✅ `services/web5.ts` | Done | TBDex/Web5 |
+| Ordinals | ❌ No manager | P2 | Ordinal display |
+| Runes | ❌ No manager | P2 | Rune tokens |
+| BIP-353 | ✅ DNS resolver | Done | Human-readable payments |
+| x402 | ❌ No manager | P3 | Open payments |
+
+## 🚀 Native Bridge Alignment (v1.9.2)
 
 The wallet utilizes a **Bridged Sovereign Architecture** where native Kotlin
 managers handle security-critical signing and protocol coordination.
@@ -118,9 +176,41 @@ managers handle security-critical signing and protocol coordination.
 - **Native Managers**: Located in `com.conxius.wallet.bitcoin`.
 - **Managers**: `BdkManager`, `BabylonManager`, `NwcManager`, `DlcManager`,
   `ArkManager`, `StateChainManager`, `MavenManager`, `LiquidManager`,
-  `EvmManager`, `LightningManager`.
+  `EvmManager`, `LightningManager`, `BreezManager`, `YieldManager`.
 - **Signing**: All final signatures MUST be routed through the native enclave
   via `WalletViewModel` or `SecureEnclavePlugin`.
+
+## 🔐 SDK Integration (Session 47 — Aug 2026)
+
+### Enclave SDK Path
+
+The `conxius-silent-payments` Rust crate (`native/silent-payments/`) has an
+optional `enclave` feature gate for hardware-backed signing through
+`conxius-enclave-sdk`. Enable in production builds:
+
+```toml
+[dependencies]
+conxius-silent-payments = { features = ["enclave"] }
+```
+
+When enabled, the crate re-exports:
+- `EnclaveManager` — Android StrongBox operations
+- `SignRequest` / `SignResponse` — enclave signing primitives
+- `AttestationReport` — hardware attestation verification
+- `ReplayGuard` — nonce replay protection
+- `musig2` — MuSig2 multisig protocol
+- `bitcoin` — Bitcoin protocol primitives
+
+### JNI Integration Path
+
+The Android JNI layer (`native/silent-payments-jni/`) is the next target for
+enclave integration. Route key operations through `silent_payments::EnclaveManager`
+before calling `silent_payments::scan_transaction`.
+
+### Current Branch
+
+Enclave changes are on `feat/enclave-sdk-wiring`. Merge to main after JNI
+integration is complete and tested on API 28+ devices.
 
 ## 🤖 Sovereign AI & Zero-Leak Privacy
 
