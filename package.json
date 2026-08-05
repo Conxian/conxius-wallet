@@ -89,7 +89,7 @@
   },
   "devDependencies": {
     "@aptos-labs/ts-sdk": "^7.2.0",
-    "@capacitor/cli": "^8.4.2",
+    "@capacitor/cli": "^8.5.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.1",
     "@solana/web3.js": "^1.98.4",
