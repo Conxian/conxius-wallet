@@ -62,6 +62,12 @@ reporting synthetic success. The production verifier still always returns
 receipt/finality, or release qualification. See the
 [issue #444 evidence record](../reports/ISSUE_444_VALUE_OPERATION_GATE_CONTAINMENT.md).
 
+### 3.3. Security & CI/CD Hygiene (Complexity: $O(1)$)
+
+To enforce Zero-Secret Egress and deterministic trust/safety across the development lifecycle, the following controls are strictly maintained:
+- **Gitleaks (Primary)**: A pinned, checksum-verified tokenless Gitleaks CLI scanner enforces hard-gate scanning of full repository history.
+- **GitGuardian (Secondary)**: An optional secondary scanner is configured with `continue-on-error: true` to prevent third-party credential drift or expired/missing API keys from causing false-positive blocking of the primary development CI pipeline.
+
 ---
 
 ## 4. Functional Requirements (v1.9.5 Alignment)
