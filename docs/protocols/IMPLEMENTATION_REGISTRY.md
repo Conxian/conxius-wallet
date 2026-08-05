@@ -107,6 +107,13 @@ exact bound dispute transaction.
 No reviewed BitVM2 verifier exists in the wallet today. Simulated or structural
 results are never authoritative and cannot authorize signing.
 
+## V. SECURITY & CI/CD INFRASTRUCTURE HARDENING
+
+| Component | Status | Notes |
+| :--- | :--- | :--- |
+| **Gitleaks (Primary)** | ✅ PRODUCTION | Pinned, checksum-verified tokenless CLI scan running on full repository history. |
+| **GitGuardian (Secondary)** | ✅ PRODUCTION | Optional secondary secret scanning configured to fail-safe via `continue-on-error: true` to prevent third-party credential drift or invalid/expired API keys from blocking development CI. |
+
 ---
 
 *Status Definitions:*
