@@ -17,6 +17,7 @@ junit = "4.13.2"
 bdk = "3.0.0"
 sqlcipher = "4.5.4"
 play-integrity = "1.6.0"
+bouncycastle = "1.80"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
@@ -45,6 +46,7 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 sqlcipher = { module = "net.zetetic:android-database-sqlcipher", version.ref = "sqlcipher" }
 sqlite-ktx = { module = "androidx.sqlite:sqlite-ktx", version = "2.7.0" }
 play-integrity = { module = "com.google.android.play:integrity", version.ref = "play-integrity" }
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
