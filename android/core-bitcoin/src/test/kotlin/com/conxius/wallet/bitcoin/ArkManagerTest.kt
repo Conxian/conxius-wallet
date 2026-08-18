@@ -41,4 +41,15 @@ class ArkManagerTest {
 
         assertFalse(left.contentEquals(right))
     }
+
+    @Test
+    fun deriveVutxoIndexDiffersWhenSeedsDiffer() {
+        val path = "m/84'/1'/0'/0/0"
+        val otherSeed = ByteArray(32) { (it + 1).toByte() }
+
+        val first = manager.deriveVutxoIndex(seed, path, 0)
+        val second = manager.deriveVutxoIndex(otherSeed, path, 0)
+
+        assertFalse(first.contentEquals(second))
+    }
 }
