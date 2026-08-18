@@ -1,6 +1,7 @@
 package com.conxius.wallet.bitcoin
 
 import android.util.Log
+import org.bouncycastle.crypto.digests.Blake2sDigest
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.MessageDigest
@@ -9,7 +10,7 @@ import java.security.MessageDigest
  * Ark V-UTXO Manager (v1.2)
  *
  * Handles native Ark lift and forfeit operations with deterministic V-UTXO deriving.
- * Uses Blake2s PRF logic for index management in the Enclave.
+ * Uses Blake2s PRF logic for index management in the Enclave via BouncyCastle's Blake2sDigest.
  * Logic: PRF(RootSeed, Path + Index)
  */
 class ArkManager {
@@ -17,17 +18,11 @@ class ArkManager {
 
     /**
      * Derives a deterministic V-UTXO index using Blake2s PRF logic.
-     * Implementation follows arkworks-rs/crypto-primitives.
+     * Implementation follows arkworks-rs/crypto-primitives specs using Blake2s.
      * Fixed-width derivation input: SHA256(path bytes) + LeBytes(index).
      */
     fun deriveVutxoIndex(seed: ByteArray, path: String, index: Int): ByteArray {
-        Log.d(TAG, "Deriving V-UTXO index for $path/$index using PRF")
-
-        // PRF Evaluate(Seed, Input)
-        // In native FFI this calls: Blake2s::evaluate(&seed, &input)
-
-        val digest = MessageDigest.getInstance("SHA-256")
-        digest.update(seed)
+        Log.d(TAG, "Deriving V-UTXO index for $path/$index using Blake2s PRF")
 
         // Fixed-width input construction: SHA256(path bytes) + LeBytes(index)
         // Keeps deterministic behavior while preserving long-path entropy and index uniqueness.
@@ -39,11 +34,16 @@ class ArkManager {
             .array()
 
         val input = pathHash + indexBytes
-        digest.update(input)
+
+        // Blake2s 256-bit (32 bytes) keyed PRF derivation using seed as key
+        val blake2s = Blake2sDigest(seed, 32, null, null)
+        blake2s.update(input, 0, input.size)
+        val output = ByteArray(32)
+        blake2s.doFinal(output, 0)
 
         return ProductionRuntimeGuard.failClosed(
             "Ark V-UTXO PRF derivation",
-            digest.digest()
+            output
         )
     }
 
