@@ -175,4 +175,24 @@ describe('Silent Payments service', () => {
         expect(app).toContain('decrypted.silentPaymentUtxos');
         expect(app).toContain("silentPaymentScan: { status: 'idle' }");
     });
+    it('enforces scan option bounds and handles cancellation', async () => {
+        (Capacitor.isNativePlatform as ReturnType<typeof vi.fn>).mockReturnValue(true);
+
+        // Invalid network
+        await expect(scanForSilentPayments({ network: 'invalid' as any, endHeight: 100 })).rejects.toThrow('INVALID_REQUEST');
+
+        // Negative endHeight
+        await expect(scanForSilentPayments({ network: 'mainnet', endHeight: -10 })).rejects.toThrow('INVALID_REQUEST');
+
+        // startHeight > endHeight
+        await expect(scanForSilentPayments({ network: 'mainnet', startHeight: 100, endHeight: 50 })).rejects.toThrow('INVALID_REQUEST');
+
+        // Range exceeds MAX_SCAN_BLOCKS (2016)
+        await expect(scanForSilentPayments({ network: 'mainnet', startHeight: 0, endHeight: 2016 })).rejects.toThrow('RESOURCE_LIMIT');
+
+        // Cancel scan on native platform
+        nativePlugin.cancelScan.mockResolvedValue({ status: 'idle' });
+        const { cancelSilentPaymentScan } = await import('../services/silent-payments');
+        await expect(cancelSilentPaymentScan()).resolves.toEqual({ status: 'idle' });
+    });
 });
