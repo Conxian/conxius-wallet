@@ -85,7 +85,7 @@ verification, and deeper reorg recovery remain outside this merged slice.
 - **Secret Scanning**: A checksum-verified, tokenless Gitleaks CLI plus optional
   GitGuardian are integrated in CI. `.gitleaks.toml` is narrow and
   `.gitleaksignore` is intentionally empty.
-- **Dependency Security**: Security overrides are authoritative in `pnpm-workspace.yaml` and reproduced in `pnpm-lock.yaml`; pnpm `11.13.0` ignores the obsolete `package.json` `pnpm` field. The versioned ledger in `scripts/ci/dependency-audit-exceptions.json` currently matches three low-or-higher findings: pending exceptions for high `bigint-buffer@1.1.5` and low `elliptic@6.6.1`, both expiring **2026-08-19**, plus a low `esbuild@0.27.3` `not-affected` disposition for production/release. `CON-1525` and GitHub `#399` are tracking context only; no approval is recorded.
+- **Dependency Security**: Security overrides are authoritative in `pnpm-workspace.yaml` and reproduced in `pnpm-lock.yaml`; pnpm `11.13.0` ignores the obsolete `package.json` `pnpm` field. The versioned ledger in `scripts/ci/dependency-audit-exceptions.json` currently matches three low-or-higher findings: pending exceptions for high `bigint-buffer@1.1.5` and low `elliptic@6.6.1`, both expiring **2026-09-19**, plus a low `esbuild@0.27.3` `not-affected` disposition for production/release. `CON-1525` and GitHub `#399` are tracking context only; no approval is recorded.
 - **Security Journal**: `.jules/` hardening journal documents vulnerability patterns and prevention guides.
 
 ## Dependency audit disposition state (reviewed 2026-07-22)
@@ -100,7 +100,7 @@ findings. `GHSA-3gc7-fjrx-p6mg` (`bigint-buffer@1.1.5`, high) is a time-bound
 exception for production Wormhole/Solana paths because npm has no published
 `1.1.6+`; `GHSA-848j-6mx2-7j84` (`elliptic@6.6.1`, low) is a time-bound
 exception for production Wormhole/CosmJS and Payjoin paths because npm has no
-published `6.6.2`. Both exceptions expire on **2026-08-19** and have approval
+published `6.6.2`. Both exceptions expire on **2026-09-19** and have approval
 status **pending**. `CON-1525` and GitHub `#399` are tracking references only,
 not approval evidence; no approver or approval date is recorded.
 

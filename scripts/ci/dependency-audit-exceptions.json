@@ -16,7 +16,7 @@
       "owner": "Conxian security maintainers",
       "rationale": "The advisory marks bigint-buffer versions through 1.1.5 as vulnerable and lists >=1.1.6 as patched, but npm currently publishes no 1.1.6 or later release. The production Wormhole/Solana paths remain on bigint-buffer@1.1.5; forcing the nonexistent patched version would break reproducible installation.",
       "remediation": "Adopt the first upstream bigint-buffer release containing the fix, or replace the Wormhole/Solana dependency path with a validated alternative before the exception expires.",
-      "expiresOn": "2026-08-19",
+      "expiresOn": "2026-09-19",
       "approval": {
         "status": "pending",
         "reference": "CON-1525; GitHub #399 (tracking context only; not approval evidence)"
@@ -37,7 +37,7 @@
       "owner": "Conxian security maintainers",
       "rationale": "The advisory marks elliptic versions through 6.6.1 as vulnerable and lists >=6.6.2 as patched, but npm currently publishes no 6.6.2 release. The production Wormhole/CosmJS and Payjoin paths remain on elliptic@6.6.1 while the dependency paths are evaluated for a compatible fix.",
       "remediation": "Adopt the first upstream elliptic release containing the fix, or replace the affected Wormhole/CosmJS and Payjoin dependency paths with validated alternatives before the exception expires.",
-      "expiresOn": "2026-08-19",
+      "expiresOn": "2026-09-19",
       "approval": {
         "status": "pending",
         "reference": "CON-1525; GitHub #399 (tracking context only; not approval evidence)"
