@@ -77,14 +77,20 @@ describe('Liquid Confidentiality & Agnostic Hardware SDK', () => {
     expect(unblinded.blindingKey.toString('hex')).toBe(blindingKey.toString('hex'));
   });
 
-  it('resolves Agnostic Hardware Surface SDK capabilities', async () => {
+  it('resolves Agnostic Hardware Surface SDK capabilities across TEE, TPM, HSM, FIDO2, Server, and POS', async () => {
     const { AgnosticHardwareSurfaceRegistry } = await import('../services/enclave-storage');
 
     const available = await AgnosticHardwareSurfaceRegistry.listAvailableSurfaces();
     expect(available).toBeInstanceOf(Array);
 
-    const teeProvider = AgnosticHardwareSurfaceRegistry.getProvider('TEE');
-    expect(teeProvider).toBeDefined();
-    expect(teeProvider?.surfaceType).toBe('TEE');
+    const surfaces = ['TEE', 'TPM', 'HSM', 'SERVER_ENCLAVE', 'FIDO2', 'POS'] as const;
+    for (const surface of surfaces) {
+      const provider = AgnosticHardwareSurfaceRegistry.getProvider(surface);
+      expect(provider).toBeDefined();
+      expect(provider?.surfaceType).toBe(surface);
+      const caps = await provider?.getCapabilities();
+      expect(caps?.surfaceType).toBe(surface);
+      expect(caps?.supportedAlgorithms.length).toBeGreaterThan(0);
+    }
   });
 });
