@@ -20,6 +20,7 @@ class LiquidManager {
      * Signs a Liquid transaction (Elements format).
      */
     fun signLiquidTx(payload: ByteArray): String {
+        require(payload.isNotEmpty()) { "Liquid transaction payload cannot be empty" }
         Log.d(TAG, "Signing Liquid Transaction (${payload.size} bytes)")
         return ProductionRuntimeGuard.failClosed(
             "Liquid transaction signing",
@@ -31,6 +32,11 @@ class LiquidManager {
      * Blinds a transaction's outputs for confidentiality.
      */
     fun blindOutputs(tx: String): String {
-        return "blinded_liquid_tx_hex"
+        require(tx.isNotBlank()) { "Liquid transaction string cannot be blank" }
+        Log.d(TAG, "Blinding Liquid Transaction Outputs")
+        return ProductionRuntimeGuard.failClosed(
+            "Liquid output blinding",
+            "blinded_liquid_tx_hex"
+        )
     }
 }

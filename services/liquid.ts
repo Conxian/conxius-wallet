@@ -76,6 +76,23 @@ export const isConfidentialAddress = (addr: string): boolean => {
   return liquid.address.isConfidential(addr);
 };
 
+/**
+ * Unblinds a confidential Liquid address to extract the underlying
+ * unconfidential address and blinding public key.
+ */
+export const unblindAddress = (
+  confidentialAddress: string
+): { unconfidentialAddress: string; blindingKey: Buffer } => {
+  if (!isConfidentialAddress(confidentialAddress)) {
+    throw new Error('[Liquid] Provided address is not a confidential Liquid address.');
+  }
+  const result = liquid.address.fromConfidential(confidentialAddress);
+  return {
+    unconfidentialAddress: result.unconfidentialAddress,
+    blindingKey: result.blindingKey,
+  };
+};
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 export const LBTC_ASSET = {

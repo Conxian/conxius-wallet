@@ -255,3 +255,72 @@ export async function persistState(state: any, pin?: string): Promise<void> {
   const blob = JSON.stringify(state);
   await setEnclaveBlob(STORAGE_KEY, blob);
 }
+
+// ─── Agnostic Hardware Surface SDK Provider Registry ───────────────────────────
+
+export type HardwareSurfaceType = 'TEE' | 'TPM' | 'HSM' | 'SERVER_ENCLAVE' | 'FIDO2' | 'POS';
+
+export interface HardwareSurfaceCapability {
+  readonly surfaceType: HardwareSurfaceType;
+  readonly name: string;
+  readonly fipsLevel?: string;
+  readonly isHardwareBacked: boolean;
+  readonly supportedAlgorithms: readonly string[];
+}
+
+export interface HardwareSurfaceProvider {
+  readonly surfaceType: HardwareSurfaceType;
+  getCapabilities(): Promise<HardwareSurfaceCapability>;
+  isAvailable(): Promise<boolean>;
+  signMessage(payload: Uint8Array): Promise<{ signature: string; pubkey: string }>;
+}
+
+export class AgnosticHardwareSurfaceRegistry {
+  private static providers = new Map<HardwareSurfaceType, HardwareSurfaceProvider>();
+
+  static registerProvider(provider: HardwareSurfaceProvider): void {
+    this.providers.set(provider.surfaceType, provider);
+  }
+
+  static getProvider(type: HardwareSurfaceType): HardwareSurfaceProvider | undefined {
+    return this.providers.get(type);
+  }
+
+  static async listAvailableSurfaces(): Promise<HardwareSurfaceCapability[]> {
+    const capabilities: HardwareSurfaceCapability[] = [];
+    for (const provider of this.providers.values()) {
+      if (await provider.isAvailable()) {
+        capabilities.push(await provider.getCapabilities());
+      }
+    }
+    return capabilities;
+  }
+}
+
+// Default Native TEE Provider registration
+AgnosticHardwareSurfaceRegistry.registerProvider({
+  surfaceType: 'TEE',
+  async isAvailable(): Promise<boolean> {
+    return await hasNativeSecureEnclave();
+  },
+  async getCapabilities(): Promise<HardwareSurfaceCapability> {
+    const sec = await getSecurityLevelNative();
+    return {
+      surfaceType: 'TEE',
+      name: sec.isStrongBox ? 'Android StrongBox KeyMint' : 'Android TEE / KeyStore',
+      fipsLevel: sec.isStrongBox ? 'FIPS 140-2 Level 3' : 'FIPS 140-2 Level 1',
+      isHardwareBacked: true,
+      supportedAlgorithms: ['ECDSA_SECP256K1', 'SCHNORR_SECP256K1', 'AES_256_GCM'],
+    };
+  },
+  async signMessage(payload: Uint8Array): Promise<{ signature: string; pubkey: string }> {
+    if (await hasNativeSecureEnclave()) {
+      return await SecureEnclave.signTransaction({
+        vault: STORAGE_KEY,
+        path: "m/44'/0'/0'/0/0",
+        messageHash: Buffer.from(payload).toString('hex'),
+      });
+    }
+    throw new Error('Native TEE provider unavailable');
+  },
+});
