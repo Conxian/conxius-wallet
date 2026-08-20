@@ -21,7 +21,7 @@ pending. This PR does not record approval or close CON-1525.
 
 The high advisory remains production-reachable through the Wormhole/Solana
 path. It is still covered only by the existing time-bounded exception, which
-expires **2026-08-19**. No expiry extension, owner change, approval, or
+expires **2026-09-19**. No expiry extension, owner change, approval, or
 not-affected determination is made here.
 
 | Advisory | Severity | Before | After | Status / disposition |
@@ -46,7 +46,7 @@ not-affected determination is made here.
   expiry and is **pending COO/security approval**, not approved by this PR.
 - **Owner/review:** Conxian security maintainers; COO/security review is
   required before release promotion and before the exception expires.
-- **Expiry/recheck:** Hard expiry **2026-08-19**; recheck upstream availability
+- **Expiry/recheck:** Hard expiry **2026-09-19**; recheck upstream availability
   and the affected path by **2026-08-05**. Never silently extend the expiry.
 - **Compensating controls:** The lockfile remains pinned; CI runs
   `scripts/ci/audit_with_exceptions.mjs`, which validates the exact advisory,
@@ -113,7 +113,7 @@ not-affected determination is made here.
   release review are required before promotion. No exception approval is
   asserted.
 - **Recheck:** Recheck `vite-plugin-top-level-await`, Vite, and esbuild
-  compatibility by **2026-08-19**, or earlier if a published fixed release is
+  compatibility by **2026-09-19**, or earlier if a published fixed release is
   available.
 - **Compensating controls:** Frozen install, deterministic baseline lockfile,
   `pnpm why esbuild`, clean production build, and explicit rejection of a
@@ -156,7 +156,7 @@ not-affected determination is made here.
   protocol/release review is required before promotion. No approval is
   asserted.
 - **Recheck:** Recheck published releases, compatible Wormhole/CosmJS updates,
-  and parent-path isolation by **2026-08-19**.
+  and parent-path isolation by **2026-09-19**.
 - **Compensating controls:** The vulnerable version remains visible to audit;
   the lockfile is deterministic; dependency-review and release review remain
   required; `pnpm why elliptic` is part of the verification record.
@@ -192,7 +192,7 @@ reported exit `1` with exactly three findings —
 `GHSA-3gc7-fjrx-p6mg` (`bigint-buffer@1.1.5`, high),
 `GHSA-g7r4-m6w7-qqqr` (`esbuild@0.27.3`, low), and
 `GHSA-848j-6mx2-7j84` (`elliptic@6.6.1`, low). The exception wrapper passed its
-default policy with two pending exceptions expiring 2026-08-19; release mode
+default policy with two pending exceptions expiring 2026-09-19; release mode
 correctly failed only for those pending approvals. A passing default wrapper is
 not approval for the remaining issue-level dispositions.
 
