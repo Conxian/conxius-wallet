@@ -424,7 +424,7 @@ AgnosticHardwareSurfaceRegistry.registerProvider({
 AgnosticHardwareSurfaceRegistry.registerProvider({
   surfaceType: 'POS',
   async isAvailable(): Promise<boolean> {
-    return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+    return typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
   },
   async getCapabilities(): Promise<HardwareSurfaceCapability> {
     return {

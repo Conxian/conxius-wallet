@@ -79,6 +79,9 @@ describe('Liquid Confidentiality & Agnostic Hardware SDK', () => {
 
   it('resolves Agnostic Hardware Surface SDK capabilities across TEE, TPM, HSM, FIDO2, Server, and POS', async () => {
     const { AgnosticHardwareSurfaceRegistry } = await import('../services/enclave-storage');
+    const { AgnosticHardwareSurfaceRegistry: SignerRegistry } = await import('../services/signer');
+
+    expect(AgnosticHardwareSurfaceRegistry).toBe(SignerRegistry);
 
     const available = await AgnosticHardwareSurfaceRegistry.listAvailableSurfaces();
     expect(available).toBeInstanceOf(Array);
