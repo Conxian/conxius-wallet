@@ -115,3 +115,15 @@ As of v1.9.5, all Conxian Protocol interfaces (Conxius Wallet, Gateway, Explorer
 Promotion from `staged` to `main` for any production artifact requires explicit sign-off from the COO as defined in the [Operating Model](../operations/OPERATING_MODEL.md).
 Issue #444 is P0 containment work and requires the same COO review before
 promotion; its presence must not be marketed as production support.
+
+## 6. HARDWARE AGNOSTIC WALLET SDK ARCHITECTURE (v1.9.5)
+
+To enable seamless adoption across institutional, enterprise, and retail environments, the wallet engine is architected as a **Hardware-Agnostic Wallet SDK** via `AgnosticHardwareSurfaceRegistry` in `services/enclave-storage.ts`.
+
+### 6.1 Supported Client & Hardware Surfaces
+1. **TEE (Mobile)**: ARM TrustZone / Android KeyStore / Apple Secure Enclave (`StrongBox` KeyMint).
+2. **TPM 2.0 (Desktop)**: TCG TPM 2.0 / Windows Hello / Linux tpm2-tss.
+3. **HSM (Institutional)**: PKCS#11 / AWS CloudHSM / YubiHSM2 / SafeNet (FIPS 140-3 Level 3).
+4. **Server Enclave**: AWS Nitro Enclaves / Intel SGX / AMD SEV attested confidential computing.
+5. **FIDO2 / Passkey**: W3C WebAuthn / FIDO2 CTAP2 browser-first passkeys.
+6. **POS (Point-of-Sale)**: EMVCo / Android POS Terminal Hardware Surface.

@@ -21,7 +21,7 @@ permalink: /docs/implementation-registry
 | **Ark** | 🛑 CONTAINED / UNAVAILABLE | Forfeit/redeem artifacts are exactly bound; reviewed production execution returns typed unsupported rather than synthetic txids. |
 | **StateChain** | 🛑 CONTAINED / UNAVAILABLE | Transfer/withdrawal artifacts are exactly bound; no production provider/finality receipt is qualified. |
 | **Maven** | 🛑 CONTAINED / UNAVAILABLE | Transfer artifacts are exactly bound; Marketplace remains preview-only and cannot report payment/delivery completion. |
-| **Liquid** | ✅ PRODUCTION | Native LiquidManager + TS Liquidjs support. |
+| **Liquid** | ✅ PRODUCTION | Native LiquidManager + TS Liquidjs support with ProductionRuntimeGuard fail-closed enforcement and confidential address validation. |
 | **EVM (BOB/RSK)** | ✅ PRODUCTION | Native EvmManager + TS Ethers support. |
 | **Musig2** | ✅ PRODUCTION | Aligned with `@noble/curves`, native session management. |
 | **Stacks** | ✅ PRODUCTION | Native StacksManager + Stacks.js (TS). |
