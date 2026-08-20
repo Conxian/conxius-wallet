@@ -6,9 +6,9 @@ permalink: /docs/sdk-research
 
 # SDK Research Report: Full Bitcoin Ecosystem Enhancements
 
-**Date:** 2026-06-20
-**Status:** EXPANDED — BitVM2 remains research/scaffolding
-**Context:** Researching SDKs for BitVM2, Babylon, Ark, and Sovereign Node Enhancements.
+**Date:** 2026-06-22
+**Status:** EXPANDED — Agnostic SDK & TradFi Integration
+**Context:** Researching SDKs for BitVM2, Babylon, Ark, Agnostic Hardware Surfaces, and Sovereign Node Enhancements.
 
 ## 1. BitVM Bridge (BitVM2)
 
@@ -46,11 +46,31 @@ permalink: /docs/sdk-research
 - **Sanitization**: Outgoing prompts are audited to strip PII and sensitive cryptographic identifiers (addresses, mnemonics, extended keys).
 - **Normalization**: ZWC (Zero Width Character) normalization strips obfuscation to prevent bypasses.
 
-## 6. Extended Research Matrix
+## 6. Agnostic Wallet Software Development Kit (SDK) Architecture
+
+To enable seamless adoption across institutional, enterprise, and retail environments, the wallet architecture is designed as a **Hardware-Agnostic Wallet SDK**.
+
+### Market Hardware & Client Surface Matrix
+
+| Surface / Target | Technical Standard | Primary Use Case | Trust Model |
+| :--- | :--- | :--- | :--- |
+| **TEE (Mobile)** | ARM TrustZone / Android KeyStore / Apple Secure Enclave | Mobile native wallet & biometrics | Hardware-enforced KeyMint isolation |
+| **TPM 2.0 (Desktop)** | TCG TPM 2.0 / Windows Hello / Linux tpm2-tss | Desktop financial terminals | Platform integrity & hardware key binding |
+| **HSM (Institutional)** | PKCS#11 / AWS CloudHSM / YubiHSM2 / SafeNet | Institutional treasury & automated signing | FIPS 140-3 Level 3 tamper-resistant HSM |
+| **Server Enclave** | AWS Nitro Enclaves / Intel SGX / AMD SEV | Confidential cloud co-signers & gateway BFF | Attested confidential computing |
+| **FIDO2 / Passkey** | W3C WebAuthn / FIDO2 CTAP2 | Browser-first web apps & consumer passkeys | User-presence biometric assertion |
+| **POS (Point-of-Sale)**| ISO 8583 / EMVCo / Android POS Terminal | Retail payment settlement & lightning swaps | Dedicated Android POS hardware sandbox |
+
+### TradFi Seamless Integration Viewpoints
+1. **Institutional Treasury (HSM / FDC3)**: Connects corporate treasury workstations (OpenFin, Finsemble) to Bitcoin layer-2 protocols via FDC3 intents (`VIEW_INSTRUMENT`, `INITIATE_SETTLEMENT`) backed by PKCS#11 HSM authorization.
+2. **Retail Merchants (POS / Lightning / Liquid)**: Enables instant point-of-sale checkout using QR/NFC, settling L-BTC and Lightning payments on dedicated Android POS terminals.
+3. **Web & SaaS Applications (FIDO2 / Passkey)**: Replaces seed phrase friction with FIDO2 WebAuthn passkeys bound to secure enclaves.
+
+## 7. Extended Research Matrix
 
 - See `docs/reports/GAP_MATRIX_2026.md` for detailed gap analysis and candidate scoring.
 
-## 7. Summary Table (v1.9.5 Alignment)
+## 8. Summary Table (v1.9.5 Alignment)
 
 | Technology | Preferred SDK | Target Version | Status |
 | :--- | :--- | :--- | :--- |
@@ -58,7 +78,8 @@ permalink: /docs/sdk-research
 | **Babylon** | `BabylonManager.kt` | 1.9 | ✅ |
 | **Ark V-UTXO** | `ArkManager.kt` | 1.9 | 🚀 |
 | **FDC3 Resolver**| `Fdc3Plugin.kt` | 1.9 | 🚀 |
+| **Agnostic SDK** | `enclave-storage.ts` / `signer.ts` | 1.9.5 | 🚀 |
 | **AI Security** | `ai-security.ts` | 1.9 | ✅ |
 
 ---
-*Updated: June 20, 2026*
+*Updated: June 2026*
