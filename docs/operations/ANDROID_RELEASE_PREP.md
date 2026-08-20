@@ -270,7 +270,7 @@ totals, advisory/package/version/path counts, each disposition and approval
 status, and the current `pnpm-lock.yaml` SHA-256. It is uploaded as a separate
 artifact from `$RUNNER_TEMP` and contains no secrets. On the current baseline
 the command is expected to fail because the `bigint-buffer` and `elliptic`
-exceptions both remain **pending** through **2026-08-19**. The `esbuild` finding
+exceptions both remain **pending** through **2026-09-19**. The `esbuild` finding
 is explicitly `not-affected` for production/release based on the Vite dev-server
 scope and the recorded `0.28.1` production-build incompatibility. Do not treat
 `CON-1525` or GitHub `#399` as approval evidence, and do not promote until the

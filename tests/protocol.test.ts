@@ -58,3 +58,42 @@ describe('Protocol Services', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
+
+describe('Liquid Confidentiality & Agnostic Hardware SDK', () => {
+  it('unblinds confidential Liquid address correctly', async () => {
+    const liquid = await import('liquidjs-lib');
+    const { deriveLiquidAddress, deriveConfidentialAddress, unblindAddress, isConfidentialAddress } = await import('../services/liquid');
+
+    const pubkey = Buffer.from('0250929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0', 'hex');
+    const blindingKey = Buffer.from('0239a7100b03ba25e8a1cd991e233816130eb5a53f09808a329d5926ec03099955', 'hex');
+
+    const unconfidentialAddr = deriveLiquidAddress(pubkey, 'mainnet');
+    const confidentialAddr = deriveConfidentialAddress(unconfidentialAddr, blindingKey);
+
+    expect(isConfidentialAddress(confidentialAddr)).toBe(true);
+
+    const unblinded = unblindAddress(confidentialAddr);
+    expect(unblinded.unconfidentialAddress).toBe(unconfidentialAddr);
+    expect(unblinded.blindingKey.toString('hex')).toBe(blindingKey.toString('hex'));
+  });
+
+  it('resolves Agnostic Hardware Surface SDK capabilities across TEE, TPM, HSM, FIDO2, Server, and POS', async () => {
+    const { AgnosticHardwareSurfaceRegistry } = await import('../services/enclave-storage');
+    const { AgnosticHardwareSurfaceRegistry: SignerRegistry } = await import('../services/signer');
+
+    expect(AgnosticHardwareSurfaceRegistry).toBe(SignerRegistry);
+
+    const available = await AgnosticHardwareSurfaceRegistry.listAvailableSurfaces();
+    expect(available).toBeInstanceOf(Array);
+
+    const surfaces = ['TEE', 'TPM', 'HSM', 'SERVER_ENCLAVE', 'FIDO2', 'POS'] as const;
+    for (const surface of surfaces) {
+      const provider = AgnosticHardwareSurfaceRegistry.getProvider(surface);
+      expect(provider).toBeDefined();
+      expect(provider?.surfaceType).toBe(surface);
+      const caps = await provider?.getCapabilities();
+      expect(caps?.surfaceType).toBe(surface);
+      expect(caps?.supportedAlgorithms.length).toBeGreaterThan(0);
+    }
+  });
+});
