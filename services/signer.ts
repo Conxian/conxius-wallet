@@ -325,3 +325,10 @@ export function parseBip322Message(message: string): {
 
 export { signAuthorizedValueOperationNative } from './value-signer';
 export type { NativeValueSigningOutcome, NativeValueSigningRequest } from './value-signer';
+
+export {
+  AgnosticHardwareSurfaceRegistry,
+  type HardwareSurfaceCapability,
+  type HardwareSurfaceProvider,
+  type HardwareSurfaceType,
+} from './enclave-storage';
