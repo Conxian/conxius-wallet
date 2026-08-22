@@ -5,18 +5,18 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(() => {
     const isVitest = process.env.VITEST === 'true';
     return {
-      worker: { format: 'es', plugins: () => [wasm(), topLevelAwait()] },
+      worker: { format: 'es' as const, plugins: () => [wasm(), topLevelAwait()] },
       plugins: [
         wasm(), topLevelAwait(), react(),
         ...(!isVitest ? [nodePolyfills({ include: ["buffer", "stream", "util", "crypto", "string_decoder"], globals: { Buffer: true, global: true, process: true } })] : []),
       ],
       resolve: {
         alias: {
-          "@": path.resolve(__dirname, "."),
-          "algosdk": path.resolve(__dirname, "node_modules/algosdk/dist/esm/index.js")
+          "@": path.resolve(import.meta.dirname, "."),
+          "algosdk": path.resolve(import.meta.dirname, "node_modules/algosdk/dist/esm/index.js")
         }
       },
       optimizeDeps: {
