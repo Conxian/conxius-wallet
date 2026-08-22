@@ -18,6 +18,7 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 - **BOS Knowledge Graph**: Implemented ecosystem entity and relationship registry in `BOS_KNOWLEDGE_GRAPH.md` (CON-1442).
 
 ### Changed
+- **CI & Build Toolchain Hygiene**: Moved package overrides to top-level in `package.json` for pnpm 11+ specification compliance, updated `vite.config.ts` to `import.meta.dirname`, and typed worker format as `es` to enforce zero deprecation warnings.
 - **Breez Payment Flow Hardening**: Fixed a critical bug in the idempotency implementation where concurrent calls could bypass state transition checks.
 - **State Machine Invariants**: Enforced strict monotonic state transitions for Lightning payments to prevent illegal terminal state modifications.
 - **CI Hardening**: Pinned all GitHub Actions to SHAs, added WASM single-fork vitest config, added dependency review workflow.
