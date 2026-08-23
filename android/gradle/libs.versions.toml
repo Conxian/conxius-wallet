@@ -17,7 +17,7 @@ junit = "4.13.2"
 bdk = "3.0.0"
 sqlcipher = "4.5.4"
 play-integrity = "1.6.0"
-bouncycastle = "1.80"
+bouncycastle = "1.85.2"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
