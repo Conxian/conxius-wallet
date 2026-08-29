@@ -5,7 +5,7 @@ working with the Conxius Wallet codebase and its B2B enhancement, the Conxian
 Gateway.
 
 **Last Updated:** 2026-06-30
-**Context:** Production Operational State (v1.9.2) — COO Alignment Complete
+**Context:** Production Operational State (v1.9.5) — COO Alignment Complete
 
 ---
 
@@ -76,11 +76,11 @@ python3 scripts/ci/baseline_hygiene_scanner.py
 Ensure the following files are synced:
 
 - `docs/archive/PROJECT_CONTEXT.md`: Current state and session notes.
-- `docs/business/PRD.md`: The high-authority source of truth (v1.9.2).
+- `docs/business/PRD.md`: The high-authority source of truth (v1.9.5).
 - `docs/state/Business_State.md`: Business alignment and market fit.
 - `docs/state/Sovereign_State.md`: Technical implementation status.
 - `docs/operations/ROADMAP.md`: Technical and business milestones.
-- `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status (v1.9.2).
+- `docs/protocols/IMPLEMENTATION_REGISTRY.md`: Feature-level status (v1.9.5).
 
 ---
 
@@ -109,7 +109,7 @@ implementing new security-sensitive code paths.
 
 ## Protocol Coverage — SDK → Wallet Alignment
 
-The Conxius Enclave SDK (`lib-conclave-sdk` v0.2.5) defines the canonical **41-chain AssetRegistry** and **33 protocol modules**. The wallet must provide user-facing protocol support for every chain where Conxian users hold or transact assets.
+The Conxius Enclave SDK (`conxius-enclave-sdk` v2.0.16) defines the canonical **42-chain AssetRegistry** and **52 protocol modules** (24 blockchain + 28 infrastructure). The wallet must provide user-facing protocol support for every chain where Conxian users hold or transact assets.
 
 ### Native Manager → SDK Chain Map
 
@@ -162,7 +162,7 @@ The Conxius Enclave SDK (`lib-conclave-sdk` v0.2.5) defines the canonical **41-c
 | BIP-353 | ✅ DNS resolver | Done | Human-readable payments |
 | x402 | ❌ No manager | P3 | Open payments |
 
-## 🚀 Native Bridge Alignment (v1.9.2)
+## 🚀 Native Bridge Alignment (v1.9.5)
 
 The wallet utilizes a **Bridged Sovereign Architecture** where native Kotlin
 managers handle security-critical signing and protocol coordination.
