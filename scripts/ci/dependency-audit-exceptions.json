@@ -50,9 +50,9 @@
       "observedVersions": [
         "0.27.3"
       ],
-      "pathCount": 9,
+      "pathCount": 11,
       "roleClassification": "optional",
-      "reachabilityFingerprint": "d168750cffc66131e823d5d751169a177c652c7b4552ad986a9b5f0e598a7359",
+      "reachabilityFingerprint": "8403166e6fe14aadee4fa43b24d5fb6dba5c25fe309eb8729aeafdc6351cd7e3",
       "disposition": "not-affected",
       "reviewedOn": "2026-07-22",
       "rationale": "This advisory is confined to the local Vite development-server response-read surface. Production and release artifacts do not run or expose that development server.",
