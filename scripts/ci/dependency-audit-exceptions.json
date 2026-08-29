@@ -54,7 +54,7 @@
       "roleClassification": "optional",
       "reachabilityFingerprint": "8403166e6fe14aadee4fa43b24d5fb6dba5c25fe309eb8729aeafdc6351cd7e3",
       "disposition": "not-affected",
-      "reviewedOn": "2026-08-29",
+      "reviewedOn": "2026-07-22",
       "rationale": "This advisory is confined to the local Vite development-server response-read surface. Production and release artifacts do not run or expose that development server.",
       "evidence": [
         "The production command is `pnpm run build`, which emits the static `dist` artifact and does not start a Vite development server.",

@@ -154,6 +154,8 @@
           "paths": [
             ".>vite-plugin-top-level-await>vite>esbuild",
             ".>vite-plugin-wasm>vite>esbuild",
+            ".>@testing-library/jest-dom>vitest>@vitest/mocker>vite>esbuild",
+            ".>@testing-library/jest-dom>vitest>vite>esbuild",
             ".>@vitejs/plugin-react>vite>esbuild",
             ".>@vitest/ui>vitest>@vitest/mocker>vite>esbuild",
             ".>@vitest/ui>vitest>vite>esbuild",

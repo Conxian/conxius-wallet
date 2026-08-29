@@ -84,9 +84,9 @@ describe('dependency audit disposition policy', () => {
       },
       {
         advisory: 'GHSA-g7r4-m6w7-qqqr',
-        pathCount: 9,
+        pathCount: 11,
         roleClassification: 'optional',
-        reachabilityFingerprint: 'd168750cffc66131e823d5d751169a177c652c7b4552ad986a9b5f0e598a7359',
+        reachabilityFingerprint: '8403166e6fe14aadee4fa43b24d5fb6dba5c25fe309eb8729aeafdc6351cd7e3',
       },
     ]);
   });
@@ -238,7 +238,7 @@ describe('dependency audit disposition policy', () => {
       generatedAt: '2026-07-22T12:00:00.000Z',
       nodeVersion: 'v22.23.1',
       pnpmVersion: '11.13.0',
-      counts: { advisories: 3, packages: 3, observedVersions: 3, paths: 123 },
+      counts: { advisories: 3, packages: 3, observedVersions: 3, paths: 125 },
       dispositions: { approvalStatusCounts: { pending: 2, approved: 0, 'not-applicable': 1 } },
       lockfile: { path: 'pnpm-lock.yaml' },
     });
