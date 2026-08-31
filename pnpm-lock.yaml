@@ -42,14 +42,14 @@ importers:
         specifier: ^5.3.0
         version: 5.3.0
       '@google/genai':
-        specifier: ^2.18.0
-        version: 2.18.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+        specifier: ^2.19.0
+        version: 2.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@noble/curves':
-        specifier: ^2.3.0
-        version: 2.3.0
+        specifier: ^2.4.0
+        version: 2.4.0
       '@noble/hashes':
-        specifier: ^2.3.0
-        version: 2.3.0
+        specifier: ^2.4.0
+        version: 2.4.0
       '@stacks/auth':
         specifier: ^7.6.0
         version: 7.6.0
@@ -102,8 +102,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       ecpair:
-        specifier: ^3.0.1
-        version: 3.0.1(@typescript/typescript6@6.0.2)
+        specifier: ^3.0.2
+        version: 3.0.2(@typescript/typescript6@6.0.2)
       generator-function:
         specifier: ^2.0.1
         version: 2.0.1
@@ -117,8 +117,8 @@ importers:
         specifier: ^6.0.2-liquid.38
         version: 6.0.2-liquid.38
       lucide-react:
-        specifier: ^1.34.0
-        version: 1.34.0(react@19.2.8)
+        specifier: ^1.35.0
+        version: 1.35.0(react@19.2.8)
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -218,7 +218,7 @@ importers:
         version: 9.1.7
       jsdom:
         specifier: ^30.0.1
-        version: 30.0.1(@noble/hashes@2.3.0)
+        version: 30.0.1(@noble/hashes@2.4.0)
       lint-staged:
         specifier: ^17.3.0
         version: 17.3.0
@@ -245,7 +245,7 @@ importers:
         version: 0.28.0(rollup@4.59.0)(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.3.0)(@vitest/ui@4.1.11)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.3.0)(@vitest/ui@4.1.11)(jsdom@30.0.1(@noble/hashes@2.4.0))(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
 
 packages:
 
@@ -774,8 +774,8 @@ packages:
   '@fontsource/jetbrains-mono@5.3.0':
     resolution: {integrity: sha512-fqDfB5I9f1p1TV486aUgB9t8zP84P0O1FtQR5Ol9vjwPy+S+EIGlVYm1cvj2W5shcZMTg2nZFdVMoH5wFu8a1A==}
 
-  '@google/genai@2.18.0':
-    resolution: {integrity: sha512-uy9gWVTAZXuA/2tld0QJl/QNiGEn4QOmfX4PiRgZQmeFQRQhojpD/Gf41SPnBJmjEnT83a+h4AdU1HHYaYvVDw==}
+  '@google/genai@2.19.0':
+    resolution: {integrity: sha512-IM3u1FjpOLyOPsPh0smGA6Ntj2olUWCPbTs/WQj7cA/2AKCGw/652W7IaySx0XtwuscFnMYBoraebQusSZ0zSQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.25.2
@@ -1009,6 +1009,10 @@ packages:
     resolution: {integrity: sha512-v7cY+4oWYPQszRj6ZFGzTVL7uP2TaLo1xMhWHzYC5wj0ZhOXQ5x+sBre8rF3hi8cAoi0bh1qXoovoOkdFtvqEg==}
     engines: {node: '>= 20.19.0'}
 
+  '@noble/curves@2.4.0':
+    resolution: {integrity: sha512-P4/62zrgfH33CneE3Dn4WhJVA22YUU0eR51wKIan4NVRvwsA0YnPTwWGpNbpuacSujmSFLvyzpyuR30+fbq2Ew==}
+    engines: {node: '>= 20.19.0'}
+
   '@noble/ed25519@2.0.0':
     resolution: {integrity: sha512-/extjhkwFupyopDrt80OMWKdLgP429qLZj+z6sYJz90rF2Iz0gjZh2ArMKPImUl13Kx+0EXI2hN9T/KJV0/Zng==}
 
@@ -1040,6 +1044,10 @@ packages:
 
   '@noble/hashes@2.3.0':
     resolution: {integrity: sha512-oN+QwyX7VSHotibwubG3kpzbwKrfnyR6OOO+3Nk/53ADL7FmgHHz4TgrbaYKvvOw09u6QTx0oiH1cNCIOuN0CQ==}
+    engines: {node: '>= 20.19.0'}
+
+  '@noble/hashes@2.4.0':
+    resolution: {integrity: sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==}
     engines: {node: '>= 20.19.0'}
 
   '@noble/secp256k1@1.7.1':
@@ -2906,8 +2914,8 @@ packages:
     resolution: {integrity: sha512-cL/mh3MtJutFOvFc27GPZE2pWL3a3k4YvzUWEOvilnfZVlH3Jwgx/7d6tlD7/75tNk8TG2m+7Kgtz0SI1tWcqw==}
     engines: {node: '>=8.0.0'}
 
-  ecpair@3.0.1:
-    resolution: {integrity: sha512-uz8wMFvtdr58TLrXnAesBsoMEyY8UudLOfApcyg40XfZjP+gt1xO4cuZSIkZ8hTMTQ8+ETgt7xSIV4eM7M6VNw==}
+  ecpair@3.0.2:
+    resolution: {integrity: sha512-q74N80jaqlSkOTx1Wki43KdQrGaz00CVHxU1fkTv4AJRCTu388uUJV+r4ZxaP1HKGLF7ygMic3lU7dt5o3r+Gg==}
     engines: {node: '>=20.0.0'}
 
   ed25519-keygen@0.4.11:
@@ -3871,8 +3879,8 @@ packages:
     resolution: {integrity: sha512-ERJq3FOzJTxBbFjZ7iDs+NiK4VI9Wz+RdrrAB8dio1oV+YvdPzUEE4QNiT2VD51DkIbCYRUUzCRkssXCHqSnKQ==}
     engines: {node: 14 || >=16.14}
 
-  lucide-react@1.34.0:
-    resolution: {integrity: sha512-vnjGJNI7Htk5+oWW8gXGuaLgwgAb0T6/iZbBrp9JCfRFwdNWZ0YTm3eyxjOLgwN6r8iyAf3UA70zNmBRBNv7yg==}
+  lucide-react@1.35.0:
+    resolution: {integrity: sha512-yXCCWxGFYT6bLIPYC4SY6fPQPRs/d797rRIue+J9XP2Td6vQvD53gaQRBCnIVT1kTQRHtAtxlfOQNWAuIF8ELg==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -4236,6 +4244,10 @@ packages:
 
   protobufjs@8.7.2:
     resolution: {integrity: sha512-oTVHV+oelUBtiu5iTuTNNZ0eLYsXSMxry4cgr30mayNkgIZL6qZ0IOQVPuSWGcyAaXKl/XgqwWHIC3a0khYVBA==}
+    engines: {node: '>=12.0.0'}
+
+  protobufjs@8.8.0:
+    resolution: {integrity: sha512-N3xhQ5yyBx3vQq4gubBfASzYhJGNzeDbjqBpu61g7UVylsN/qyffU96TKWD3GbbLOKF82VGNRNvv1+BFgE31Eg==}
     engines: {node: '>=12.0.0'}
 
   protons-runtime@5.6.0:
@@ -5475,8 +5487,8 @@ snapshots:
       '@cosmjs/math': 0.39.0
       '@cosmjs/utils': 0.39.0
       '@noble/ciphers': 2.2.0
-      '@noble/curves': 2.3.0
-      '@noble/hashes': 2.3.0
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
       '@scure/bip39': 2.2.0
 
   '@cosmjs/encoding@0.32.4':
@@ -5771,19 +5783,19 @@ snapshots:
       '@eslint/core': 1.2.1
       levn: 0.4.1
 
-  '@exodus/bytes@1.15.1(@noble/hashes@2.3.0)':
+  '@exodus/bytes@1.15.1(@noble/hashes@2.4.0)':
     optionalDependencies:
-      '@noble/hashes': 2.3.0
+      '@noble/hashes': 2.4.0
 
   '@fontsource/inter@5.3.0': {}
 
   '@fontsource/jetbrains-mono@5.3.0': {}
 
-  '@google/genai@2.18.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
+  '@google/genai@2.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
       google-auth-library: 10.9.1
       p-retry: 4.6.2
-      protobufjs: 8.7.2
+      protobufjs: 8.8.0
       ws: 8.21.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
@@ -6084,8 +6096,8 @@ snapshots:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.14.2)
       '@mysten/bcs': 2.1.0
       '@mysten/utils': 0.4.0
-      '@noble/curves': 2.3.0
-      '@noble/hashes': 2.3.0
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
       '@protobuf-ts/grpcweb-transport': 2.11.1
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
@@ -6141,6 +6153,10 @@ snapshots:
     dependencies:
       '@noble/hashes': 2.3.0
 
+  '@noble/curves@2.4.0':
+    dependencies:
+      '@noble/hashes': 2.4.0
+
   '@noble/ed25519@2.0.0': {}
 
   '@noble/ed25519@2.3.0': {}
@@ -6158,6 +6174,8 @@ snapshots:
   '@noble/hashes@2.2.0': {}
 
   '@noble/hashes@2.3.0': {}
+
+  '@noble/hashes@2.4.0': {}
 
   '@noble/secp256k1@1.7.1': {}
 
@@ -6710,7 +6728,7 @@ snapshots:
       picocolors: 1.1.1
       redent: 3.0.0
     optionalDependencies:
-      vitest: 4.1.11(@types/node@26.3.0)(@vitest/ui@4.1.11)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
+      vitest: 4.1.11(@types/node@26.3.0)(@vitest/ui@4.1.11)(jsdom@30.0.1(@noble/hashes@2.4.0))(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
 
   '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
@@ -7044,7 +7062,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vitest: 4.1.11(@types/node@26.3.0)(@vitest/ui@4.1.11)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
+      vitest: 4.1.11(@types/node@26.3.0)(@vitest/ui@4.1.11)(jsdom@30.0.1(@noble/hashes@2.4.0))(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
 
   '@vitest/utils@4.1.11':
     dependencies:
@@ -7570,7 +7588,7 @@ snapshots:
 
   '@xrplf/isomorphic@1.0.2(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@noble/hashes': 2.3.0
+      '@noble/hashes': 2.4.0
       eventemitter3: 5.0.1
       ws: 8.21.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
@@ -8279,10 +8297,10 @@ snapshots:
 
   data-uri-to-buffer@4.0.1: {}
 
-  data-urls@7.0.0(@noble/hashes@2.3.0):
+  data-urls@7.0.0(@noble/hashes@2.4.0):
     dependencies:
       whatwg-mimetype: 5.0.0
-      whatwg-url: 16.0.1(@noble/hashes@2.3.0)
+      whatwg-url: 16.0.1(@noble/hashes@2.4.0)
     transitivePeerDependencies:
       - '@noble/hashes'
 
@@ -8376,7 +8394,7 @@ snapshots:
       typeforce: 1.18.0
       wif: 2.0.6
 
-  ecpair@3.0.1(@typescript/typescript6@6.0.2):
+  ecpair@3.0.2(@typescript/typescript6@6.0.2):
     dependencies:
       uint8array-tools: 0.0.8
       valibot: 1.4.2(@typescript/typescript6@6.0.2)
@@ -8881,9 +8899,9 @@ snapshots:
       minimalistic-assert: 1.0.1
       minimalistic-crypto-utils: 1.0.1
 
-  html-encoding-sniffer@6.0.0(@noble/hashes@2.3.0):
+  html-encoding-sniffer@6.0.0(@noble/hashes@2.4.0):
     dependencies:
-      '@exodus/bytes': 1.15.1(@noble/hashes@2.3.0)
+      '@exodus/bytes': 1.15.1(@noble/hashes@2.4.0)
     transitivePeerDependencies:
       - '@noble/hashes'
 
@@ -9150,17 +9168,17 @@ snapshots:
 
   jsbi@4.3.2: {}
 
-  jsdom@30.0.1(@noble/hashes@2.3.0):
+  jsdom@30.0.1(@noble/hashes@2.4.0):
     dependencies:
       '@asamuzakjp/css-color': 6.0.5
       '@asamuzakjp/dom-selector': 8.3.0
       '@bramus/specificity': 2.4.2
       '@csstools/css-syntax-patches-for-csstree': 1.1.7(css-tree@3.2.1)
-      '@exodus/bytes': 1.15.1(@noble/hashes@2.3.0)
+      '@exodus/bytes': 1.15.1(@noble/hashes@2.4.0)
       css-tree: 3.2.1
-      data-urls: 7.0.0(@noble/hashes@2.3.0)
+      data-urls: 7.0.0(@noble/hashes@2.4.0)
       decimal.js: 10.6.0
-      html-encoding-sniffer: 6.0.0(@noble/hashes@2.3.0)
+      html-encoding-sniffer: 6.0.0(@noble/hashes@2.4.0)
       is-potential-custom-element-name: 1.0.1
       lru-cache: 11.5.2
       parse5: 8.0.1
@@ -9171,7 +9189,7 @@ snapshots:
       w3c-xmlserializer: 5.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
-      whatwg-url: 17.1.0(@noble/hashes@2.3.0)
+      whatwg-url: 17.1.0(@noble/hashes@2.4.0)
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - '@noble/hashes'
@@ -9422,7 +9440,7 @@ snapshots:
 
   lru-cache@9.1.2: {}
 
-  lucide-react@1.34.0(react@19.2.8):
+  lucide-react@1.35.0(react@19.2.8):
     dependencies:
       react: 19.2.8
 
@@ -9774,6 +9792,10 @@ snapshots:
       sisteransi: 1.0.5
 
   protobufjs@8.7.2:
+    dependencies:
+      long: 5.3.2
+
+  protobufjs@8.8.0:
     dependencies:
       long: 5.3.2
 
@@ -10581,7 +10603,7 @@ snapshots:
       jiti: 2.7.0
       yaml: 2.9.0
 
-  vitest@4.1.11(@types/node@26.3.0)(@vitest/ui@4.1.11)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0)):
+  vitest@4.1.11(@types/node@26.3.0)(@vitest/ui@4.1.11)(jsdom@30.0.1(@noble/hashes@2.4.0))(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.11
       '@vitest/mocker': 4.1.11(vite@8.2.2(@types/node@26.3.0)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.0))
@@ -10606,7 +10628,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 26.3.0
       '@vitest/ui': 4.1.11(vitest@4.1.11)
-      jsdom: 30.0.1(@noble/hashes@2.3.0)
+      jsdom: 30.0.1(@noble/hashes@2.4.0)
     transitivePeerDependencies:
       - msw
 
@@ -10626,17 +10648,17 @@ snapshots:
 
   whatwg-mimetype@5.0.0: {}
 
-  whatwg-url@16.0.1(@noble/hashes@2.3.0):
+  whatwg-url@16.0.1(@noble/hashes@2.4.0):
     dependencies:
-      '@exodus/bytes': 1.15.1(@noble/hashes@2.3.0)
+      '@exodus/bytes': 1.15.1(@noble/hashes@2.4.0)
       tr46: 6.0.0
       webidl-conversions: 8.0.1
     transitivePeerDependencies:
       - '@noble/hashes'
 
-  whatwg-url@17.1.0(@noble/hashes@2.3.0):
+  whatwg-url@17.1.0(@noble/hashes@2.4.0):
     dependencies:
-      '@exodus/bytes': 1.15.1(@noble/hashes@2.3.0)
+      '@exodus/bytes': 1.15.1(@noble/hashes@2.4.0)
       tr46: 6.0.0
       webidl-conversions: 8.0.1
     transitivePeerDependencies:
