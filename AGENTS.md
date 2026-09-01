@@ -109,7 +109,7 @@ implementing new security-sensitive code paths.
 
 ## Protocol Coverage — SDK → Wallet Alignment
 
-The Conxius Enclave SDK (`conxius-enclave-sdk` v2.0.17) defines the canonical **42-chain AssetRegistry** and **52 protocol modules** (24 blockchain + 28 infrastructure). The wallet must provide user-facing protocol support for every chain where Conxian users hold or transact assets.
+The Conxius Enclave SDK (`conxius-enclave-sdk` v2.0.17) defines the canonical **42-chain AssetRegistry** and **43 protocol modules** (25 blockchain + 18 infrastructure). The wallet must provide user-facing protocol support for every chain where Conxian users hold or transact assets.
 
 ### Native Manager → SDK Chain Map
 
