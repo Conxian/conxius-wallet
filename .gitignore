@@ -85,6 +85,8 @@ openspec/changes/*
 !/AGENTS.md
 !/SECURITY.md
 !/CHANGELOG.md
+
+# AI Assistant & Tool Directories
 !.github/skills/
 .gemini/
 .agent/
@@ -92,7 +94,6 @@ openspec/changes/*
 .cursor/
 .pi/
 .qwen/
-.github/skills/
 .codex/
 .crush/
 .iflow/
@@ -113,7 +114,3 @@ openspec/changes/*
 .idx/
 .jules/
 .Jules/
-node_modules/
-test-results/
-playwright-report/
-.vscode/

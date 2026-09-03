@@ -35,8 +35,8 @@ def main():
             print(f"  {RED}✗{RESET} {f} is MISSING!")
             gov_passed = False
 
-    # 2. Check Git Tracked Files (Sensitive & Generated Artifacts)
-    print_section("2. Tracked Sensitive & Generated Files Check")
+    # 2. Check Git Tracked Files & Ignore Rule Hygiene
+    print_section("2. Tracked Sensitive, Generated Files & Ignore Rules Check")
     code, stdout, stderr = run_cmd("git ls-files", cwd=repo_root)
     if code != 0:
         print(f"  {RED}✗ Failed to execute git ls-files. Is this a git repository?{RESET}")
@@ -92,6 +92,31 @@ def main():
             print(f"    - {f}")
     else:
         print(f"  {GREEN}✓{RESET} No tracked generated artifacts or build files in git.")
+
+    # 2b. Check .gitignore rule hygiene
+    gitignore_passed = True
+    gitignore_path = os.path.join(repo_root, ".gitignore")
+    if os.path.exists(gitignore_path):
+        with open(gitignore_path, "r") as gf:
+            lines = [line.strip() for line in gf.readlines() if line.strip() and not line.strip().startswith("#")]
+        seen_rules = set()
+        duplicate_rules = []
+        for line in lines:
+            if line in seen_rules:
+                duplicate_rules.append(line)
+            else:
+                seen_rules.add(line)
+
+        if duplicate_rules:
+            print(f"  {RED}✗ HYGIENE ISSUE: Duplicate rules found in .gitignore!{RESET}")
+            for r in duplicate_rules:
+                print(f"    - Duplicate rule: {r}")
+            gitignore_passed = False
+        else:
+            print(f"  {GREEN}✓{RESET} .gitignore contains no duplicate rules.")
+    else:
+        print(f"  {RED}✗ .gitignore is MISSING!{RESET}")
+        gitignore_passed = False
 
     # 3. Check Version Consistency (Drift Detection)
     print_section("3. Release & Versioning Consistency Check")
@@ -199,6 +224,7 @@ def main():
     success = (gov_passed and
                not sensitive_found and
                not generated_found and
+               gitignore_passed and
                not any_version_failed and
                version_sync_passed and
                purpose_found and
