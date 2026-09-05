@@ -24,3 +24,12 @@
 - **Install Verification:** Integrity Hash (SRI/Subresource Integrity)
 - **Rollback Expectation:** Version deprecation + patch
 - **Promotion Owner:** Lead Engineer
+
+## 4. Repository Artifact & Runtime Containment Policy
+- **Scope:** Broad exclusion of generated/runtime artifacts in version control across all modules and scripts.
+- **Enforced Exclusions:**
+  - Python Bytecode & Runtime Caches: `__pycache__/`, `*.pyc`, `*.pyo`, `.pytest_cache/`
+  - Android Submodule Build Outputs: `android/**/build/`, `build/`, `android/.gradle/`, `.gradle/`
+  - Compiled Binaries & Release Packages: `*.apk`, `*.aab`, `*.aar`, `*.jar`
+  - Web & Testing Artifacts: `node_modules/`, `dist/`, `test-results/`, `playwright-report/`, `coverage/`
+- **Verification:** Enforced via `.gitignore` rules and programmatically validated on every scanner pass via `scripts/ci/baseline_hygiene_scanner.py`.
