@@ -99,3 +99,4 @@ workflow. This implementation does not create or modify a tag or release.
 - `scripts/ci/validate_android_security.sh` and
   `scripts/ci/check_release_version.mjs` fail closed when required evidence or
   metadata is missing.
+- `scripts/ci/baseline_hygiene_scanner.py` programmatically scans for tracked sensitive files, version sync, duplicate `.gitignore` rules, and generated/runtime build artifacts (including Python `__pycache__`, Android submodule build directories, and compiled binaries).
