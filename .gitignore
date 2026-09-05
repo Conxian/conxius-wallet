@@ -29,13 +29,23 @@ blob-report
 *.sln
 *.sw?
 
-# Android
-android/app/build
-android/app/build/generated/silent-payments/
+# Android and Build Binaries
+android/**/build/
 android/.gradle
 android/local.properties
 android/captures
 .gradle
+build/
+*.apk
+*.aab
+*.aar
+*.jar
+
+# Python Bytecode and Caches
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
 
 # Rust build artifacts
 native/**/target/
