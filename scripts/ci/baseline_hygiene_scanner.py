@@ -60,9 +60,14 @@ def main():
         r"^test-results/",
         r"^playwright-report/",
         r"^dist/",
-        r"^build/",
-        r"android/app/build/",
+        r"(^|/)build/",
+        r"android/.*/build/",
         r"android/\.gradle/",
+        r"__pycache__",
+        r"\.pyc$",
+        r"\.apk$",
+        r"\.aab$",
+        r"\.aar$",
     ]
 
     sensitive_found = []
