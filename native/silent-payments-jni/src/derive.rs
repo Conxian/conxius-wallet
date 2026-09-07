@@ -2,7 +2,7 @@ use std::str;
 
 use bip39::Mnemonic;
 use bitcoin::bip32::{ChildNumber, Xpriv};
-use secp256k1::{PublicKey, Secp256k1, SecretKey};
+use secp256k1::{PublicKey, SecretKey};
 use zeroize::Zeroizing;
 
 use crate::{
@@ -91,9 +91,8 @@ pub fn derive_receiver_keys(
     let scan_secret = derive_path(&seed, [352, coin_type, account, 1, 0])?;
     let spend_secret = derive_path(&seed, [352, coin_type, account, 0, 0])?;
     let mut spend_secret_key =
-        SecretKey::from_byte_array(*spend_secret).map_err(|_| NativeErrorCode::InvalidSecret)?;
-    let spend_public_key =
-        PublicKey::from_secret_key(&Secp256k1::new(), &spend_secret_key).serialize();
+        SecretKey::from_secret_bytes(*spend_secret).map_err(|_| NativeErrorCode::InvalidSecret)?;
+    let spend_public_key = PublicKey::from_secret_key(&spend_secret_key).serialize();
     spend_secret_key.non_secure_erase();
 
     Ok(DerivedReceiverKeys {
@@ -120,7 +119,7 @@ fn derive_path(seed: &[u8; 64], path: [u32; 5]) -> Result<Zeroizing<[u8; 32]>, N
         .derive_priv(&secp, &child_numbers)
         .map_err(|_| NativeErrorCode::InvalidSecret)?;
     let secret_bytes = derived.private_key.secret_bytes();
-    SecretKey::from_byte_array(secret_bytes).map_err(|_| NativeErrorCode::InvalidSecret)?;
+    SecretKey::from_secret_bytes(secret_bytes).map_err(|_| NativeErrorCode::InvalidSecret)?;
     Ok(Zeroizing::new(secret_bytes))
 }
 
@@ -155,10 +154,9 @@ mod tests {
         let mnemonic = b"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
         let keys = derive_receiver_keys(mnemonic, PUBLIC_FIXTURE_PASSPHRASE, Network::Mainnet, 0)
             .expect("known BIP39/BIP32 fixture");
-        let secp = Secp256k1::new();
-        let scan_secret = SecretKey::from_byte_array(*keys.scan_secret).expect("scan secret");
+        let scan_secret = SecretKey::from_secret_bytes(*keys.scan_secret).expect("scan secret");
         assert_eq!(
-            PublicKey::from_secret_key(&secp, &scan_secret).serialize(),
+            PublicKey::from_secret_key(&scan_secret).serialize(),
             [
                 0x02, 0x93, 0xfb, 0xbc, 0xfb, 0xc4, 0x90, 0x16, 0x2b, 0x5e, 0xed, 0x58, 0x3f, 0x00,
                 0x71, 0xea, 0x71, 0x08, 0x51, 0x2a, 0x1d, 0xbe, 0x0e, 0x91, 0x72, 0x88, 0xf1, 0x45,
@@ -219,8 +217,8 @@ mod tests {
             let keys = derive_receiver_keys(mnemonic, &passphrase, network, account)
                 .expect("native fixture derivation");
             let scan_secret =
-                SecretKey::from_byte_array(*keys.scan_secret).expect("fixture scan secret");
-            let scan_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &scan_secret);
+                SecretKey::from_secret_bytes(*keys.scan_secret).expect("fixture scan secret");
+            let scan_public_key = PublicKey::from_secret_key(&scan_secret);
 
             assert_eq!(
                 hex(&scan_public_key.serialize()),
