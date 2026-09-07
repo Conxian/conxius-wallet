@@ -7,7 +7,7 @@ use conxius_silent_payments_jni::{
     scan_public_batch, BatchMetrics, DecodedResult, Network, PublicBatch, PublicMatch,
     PublicScanResult, PublicTransaction,
 };
-use secp256k1::{PublicKey, Secp256k1, SecretKey};
+use secp256k1::{PublicKey, SecretKey};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
@@ -86,7 +86,6 @@ fn derived_output_key(
     input_public_key: [u8; 33],
     k: u32,
 ) -> [u8; 32] {
-    let secp = Secp256k1::new();
     let input_public_key = PublicKey::from_byte_array_compressed(input_public_key).unwrap();
     let input_hash = tagged_hash(
         b"BIP0352/Inputs",
@@ -97,9 +96,9 @@ fn derived_output_key(
         .concat(),
     );
     let input_hash = secp256k1::Scalar::from_be_bytes(input_hash).unwrap();
-    let first_ecdh = input_public_key.mul_tweak(&secp, &input_hash).unwrap();
+    let first_ecdh = input_public_key.mul_tweak(&input_hash).unwrap();
     let scan_scalar = secp256k1::Scalar::from_be_bytes(*scan_secret).unwrap();
-    let ecdh_point = first_ecdh.mul_tweak(&secp, &scan_scalar).unwrap();
+    let ecdh_point = first_ecdh.mul_tweak(&scan_scalar).unwrap();
     let mut tweak_message = Vec::with_capacity(37);
     tweak_message.extend_from_slice(&ecdh_point.serialize());
     tweak_message.extend_from_slice(&k.to_be_bytes());
@@ -108,11 +107,11 @@ fn derived_output_key(
             .unwrap();
     PublicKey::from_byte_array_compressed(spend_public_key)
         .unwrap()
-        .add_exp_tweak(&secp, &tweak)
+        .add_exp_tweak(&tweak)
         .unwrap()
         .x_only_public_key()
         .0
-        .serialize()
+        .to_byte_array()
 }
 
 fn fixed<const N: usize>(value: &str) -> [u8; N] {
@@ -131,8 +130,8 @@ fn sample_batch() -> PublicBatch {
         txid_le: [7u8; 32],
         vout: 1,
     };
-    let spend_secret = SecretKey::from_byte_array([2u8; 32]).expect("fixture secret");
-    let spend_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &spend_secret).serialize();
+    let spend_secret = SecretKey::from_secret_bytes([2u8; 32]).expect("fixture secret");
+    let spend_public_key = PublicKey::from_secret_key(&spend_secret).serialize();
     PublicBatch {
         network: Network::Testnet,
         account: 0,
@@ -253,8 +252,8 @@ fn public_batch_adapter_derives_keys_and_returns_public_matches() {
         txid_le: [7u8; 32],
         vout: 1,
     };
-    let input_secret = SecretKey::from_byte_array([2u8; 32]).expect("fixture input secret");
-    let input_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &input_secret).serialize();
+    let input_secret = SecretKey::from_secret_bytes([2u8; 32]).expect("fixture input secret");
+    let input_public_key = PublicKey::from_secret_key(&input_secret).serialize();
     let derived = conxius_silent_payments_jni::derive_receiver_keys(
         b"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
         PUBLIC_FIXTURE_PASSPHRASE,
@@ -318,8 +317,8 @@ fn public_batch_adapter_rejects_pathological_ecc_work_before_secret_derivation()
         txid_le: [12u8; 32],
         vout: 0,
     };
-    let input_secret = SecretKey::from_byte_array([2u8; 32]).expect("fixture input secret");
-    let input_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &input_secret).serialize();
+    let input_secret = SecretKey::from_secret_bytes([2u8; 32]).expect("fixture input secret");
+    let input_public_key = PublicKey::from_secret_key(&input_secret).serialize();
     let outputs: Vec<_> = (0..MAX_TAPROOT_OUTPUTS)
         .map(|vout| TaprootOutput {
             output_key: [0u8; 32],
@@ -505,11 +504,11 @@ fn official_bip352_core_vector_adapter_is_separate_from_jni_e2e() {
         given["key_material"]["scan_priv_key"].as_str().unwrap(),
     ))
     .expect("official scan secret");
-    let spend_secret = SecretKey::from_byte_array(fixed::<32>(
+    let spend_secret = SecretKey::from_secret_bytes(fixed::<32>(
         given["key_material"]["spend_priv_key"].as_str().unwrap(),
     ))
     .expect("official spend secret");
-    let spend_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &spend_secret).serialize();
+    let spend_public_key = PublicKey::from_secret_key(&spend_secret).serialize();
     let outcome = scan_transaction(
         &scan_secret,
         spend_public_key,
