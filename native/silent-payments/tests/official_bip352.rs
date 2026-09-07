@@ -5,7 +5,7 @@ use conxius_silent_payments::{
     ScanOutcome, ScanSecret, ScanSkipReason, ScanStopReason, TaprootOutput, K_MAX,
 };
 use ripemd::{Digest as RipemdDigest, Ripemd160};
-use secp256k1::{Parity, PublicKey, Scalar, Secp256k1, SecretKey};
+use secp256k1::{Parity, PublicKey, Scalar, SecretKey};
 use serde_json::Value;
 use sha2::{Digest as Sha2Digest, Sha256};
 
@@ -231,12 +231,12 @@ fn scan_secret(given: &Value) -> ScanSecret {
 }
 
 fn spend_public_key(given: &Value) -> [u8; 33] {
-    let spend_secret = SecretKey::from_byte_array(fixed::<32>(string_field(
+    let spend_secret = SecretKey::from_secret_bytes(fixed::<32>(string_field(
         &given["key_material"],
         "spend_priv_key",
     )))
     .expect("official spend secret must be valid");
-    PublicKey::from_secret_key(&Secp256k1::new(), &spend_secret).serialize()
+    PublicKey::from_secret_key(&spend_secret).serialize()
 }
 
 fn spend_public_key_point(given: &Value) -> PublicKey {
@@ -307,11 +307,11 @@ fn independent_shared_secret_tweak(shared_secret: &[u8; 33], k: u32) -> Scalar {
 
 fn add_scalars(left: Scalar, right: Scalar) -> Scalar {
     let left_bytes = left.to_be_bytes();
-    let mut result = SecretKey::from_byte_array(left_bytes)
+    let mut result = SecretKey::from_secret_bytes(left_bytes)
         .expect("official scalar must be usable as a secret key")
         .add_tweak(&right)
         .expect("official scalar addition must remain non-zero");
-    let result_bytes = result.secret_bytes();
+    let result_bytes = result.to_secret_bytes();
     result.non_secure_erase();
     independent_scalar(result_bytes)
 }
@@ -354,15 +354,14 @@ fn assert_expected_intermediates(
     input_hash_message.extend_from_slice(&lowest_outpoint.serialize());
     input_hash_message.extend_from_slice(&input_public_key_sum.serialize());
     let input_hash = independent_scalar(independent_tagged_hash(INPUTS_TAG, &input_hash_message));
-    let secp = Secp256k1::new();
     let tweak_point = input_public_key_sum
-        .mul_tweak(&secp, &input_hash)
+        .mul_tweak(&input_hash)
         .expect("official input tweak point");
 
     let scan_secret = fixed::<32>(string_field(&given["key_material"], "scan_priv_key"));
-    let scan_secret_key = SecretKey::from_byte_array(scan_secret).expect("official scan secret");
+    let scan_secret_key = SecretKey::from_secret_bytes(scan_secret).expect("official scan secret");
     let shared_secret = tweak_point
-        .mul_tweak(&secp, &Scalar::from(scan_secret_key))
+        .mul_tweak(&Scalar::from(scan_secret_key))
         .expect("official shared secret point");
 
     assert_eq!(
@@ -392,7 +391,6 @@ fn expected_match(given: &Value, expected: &Value, output: &Value) -> ExpectedMa
     let scan_secret = fixed::<32>(string_field(&given["key_material"], "scan_priv_key"));
     let receiver_labels = labels(given);
     let spend_public_key = spend_public_key_point(given);
-    let secp = Secp256k1::new();
     let mut candidates = Vec::new();
 
     for k in 0..K_MAX {
@@ -416,10 +414,10 @@ fn expected_match(given: &Value, expected: &Value, output: &Value) -> ExpectedMa
     );
     let (k, kind, candidate_tweak) = candidates.pop().expect("one official candidate");
     let derived_point = spend_public_key
-        .add_exp_tweak(&secp, &candidate_tweak)
+        .add_exp_tweak(&candidate_tweak)
         .expect("official output tweak point");
     assert_eq!(
-        derived_point.x_only_public_key().0.serialize(),
+        derived_point.x_only_public_key().0.to_byte_array(),
         expected_output_key,
         "canonical output public key for k/label"
     );
@@ -448,7 +446,6 @@ fn canonical_k_max_matches(given: &Value, expected: &Value) -> Vec<ExpectedMatch
     let scan_secret = fixed::<32>(string_field(&given["key_material"], "scan_priv_key"));
     let receiver_labels = labels(given);
     let spend_public_key = spend_public_key_point(given);
-    let secp = Secp256k1::new();
     let output_keys: Vec<[u8; 32]> = given["outputs"]
         .as_array()
         .expect("official K_max outputs array")
@@ -472,11 +469,11 @@ fn canonical_k_max_matches(given: &Value, expected: &Value) -> Vec<ExpectedMatch
                 .into_iter()
                 .filter(|(_, tweak)| {
                     spend_public_key
-                        .add_exp_tweak(&secp, tweak)
+                        .add_exp_tweak(tweak)
                         .expect("official K_max output tweak point")
                         .x_only_public_key()
                         .0
-                        .serialize()
+                        .to_byte_array()
                         == expected_output_key
                 })
                 .collect();
@@ -490,7 +487,7 @@ fn canonical_k_max_matches(given: &Value, expected: &Value) -> Vec<ExpectedMatch
                 .next()
                 .expect("one canonical K_max output candidate");
             let derived_point = spend_public_key
-                .add_exp_tweak(&secp, &candidate_tweak)
+                .add_exp_tweak(&candidate_tweak)
                 .expect("official K_max output point");
             ExpectedMatch {
                 output_key: expected_output_key,
@@ -686,8 +683,8 @@ fn ordered_output_adapter_preserves_duplicate_identities() {
 #[test]
 fn malformed_public_records_fail_closed_without_secret_bearing_errors() {
     let scan_secret = ScanSecret::from_bytes([1u8; 32]).expect("test scan secret");
-    let spend_secret = SecretKey::from_byte_array([2u8; 32]).expect("test spend secret");
-    let spend_public_key = PublicKey::from_secret_key(&Secp256k1::new(), &spend_secret).serialize();
+    let spend_secret = SecretKey::from_secret_bytes([2u8; 32]).expect("test spend secret");
+    let spend_public_key = PublicKey::from_secret_key(&spend_secret).serialize();
     let input = EligibleInput {
         outpoint: OutPoint {
             txid_le: [3u8; 32],
