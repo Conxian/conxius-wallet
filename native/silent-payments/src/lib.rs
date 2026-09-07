@@ -12,7 +12,7 @@ use std::{
 };
 
 use secp256k1::{
-    constants::PUBLIC_KEY_SIZE, Parity, PublicKey, Scalar, Secp256k1, SecretKey, XOnlyPublicKey,
+    constants::PUBLIC_KEY_SIZE, Parity, PublicKey, Scalar, SecretKey, XOnlyPublicKey,
 };
 use sha2::{Digest, Sha256};
 use thiserror::Error;
@@ -155,7 +155,7 @@ impl ScanSecret {
     /// Creates a scan secret from raw big-endian bytes.
     pub fn from_bytes(bytes: [u8; 32]) -> Result<Self, ScanError> {
         let mut secret_key =
-            SecretKey::from_byte_array(bytes).map_err(|_| ScanError::InvalidScanSecret)?;
+            SecretKey::from_secret_bytes(bytes).map_err(|_| ScanError::InvalidScanSecret)?;
         secret_key.non_secure_erase();
         Ok(Self(Zeroizing::new(bytes)))
     }
@@ -400,7 +400,6 @@ pub fn scan_transaction_with_cancellation<C: CancellationToken>(
         });
     }
 
-    let secp = Secp256k1::new();
     let spend_public_key = PublicKey::from_byte_array_compressed(spend_public_key)
         .map_err(|_| ScanError::InvalidSpendPublicKey)?;
 
@@ -465,10 +464,10 @@ pub fn scan_transaction_with_cancellation<C: CancellationToken>(
     // that the compiler never copied a value, so this is cleanup rather than a hard guarantee.
     let ecdh_serialized = {
         let mut scan_scalar = scan_secret.scalar();
-        let first_ecdh = input_public_key_sum.mul_tweak(&secp, &input_hash);
+        let first_ecdh = input_public_key_sum.mul_tweak(&input_hash);
         input_hash.non_secure_erase();
         let first_ecdh = first_ecdh.map_err(|_| ScanError::PointOperation)?;
-        let ecdh_point = first_ecdh.mul_tweak(&secp, &scan_scalar);
+        let ecdh_point = first_ecdh.mul_tweak(&scan_scalar);
         scan_scalar.non_secure_erase();
         let ecdh_point = ecdh_point.map_err(|_| ScanError::PointOperation)?;
         Zeroizing::new(ecdh_point.serialize())
@@ -477,7 +476,7 @@ pub fn scan_transaction_with_cancellation<C: CancellationToken>(
     if cancellation.is_cancelled() {
         return Err(ScanError::Cancelled);
     }
-    let label_candidates = build_label_candidates(scan_secret, labels, &secp)?;
+    let label_candidates = build_label_candidates(scan_secret, labels)?;
     let mut matched_outputs = vec![false; parsed_outputs.len()];
     let mut matched_output_count = 0usize;
     let mut matches = Vec::with_capacity(parsed_outputs.len().min(K_MAX as usize));
@@ -493,10 +492,10 @@ pub fn scan_transaction_with_cancellation<C: CancellationToken>(
         let mut tweak =
             valid_nonzero_scalar(&tagged_hash(SHARED_SECRET_TAG, tweak_message.as_ref()))
                 .ok_or(ScanError::InvalidSharedSecretTweak(k))?;
-        let derived_key = spend_public_key.add_exp_tweak(&secp, &tweak);
+        let derived_key = spend_public_key.add_exp_tweak(&tweak);
         tweak.non_secure_erase();
         let derived_key = derived_key.map_err(|_| ScanError::PointOperation)?;
-        let derived_x_only = derived_key.x_only_public_key().0.serialize();
+        let derived_x_only = derived_key.x_only_public_key().0.to_byte_array();
 
         let mut found_match = None;
         for (output_index, (output, output_point)) in parsed_outputs.iter().enumerate() {
@@ -516,14 +515,14 @@ pub fn scan_transaction_with_cancellation<C: CancellationToken>(
                 continue;
             }
 
-            let derived_negative = derived_key.negate(&secp);
+            let derived_negative = derived_key.negate();
             if let Some(kind) = find_label_match(*output_point, derived_negative, &label_candidates)
             {
                 found_match = Some((output_index, kind, false));
                 break;
             }
 
-            let negated_output = output_point.negate(&secp);
+            let negated_output = output_point.negate();
             if let Some(kind) =
                 find_label_match(negated_output, derived_negative, &label_candidates)
             {
@@ -641,7 +640,6 @@ fn validate_limit(resource: ScanResource, actual: usize, limit: usize) -> Result
 fn build_label_candidates(
     scan_secret: &ScanSecret,
     labels: &[u32],
-    secp: &Secp256k1<secp256k1::All>,
 ) -> Result<HashMap<[u8; PUBLIC_KEY_SIZE], u32>, ScanError> {
     let mut candidates = HashMap::with_capacity(labels.len());
     for &index in labels {
@@ -651,14 +649,14 @@ fn build_label_candidates(
         let mut scalar = valid_nonzero_scalar(&tagged_hash(LABEL_TAG, message.as_ref()))
             .ok_or(ScanError::InvalidLabel(index))?;
         let scalar_bytes = Zeroizing::new(scalar.to_be_bytes());
-        let mut secret_key = match SecretKey::from_byte_array(*scalar_bytes) {
+        let mut secret_key = match SecretKey::from_secret_bytes(*scalar_bytes) {
             Ok(secret_key) => secret_key,
             Err(_) => {
                 scalar.non_secure_erase();
                 return Err(ScanError::InvalidLabel(index));
             }
         };
-        let point = PublicKey::from_secret_key(secp, &secret_key);
+        let point = PublicKey::from_secret_key(&secret_key);
         secret_key.non_secure_erase();
         scalar.non_secure_erase();
         candidates.entry(point.serialize()).or_insert(index);
@@ -698,8 +696,8 @@ mod tests {
     use std::sync::atomic::AtomicUsize;
 
     fn test_spend_public_key() -> [u8; PUBLIC_KEY_SIZE] {
-        let spend_secret = SecretKey::from_byte_array([2u8; 32]).expect("test spend secret");
-        PublicKey::from_secret_key(&Secp256k1::new(), &spend_secret).serialize()
+        let spend_secret = SecretKey::from_secret_bytes([2u8; 32]).expect("test spend secret");
+        PublicKey::from_secret_key(&spend_secret).serialize()
     }
 
     fn test_outpoint(vout: u32) -> OutPoint {
@@ -953,12 +951,11 @@ mod tests {
         );
 
         let output_key = PublicKey::from_secret_key(
-            &Secp256k1::new(),
-            &SecretKey::from_byte_array([3u8; 32]).expect("test output secret"),
+            &SecretKey::from_secret_bytes([3u8; 32]).expect("test output secret"),
         )
         .x_only_public_key()
         .0
-        .serialize();
+        .to_byte_array();
         let duplicate_output = TaprootOutput {
             output_key,
             outpoint: test_outpoint(2),
@@ -1006,12 +1003,11 @@ mod tests {
         let spend_public_key = test_spend_public_key();
         let input_outpoint = test_outpoint(0);
         let output_key = PublicKey::from_secret_key(
-            &Secp256k1::new(),
-            &SecretKey::from_byte_array([3u8; 32]).expect("test output secret"),
+            &SecretKey::from_secret_bytes([3u8; 32]).expect("test output secret"),
         )
         .x_only_public_key()
         .0
-        .serialize();
+        .to_byte_array();
         let cancellation = CancelAt {
             checks: AtomicUsize::new(0),
             cancel_at: 5,
