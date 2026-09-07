@@ -11,9 +11,7 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-use secp256k1::{
-    constants::PUBLIC_KEY_SIZE, Parity, PublicKey, Scalar, SecretKey, XOnlyPublicKey,
-};
+use secp256k1::{constants::PUBLIC_KEY_SIZE, Parity, PublicKey, Scalar, SecretKey, XOnlyPublicKey};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 use zeroize::Zeroizing;

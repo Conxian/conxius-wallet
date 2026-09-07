@@ -92,8 +92,7 @@ pub fn derive_receiver_keys(
     let spend_secret = derive_path(&seed, [352, coin_type, account, 0, 0])?;
     let mut spend_secret_key =
         SecretKey::from_secret_bytes(*spend_secret).map_err(|_| NativeErrorCode::InvalidSecret)?;
-    let spend_public_key =
-        PublicKey::from_secret_key(&spend_secret_key).serialize();
+    let spend_public_key = PublicKey::from_secret_key(&spend_secret_key).serialize();
     spend_secret_key.non_secure_erase();
 
     Ok(DerivedReceiverKeys {
