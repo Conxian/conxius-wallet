@@ -73,6 +73,26 @@ reflected in the [PRD.md](docs/business/PRD.md) and tracked in [IMPLEMENTATION_R
 - If you modify internal logic, update the corresponding documentation sections
   from **Pending** to **Active**.
 
+## 🚀 Release & Changelog Guidance
+
+All releases and version bumps must follow strict versioning discipline and changelog procedures:
+
+1. **Semantic Versioning**: Releases strictly adhere to `MAJOR.MINOR.PATCH` (e.g., `1.9.5`).
+2. **Changelog Maintenance**: Every user-facing or architectural change must update [CHANGELOG.md](CHANGELOG.md) under the top unreleased/active release heading following the [Keep a Changelog](https://keepachangelog.com/) format. Use standard categories:
+   - `### Added` for new features or capabilities.
+   - `### Changed` for modifications to existing functionality.
+   - `### Fixed` for bug fixes.
+   - `### Security` for vulnerability remediations and dependency hardening.
+   - `### Operations` for governance, CI/CD, and release pipeline updates.
+3. **Multi-File Version Synchronization**: Any version bump MUST be synchronized across all authoritative version fields:
+   - `package.json` (`version`)
+   - `metadata.json` (`version`)
+   - `android/app/build.gradle.kts` (`versionName` & derived `versionCode` via `scripts/ci/derive_android_version_code.mjs`)
+   - `README.md` (Production claim)
+   - `CHANGELOG.md` (Release section header)
+4. **Pull Request Labeling & Release Notes**: Pull Requests should apply appropriate GitHub labels (`security`, `dependencies`, `governance`, `ci`, `docs`, `chore`) to ensure automated aggregation in GitHub Release notes as defined in [.github/release.yml](.github/release.yml).
+5. **Release Gate Verification**: Release builds and publication are verified by `.github/workflows/android-release.yml` and must satisfy all required CI checks specified in [docs/operations/CI_CD_BASELINE.md](docs/operations/CI_CD_BASELINE.md).
+
 ## ⚖️ Governance & Approval
 
 Conxius follows a formal operational governance model as defined in [docs/operations/OPERATING_MODEL.md](docs/operations/OPERATING_MODEL.md).

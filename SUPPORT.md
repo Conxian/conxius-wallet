@@ -2,6 +2,20 @@
 
 This document provides guidance on how to get help with the Conxius Wallet and how to interact with the project team.
 
+## Repository Categorization & Support Expectations
+
+The `conxius-wallet` repository is formally categorized as **Tier 1: Production Core**.
+
+- **Classification**: Production Core (Public Wallet & Reference Client)
+- **Scope**: Sovereign mobile wallet application, enclave signing interfaces, and reference client flows.
+- **Maintainer SLA Expectations**:
+
+| Severity Tier | Definition / Impact | Target Response SLA | Target Resolution / Mitigation |
+| ------------- | ------------------- | ------------------- | ------------------------------ |
+| **P0 - Critical** | Exploitable security vulnerability, key loss, or total loss of wallet availability on mainnet | < 24 hours | Hotfix / Security Advisory within 48 hours |
+| **P1 - High** | Impaired core functionality (e.g., transaction broadcast failure, chain RPC sync block) | < 48 hours | Resolution in next patch release or < 5 business days |
+| **P2 - Normal** | Non-critical bugs, UI/UX polish, or enhancement requests | < 5 business days | Scheduled in roadmap sprint cycles |
+
 ## End-User Support
 
 If you are an end-user of the Conxius Wallet and need assistance with using the application:
