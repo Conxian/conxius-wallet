@@ -101,8 +101,8 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0
       bitcoinjs-lib:
-        specifier: ^7.0.1
-        version: 7.0.1(@typescript/typescript6@6.0.2)
+        specifier: ^7.0.2
+        version: 7.0.2(@typescript/typescript6@6.0.2)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -122,8 +122,8 @@ importers:
         specifier: ^6.0.2-liquid.38
         version: 6.0.2-liquid.38
       lucide-react:
-        specifier: ^1.41.0
-        version: 1.41.0(react@19.2.8)
+        specifier: ^1.42.0
+        version: 1.42.0(react@19.2.8)
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -2488,8 +2488,8 @@ packages:
     resolution: {integrity: sha512-tlf/r2DGMbF7ky1MgUqXHzypYHakkEnm0SZP23CJKIqNY/5uNAnMbFhMJdhjrL/7anfb/U8+AlpdjPWjPnAalg==}
     engines: {node: '>=8.0.0'}
 
-  bitcoinjs-lib@7.0.1:
-    resolution: {integrity: sha512-vwEmpL5Tpj0I0RBdNkcDMXePoaYSTeKY6mL6/l5esbnTs+jGdPDuLp4NY1hSh6Zk5wSgePygZ4Wx5JJao30Pww==}
+  bitcoinjs-lib@7.0.2:
+    resolution: {integrity: sha512-ugLk9SR+2gvhpNA7kqQL1eVDKyBNo/rbr+df72nrZj4OOdZvQRHDVtyogPGXAU2MLQimLL7EbUdz95QGh6Th5Q==}
     engines: {node: '>=18.0.0'}
 
   bitset@5.2.3:
@@ -3918,8 +3918,8 @@ packages:
     resolution: {integrity: sha512-ERJq3FOzJTxBbFjZ7iDs+NiK4VI9Wz+RdrrAB8dio1oV+YvdPzUEE4QNiT2VD51DkIbCYRUUzCRkssXCHqSnKQ==}
     engines: {node: 14 || >=16.14}
 
-  lucide-react@1.41.0:
-    resolution: {integrity: sha512-6lksP35l6KszDKUeRTi4LV7i6DEe0Yzl2ALJm9j4c5xEYN91GdW1xGsawGMOg2mgjF5GHBVX8pKX9kP+cWsP3Q==}
+  lucide-react@1.42.0:
+    resolution: {integrity: sha512-b3jprplnoLS8n5etw1z8xODe3hF/yjKATrTitsrKrnjUhCef5BdDct6Ppv3zVvzFwmtfWgLO6XNM3C9fAD93ug==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -7959,7 +7959,7 @@ snapshots:
       typeforce: 1.18.0
       varuint-bitcoin: 1.1.2
 
-  bitcoinjs-lib@7.0.1(@typescript/typescript6@6.0.2):
+  bitcoinjs-lib@7.0.2(@typescript/typescript6@6.0.2):
     dependencies:
       '@noble/hashes': 1.8.0
       bech32: 2.0.0
@@ -9535,7 +9535,7 @@ snapshots:
 
   lru-cache@9.1.2: {}
 
-  lucide-react@1.41.0(react@19.2.8):
+  lucide-react@1.42.0(react@19.2.8):
     dependencies:
       react: 19.2.8
 
