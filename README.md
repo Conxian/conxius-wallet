@@ -52,8 +52,8 @@ This repository is maintained by Conxian Labs as a public product surface for th
 ## Release discipline
 
 - Semantic Versioning is enforced.
-- Production releases are tagged.
-- Every release requires a `CHANGELOG.md` entry.
+- Production releases are tagged and require synchronized version updates across `package.json`, `metadata.json`, `android/app/build.gradle.kts`, `README.md`, and `CHANGELOG.md`.
+- Release guidance and changelog formatting standards are documented in [CONTRIBUTING.md#release--changelog-guidance](CONTRIBUTING.md#release--changelog-guidance).
 - Promotion to `main` requires successful validation and approval according to repository policy.
 - Release gates and external GitHub settings: [docs/operations/CI_CD_BASELINE.md](docs/operations/CI_CD_BASELINE.md)
 - Rollback procedure: [docs/operations/RELEASE_ROLLBACK.md](docs/operations/RELEASE_ROLLBACK.md)
@@ -91,6 +91,7 @@ Do not disclose vulnerabilities publicly. Use [SECURITY.md](SECURITY.md) or `sec
 ## Policies
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
+- [SUPPORT.md](SUPPORT.md) (Tier 1 Support Expectations & SLAs)
 - [SECURITY.md](SECURITY.md)
 - [CODEOWNERS](CODEOWNERS)
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
