@@ -148,6 +148,8 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: ''
 
       - name: Install Android SDK packages
         shell: bash
@@ -320,6 +322,8 @@ jobs:
 
       - name: Setup Android SDK for artifact verification
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: ''
 
       - name: Install Android artifact verification tools
         shell: bash
@@ -471,6 +475,8 @@ jobs:
 
       - name: Setup Android SDK for artifact verification
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: ''
 
       - name: Install Android artifact verification tools
         run: |
@@ -623,6 +629,8 @@ jobs:
 
       - name: Setup Android SDK for artifact verification
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: ''
 
       - name: Install Android artifact verification tools
         run: |
