@@ -11,7 +11,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bitcoin = { version = "0.32.7", default-features = false, features = ["std"] }
-bip39 = { version = "2.2.0", default-features = false, features = ["std", "all-languages"] }
+bip39 = { version = "3.0.0", default-features = false, features = ["std", "all-languages"] }
 conxius-silent-payments = { path = "../silent-payments" }
 jni = "0.22.4"
 secp256k1 = "0.33.1"
