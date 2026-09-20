@@ -26,6 +26,8 @@
   },
   "type": "module",
   "scripts": {
+    "preinstall": "node scripts/ci/check_toolchain_version.mjs",
+    "check:toolchain": "node scripts/ci/check_toolchain_version.mjs",
     "dev": "vite",
     "build": "pnpm run check:typescript-compat && pnpm run typecheck:ts7 && vite build",
     "preview": "vite preview",
