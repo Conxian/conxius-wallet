@@ -30,6 +30,6 @@
 - **Enforced Exclusions:**
   - Python Bytecode & Runtime Caches: `__pycache__/`, `*.pyc`, `*.pyo`, `.pytest_cache/`
   - Android Submodule Build Outputs: `android/**/build/`, `build/`, `android/.gradle/`, `.gradle/`
-  - Compiled Binaries & Release Packages: `*.apk`, `*.aab`, `*.aar`, `*.jar`
+  - Compiled Binaries & Release Packages: `*.apk`, `*.aab`, `*.aar`, `*.jar`, `*.bat` (legacy Windows batch scripts excluded)
   - Web & Testing Artifacts: `node_modules/`, `dist/`, `test-results/`, `playwright-report/`, `coverage/`
 - **Verification:** Enforced via `.gitignore` rules and programmatically validated on every scanner pass via `scripts/ci/baseline_hygiene_scanner.py`.
