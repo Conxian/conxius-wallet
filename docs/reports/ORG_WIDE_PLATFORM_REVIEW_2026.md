@@ -75,3 +75,13 @@ To eliminate manual setup drift, the platform recommends deploying `@conxian/cli
 ---
 
 *Prepared by Jules, Sovereign Systems Architect. Aligned with v1.9.5 Production Readiness Standards.*
+
+---
+
+## 4. Org-Wide SLA Positioning & Enterprise Risk Containment
+
+### 4.1 Structural SLA Realignment Strategy
+- **Core Reality**: Open-source infrastructure pre-seed/grant funding does not support 24/7/365 follow-the-sun incident response. Applying rigid commercial SLAs across public protocol layers creates severe maintainer bottlenecks and liability traps.
+- **Protocol vs. Enterprise Decoupling**:
+  - **Public Core Protocol (`conxius-wallet`, `lib-conxian-core`, `conxius-enclave-sdk`, `conxian-nexus`)**: Public code is provided "AS-IS" without commercial SLAs. Support is provided on a community best-effort basis.
+  - **Enterprise Gateway Tier (`conxian-gateway` / ISO 20022 Adapters)**: Commercial SLAs are restricted exclusively to paid enterprise contracts, covering integration support and business-hour response times, explicitly excluding network uptime, L1/L2 consensus halts, and vendor enclave deprecations.
