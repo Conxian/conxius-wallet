@@ -21,5 +21,5 @@ assignees: []
 
 ## Environment
 - **Node**: 22.x
-- **pnpm**: 10.30.3
+- **pnpm**: 11.13.0
 - **Android**: Gradle 9.x / Kotlin 2.4.x
