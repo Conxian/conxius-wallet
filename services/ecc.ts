@@ -20,7 +20,8 @@ export function tweakTaprootPubkey(publicKey: Uint8Array, tweak: Uint8Array): Ui
     const t = BigInt('0x' + Buffer.from(tweak).toString('hex'));
     const Q = P.add(Point.BASE.multiply(t));
 
-    return Q.toRawBytes(true).slice(1, 33);
+    const raw = typeof Q.toBytes === 'function' ? Q.toBytes(true) : Q.toRawBytes(true);
+    return raw.slice(1, 33);
 }
 
 /**
@@ -33,7 +34,7 @@ export function hasEvenY(publicKey: Uint8Array): boolean {
             ? '02' + Buffer.from(publicKey).toString('hex')
             : Buffer.from(publicKey).toString('hex')
     );
-    const raw = P.toRawBytes(true);
+    const raw = typeof P.toBytes === 'function' ? P.toBytes(true) : P.toRawBytes(true);
     return raw[0] === 0x02;
 }
 
