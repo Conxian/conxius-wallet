@@ -602,12 +602,13 @@ fn skip_reason_name(reason: conxius_silent_payments::ScanSkipReason) -> &'static
 }
 
 fn hex_fixed<const N: usize>(value: &str, name: &str) -> Result<[u8; N], String> {
-    if value.len() != N * 2 || !value.as_bytes().chunks_exact(2).remainder().is_empty() {
+    let (chunks, remainder) = value.as_bytes().as_chunks::<2>();
+    if value.len() != N * 2 || !remainder.is_empty() {
         return Err(format!("{name} must contain {N} bytes"));
     }
     let mut bytes = [0u8; N];
-    for (index, pair) in value.as_bytes().chunks_exact(2).enumerate() {
-        bytes[index] = (hex_nibble(pair[0])? << 4) | hex_nibble(pair[1])?;
+    for (index, &[hi, lo]) in chunks.iter().enumerate() {
+        bytes[index] = (hex_nibble(hi)? << 4) | hex_nibble(lo)?;
     }
     Ok(bytes)
 }

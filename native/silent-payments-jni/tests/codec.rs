@@ -30,8 +30,10 @@ fn hex_nibble(byte: u8) -> u8 {
 fn hex_bytes(value: &str) -> Vec<u8> {
     value
         .as_bytes()
-        .chunks_exact(2)
-        .map(|pair| (hex_nibble(pair[0]) << 4) | hex_nibble(pair[1]))
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|&[hi, lo]| (hex_nibble(hi) << 4) | hex_nibble(lo))
         .collect()
 }
 
