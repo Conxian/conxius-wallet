@@ -13,7 +13,10 @@ class LiquidManager {
      */
     fun deriveConfidentialAddress(): String {
         Log.d(TAG, "Deriving Liquid Confidential Address")
-        return "tlq1${System.currentTimeMillis()}"
+        return ProductionRuntimeGuard.failClosed(
+            "Liquid confidential address derivation",
+            "lq1qq2xl3s45842c35acc3a48019fafb586a5d2811a2_confidential_sample"
+        )
     }
 
     /**
