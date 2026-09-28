@@ -34,8 +34,8 @@ fn fixed<const N: usize>(hex: &str) -> [u8; N] {
         "official vector byte field has wrong length"
     );
     let mut result = [0u8; N];
-    for (index, byte) in hex.as_bytes().chunks_exact(2).enumerate() {
-        result[index] = (hex_nibble(byte[0]) << 4) | hex_nibble(byte[1]);
+    for (index, &[hi, lo]) in hex.as_bytes().as_chunks::<2>().0.iter().enumerate() {
+        result[index] = (hex_nibble(hi) << 4) | hex_nibble(lo);
     }
     result
 }
@@ -43,8 +43,10 @@ fn fixed<const N: usize>(hex: &str) -> [u8; N] {
 fn hex_bytes(hex: &str) -> Vec<u8> {
     assert_eq!(hex.len() % 2, 0, "official vector hex field has odd length");
     hex.as_bytes()
-        .chunks_exact(2)
-        .map(|byte| (hex_nibble(byte[0]) << 4) | hex_nibble(byte[1]))
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|&[hi, lo]| (hex_nibble(hi) << 4) | hex_nibble(lo))
         .collect()
 }
 
