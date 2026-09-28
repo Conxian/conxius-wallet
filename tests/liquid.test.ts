@@ -72,7 +72,12 @@ describe('Liquid Confidentiality & Protocol Service Suite', () => {
       txid: 'a000000000000000000000000000000000000000000000000000000000000001',
       vout: 0,
       amount: 100000,
-      script: '00140000000000000000000000000000000000000000'
+      address: 'ex1qsampleliquidaddress',
+      script: '00140000000000000000000000000000000000000000',
+      status: 'confirmed',
+      isFrozen: false,
+      derivationPath: "m/84'/0'/0'/0/0",
+      privacyRisk: 'Low'
     };
 
     it('should construct a valid Base64 encoded peg-out PSET', async () => {
