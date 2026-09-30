@@ -1,5 +1,7 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { Network, UTXO } from '../types';
+import { tweakTaprootPubkey } from './ecc';
+import { sha256 } from '@noble/hashes/sha2.js';
 
 /**
  * Sovereign Smart Wallet Service (v1.2)
@@ -83,12 +85,24 @@ export const checkPolicyCompliance = (utxos: UTXO[], policy: SpendingPolicy): bo
 };
 
 /**
- * Generates a Bitcoin Output Script based on a Miniscript policy.
+ * Generates a Bitcoin Output Script based on a Miniscript policy and public key.
+ * Derives a Taproot (P2TR) scriptPubKey via BIP-341 key tweaking.
  */
-export const generatePolicyScript = (policy: SpendingPolicy, keys: string[]): Buffer => {
-    // This would use a lib like 'miniscript-js' to compile to ASM/Binary
-    // Placeholder: Return a mock Taproot tweak or Script Hash
-    return Buffer.from("5120" + "1".repeat(64), "hex");
+export const generatePolicyScript = (
+    policy: SpendingPolicy,
+    internalPubKey: Uint8Array
+): Buffer => {
+    // 1. Hash the policy rules to compute the script tree merkle root / tweak
+    const scriptHash = sha256(Buffer.from(policy.rules, 'utf8'));
+
+    // 2. Tweak internal x-only public key with policy script merkle root
+    const tweakedPubKey = tweakTaprootPubkey(internalPubKey, scriptHash);
+
+    // 3. Return P2TR scriptPubKey: OP_1 (0x51) + 32-byte push (0x20) + tweaked x-only pubkey
+    return Buffer.concat([
+        Buffer.from([0x51, 0x20]),
+        Buffer.from(tweakedPubKey)
+    ]);
 };
 
 /**

@@ -1,20 +1,33 @@
-# Support for Conxius Wallet
+# Support for Conxius Wallet & Conxian Platform Ecosystem
 
-This document provides guidance on how to get help with the Conxius Wallet and how to interact with the project team.
+This document provides guidance on how to get help across the Conxian platform ecosystem and defines our support tiers, maintainer expectations, and SLA boundaries.
 
-## Repository Categorization & Support Expectations
+## Ecosystem Tiered Support & SLA Matrix
 
-The `conxius-wallet` repository is formally categorized as **Tier 1: Production Core**.
+To maintain sovereign open-source protocol integrity while serving enterprise middleware partners, Conxian enforces a strict **Tiered Support Matrix** separating public protocol code from commercial enterprise integrations.
 
-- **Classification**: Production Core (Public Wallet & Reference Client)
-- **Scope**: Sovereign mobile wallet application, enclave signing interfaces, and reference client flows.
-- **Maintainer SLA Expectations**:
+### Tier 1: Public Core Protocol Repositories (No Commercial SLA)
+- **Scope**: `conxius-wallet`, `lib-conxian-core`, `conxius-enclave-sdk`, `conxian-nexus`.
+- **Classification**: Open-Source Sovereign Infrastructure & Reference Client.
+- **SLA Commitment**: **Explicitly NO Commercial SLA or Financial Guarantees**.
+- **Support Model**: Community-best-effort support via GitHub Issues and Discussions under standard open-source license disclaimers (AS-IS without warranty).
+- **Maintainer Target Guidelines** (Non-Binding Internal Targets):
 
-| Severity Tier | Definition / Impact | Target Response SLA | Target Resolution / Mitigation |
-| ------------- | ------------------- | ------------------- | ------------------------------ |
-| **P0 - Critical** | Exploitable security vulnerability, key loss, or total loss of wallet availability on mainnet | < 24 hours | Hotfix / Security Advisory within 48 hours |
-| **P1 - High** | Impaired core functionality (e.g., transaction broadcast failure, chain RPC sync block) | < 48 hours | Resolution in next patch release or < 5 business days |
-| **P2 - Normal** | Non-critical bugs, UI/UX polish, or enhancement requests | < 5 business days | Scheduled in roadmap sprint cycles |
+| Severity Tier | Definition / Impact | Target Acknowledgment | Target Resolution / Advisory |
+| ------------- | ------------------- | --------------------- | ---------------------------- |
+| **P0 - Critical** | Exploitable security vulnerability, key loss vector, or unhandled cryptographic failure | < 24 hours | Hotfix / Security Advisory within 48 hours |
+| **P1 - High** | Impaired core functionality (e.g., transaction broadcast failure, chain RPC sync block) | < 48 hours | Patch release in < 5 business days |
+| **P2 - Normal** | Non-critical bugs, UI/UX polish, or feature requests | < 5 business days | Scheduled in roadmap sprint cycles |
+
+### Tier 2: Enterprise & Gateway Tier (Commercial SLA under B2B Contract Only)
+- **Scope**: `conxian-gateway`, ISO 20022 Financial Adapters, and Custom Enterprise Deployments.
+- **Classification**: Enterprise Financial Middleware & Portal Gateway.
+- **SLA Commitment**: Commercial SLAs are offered **exclusively** under a signed B2B commercial agreement or paid enterprise subscription tier.
+- **Scope Boundaries**:
+  - **Included**: Integration support, configuration assistance, API route troubleshooting, and business-hours response windows (e.g., Next-Business-Day response).
+  - **Explicitly Excluded**: Immutable underlying L1/L2 network availability (Bitcoin, Stacks, Liquid), network congestion, L1 block time variance, force majeure events, and hardware-vendor enclave/StrongBox API deprecations.
+
+---
 
 ## End-User Support
 

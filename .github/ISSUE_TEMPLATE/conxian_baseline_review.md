@@ -8,38 +8,79 @@ assignees: []
 
 ## Objective
 
-Use this checklist when you want to document a single high-value repository improvement without filing the structured form.
+Review this repository and complete the next highest-value improvement using the Conxian GitHub review baseline.
 
 ## Repo focus
 
-- Repository: [Repository name]
+[Repository name]
 
 ## Baseline review context
 
-- Public/private separation risk
-- Sensitive configuration exposure
-- Generated/runtime artifacts tracked in git
-- Governance or documentation gaps
-- Release/versioning concerns
+Known cross-org concerns:
 
-## Selected task
+- public/private separation risk
+- possible sensitive config exposure such as `.env`
+- tracked generated/runtime artifacts such as:
+  - `node_modules`
+  - `test-results`
+  - `playwright-report`
+  - `dist`
+- inconsistent governance and repo standards
+- missing files may include:
+  - `README`
+  - `LICENSE`
+  - `SECURITY.md`
+  - `CONTRIBUTING.md`
+  - `CODEOWNERS`
+  - changelog / release guidance
+- weak release/versioning discipline
+- unclear public-facing purpose/status
 
-- Priority: [1-6]
-- Task: [Short description]
-- Why this task: [Reason]
+## Task for agent
 
-## Evidence
+Inspect this repository, research further, and choose exactly one high-value, self-contained task.
 
-- Files or logs reviewed:
-- Key findings:
+Priority:
 
-## Implementation and verification
+1. Security exposure or public/private boundary risk
+2. Sensitive files or generated artifacts tracked in git
+3. Missing ignore rules or CI hygiene
+4. Missing governance files
+5. README / public-facing clarity improvements
+6. Release/versioning improvements
 
-- Changes made:
-- Validation run:
-- Documentation updated:
+## Required workflow
 
-## Follow-up
+- inspect the repo before making changes
+- select one task only
+- record evidence for why it was selected
+- implement the change fully
+- run relevant validation
+- update all related docs
+- prepare approval-ready notes
 
-- Remaining concerns:
-- Approval note:
+## Deliverables
+
+- selected task
+- why it was chosen
+- evidence found
+- files changed
+- validation results
+- documentation updated
+- follow-up items
+- approval note
+
+## Constraints
+
+- do not expose or commit secrets
+- if likely secrets are found, prioritize remediation and note required rotation/manual follow-up
+- avoid broad speculative refactors
+- prefer minimal, high-confidence changes
+- improve existing governance/docs rather than duplicating them
+
+## Definition of done
+
+- one meaningful repo improvement completed
+- relevant validation performed
+- docs updated to match
+- ready for human approval
