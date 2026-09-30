@@ -102,3 +102,30 @@ Current state shows a "technical" view of the bridge.
 You have built a Ferrari engine (The Conclave) and put it in a beautiful chassis (The UI). But you haven't put gas in the tank (Infrastructure).
 
 **Do not write more React components.** Go to Google Cloud Console and deploy the backend rails. The code is ready; the network is waiting.
+
+---
+
+## 6. Org-Wide SLA Strategy & Strategic Advisory Realignment
+
+### 6.1 The Core Reality: Open-Source Funding vs. Enterprise SLAs
+Commercial SLAs (99.9% uptime, 1-hour incident response, guaranteed patch delivery) are legally and financially binding guarantees backed by financial penalty clauses. In early-stage sovereign infrastructure:
+- **Lumpy Funding**: Pre-seed budgets, grants, or early trial revenues cannot sustain a 24/7/365 follow-the-sun incident response engineering team.
+- **Maintainer Bottleneck**: Core architecture relies on lean, specialized teams. PagerDuty alarms for non-critical bugs paralyze protocol engineering.
+- **Asymmetric Sovereign Security Risk**: Hardware security modules (HSMs), TEEs, and Bitcoin L1 layers carry irreversible security risks. Rushed patches under tight SLA windows invite key exposure or state corruption.
+
+### 6.2 Peer Open-Source Ecosystem Comparison
+
+| Dimension | Typical Open-Source Infra Player | Conxian Ecosystem Profile |
+| :--- | :--- | :--- |
+| **Surface Area** | Focused (1–3 libraries / single SDK) | Expansive: L1 primitives (`lib-conxian-core`), enclaves (`conxius-enclave-sdk`), mobile wallet (`conxius-wallet`), sovereign state layer (`conxian-nexus`), and enterprise gateway (`conxian-gateway` / ISO 20022). |
+| **Support Model** | Community best-effort; bounded enterprise tiers. | Bridges sovereign Bitcoin tech with enterprise finance (ISO 20022), inviting corporate expectations. |
+| **SLA Strategy** | No SLA for public repos; SLAs restricted to paid enterprise wrappers. | Must avoid over-committing uptime metrics on decentralized consensus layers. |
+
+### 6.3 Tiered SLA Framework & Strategic Guidance
+1. **Decouple Protocol from Enterprise Wrapper**:
+   - Public repositories (`conxius-wallet`, `lib-conxian-core`, `conxius-enclave-sdk`, `conxian-nexus`) carry **NO commercial SLA**. Support is best-effort.
+   - B2B Gateway (`conxian-gateway` / ISO 20022) offers SLAs **exclusively** under signed commercial contracts, strictly bounded to integration support and business-hours response windows.
+2. **Exclude External Dependencies from Liability**:
+   - SLAs must explicitly exclude Bitcoin/Stacks/Liquid network halts, network congestion, and vendor hardware enclave firmware deprecations.
+3. **Automate Guardrails**:
+   - Rely on automated CI/CD pipelines, fail-closed runtime guards (`ProductionRuntimeGuard`), and staging verification to maintain code quality without burning engineering bandwidth.
