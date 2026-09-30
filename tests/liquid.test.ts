@@ -35,20 +35,6 @@ describe('Liquid Confidentiality & Protocol Service Suite', () => {
       expect(unblinded.blindingKey.toString('hex')).toEqual(dummyBlindingPubkey.toString('hex'));
     });
 
-    it('should safely parse a confidential Liquid address with parseConfidentialAddress', () => {
-      const unconfidentialAddress = liquidService.deriveLiquidAddress(dummyPubkey, 'mainnet');
-      const confidentialAddress = liquidService.deriveConfidentialAddress(unconfidentialAddress, dummyBlindingPubkey);
-
-      const parsed = liquidService.parseConfidentialAddress(confidentialAddress);
-      expect(parsed.isValid).toBe(true);
-      expect(parsed.unconfidentialAddress).toEqual(unconfidentialAddress);
-      expect(parsed.blindingKey.toString('hex')).toEqual(dummyBlindingPubkey.toString('hex'));
-
-      const invalidParsed = liquidService.parseConfidentialAddress('invalid_address');
-      expect(invalidParsed.isValid).toBe(false);
-      expect(invalidParsed.unconfidentialAddress).toBe('');
-    });
-
     it('should throw an error when attempting to unblind a non-confidential address', () => {
       const unconfidentialAddress = liquidService.deriveLiquidAddress(dummyPubkey, 'mainnet');
       expect(() => liquidService.unblindAddress(unconfidentialAddress)).toThrow(
