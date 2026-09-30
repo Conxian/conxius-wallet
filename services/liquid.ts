@@ -112,6 +112,23 @@ export const unblindAddress = (
   };
 };
 
+/**
+ * Validates and parses a confidential Liquid address, returning its components if valid.
+ */
+export const parseConfidentialAddress = (
+  confidentialAddress: string
+): { unconfidentialAddress: string; blindingKey: Buffer; isValid: boolean } => {
+  if (!confidentialAddress || !isConfidentialAddress(confidentialAddress)) {
+    return { unconfidentialAddress: '', blindingKey: Buffer.alloc(0), isValid: false };
+  }
+  try {
+    const { unconfidentialAddress, blindingKey } = unblindAddress(confidentialAddress);
+    return { unconfidentialAddress, blindingKey, isValid: true };
+  } catch {
+    return { unconfidentialAddress: '', blindingKey: Buffer.alloc(0), isValid: false };
+  }
+};
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 export const LBTC_ASSET = {
