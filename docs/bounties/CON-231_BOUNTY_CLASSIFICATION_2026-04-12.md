@@ -1,5 +1,7 @@
 # Bounty Classification Review (CON-231)
 
+> **RETIRED (2026-10-03).** ConxianCSF is retired by design — Conxian is universal, protocol-agnostic, non-custodial infrastructure and does not own/launch a protocol. The mainnet-launch gate and the ALEX-funding path referenced in this document are **void**. Retained for historical context only.
+
 **Date:** 2026-04-12
 **Status:** Canonical Audit Baseline
 

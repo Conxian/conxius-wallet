@@ -1,5 +1,7 @@
 # Community Funding Model for System Delivery (CON-137)
 
+> **RETIRED (2026-10-03).** ConxianCSF is retired by design — Conxian is universal, protocol-agnostic, non-custodial infrastructure and does not own/launch a protocol. The mainnet-launch gate and the ALEX-funding path referenced in this document are **void**. Retained for historical context only.
+
 ## Context
 Internal funds are constrained. Community participation must help fund and execute suitable work while protecting internal-only deployment, wallet, and security-critical tasks.
 
