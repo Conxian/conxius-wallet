@@ -55,6 +55,7 @@
     "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.5.2",
     "@capacitor/local-notifications": "^8.3.1",
+    "@conxian/market-sdk": "^0.2.4",
     "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@google/genai": "^2.24.0",

@@ -25,6 +25,7 @@ overrides:
 minimumReleaseAge: 60
 minimumReleaseAgeExclude:
   - "@capacitor/*"
+  - "@conxian/market-sdk"
   - "@vitejs/*"
   - "vite"
   - "vitest"
