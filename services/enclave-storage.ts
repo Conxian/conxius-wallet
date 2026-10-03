@@ -51,6 +51,29 @@ type SecureEnclavePlugin = {
     transactionHex: string;
     network?: string;
   }): Promise<{ txid: string }>;
+  evmAddress(options: {
+    path: string;
+    network?: string;
+  }): Promise<{ address: string }>;
+  evmSignTransaction(options: {
+    path: string;
+    network?: string;
+    type?: 'legacy' | 'eip1559';
+    chainId: string;
+    nonce: string;
+    gasLimit: string;
+    to: string;
+    value?: string;
+    data?: string;
+    gasPrice?: string;
+    maxPriorityFeePerGas?: string;
+    maxFeePerGas?: string;
+  }): Promise<{ rawTransaction: string }>;
+  evmSignDigest(options: {
+    path: string;
+    network?: string;
+    digest: string;
+  }): Promise<{ signature: string }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -260,6 +283,50 @@ export async function broadcastNative(options: {
 }): Promise<{ txid: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.broadcastTransaction(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only EVM address derivation (EIP-55 checksummed). */
+export async function evmAddressNative(options: {
+  path: string;
+  network?: string;
+}): Promise<{ address: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.evmAddress(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only EVM transaction signing (EIP-155 legacy or EIP-1559). */
+export async function evmSignTransactionNative(options: {
+  path: string;
+  network?: string;
+  type?: 'legacy' | 'eip1559';
+  chainId: string;
+  nonce: string;
+  gasLimit: string;
+  to: string;
+  value?: string;
+  data?: string;
+  gasPrice?: string;
+  maxPriorityFeePerGas?: string;
+  maxFeePerGas?: string;
+}): Promise<{ rawTransaction: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.evmSignTransaction(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only 32-byte digest signing (e.g. EIP-712), returning `r || s || v`. */
+export async function evmSignDigestNative(options: {
+  path: string;
+  network?: string;
+  digest: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.evmSignDigest(options);
   }
   throw new Error("Native Enclave not available");
 }
