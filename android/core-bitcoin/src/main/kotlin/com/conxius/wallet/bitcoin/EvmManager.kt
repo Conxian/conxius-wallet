@@ -1,32 +1,52 @@
 package com.conxius.wallet.bitcoin
 
-import android.util.Log
+import java.math.BigInteger
 
 /**
- * EvmManager: Native Bridge for EVM-compatible Bitcoin L2s (BOB, Rootstock).
+ * EvmManager: Native bridge for EVM-compatible Bitcoin L2s (BOB, Rootstock, B2,
+ * Botanix, Mezo) and the broader EVM family (Ethereum, Base, Arbitrum, Optimism,
+ * Polygon).
+ *
+ * A thin, stateless facade over [EvmSigner]. The private scalar is supplied by the
+ * caller (derived from the wallet seed via [Secp256k1Signer] at the signing
+ * boundary); this class never touches storage and never logs secrets.
  */
 class EvmManager {
-    private val TAG = "EvmManager"
+    /** EIP-55 checksummed EVM address for a private scalar. */
+    fun addressFromPrivateKey(privateKey: BigInteger): String =
+        EvmSigner.addressFromPrivateKey(privateKey)
 
-    /**
-     * Signs an EVM transaction (Legacy, EIP-1559, or EIP-2930).
-     */
-    fun signTransaction(txPayload: ByteArray, chainId: Long): String {
-        Log.d(TAG, "Signing EVM Transaction for chain: $chainId")
-        return ProductionRuntimeGuard.failClosed(
-            "EVM transaction signing",
-            "evm_sig_hex_00112233"
-        )
-    }
+    /** Signs an EIP-155 legacy transaction and returns the raw (RLP) bytes. */
+    fun signLegacyTransaction(
+        privateKey: BigInteger,
+        chainId: Long,
+        nonce: Long,
+        gasPrice: BigInteger,
+        gasLimit: Long,
+        to: ByteArray,
+        value: BigInteger,
+        data: ByteArray,
+    ): ByteArray = EvmSigner.signLegacyTransaction(
+        privateKey, chainId, nonce, gasPrice, gasLimit, to, value, data,
+    )
 
-    /**
-     * Signs EIP-712 typed data for secure contract interaction.
-     */
-    fun signTypedData(jsonPayload: String): String {
-        Log.d(TAG, "Signing EIP-712 Typed Data")
-        return ProductionRuntimeGuard.failClosed(
-            "EIP-712 typed data signing",
-            "evm_typed_sig_hex"
-        )
-    }
+    /** Signs an EIP-1559 dynamic-fee transaction and returns the raw (RLP) bytes. */
+    fun signEip1559Transaction(
+        privateKey: BigInteger,
+        chainId: Long,
+        nonce: Long,
+        maxPriorityFeePerGas: BigInteger,
+        maxFeePerGas: BigInteger,
+        gasLimit: Long,
+        to: ByteArray,
+        value: BigInteger,
+        data: ByteArray,
+        accessList: List<EvmSigner.AccessListItem> = emptyList(),
+    ): ByteArray = EvmSigner.signEip1559Transaction(
+        privateKey, chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, to, value, data, accessList,
+    )
+
+    /** Signs a 32-byte digest (e.g. EIP-712 typed data) and returns `r || s || v`. */
+    fun signDigest(privateKey: BigInteger, digest: ByteArray): ByteArray =
+        EvmSigner.signDigest(privateKey, digest)
 }

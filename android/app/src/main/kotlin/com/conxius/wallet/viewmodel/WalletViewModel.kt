@@ -275,17 +275,6 @@ class WalletViewModel(
         }
     }
 
-    fun signEvmTransaction(data: ByteArray) {
-        viewModelScope.launch {
-            try {
-                val sig = evmManager.signTransaction(data, 1)
-                _error.value = "EVM Transaction Signed: $sig"
-            } catch (e: Exception) {
-                _error.value = "EVM signing failed: ${e.message}"
-            }
-        }
-    }
-
     fun signStacksTx(payload: ByteArray) {
         viewModelScope.launch {
             try {
