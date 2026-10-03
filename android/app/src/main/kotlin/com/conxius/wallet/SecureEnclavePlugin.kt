@@ -1,7 +1,9 @@
 package com.conxius.wallet
 
 import com.conxius.wallet.bitcoin.EvmSigner
+import com.conxius.wallet.bitcoin.LiquidSigner
 import com.conxius.wallet.bitcoin.Secp256k1Signer
+import com.conxius.wallet.bitcoin.StacksSigner
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -29,6 +31,8 @@ import java.net.URL
 class SecureEnclavePlugin : Plugin() {
     private companion object {
         const val EVM_DEFAULT_PATH = "m/44'/60'/0'/0/0"
+        const val STACKS_DEFAULT_PATH = "m/44'/5757'/0'/0/0"
+        const val LIQUID_DEFAULT_PATH = "m/84'/0'/0'/0/0"
     }
 
     private val pluginScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -242,6 +246,104 @@ class SecureEnclavePlugin : Plugin() {
                 call.resolve(ret)
             } catch (e: Exception) {
                 call.reject(e.message ?: "EVM digest signing failed")
+            }
+        }
+    }
+
+    // ── Stacks L2 (sBTC) signing ──────────────────────────────────────────────────
+
+    /** Derives the c32check Stacks address (SIP-005) for the sovereign key. */
+    @PluginMethod
+    fun stacksAddress(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: STACKS_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        pluginScope.launch {
+            try {
+                val address = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    StacksSigner.addressFromPrivateKey(privKey, testnet = network != "mainnet")
+                }
+                val ret = JSObject()
+                ret.put("address", address)
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Stacks address derivation failed")
+            }
+        }
+    }
+
+    /**
+     * Signs a 32-byte SHA512/256 digest (SIP-018) computed by the TS layer and
+     * returns a 65-byte `r || s || recoveryId` (hex). The TS layer assembles the
+     * final Stacks signature from these components.
+     */
+    @PluginMethod
+    fun stacksSignDigest(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: STACKS_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val digest = call.getString("digest") ?: return reject(call, "digest required")
+        pluginScope.launch {
+            try {
+                val signature = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    Hex.toHexString(StacksSigner.signDigest(privKey, Hex.decode(digest)))
+                }
+                val ret = JSObject()
+                ret.put("signature", signature)
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Stacks digest signing failed")
+            }
+        }
+    }
+
+    // ── Liquid Network signing ────────────────────────────────────────────────────
+
+    /** Derives the unconfidential Liquid P2WPKH (bech32) address. */
+    @PluginMethod
+    fun liquidAddress(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: LIQUID_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        pluginScope.launch {
+            try {
+                val address = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    LiquidSigner.addressFromPrivateKey(privKey, network)
+                }
+                val ret = JSObject()
+                ret.put("address", address)
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Liquid address derivation failed")
+            }
+        }
+    }
+
+    /** Signs a 32-byte Elements sighash, returning `DER(r, s) || 0x01` (hex). */
+    @PluginMethod
+    fun liquidSignDigest(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: LIQUID_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val digest = call.getString("digest") ?: return reject(call, "digest required")
+        pluginScope.launch {
+            try {
+                val signature = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    Hex.toHexString(LiquidSigner.signDigest(privKey, Hex.decode(digest)))
+                }
+                val ret = JSObject()
+                ret.put("signature", signature)
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Liquid sighash signing failed")
             }
         }
     }
