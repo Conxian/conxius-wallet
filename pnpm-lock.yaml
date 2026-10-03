@@ -40,6 +40,9 @@ importers:
       '@capacitor/local-notifications':
         specifier: ^8.3.1
         version: 8.3.1(@capacitor/core@8.5.2)
+      '@conxian/market-sdk':
+        specifier: ^0.2.4
+        version: 0.2.4
       '@fontsource/inter':
         specifier: ^5.3.0
         version: 5.3.0
@@ -443,6 +446,10 @@ packages:
   '@confio/ics23@0.6.8':
     resolution: {integrity: sha512-wB6uo+3A50m0sW/EWcU64xpV/8wShZ6bMTa7pF8eYsTrSkQA7oLUIJcs/wb8g4y2Oyq701BaGiO6n/ak5WXO1w==}
     deprecated: Unmaintained. The codebase for this package was moved to https://github.com/cosmos/ics23 but then the JS implementation was removed in https://github.com/cosmos/ics23/pull/353. Please consult the maintainers of https://github.com/cosmos for further assistance.
+
+  '@conxian/market-sdk@0.2.4':
+    resolution: {integrity: sha512-zBJhG0jJfBbLR3MyRGtqLoDKqTYNSvZzgGEhhYWLibe3sX30aOUW8phsMZaeG9Wu7OoQhAib4+9DhDhj5N2KWQ==}
+    engines: {node: '>=20'}
 
   '@coral-xyz/anchor@0.29.0':
     resolution: {integrity: sha512-eny6QNG0WOwqV0zQ7cs/b1tIuzZGmP7U7EcH+ogt4Gdbl8HDmIYVMh/9aTmYZPaFWjtUaI8qSn73uYEXWfATdA==}
@@ -5196,6 +5203,9 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
@@ -5457,6 +5467,10 @@ snapshots:
     dependencies:
       '@noble/hashes': 1.8.0
       protobufjs: 8.8.0
+
+  '@conxian/market-sdk@0.2.4':
+    dependencies:
+      zod: 3.25.76
 
   '@coral-xyz/anchor@0.29.0(@typescript/typescript6@6.0.2)(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
@@ -10891,6 +10905,8 @@ snapshots:
   zod-validation-error@4.0.2(zod@4.3.6):
     dependencies:
       zod: 4.3.6
+
+  zod@3.25.76: {}
 
   zod@4.3.6: {}
 
