@@ -2,95 +2,29 @@ package com.conxius.wallet
 
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.compose.setContent
-import androidx.compose.runtime.*
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.conxius.wallet.ui.screens.DashboardScreen
-import com.conxius.wallet.ui.screens.OnboardingScreen
-import com.conxius.wallet.ui.screens.SecurityScreen
-import com.conxius.wallet.ui.theme.ConxiusTheme
-import com.conxius.wallet.viewmodel.OnboardingViewModel
-import com.conxius.wallet.viewmodel.ViewModelFactory
-import com.conxius.wallet.viewmodel.WalletViewModel
+import com.conxius.wallet.crypto.Fdc3Plugin
+import com.getcapacitor.BridgeActivity
 
-class MainActivity : FragmentActivity() {
+/**
+ * Capacitor host for the bundled web app (`dist/`).
+ *
+ * Loads the web/TS layer in a WebView and registers the native boundary plugins that the
+ * TypeScript layer reaches through `@capacitor/core`:
+ *   - [SecureEnclavePlugin] — isAvailable / getPublicKey / signBatch / signTransaction / broadcastTransaction
+ *   - [SilentPaymentPlugin] — scanForPayments
+ *   - [Fdc3Plugin] — raiseIntent
+ *
+ * Previously a Compose launcher (`FragmentActivity`); the `@CapacitorPlugin` bridges were
+ * unreachable from the TS boundary without a Capacitor host (issue #635).
+ */
+class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // registerPlugin mutates the Bridge.Builder; it must run before super.onCreate(),
+        // which constructs the Bridge from that builder.
+        registerPlugin(SecureEnclavePlugin::class.java)
+        registerPlugin(SilentPaymentPlugin::class.java)
+        registerPlugin(Fdc3Plugin::class.java)
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-
-        val app = application as ConxiusApplication
-        val factory = ViewModelFactory(
-            app.walletRepository,
-            app.bdkManager,
-            app.strongBoxManager,
-            app.babylonManager,
-            app.dlcManager,
-            app.nwcManager,
-            app.arkManager,
-            app.stateChainManager,
-            app.mavenManager,
-            app.liquidManager,
-            app.evmManager,
-            app.lightningManager,
-            app.breezManager,
-            app.stacksManager,
-            app.rgbManager,
-            app.bitVmManager,
-            app.web5Manager,
-            app.musig2Manager,
-            app.silentPaymentCoordinator,
-            app.walletSession,
-            app.yieldManager,
-            app.insuranceManager,
-            app.interoperabilityManager,
-            app.b2bManager,
-            app.playIntegrityPlugin,
-        )
-
-        setContent {
-            ConxiusTheme {
-                val onboardingViewModel: OnboardingViewModel = viewModel(factory = factory)
-                val walletViewModel: WalletViewModel = viewModel(factory = factory)
-
-                var currentScreen by remember { mutableStateOf<Screen>(Screen.Onboarding) }
-                val isWalletCreated by onboardingViewModel.isWalletCreated.collectAsState()
-                val isLocked by walletViewModel.isLocked.collectAsState()
-
-                LaunchedEffect(isWalletCreated) {
-                    if (isWalletCreated) {
-                        currentScreen = Screen.Security
-                    }
-                }
-
-                when (currentScreen) {
-                    Screen.Onboarding -> {
-                        OnboardingScreen(
-                            viewModel = onboardingViewModel,
-                            onOnboardingComplete = {
-                                currentScreen = Screen.Security
-                            }
-                        )
-                    }
-                    Screen.Security -> {
-                        SecurityScreen(
-                            viewModel = walletViewModel,
-                            onUnlockSuccess = {
-                                currentScreen = Screen.Dashboard
-                            }
-                        )
-                    }
-                    Screen.Dashboard -> {
-                        DashboardScreen(viewModel = walletViewModel)
-                    }
-                }
-            }
-        }
-    }
-
-    sealed class Screen {
-        object Onboarding : Screen()
-        object Security : Screen()
-        object Dashboard : Screen()
     }
 }
