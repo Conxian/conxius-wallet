@@ -4,6 +4,7 @@ import com.conxius.wallet.bitcoin.EvmSigner
 import com.conxius.wallet.bitcoin.LiquidSigner
 import com.conxius.wallet.bitcoin.Secp256k1Signer
 import com.conxius.wallet.bitcoin.StacksSigner
+import com.conxius.wallet.bitcoin.TaprootSigner
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -18,6 +19,7 @@ import org.bouncycastle.util.encoders.Hex
 import java.math.BigInteger
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.SecureRandom
 
 /**
  * Non-custodial value-signing boundary.
@@ -33,6 +35,7 @@ class SecureEnclavePlugin : Plugin() {
         const val EVM_DEFAULT_PATH = "m/44'/60'/0'/0/0"
         const val STACKS_DEFAULT_PATH = "m/44'/5757'/0'/0/0"
         const val LIQUID_DEFAULT_PATH = "m/84'/0'/0'/0/0"
+        const val TAPROOT_DEFAULT_PATH = "m/86'/0'/0'/0/0"
     }
 
     private val pluginScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -344,6 +347,58 @@ class SecureEnclavePlugin : Plugin() {
                 call.resolve(ret)
             } catch (e: Exception) {
                 call.reject(e.message ?: "Liquid sighash signing failed")
+            }
+        }
+    }
+
+    // ── Taproot / Babylon signing (BIP-340 Schnorr + BIP-86 P2TR) ─────────────────
+
+    /** Derives the BIP-86 single-key P2TR taproot address for the wallet's key. */
+    @PluginMethod
+    fun taprootAddress(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: TAPROOT_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        pluginScope.launch {
+            try {
+                val address = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    TaprootSigner.p2trAddress(
+                        TaprootSigner.taprootOutputKey(TaprootSigner.xOnlyPublicKey(privKey)),
+                        network,
+                    )
+                }
+                val ret = JSObject()
+                ret.put("address", address)
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Taproot address derivation failed")
+            }
+        }
+    }
+
+    /** Signs a 32-byte taproot keypath digest (BIP-340 Schnorr), returns 64-byte hex. */
+    @PluginMethod
+    fun schnorrSignDigest(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: TAPROOT_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val digest = call.getString("digest") ?: return reject(call, "digest required")
+        pluginScope.launch {
+            try {
+                val signature = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    val auxRand = ByteArray(32)
+                    SecureRandom().nextBytes(auxRand)
+                    Hex.toHexString(TaprootSigner.schnorrSign(privKey, Hex.decode(digest), auxRand))
+                }
+                val ret = JSObject()
+                ret.put("signature", signature)
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Schnorr digest signing failed")
             }
         }
     }
