@@ -5,3 +5,5 @@ secret:
     - "docs/**/*.md"
     - "README.md"
     - ".gitleaksignore"
+    # Public BIP84/BIP32 test vectors (well-known mnemonics + derived keys), not real secrets.
+    - "android/core-bitcoin/src/test/**/*.kt"

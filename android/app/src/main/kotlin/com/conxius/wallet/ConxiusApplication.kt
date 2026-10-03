@@ -16,7 +16,7 @@ class ConxiusApplication : Application() {
     val database by lazy { AppDatabase.getDatabase(this, strongBoxManager.getDatabasePassphrase()) }
     val walletSession by lazy { WalletSession() }
     val walletRepository by lazy { WalletRepository(database.walletDao(), walletSession) }
-    private val walletSeedProvider by lazy {
+    val walletSeedProvider by lazy {
         RoomWalletSeedProvider(walletRepository, strongBoxManager, walletSession)
     }
     val bdkManager by lazy { BdkManager() }

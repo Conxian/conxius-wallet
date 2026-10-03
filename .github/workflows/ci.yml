@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, dev, staged]
   pull_request:
-    branches: [main, develop]
+    branches: [main, dev, staged]
 
 permissions:
   contents: read
@@ -395,3 +395,6 @@ jobs:
       - name: Run Android unit tests
         working-directory: android
         run: ./gradlew :app:testDebugUnitTest --no-daemon
+      - name: Run Bitcoin signing conformance tests
+        working-directory: android
+        run: ./gradlew :core-bitcoin:testDebugUnitTest --tests "com.conxius.wallet.bitcoin.Secp256k1SignerTest" --no-daemon

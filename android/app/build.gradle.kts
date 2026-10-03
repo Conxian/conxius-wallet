@@ -209,6 +209,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
 
     implementation(libs.bdk.android)
+    implementation(libs.bouncycastle)
     implementation(libs.androidx.room.runtime)
 
     implementation("com.google.android.material:material:1.14.0")
