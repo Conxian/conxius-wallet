@@ -4,6 +4,8 @@ layout: page
 permalink: /docs/csf-readiness
 ---
 
+> **RETIRED (2026-10-03).** ConxianCSF is retired by design — Conxian is universal, protocol-agnostic, non-custodial infrastructure and does not own/launch a protocol. The mainnet-launch gate and the ALEX-funding path referenced in this document are **void**. Retained for historical context only.
+
 # ConxianCSF Mainnet Readiness Gate (CON-129)
 
 This document tracks the final launch readiness for ConxianCSF mainnet deployment.
