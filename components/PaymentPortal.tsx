@@ -15,6 +15,7 @@ import { fetchUtxos } from '../services/protocol';
 import { buildPsbt } from '../services/psbt';
 import { getRecommendedFees } from '../services/fees';
 import { endpointsFor } from '../services/network';
+import { computeSettlementFee, SettlementRail, TrustTier } from '../services/settlement';
 import { BrowserMultiFormatReader } from '@zxing/library';
 import { decodeBolt11, isLnurl, decodeLnurl, fetchLnurlParams } from '../services/lightning';
 import { STORAGE_KEY } from '../services/enclave-storage';
@@ -139,6 +140,13 @@ const PaymentPortal: React.FC = () => {
              const utxos = await fetchUtxos(fromAddress, network);
              const amountSats = parseBtcToSatoshis(amount);
              const amountSatsString = amountSats.toString();
+             // Protocol settlement fee via the canonical ADR-004 model (G3).
+             const protocolFee = computeSettlementFee({
+                 amountSat: amountSats,
+                 rail: SettlementRail.Sbtc,
+                 tier: TrustTier.Expedient,
+             });
+             context.updateFees(Number(protocolFee.effectiveFeeSat));
              const feeRate = (await getRecommendedFees(endpointsFor(network, context.state).BTC_API)).fastestFee;
 
              const psbtHex = await buildPsbt({
