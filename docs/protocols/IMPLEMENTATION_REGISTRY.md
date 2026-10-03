@@ -14,24 +14,24 @@ permalink: /docs/implementation-registry
 | **BIP-110 client-side fee alignment** | 🟡 IN PROGRESS | `services/bitcoin-fee-oracle.ts` samples bounded confirmed blocks, excludes narrowly detected inscription envelopes, and falls back to the existing fee endpoint. This is client-side policy, not consensus compliance; see [BIP-110 alignment](../operations/BIP110_COMPLIANCE.md). |
 | **BIP-352 Silent Payments** | 🟡 IN PROGRESS | Merged PR #390 implements bounded Rust/JNI scanning, Kotlin Esplora ingestion with cursor/persistence and shallow reorg fail-closed checks, plus a public-only Compose scan card. Pending release validation, mobile evidence, compact-filter discovery, spending/tweak recovery, native address encoding, authoritative spentness, and raw/merkle proof coverage. |
 | **Lightning payments** | 🛑 CONTAINED / UNAVAILABLE | Reviewed Breez/TS/backend payment paths return typed unsupported outcomes before payment; no synthetic preimage or txid can satisfy success. |
-| **Babylon Staking** | ✅ PRODUCTION | Native Taproot staking for Babylon protocol. |
-| **NIP-47 (NWC)** | ✅ PRODUCTION | Native NwcManager + TS event support. |
+| **Babylon Staking** | 🟡 IN PROGRESS | Native Taproot signing (BIP-340 Schnorr + BIP-341 tweak + BIP-86 P2TR + BIP-350 bech32m) in PR #641; reachable from TS via `SecureEnclavePlugin.taprootAddress`/`schnorrSignDigest`. Babylon transaction layout and unbonding remain TS/API-layer. |
+| **NIP-47 (NWC)** | 🛑 CONTAINED / UNAVAILABLE | `NwcManager` remains `failClosed`; NIP-47 event signing is provider/relay-gated and reuses the Phase-3 Schnorr primitive when enabled. |
 | **DLC (Discreet Log)** | 🛑 CONTAINED / UNAVAILABLE | Offer construction may exist, but acceptance/settlement execution requires exact `{ authorization, artifact }` binding and has no qualified adapter receipt. |
-| **sBTC Bridge** | ✅ PRODUCTION | Clarity 4.0 contract in `core/stacks-bridge.clar`. |
-| **Ark** | 🛑 CONTAINED / UNAVAILABLE | Forfeit/redeem artifacts are exactly bound; reviewed production execution returns typed unsupported rather than synthetic txids. |
+| **sBTC Bridge** | 🟡 IN PROGRESS | Stacks signing is native (PR #640); the sBTC Clarity bridge contract and full peg flow are tracked separately and not yet end-to-end. |
+| **Ark** | 🛑 CONTAINED / UNAVAILABLE | Forfeit/redeem artifacts are exactly bound; reviewed production execution returns typed unsupported rather than synthetic txids. Blocked on covenant opcodes (CTV/BIP-119) which remain draft. |
 | **StateChain** | 🛑 CONTAINED / UNAVAILABLE | Transfer/withdrawal artifacts are exactly bound; no production provider/finality receipt is qualified. |
 | **Maven** | 🛑 CONTAINED / UNAVAILABLE | Transfer artifacts are exactly bound; Marketplace remains preview-only and cannot report payment/delivery completion. |
-| **Liquid** | ✅ PRODUCTION | Native LiquidManager + TS Liquidjs support with ProductionRuntimeGuard fail-closed enforcement and confidential address validation. |
-| **EVM (BOB/RSK)** | ✅ PRODUCTION | Native EvmManager + TS Ethers support. |
-| **Musig2** | ✅ PRODUCTION | Aligned with `@noble/curves`, native session management. |
-| **Stacks** | ✅ PRODUCTION | Native StacksManager + Stacks.js (TS). |
+| **Liquid** | 🟡 IN PROGRESS | Native `LiquidSigner` (unconfidential sighash DER + P2WPKH bech32) in PR #640; confidential assets (Pedersen commitments, range proofs, Blech32) remain in `liquidjs-lib`. |
+| **EVM (BOB/RSK)** | ✅ PRODUCTION | Native `EvmSigner` (EIP-155/1559/712) merged in PR #638; reachable from TS via `SecureEnclavePlugin.evmAddress/evmSignTransaction/evmSignDigest`. |
+| **Musig2** | 🛑 CONTAINED / UNAVAILABLE | `Musig2Manager` remains `failClosed`; BIP-327 (Final) is the next phase and builds on the PR #641 Schnorr/x-only primitives. |
+| **Stacks** | ✅ PRODUCTION | Native `StacksSigner` (SIP-005 c32check + SIP-018 SHA512/256) in PR #640; reachable from TS via `SecureEnclavePlugin.stacksAddress/stacksSignDigest`. |
 | **RGB** | 🛑 CONTAINED / UNAVAILABLE | Issuance/transfer paths use typed exact binding and cannot return synthetic production success; native/provider qualification remains absent. |
 | **BitVM2** | 🔬 RESEARCH / QUARANTINED | Typed proof-envelope validation only. No reviewed wallet verifier, segment backend, challenge source, or authoritative dispute signer exists. |
 | **Web5** | ✅ PRODUCTION | Native Web5Manager + Web5 API (TS). |
 | **Yield (Yield.xyz)** | 🟡 DISCOVERY ONLY / EXECUTION UNAVAILABLE | Non-value discovery can remain visible; reviewed entry actions do not submit value operations. |
 | **Insurance (Parametric)**| 🛑 CONTAINED / UNAVAILABLE | Reviewed purchase/settlement paths cannot claim production completion without qualified evidence and receipts. |
 | **Interoperability / swaps / NTT** | 🛑 CONTAINED / UNAVAILABLE | Wormhole/NTT, bridge, and swap execution paths use typed containment or explicit unsupported outcomes before side effects. |
-| **B2B Gateway** | ✅ PRODUCTION | Native B2bManager + Conxian Gateway integration. |
+| **B2B Gateway** | 🛑 CONTAINED / UNAVAILABLE | `B2bManager` remains `failClosed`; gated on the Conxian Gateway deploy (#466). |
 | **Revenue Automation** | ✅ PRODUCTION | `core/revenue-automation.clar` (1% fee) implemented. |
 | **Referral Aggregator** | ✅ PRODUCTION | `core/referral-aggregator.clar` (5-5-5 logic) implemented. |
 
