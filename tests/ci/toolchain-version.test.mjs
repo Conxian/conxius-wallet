@@ -24,32 +24,32 @@ describe('Toolchain Version Check', () => {
     expect(detected).toBe('11.13.0');
   });
 
-  it('passes validation when Node is 22.x and pnpm is 11.13.0', () => {
-    const result = validateToolchainVersion({
-      nodeVersion: 'v22.22.1',
-      expectedPnpm: '11.13.0',
-      actualPnpm: '11.13.0',
-    });
-
-    expect(result.errors).toHaveLength(0);
-    expect(result.nodeMajor).toBe('22');
-    expect(result.actualPnpm).toBe('11.13.0');
-  });
-
-  it('fails validation when Node major is not 22', () => {
+  it('passes validation when Node is 24.x and pnpm is 11.13.0', () => {
     const result = validateToolchainVersion({
       nodeVersion: 'v24.2.0',
       expectedPnpm: '11.13.0',
       actualPnpm: '11.13.0',
     });
 
+    expect(result.errors).toHaveLength(0);
+    expect(result.nodeMajor).toBe('24');
+    expect(result.actualPnpm).toBe('11.13.0');
+  });
+
+  it('fails validation when Node major is below 24', () => {
+    const result = validateToolchainVersion({
+      nodeVersion: 'v22.22.1',
+      expectedPnpm: '11.13.0',
+      actualPnpm: '11.13.0',
+    });
+
     expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]).toContain('Node.js version mismatch: expected 22.x, got v24.2.0');
+    expect(result.errors[0]).toContain('Node.js version mismatch: expected 24.x or higher, got v22.22.1');
   });
 
   it('fails validation when pnpm version is mismatched', () => {
     const result = validateToolchainVersion({
-      nodeVersion: 'v22.14.0',
+      nodeVersion: 'v24.2.0',
       expectedPnpm: '11.13.0',
       actualPnpm: '10.28.1',
     });
@@ -60,7 +60,7 @@ describe('Toolchain Version Check', () => {
 
   it('fails validation when pnpm version cannot be detected', () => {
     const result = validateToolchainVersion({
-      nodeVersion: 'v22.14.0',
+      nodeVersion: 'v24.2.0',
       expectedPnpm: '11.13.0',
       actualPnpm: null,
     });
@@ -81,7 +81,7 @@ describe('Toolchain Version Check', () => {
 
   it('runToolchainVersionCheck returns success message on pass', () => {
     const message = runToolchainVersionCheck({
-      nodeVersion: 'v22.22.1',
+      nodeVersion: 'v24.2.0',
       expectedPnpm: '11.13.0',
       actualPnpm: '11.13.0',
     });
