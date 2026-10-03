@@ -1,3 +1,5 @@
+import { evmAddressNative, evmSignDigestNative, evmSignTransactionNative } from './enclave-storage';
+
 const ROUND_CONSTANTS = [
   0x0000000000000001n, 0x0000000000008082n, 0x800000000000808an, 0x8000000080008000n,
   0x000000000000808bn, 0x0000000080000001n, 0x8000000080008081n, 0x8000000000008009n,
@@ -126,4 +128,52 @@ export function publicKeyToEvmAddress(uncompressedPubkey: Uint8Array) {
   const digest = keccak256(pub);
   const addr = digest.slice(12);
   return toEip55Address(addr);
+}
+
+// ─── Native EVM signing boundary ─────────────────────────────────────────────
+// These delegate to the SecureEnclave Capacitor plugin so the private key never
+// crosses into JavaScript. The web-only keccak256 / EIP-712 hashing above remains
+// available for digest construction and address derivation without a key.
+
+export const EVM_DEFAULT_PATH = "m/44'/60'/0'/0/0";
+
+export interface EvmUnsignedTransaction {
+  chainId: string;
+  nonce: string;
+  gasLimit: string;
+  to: string;
+  value?: string;
+  data?: string;
+}
+
+export async function deriveEvmAddress(
+  path: string = EVM_DEFAULT_PATH,
+  network = 'mainnet',
+): Promise<string> {
+  const { address } = await evmAddressNative({ path, network });
+  return address;
+}
+
+export async function signEvmTransaction(
+  tx: EvmUnsignedTransaction & {
+    type?: 'legacy' | 'eip1559';
+    gasPrice?: string;
+    maxPriorityFeePerGas?: string;
+    maxFeePerGas?: string;
+  },
+  path: string = EVM_DEFAULT_PATH,
+  network = 'mainnet',
+): Promise<string> {
+  const { rawTransaction } = await evmSignTransactionNative({ path, network, ...tx });
+  return rawTransaction;
+}
+
+/** Signs a 32-byte digest (hex) — e.g. an EIP-712 struct hash — and returns `0x`-prefixed `r || s || v`. */
+export async function signEvmDigest(
+  digest: string,
+  path: string = EVM_DEFAULT_PATH,
+  network = 'mainnet',
+): Promise<string> {
+  const { signature } = await evmSignDigestNative({ path, network, digest });
+  return signature;
 }

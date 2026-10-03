@@ -1,5 +1,6 @@
 package com.conxius.wallet
 
+import com.conxius.wallet.bitcoin.EvmSigner
 import com.conxius.wallet.bitcoin.Secp256k1Signer
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
@@ -12,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.bouncycastle.util.encoders.Hex
+import java.math.BigInteger
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -25,6 +27,10 @@ import java.net.URL
  */
 @CapacitorPlugin(name = "SecureEnclave")
 class SecureEnclavePlugin : Plugin() {
+    private companion object {
+        const val EVM_DEFAULT_PATH = "m/44'/60'/0'/0/0"
+    }
+
     private val pluginScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private val app: ConxiusApplication?
@@ -143,6 +149,103 @@ class SecureEnclavePlugin : Plugin() {
         }
     }
 
+    // ── EVM signing (EIP-155 legacy / EIP-1559 / EIP-712 digest) ──────────────────
+
+    /** Derives the EIP-55 checksummed EVM address for the wallet's sovereign key. */
+    @PluginMethod
+    fun evmAddress(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: EVM_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        pluginScope.launch {
+            try {
+                val address = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    EvmSigner.addressFromPrivateKey(privKey)
+                }
+                val ret = JSObject()
+                ret.put("address", address)
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "EVM address derivation failed")
+            }
+        }
+    }
+
+    /**
+     * Signs an unsigned EVM transaction and returns the raw `0x`-prefixed bytes.
+     * Numeric fields (wei amounts, nonce, gasLimit, chainId) arrive as strings to
+     * avoid JavaScript number-precision loss; hex fields use `0x`-prefixed form.
+     */
+    @PluginMethod
+    fun evmSignTransaction(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: EVM_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val type = call.getString("type") ?: "eip1559"
+        val chainId = call.getString("chainId") ?: return reject(call, "chainId required")
+        val nonce = call.getString("nonce") ?: return reject(call, "nonce required")
+        val gasLimit = call.getString("gasLimit") ?: return reject(call, "gasLimit required")
+        val to = call.getString("to") ?: ""
+        val value = call.getString("value") ?: "0x0"
+        val data = call.getString("data") ?: "0x"
+        pluginScope.launch {
+            try {
+                val rawHex = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    val toBytes = parseHexBytes(to)
+                    val valueWei = parseHexBigInteger(value)
+                    val dataBytes = parseHexBytes(data)
+                    val raw = if (type == "legacy") {
+                        val gasPrice = parseHexBigInteger(call.getString("gasPrice") ?: "0x0")
+                        EvmSigner.signLegacyTransaction(
+                            privKey, chainId.toLong(), nonce.toLong(), gasPrice,
+                            gasLimit.toLong(), toBytes, valueWei, dataBytes,
+                        )
+                    } else {
+                        val maxPriority = parseHexBigInteger(call.getString("maxPriorityFeePerGas") ?: "0x0")
+                        val maxFee = parseHexBigInteger(call.getString("maxFeePerGas") ?: "0x0")
+                        EvmSigner.signEip1559Transaction(
+                            privKey, chainId.toLong(), nonce.toLong(), maxPriority, maxFee,
+                            gasLimit.toLong(), toBytes, valueWei, dataBytes,
+                        )
+                    }
+                    Hex.toHexString(raw)
+                }
+                val ret = JSObject()
+                ret.put("rawTransaction", "0x$rawHex")
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "EVM transaction signing failed")
+            }
+        }
+    }
+
+    /** Signs a 32-byte digest (e.g. EIP-712) and returns the 65-byte `r || s || v`. */
+    @PluginMethod
+    fun evmSignDigest(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: EVM_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val digest = call.getString("digest") ?: return reject(call, "digest required")
+        pluginScope.launch {
+            try {
+                val signature = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    Hex.toHexString(EvmSigner.signDigest(privKey, Hex.decode(digest)))
+                }
+                val ret = JSObject()
+                ret.put("signature", "0x$signature")
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "EVM digest signing failed")
+            }
+        }
+    }
+
     // ── Secondary vault-state storage (seed itself lives in Room/StrongBox) ─────────
 
     @PluginMethod
@@ -201,6 +304,16 @@ class SecureEnclavePlugin : Plugin() {
     private fun derivePublicKeyHex(mnemonic: String, path: String, network: String): String {
         val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
         return Hex.toHexString(Secp256k1Signer.publicKey(privKey))
+    }
+
+    private fun parseHexBigInteger(value: String): BigInteger {
+        val cleaned = value.removePrefix("0x")
+        return if (cleaned.isEmpty()) BigInteger.ZERO else BigInteger(cleaned, 16)
+    }
+
+    private fun parseHexBytes(value: String): ByteArray {
+        val cleaned = value.removePrefix("0x")
+        return if (cleaned.isEmpty()) byteArrayOf() else Hex.decode(cleaned)
     }
 
     private fun signHashes(mnemonic: String, path: String, network: String, hashHexList: List<String>): JSArray {
