@@ -1,9 +1,9 @@
 package com.conxius.wallet.bitcoin
 
 import org.bouncycastle.util.encoders.Hex
+import org.junit.Assert.assertEquals
+import org.junit.Test
 import java.math.BigInteger
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
 /**
  * Conformance against liquidjs-lib (P2WPKH bech32 addresses) and RFC-6979
