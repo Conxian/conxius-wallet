@@ -66,6 +66,7 @@ function renderWithContext(component: React.ReactElement, authorization: ReturnT
             walletConfig: { masterAddress: 'bc1qwallet', stacksAddress: 'SPWALLET' },
         },
         requestValueOperationAuthorization: authorization,
+        updateFees: vi.fn(),
         notify,
     } as any;
     return { ...render(<AppContext.Provider value={value}>{component}</AppContext.Provider>), notify };

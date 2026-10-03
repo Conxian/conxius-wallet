@@ -169,6 +169,24 @@
           "bundled": false
         }
       ]
+    },
+    "1240991": {
+      "github_advisory_id": "GHSA-ch52-4w7c-c8xp",
+      "module_name": "http-cache-semantics",
+      "severity": "high",
+      "findings": [
+        {
+          "version": "4.2.0",
+          "paths": [
+            ".>@wormhole-foundation/sdk>@wormhole-foundation/sdk-aptos>@aptos-labs/ts-sdk>@aptos-labs/aptos-client>got>cacheable-request>http-cache-semantics",
+            ".>@wormhole-foundation/sdk>@wormhole-foundation/sdk-aptos-cctp>@aptos-labs/ts-sdk>@aptos-labs/aptos-client>got>cacheable-request>http-cache-semantics",
+            ".>@wormhole-foundation/sdk>@wormhole-foundation/sdk-aptos-cctp>@wormhole-foundation/sdk-aptos>@aptos-labs/ts-sdk>@aptos-labs/aptos-client>got>cacheable-request>http-cache-semantics",
+            ".>@wormhole-foundation/sdk>@wormhole-foundation/sdk-aptos-core>@wormhole-foundation/sdk-aptos>@aptos-labs/ts-sdk>@aptos-labs/aptos-client>got>cacheable-request>http-cache-semantics",
+            ".>@wormhole-foundation/sdk>@wormhole-foundation/sdk-aptos-tokenbridge>@wormhole-foundation/sdk-aptos>@aptos-labs/ts-sdk>@aptos-labs/aptos-client>got>cacheable-request>http-cache-semantics",
+            ".>@aptos-labs/ts-sdk>@aptos-labs/aptos-client>got>cacheable-request>http-cache-semantics"
+          ]
+        }
+      ]
     }
   },
   "metadata": {
