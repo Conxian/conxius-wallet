@@ -19,10 +19,10 @@ describe('Native Bridge Integrity', () => {
     expect(factoryContent).toContain('private val nwcManager: NwcManager');
   });
 
-  it('should have bridge methods in WalletViewModel', () => {
-    const vmContent = fs.readFileSync(path.join(process.cwd(), 'android/app/src/main/kotlin/com/conxius/wallet/viewmodel/WalletViewModel.kt'), 'utf8');
+  it('should have native Taproot/Babylon bridge methods in SecureEnclavePlugin', () => {
+    const pluginContent = fs.readFileSync(path.join(process.cwd(), 'android/app/src/main/kotlin/com/conxius/wallet/SecureEnclavePlugin.kt'), 'utf8');
 
-    expect(vmContent).toContain('fun createStakingTx(stakerPk: String, amount: Long)');
-    expect(vmContent).toContain('babylonManager.createStakingTx');
+    expect(pluginContent).toContain('fun taprootAddress(');
+    expect(pluginContent).toContain('fun schnorrSignDigest(');
   });
 });
