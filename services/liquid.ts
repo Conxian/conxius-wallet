@@ -1,6 +1,7 @@
 import * as liquid from 'liquidjs-lib';
 import { Network, UTXO } from '../types';
 import { failClosed } from './production-guard';
+import { liquidAddressNative, liquidSignDigestNative } from './enclave-storage';
 
 // ─── Feature Gate ────────────────────────────────────────────────────────────
 
@@ -66,6 +67,36 @@ export const deriveConfidentialAddress = (
   }
   return liquid.address.toConfidential(address, blindingPubkey);
 };
+
+// ─── Native signing boundary ─────────────────────────────────────────────────
+
+export const LIQUID_DEFAULT_PATH = "m/84'/0'/0'/0/0";
+
+/**
+ * Derives the unconfidential Liquid P2WPKH (bech32) address from the native
+ * enclave. The private key never crosses into JavaScript.
+ */
+export async function deriveLiquidAddressNative(
+  path: string = LIQUID_DEFAULT_PATH,
+  network: Network = 'mainnet',
+): Promise<string> {
+  const { address } = await liquidAddressNative({ path, network });
+  return address;
+}
+
+/**
+ * Signs a 32-byte Elements sighash in the native enclave, returning
+ * `DER(r, s) || 0x01` (hex). The TS layer computes the sighash (via
+ * liquidjs-lib) and finalizes the PSET with the returned signature.
+ */
+export async function signLiquidDigest(
+  sighash: string,
+  path: string = LIQUID_DEFAULT_PATH,
+  network: Network = 'mainnet',
+): Promise<string> {
+  const { signature } = await liquidSignDigestNative({ path, network, digest: sighash });
+  return signature;
+}
 
 /**
  * Validates a Liquid address (both confidential and unconfidential).

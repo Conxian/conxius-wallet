@@ -74,6 +74,24 @@ type SecureEnclavePlugin = {
     network?: string;
     digest: string;
   }): Promise<{ signature: string }>;
+  stacksAddress(options: {
+    path: string;
+    network?: string;
+  }): Promise<{ address: string }>;
+  stacksSignDigest(options: {
+    path: string;
+    network?: string;
+    digest: string;
+  }): Promise<{ signature: string }>;
+  liquidAddress(options: {
+    path: string;
+    network?: string;
+  }): Promise<{ address: string }>;
+  liquidSignDigest(options: {
+    path: string;
+    network?: string;
+    digest: string;
+  }): Promise<{ signature: string }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -327,6 +345,52 @@ export async function evmSignDigestNative(options: {
 }): Promise<{ signature: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.evmSignDigest(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only c32check Stacks address derivation (SIP-005). */
+export async function stacksAddressNative(options: {
+  path: string;
+  network?: string;
+}): Promise<{ address: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.stacksAddress(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only Stacks SHA512/256 digest signing, returning `r || s || recoveryId`. */
+export async function stacksSignDigestNative(options: {
+  path: string;
+  network?: string;
+  digest: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.stacksSignDigest(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only unconfidential Liquid P2WPKH (bech32) address derivation. */
+export async function liquidAddressNative(options: {
+  path: string;
+  network?: string;
+}): Promise<{ address: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.liquidAddress(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only Liquid Elements sighash signing, returning `DER(r, s) || 0x01`. */
+export async function liquidSignDigestNative(options: {
+  path: string;
+  network?: string;
+  digest: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.liquidSignDigest(options);
   }
   throw new Error("Native Enclave not available");
 }
