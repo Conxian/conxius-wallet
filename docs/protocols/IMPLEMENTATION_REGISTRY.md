@@ -23,7 +23,7 @@ permalink: /docs/implementation-registry
 | **Maven** | 🛑 CONTAINED / UNAVAILABLE | Transfer artifacts are exactly bound; Marketplace remains preview-only and cannot report payment/delivery completion. |
 | **Liquid** | 🟡 IN PROGRESS | Native `LiquidSigner` (unconfidential sighash DER + P2WPKH bech32) in PR #640; confidential assets (Pedersen commitments, range proofs, Blech32) remain in `liquidjs-lib`. |
 | **EVM (BOB/RSK)** | ✅ PRODUCTION | Native `EvmSigner` (EIP-155/1559/712) merged in PR #638; reachable from TS via `SecureEnclavePlugin.evmAddress/evmSignTransaction/evmSignDigest`. |
-| **Musig2** | 🛑 CONTAINED / UNAVAILABLE | `Musig2Manager` remains `failClosed`; BIP-327 (Final) is the next phase and builds on the PR #641 Schnorr/x-only primitives. |
+| **Musig2** | 🟡 IN PROGRESS | Native BIP-327 crypto in `Musig2Signer` (KeyAgg + ApplyTweak, NonceGen/Agg, Sign, PartialSigVerify, PartialSigAgg) with BIP-327 conformance vectors; `Musig2Manager` is now a real facade (no `failClosed`). Session coordination + Capacitor/TS wiring pending (TS `services/musig2.ts` still uses a naive noble-curves `aggregatePubkeys` without KeyAgg coefficients). |
 | **Stacks** | ✅ PRODUCTION | Native `StacksSigner` (SIP-005 c32check + SIP-018 SHA512/256) in PR #640; reachable from TS via `SecureEnclavePlugin.stacksAddress/stacksSignDigest`. |
 | **RGB** | 🛑 CONTAINED / UNAVAILABLE | Issuance/transfer paths use typed exact binding and cannot return synthetic production success; native/provider qualification remains absent. |
 | **BitVM2** | 🔬 RESEARCH / QUARANTINED | Typed proof-envelope validation only. No reviewed wallet verifier, segment backend, challenge source, or authoritative dispute signer exists. |

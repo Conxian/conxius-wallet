@@ -1,38 +1,64 @@
 package com.conxius.wallet.bitcoin
 
-import android.util.Log
-
 /**
- * Musig2 Manager (v1.1)
+ * MuSig2 Manager (BIP-327).
  *
- * Native bridge for Musig2 multi-signature session management and partial signing.
+ * Thin, stateless facade over [Musig2Signer] for n-of-n BIP-340 multi-signatures.
+ * Owns none of the session state: the TS layer coordinates participants, nonces
+ * and partial signatures; native only performs the pure BIP-327 crypto. Partial
+ * signing consumes the signer's 32-byte secret scalar and wipes nothing itself —
+ * callers obtain scalars via [WalletSeedProvider.withSeed] as elsewhere.
  */
 class Musig2Manager {
-    private val TAG = "Musig2Manager"
+    /** KeyAgg + GetXonlyPubkey: 32-byte x-only aggregate public key. */
+    fun aggregatePubkeys(pubkeys: List<ByteArray>): ByteArray = Musig2Signer.keyAggregate(pubkeys)
 
-    /**
-     * Generates a nonce for a new Musig2 session.
-     */
-    fun generateNonce(): String {
-        Log.d(TAG, "Generating Musig2 Nonce")
-        return "musig2_nonce_hex_${System.currentTimeMillis()}"
-    }
+    /** KeySort: canonical lexicographic ordering of the compressed keys. */
+    fun sortPubkeys(pubkeys: List<ByteArray>): List<ByteArray> = Musig2Signer.keySort(pubkeys)
 
-    /**
-     * Signs a message partially using the session nonce and private key.
-     */
-    fun signPartial(sessionData: String, messageHash: ByteArray): String {
-        Log.d(TAG, "Signing Musig2 Partial")
-        return ProductionRuntimeGuard.failClosed(
-            "Musig2 partial signing",
-            "musig2_partial_sig_hex"
-        )
-    }
+    /** NonceGen: (secnonce, pubnonce) from high-entropy [random] (32 bytes). */
+    fun generateNonce(
+        sk: ByteArray?,
+        pk: ByteArray,
+        aggpk: ByteArray?,
+        m: ByteArray?,
+        extraIn: ByteArray?,
+        random: ByteArray,
+    ): Pair<ByteArray, ByteArray> = Musig2Signer.nonceGen(sk, pk, aggpk, m, extraIn, random)
 
-    /**
-     * Aggregates partial signatures into a final Schnorr signature.
-     */
-    fun aggregateSignatures(partials: List<String>): String {
-        return "musig2_final_sig_hex"
-    }
+    /** NonceAgg: 66-byte aggregate nonce. */
+    fun aggregateNonces(pubnonces: List<ByteArray>): ByteArray = Musig2Signer.nonceAggregate(pubnonces)
+
+    /** Sign: 32-byte partial signature for one signer. */
+    fun signPartial(
+        secnonce: ByteArray,
+        sk: ByteArray,
+        aggnonce: ByteArray,
+        pubkeys: List<ByteArray>,
+        tweaks: List<ByteArray>,
+        isXonly: List<Boolean>,
+        m: ByteArray,
+    ): ByteArray = Musig2Signer.signPartial(secnonce, sk, aggnonce, pubkeys, tweaks, isXonly, m)
+
+    /** PartialSigVerify: true iff the signer's partial signature is valid. */
+    fun verifyPartial(
+        psig: ByteArray,
+        pubnonce: ByteArray,
+        pubnonces: List<ByteArray>,
+        pubkeys: List<ByteArray>,
+        tweaks: List<ByteArray>,
+        isXonly: List<Boolean>,
+        m: ByteArray,
+        signerIndex: Int,
+    ): Boolean = Musig2Signer.partialSigVerify(psig, pubnonce, pubnonces, pubkeys, tweaks, isXonly, m, signerIndex)
+
+    /** PartialSigAgg: 64-byte BIP-340 signature from the partial signatures. */
+    fun aggregateSignatures(
+        psigs: List<ByteArray>,
+        aggnonce: ByteArray,
+        pubkeys: List<ByteArray>,
+        tweaks: List<ByteArray>,
+        isXonly: List<Boolean>,
+        m: ByteArray,
+    ): ByteArray = Musig2Signer.partialSigAggregate(psigs, aggnonce, pubkeys, tweaks, isXonly, m)
 }
