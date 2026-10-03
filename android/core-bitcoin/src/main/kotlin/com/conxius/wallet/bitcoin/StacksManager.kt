@@ -1,28 +1,23 @@
 package com.conxius.wallet.bitcoin
 
-import android.util.Log
+import java.math.BigInteger
 
 /**
- * StacksManager: Native Bridge for Stacks L2 and sBTC Bridge operations.
+ * StacksManager: Native bridge for Stacks L2 and the sBTC bridge.
+ *
+ * A thin, stateless facade over [StacksSigner]. The private scalar is supplied by
+ * the caller (derived from the wallet seed via [Secp256k1Signer] at the signing
+ * boundary); this class never touches storage and never logs secrets.
  */
 class StacksManager {
-    private val TAG = "StacksManager"
+    /** SHA512/256 — the Stacks transaction / structured-data digest (SIP-018). */
+    fun sha512256(data: ByteArray): ByteArray = StacksSigner.sha512256(data)
 
-    /**
-     * Signs a Stacks transaction payload (SIP-010, SIP-009, or contract call).
-     */
-    fun signStacksTransaction(payload: ByteArray): String {
-        Log.d(TAG, "Signing Stacks Transaction (${payload.size} bytes)")
-        return ProductionRuntimeGuard.failClosed(
-            "Stacks transaction signing",
-            "stx_sig_hex_00112233"
-        )
-    }
+    /** c32check-encoded Stacks address (SIP-005) from a private scalar. */
+    fun addressFromPrivateKey(privateKey: BigInteger, testnet: Boolean = false): String =
+        StacksSigner.addressFromPrivateKey(privateKey, testnet)
 
-    /**
-     * Verifies a Stacks address ownership.
-     */
-    fun verifyAddress(address: String, pubkey: ByteArray): Boolean {
-        return ProductionRuntimeGuard.failClosed("Stacks address verification", true)
-    }
+    /** Signs a 32-byte digest and returns a 65-byte `r || s || recoveryId`. */
+    fun signDigest(privateKey: BigInteger, digest: ByteArray): ByteArray =
+        StacksSigner.signDigest(privateKey, digest)
 }

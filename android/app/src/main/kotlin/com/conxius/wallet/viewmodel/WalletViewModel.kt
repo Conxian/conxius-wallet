@@ -264,28 +264,6 @@ class WalletViewModel(
         }
     }
 
-    fun deriveLiquidAddress() {
-        viewModelScope.launch {
-            try {
-                val address = liquidManager.deriveConfidentialAddress()
-                _error.value = "Confidential Address: $address"
-            } catch (e: Exception) {
-                _error.value = "Liquid failed: ${e.message}"
-            }
-        }
-    }
-
-    fun signStacksTx(payload: ByteArray) {
-        viewModelScope.launch {
-            try {
-                val sig = stacksManager.signStacksTransaction(payload)
-                _error.value = "Stacks Tx Signed: $sig"
-            } catch (e: Exception) {
-                _error.value = "Stacks signing failed: ${e.message}"
-            }
-        }
-    }
-
     fun validateRgbConsignment(consignment: String) {
         viewModelScope.launch {
             try {
