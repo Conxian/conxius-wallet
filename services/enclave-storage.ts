@@ -92,6 +92,15 @@ type SecureEnclavePlugin = {
     network?: string;
     digest: string;
   }): Promise<{ signature: string }>;
+  taprootAddress(options: {
+    path: string;
+    network?: string;
+  }): Promise<{ address: string }>;
+  schnorrSignDigest(options: {
+    path: string;
+    network?: string;
+    digest: string;
+  }): Promise<{ signature: string }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -391,6 +400,29 @@ export async function liquidSignDigestNative(options: {
 }): Promise<{ signature: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.liquidSignDigest(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-86 single-key P2TR taproot address derivation. */
+export async function taprootAddressNative(options: {
+  path: string;
+  network?: string;
+}): Promise<{ address: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.taprootAddress(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-340 Schnorr keypath signing of a 32-byte digest. */
+export async function schnorrSignDigestNative(options: {
+  path: string;
+  network?: string;
+  digest: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.schnorrSignDigest(options);
   }
   throw new Error("Native Enclave not available");
 }

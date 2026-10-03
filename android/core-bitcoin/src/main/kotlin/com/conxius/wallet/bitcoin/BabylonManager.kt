@@ -1,45 +1,26 @@
 package com.conxius.wallet.bitcoin
 
-import android.util.Log
-import org.bitcoindevkit.Network
+import java.math.BigInteger
 
 /**
- * Babylon Bitcoin Staking Manager (v1.1)
+ * Babylon Bitcoin Staking Manager.
  *
- * Handles native Taproot staking transactions for the Babylon protocol.
- * Aligned with v1.9.5 "Sovereign" architecture.
+ * Thin, stateless facade over [TaprootSigner] for the Bitcoin-native primitives
+ * Babylon v1 requires: a BIP-86 single-key taproot staking address and BIP-340
+ * Schnorr keypath signing of the staking/unbonding transaction digest. The
+ * Babylon-specific transaction layout (tapscript committing the staker key,
+ * finality-provider key, amount and timelock) is owned by the TS layer; native
+ * only derives the address and signs the 32-byte digest.
  */
 class BabylonManager {
-    private val TAG = "BabylonManager"
-
-    /**
-     * Constructs an unsigned Taproot staking transaction for Babylon.
-     * The script includes the staker's public key and the finality provider's key.
-     */
-    fun createStakingTx(stakerPk: String, amountSats: Long, duration: Int, network: Network): String {
-        Log.d(TAG, "Constructing Babylon Staking Tx for $amountSats sats")
-        return ProductionRuntimeGuard.failClosed(
-            "Babylon staking transaction",
-            "babylon_staking_sim_txid_${System.currentTimeMillis()}"
-        )
+    /** BIP-86 single-key P2TR staking address from a private scalar. */
+    fun taprootAddress(privateKey: BigInteger, network: String = "mainnet"): String {
+        val xOnly = TaprootSigner.xOnlyPublicKey(privateKey)
+        val outputKey = TaprootSigner.taprootOutputKey(xOnly)
+        return TaprootSigner.p2trAddress(outputKey, network)
     }
 
-    /**
-     * Calculates the required fee for a staking transaction.
-     */
-    fun estimateStakingFee(amountSats: Long): Long {
-        // Standard Taproot TX fee estimation
-        return 1500L
-    }
-
-    /**
-     * Generates an unbonding transaction for early withdrawal.
-     */
-    fun createUnbondingTx(stakingTxId: String, stakerPk: String): String {
-        Log.d(TAG, "Constructing Babylon Unbonding Tx for $stakingTxId")
-        return ProductionRuntimeGuard.failClosed(
-            "Babylon unbonding transaction",
-            "babylon_unbonding_sim_txid_${System.currentTimeMillis()}"
-        )
-    }
+    /** BIP-340 Schnorr keypath signature over a 32-byte transaction digest. */
+    fun signKeypath(privateKey: BigInteger, digest: ByteArray, auxRand: ByteArray = ByteArray(32)): ByteArray =
+        TaprootSigner.schnorrSign(privateKey, digest, auxRand)
 }

@@ -198,17 +198,6 @@ class WalletViewModel(
         unlock("")
     }
 
-    fun createStakingTx(stakerPk: String, amount: Long) {
-        viewModelScope.launch {
-            try {
-                val txid = babylonManager.createStakingTx(stakerPk, amount, 100, org.bitcoindevkit.Network.BITCOIN)
-                _error.value = "Babylon Staking Signed: $txid"
-            } catch (e: Exception) {
-                _error.value = "Babylon failed: ${e.message}"
-            }
-        }
-    }
-
     fun createDlcOffer(oraclePk: String, event: String, collateral: Long) {
         viewModelScope.launch {
             try {
