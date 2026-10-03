@@ -9,6 +9,7 @@ import {
     type SignedBitcoinLineageRejectionReason,
     type SignedBitcoinValueOperation,
 } from './value-signer';
+import { broadcastNative } from './enclave-storage';
 
 export interface BitcoinBroadcastRequest {
     readonly authorization: AuthorizedValueOperation;
@@ -16,6 +17,7 @@ export interface BitcoinBroadcastRequest {
 }
 
 export type BitcoinBroadcastOutcome =
+    | Readonly<{ kind: 'broadcast'; txid: string }>
     | Readonly<{ kind: 'unsupported'; reason: 'qualified_provider_unavailable' }>
     | Readonly<{ kind: 'rejected'; reason:
         | 'invalid_broadcast_request'
@@ -73,5 +75,13 @@ export async function broadcastAuthorizedBitcoinTransaction(
         authorization.envelopeDigest,
     );
     if (consumed.kind === 'rejected') return consumed;
-    return Object.freeze({ kind: 'unsupported', reason: 'qualified_provider_unavailable' });
+    try {
+        const { txid } = await broadcastNative({
+            transactionHex: signed.transactionHex,
+            network: signed.network,
+        });
+        return Object.freeze({ kind: 'broadcast', txid });
+    } catch {
+        return Object.freeze({ kind: 'unsupported', reason: 'qualified_provider_unavailable' });
+    }
 }

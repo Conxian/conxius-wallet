@@ -57,12 +57,13 @@ describe('dependency audit disposition policy', () => {
   it('accepts the current fixture report and versioned ledger', () => {
     const result = evaluate();
 
-    expect(result.audit.findings).toHaveLength(3);
-    expect(result.dispositionCounts).toEqual({ 'not-affected': 1, exception: 2 });
-    expect(result.approvalStatusCounts).toEqual({ pending: 2, approved: 0, 'not-applicable': 1 });
+    expect(result.audit.findings).toHaveLength(4);
+    expect(result.dispositionCounts).toEqual({ 'not-affected': 1, exception: 3 });
+    expect(result.approvalStatusCounts).toEqual({ pending: 3, approved: 0, 'not-applicable': 1 });
     expect(result.pendingExceptions.map((record) => record.advisory)).toEqual([
       'GHSA-3gc7-fjrx-p6mg',
       'GHSA-848j-6mx2-7j84',
+      'GHSA-ch52-4w7c-c8xp',
     ]);
     expect(result.audit.findings.map(({ advisory, pathCount, roleClassification, reachabilityFingerprint }) => ({
       advisory,
@@ -87,6 +88,12 @@ describe('dependency audit disposition policy', () => {
         pathCount: 11,
         roleClassification: 'optional',
         reachabilityFingerprint: '8403166e6fe14aadee4fa43b24d5fb6dba5c25fe309eb8729aeafdc6351cd7e3',
+      },
+      {
+        advisory: 'GHSA-ch52-4w7c-c8xp',
+        pathCount: 6,
+        roleClassification: 'production',
+        reachabilityFingerprint: '3d6fc41b5455218442338fb6efd310216ba22e4c7bdb5be80d0ecd0b2e9b20af',
       },
     ]);
   });
@@ -149,7 +156,7 @@ describe('dependency audit disposition policy', () => {
 
     expect(() => assertReleasePolicy(result)).not.toThrow();
     expect(() => assertReleasePolicy(result, { requireApprovedExceptions: true })).toThrow(
-      /Release dependency audit blocked[\s\S]*GHSA-3gc7-fjrx-p6mg[\s\S]*GHSA-848j-6mx2-7j84/,
+      /Release dependency audit blocked[\s\S]*GHSA-3gc7-fjrx-p6mg[\s\S]*GHSA-848j-6mx2-7j84[\s\S]*GHSA-ch52-4w7c-c8xp/,
     );
   });
 
@@ -238,8 +245,8 @@ describe('dependency audit disposition policy', () => {
       generatedAt: '2026-07-22T12:00:00.000Z',
       nodeVersion: 'v22.23.1',
       pnpmVersion: '11.13.0',
-      counts: { advisories: 3, packages: 3, observedVersions: 3, paths: 125 },
-      dispositions: { approvalStatusCounts: { pending: 2, approved: 0, 'not-applicable': 1 } },
+      counts: { advisories: 4, packages: 4, observedVersions: 4, paths: 131 },
+      dispositions: { approvalStatusCounts: { pending: 3, approved: 0, 'not-applicable': 1 } },
       lockfile: { path: 'pnpm-lock.yaml' },
     });
     expect(statSync(evidencePath).mode & 0o777).toBe(0o600);

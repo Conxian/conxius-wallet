@@ -61,6 +61,27 @@
         "The `Web build` step in `.github/workflows/android-release.yml` runs `pnpm run build` before Android packaging; the release workflow has no Vite development-server step.",
         "esbuild@0.28.1 was tested and breaks `vite-plugin-top-level-await` production builds, so esbuild@0.27.3 is retained for compatibility while this advisory remains explicitly tracked."
       ]
+    },
+    {
+      "advisory": "GHSA-ch52-4w7c-c8xp",
+      "package": "http-cache-semantics",
+      "severity": "high",
+      "observedVersions": [
+        "4.2.0"
+      ],
+      "pathCount": 6,
+      "roleClassification": "production",
+      "reachabilityFingerprint": "3d6fc41b5455218442338fb6efd310216ba22e4c7bdb5be80d0ecd0b2e9b20af",
+      "disposition": "exception",
+      "reviewedOn": "2026-07-22",
+      "owner": "Conxian security maintainers",
+      "rationale": "The advisory marks http-cache-semantics 4.2.0 as vulnerable and lists >=4.2.1 as patched, but npm currently publishes no 4.2.1 or later release (latest is 4.2.0). The Wormhole/Aptos production paths remain on http-cache-semantics@4.2.0 via the got/cacheable-request chain; forcing a nonexistent patched version would break reproducible installation.",
+      "remediation": "Adopt the first upstream http-cache-semantics release containing the fix (>=4.2.1), or replace the Wormhole/Aptos dependency path with a validated alternative before the exception expires.",
+      "expiresOn": "2026-10-19",
+      "approval": {
+        "status": "pending",
+        "reference": "CON-1525; GitHub #399 (tracking context only; not approval evidence)"
+      }
     }
   ]
 }

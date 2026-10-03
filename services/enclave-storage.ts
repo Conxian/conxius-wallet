@@ -47,6 +47,10 @@ type SecureEnclavePlugin = {
     pin?: string;
   }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }>;
   getSecurityLevel(): Promise<{ level: string; isStrongBox: boolean }>;
+  broadcastTransaction(options: {
+    transactionHex: string;
+    network?: string;
+  }): Promise<{ txid: string }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -247,6 +251,17 @@ export async function getSecurityLevelNative(): Promise<{ level: string; isStron
     return await SecureEnclave.getSecurityLevel();
   }
   return { level: 'WEB', isStrongBox: false };
+}
+
+/** Native-only broadcast boundary: submits a signed transaction to the Bitcoin network. */
+export async function broadcastNative(options: {
+  transactionHex: string;
+  network?: string;
+}): Promise<{ txid: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.broadcastTransaction(options);
+  }
+  throw new Error("Native Enclave not available");
 }
 
 export const STORAGE_KEY = 'conxius_vault';
