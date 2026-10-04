@@ -612,10 +612,10 @@ object EsploraTransactionParser {
                 outputKey = script.copyOfRange(2, 34),
                 outpoint = OutPoint(txidLittleEndian, outputIndex.toLong()),
                 valueSat = value,
-                // The binary protocol requires a boolean, but an absent Esplora spentness field
-                // is not evidence of unspentness. Persisted truth is carried separately by
-                // [spentnessKnown] and remains UNKNOWN when this fallback is used.
-                isUnspent = spentFlag == true,
+                // `spentFlag` is authoritative "is spent" (true = spent, false = unspent,
+                // null = unknown). `isUnspent` is its negation; when neither field is present
+                // the default `false` is carried alongside `spentnessKnown == false`.
+                isUnspent = spentFlag == false,
                 spentnessKnown = spentFlag != null,
             )
         }

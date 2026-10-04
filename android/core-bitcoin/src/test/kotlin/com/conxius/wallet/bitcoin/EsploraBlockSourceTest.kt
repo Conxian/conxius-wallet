@@ -33,7 +33,7 @@ class EsploraBlockSourceTest {
 
         assertEquals(4, parsed.allInputOutpoints.size)
         assertEquals(4, parsed.eligibleInputs.size)
-        assertEquals(1, parsed.allInputOutpoints.first().txidLittleEndian[0].toInt())
+        assertEquals(2, parsed.allInputOutpoints.first().txidLittleEndian[0].toInt())
         assertEquals(3, parsed.allInputOutpoints.last().vout)
         assertTrue(parsed.eligibleInputs[0].publicKey is EligiblePublicKey.Compressed)
         assertTrue(parsed.eligibleInputs[1].publicKey is EligiblePublicKey.Compressed)
@@ -210,7 +210,7 @@ class EsploraBlockSourceTest {
 
     @Test
     fun parserFindsP2pkhKeyInsideNonStandardScriptSig() {
-        val compressedKey = "03" + "44".repeat(32)
+        val compressedKey = "02" + "11".repeat(32)
         val nonStandardScriptSig = "01aa75" + "46" + "01".repeat(70) + "21" + compressedKey
         val tx = transactionJson(
             txid = "06".repeat(32),
@@ -348,7 +348,7 @@ class EsploraBlockSourceTest {
         assertEquals(26, batches.single().transactions.size)
         assertTrue(batches.single().isFinalBatchForBlock)
         assertEquals((0 until 26).map { it.toLong() }, batches.single().transactions.map { it.transactionIndex })
-        assertEquals(listOf("/blocks/tip/height", "/blocks/tip/hash", "/block-height/100", "/block-height/99", "/block/$blockHash", "/block/$blockHash/txids", "/block/$blockHash/txs/0", "/block/$blockHash/txs/25"), client.paths)
+        assertEquals(listOf("/blocks/tip/height", "/blocks/tip/hash", "/block-height/100", "/block/$blockHash", "/block-height/99", "/block/$blockHash/txids", "/block/$blockHash/txs/0", "/block/$blockHash/txs/25"), client.paths)
     }
 
     @Test
