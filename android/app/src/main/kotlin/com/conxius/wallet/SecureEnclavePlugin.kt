@@ -7,6 +7,7 @@ import com.conxius.wallet.bitcoin.LiquidSigner
 import com.conxius.wallet.bitcoin.Musig2Signer
 import com.conxius.wallet.bitcoin.NostrSigner
 import com.conxius.wallet.bitcoin.Secp256k1Signer
+import com.conxius.wallet.bitcoin.SilentPaymentAddress
 import com.conxius.wallet.bitcoin.StacksSigner
 import com.conxius.wallet.bitcoin.TaprootSigner
 import com.getcapacitor.JSArray
@@ -43,6 +44,8 @@ class SecureEnclavePlugin : Plugin() {
         const val NOSTR_DEFAULT_PATH = "m/44'/1237'/0'/0/0"
         const val DLC_DEFAULT_PATH = "m/86'/0'/0'/0/0"
         const val LIGHTNING_DEFAULT_PATH = "m/84'/0'/0'/0/0"
+        const val SILENT_PAYMENT_SCAN_DEFAULT_PATH = "m/352'/0'/0'/1/0"
+        const val SILENT_PAYMENT_SPEND_DEFAULT_PATH = "m/352'/0'/0'/0/0"
     }
 
     private val pluginScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -406,6 +409,34 @@ class SecureEnclavePlugin : Plugin() {
                 call.resolve(ret)
             } catch (e: Exception) {
                 call.reject(e.message ?: "Schnorr digest signing failed")
+            }
+        }
+    }
+
+    /** BIP-352 silent payment address from scan/spend derivation paths (returns `sp`/`tsp` bech32m). */
+    @PluginMethod
+    fun silentPaymentAddress(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val scanPath = call.getString("scanPath") ?: SILENT_PAYMENT_SCAN_DEFAULT_PATH
+        val spendPath = call.getString("spendPath") ?: SILENT_PAYMENT_SPEND_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        pluginScope.launch {
+            try {
+                val address = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val scanPriv = Secp256k1Signer.derivePrivateKey(mnemonic, scanPath, network)
+                    val spendPriv = Secp256k1Signer.derivePrivateKey(mnemonic, spendPath, network)
+                    SilentPaymentAddress.encode(
+                        Secp256k1Signer.publicKey(scanPriv),
+                        Secp256k1Signer.publicKey(spendPriv),
+                        network,
+                    )
+                }
+                val ret = JSObject()
+                ret.put("address", address)
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Silent payment address derivation failed")
             }
         }
     }
