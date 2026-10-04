@@ -2,6 +2,7 @@ package com.conxius.wallet
 
 import com.conxius.wallet.bitcoin.EvmSigner
 import com.conxius.wallet.bitcoin.LiquidSigner
+import com.conxius.wallet.bitcoin.Musig2Signer
 import com.conxius.wallet.bitcoin.Secp256k1Signer
 import com.conxius.wallet.bitcoin.StacksSigner
 import com.conxius.wallet.bitcoin.TaprootSigner
@@ -403,6 +404,140 @@ class SecureEnclavePlugin : Plugin() {
         }
     }
 
+    // ── MuSig2 (BIP-327) n-of-n Schnorr multisig ────────────────────────────────
+
+    /** BIP-327 KeyAgg: 32-byte x-only aggregate public key from 33-byte compressed keys. */
+    @PluginMethod
+    fun musig2AggregatePubkeys(call: PluginCall) {
+        val pubkeys = hexList(call, "pubkeys") ?: return reject(call, "pubkeys required")
+        if (pubkeys.isEmpty()) return reject(call, "pubkeys required")
+        val aggregate = Musig2Signer.keyAggregate(pubkeys.map { Hex.decode(it) })
+        val ret = JSObject()
+        ret.put("aggregatePubkey", Hex.toHexString(aggregate))
+        call.resolve(ret)
+    }
+
+    /** BIP-327 KeySort: canonical lexicographic order of 33-byte compressed keys. */
+    @PluginMethod
+    fun musig2SortPubkeys(call: PluginCall) {
+        val pubkeys = hexList(call, "pubkeys") ?: return reject(call, "pubkeys required")
+        val sorted = Musig2Signer.keySort(pubkeys.map { Hex.decode(it) })
+        val arr = JSArray()
+        sorted.forEach { arr.put(Hex.toHexString(it)) }
+        val ret = JSObject()
+        ret.put("sortedPubkeys", arr)
+        call.resolve(ret)
+    }
+
+    /**
+     * BIP-327 NonceGen for the wallet key. `aggpk` (x-only), `message` and `extraIn`
+     * are optional hex strings; fresh `rand'` is drawn internally with [SecureRandom].
+     * Returns (secnonce 97 bytes, pubnonce 66 bytes) as hex.
+     */
+    @PluginMethod
+    fun musig2GenerateNonce(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: TAPROOT_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val aggpk = call.getString("aggpk")?.let { Hex.decode(it) }
+        val message = call.getString("message")?.let { Hex.decode(it) }
+        val extra = call.getString("extra")?.let { Hex.decode(it) }
+        pluginScope.launch {
+            try {
+                val (secnonce, pubnonce) = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    val sk = Musig2Signer.secretScalar(privKey)
+                    val pk = Secp256k1Signer.publicKey(privKey)
+                    val random = ByteArray(32)
+                    SecureRandom().nextBytes(random)
+                    Musig2Signer.nonceGen(sk, pk, aggpk, message, extra, random)
+                }
+                val ret = JSObject()
+                ret.put("secnonce", Hex.toHexString(secnonce))
+                ret.put("pubnonce", Hex.toHexString(pubnonce))
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "MuSig2 nonce generation failed")
+            }
+        }
+    }
+
+    /** BIP-327 NonceAgg: 66-byte aggregate nonce from 66-byte pubnonces. */
+    @PluginMethod
+    fun musig2AggregateNonces(call: PluginCall) {
+        val pubnonces = hexList(call, "pubnonces") ?: return reject(call, "pubnonces required")
+        if (pubnonces.isEmpty()) return reject(call, "pubnonces required")
+        val aggregate = Musig2Signer.nonceAggregate(pubnonces.map { Hex.decode(it) })
+        val ret = JSObject()
+        ret.put("aggregateNonce", Hex.toHexString(aggregate))
+        call.resolve(ret)
+    }
+
+    /** BIP-327 Sign: 32-byte partial signature for the wallet key. */
+    @PluginMethod
+    fun musig2SignPartial(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: TAPROOT_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val secnonce = Hex.decode(call.getString("secnonce") ?: return reject(call, "secnonce required"))
+        val aggnonce = Hex.decode(call.getString("aggnonce") ?: return reject(call, "aggnonce required"))
+        val pubkeys = hexList(call, "pubkeys")?.map { Hex.decode(it) } ?: return reject(call, "pubkeys required")
+        val tweaks = hexList(call, "tweaks")?.map { Hex.decode(it) } ?: emptyList()
+        val isXonly = boolList(call, "isXonly") ?: emptyList()
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        pluginScope.launch {
+            try {
+                val partial = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    val sk = Musig2Signer.secretScalar(privKey)
+                    Musig2Signer.signPartial(secnonce, sk, aggnonce, pubkeys, tweaks, isXonly, message)
+                }
+                val ret = JSObject()
+                ret.put("partialSignature", Hex.toHexString(partial))
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "MuSig2 partial signing failed")
+            }
+        }
+    }
+
+    /** BIP-327 PartialSigVerify: blame-free boolean check of a partial signature. */
+    @PluginMethod
+    fun musig2VerifyPartial(call: PluginCall) {
+        val psig = Hex.decode(call.getString("partialSignature") ?: return reject(call, "partialSignature required"))
+        val pubnonce = Hex.decode(call.getString("pubnonce") ?: return reject(call, "pubnonce required"))
+        val pubnonces = hexList(call, "pubnonces")?.map { Hex.decode(it) } ?: return reject(call, "pubnonces required")
+        val pubkeys = hexList(call, "pubkeys")?.map { Hex.decode(it) } ?: return reject(call, "pubkeys required")
+        val tweaks = hexList(call, "tweaks")?.map { Hex.decode(it) } ?: emptyList()
+        val isXonly = boolList(call, "isXonly") ?: emptyList()
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        val signerIndex = call.getInt("signerIndex") ?: return reject(call, "signerIndex required")
+        val valid = Musig2Signer.partialSigVerify(
+            psig, pubnonce, pubnonces, pubkeys, tweaks, isXonly, message, signerIndex,
+        )
+        val ret = JSObject()
+        ret.put("valid", valid)
+        call.resolve(ret)
+    }
+
+    /** BIP-327 PartialSigAgg: 64-byte BIP-340 signature from partial signatures. */
+    @PluginMethod
+    fun musig2AggregateSignatures(call: PluginCall) {
+        val partialSigs = hexList(call, "partialSignatures")?.map { Hex.decode(it) }
+            ?: return reject(call, "partialSignatures required")
+        val aggnonce = Hex.decode(call.getString("aggnonce") ?: return reject(call, "aggnonce required"))
+        val pubkeys = hexList(call, "pubkeys")?.map { Hex.decode(it) } ?: return reject(call, "pubkeys required")
+        val tweaks = hexList(call, "tweaks")?.map { Hex.decode(it) } ?: emptyList()
+        val isXonly = boolList(call, "isXonly") ?: emptyList()
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        val signature = Musig2Signer.partialSigAggregate(partialSigs, aggnonce, pubkeys, tweaks, isXonly, message)
+        val ret = JSObject()
+        ret.put("signature", Hex.toHexString(signature))
+        call.resolve(ret)
+    }
+
     // ── Secondary vault-state storage (seed itself lives in Room/StrongBox) ─────────
 
     @PluginMethod
@@ -471,6 +606,16 @@ class SecureEnclavePlugin : Plugin() {
     private fun parseHexBytes(value: String): ByteArray {
         val cleaned = value.removePrefix("0x")
         return if (cleaned.isEmpty()) byteArrayOf() else Hex.decode(cleaned)
+    }
+
+    private fun hexList(call: PluginCall, key: String): List<String>? {
+        val arr = call.getArray(key) ?: return null
+        return (0 until arr.length()).map { arr.getString(it) ?: "" }
+    }
+
+    private fun boolList(call: PluginCall, key: String): List<Boolean>? {
+        val arr = call.getArray(key) ?: return null
+        return (0 until arr.length()).map { arr.getBoolean(it) }
     }
 
     private fun signHashes(mnemonic: String, path: String, network: String, hashHexList: List<String>): JSArray {
