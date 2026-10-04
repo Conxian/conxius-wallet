@@ -2,6 +2,14 @@
 
 <!-- What changed and why? -->
 
+### Feature -> dev promotion checklist
+
+<!-- Required for PRs targeting `dev`; enforced by the branch-promotion policy CI check. -->
+
+- [ ] Scoped to a single feature/fix with a conventional commit title.
+- [ ] Conformance tests / test vectors updated where behavior changed.
+- [ ] Readiness labels are honest (no overstating production readiness).
+
 ## Security and Governance Checklist
 
 - [ ] I assessed whether this change affects security posture, threat model, or governance controls.
