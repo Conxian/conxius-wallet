@@ -108,11 +108,11 @@ object TaprootSigner {
 
     /** bech32m P2TR address for a 32-byte x-only taproot output key. */
     fun p2trAddress(outputKeyXOnly: ByteArray, network: String = "mainnet"): String {
-        val data = convertBits(outputKeyXOnly, 8, 5, true)
+        val data = Bech32m.convertBits(outputKeyXOnly, 8, 5, true)
         val withVersion = IntArray(data.size + 1)
         withVersion[0] = 1
         data.copyInto(withVersion, 1)
-        return bech32mEncode(hrpFor(network), withVersion)
+        return Bech32m.encode(hrpFor(network), withVersion)
     }
 
     // ── Internal helpers ─────────────────────────────────────────────────────
@@ -162,59 +162,4 @@ object TaprootSigner {
         return out
     }
 
-    // ── BIP-350 bech32m ──────────────────────────────────────────────────────
-
-    private const val BECH32M_CONST = 0x2bc830a3
-    private const val CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
-    private val GEN = intArrayOf(0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3)
-
-    private fun bech32mEncode(hrp: String, data: IntArray): String {
-        val expanded = hrpExpand(hrp)
-        val combined = IntArray(expanded.size + data.size + 6)
-        expanded.copyInto(combined, 0)
-        data.copyInto(combined, expanded.size)
-        val check = polymod(combined) xor BECH32M_CONST
-        val sb = StringBuilder(hrp).append('1')
-        for (d in data) sb.append(CHARSET[d])
-        for (i in 0 until 6) sb.append(CHARSET[(check ushr (5 * (5 - i))) and 31])
-        return sb.toString()
-    }
-
-    private fun hrpExpand(hrp: String): IntArray {
-        val out = IntArray(hrp.length * 2 + 1)
-        var idx = 0
-        for (i in hrp.indices) out[idx++] = hrp[i].code ushr 5
-        out[idx++] = 0
-        for (i in hrp.indices) out[idx++] = hrp[i].code and 31
-        return out
-    }
-
-    private fun convertBits(data: ByteArray, fromBits: Int, toBits: Int, pad: Boolean): IntArray {
-        var acc = 0
-        var bits = 0
-        val maxv = (1 shl toBits) - 1
-        val ret = mutableListOf<Int>()
-        for (value in data) {
-            acc = (acc shl fromBits) or (value.toInt() and 0xff)
-            bits += fromBits
-            while (bits >= toBits) {
-                bits -= toBits
-                ret.add((acc ushr bits) and maxv)
-            }
-        }
-        if (pad && bits > 0) ret.add((acc shl (toBits - bits)) and maxv)
-        return ret.toIntArray()
-    }
-
-    private fun polymod(values: IntArray): Int {
-        var chk = 1
-        for (v in values) {
-            val top = chk ushr 25
-            chk = ((chk and 0x1ffffff) shl 5) xor v
-            for (i in 0 until 5) {
-                if (((top ushr i) and 1) == 1) chk = chk xor GEN[i]
-            }
-        }
-        return chk
-    }
 }
