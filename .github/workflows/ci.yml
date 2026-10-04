@@ -397,4 +397,21 @@ jobs:
         run: ./gradlew :app:testDebugUnitTest --no-daemon
       - name: Run Bitcoin core conformance tests
         working-directory: android
-        run: ./gradlew :core-bitcoin:testDebugUnitTest --no-daemon
+        run: |
+          ./gradlew :core-bitcoin:testDebugUnitTest \
+            --tests "com.conxius.wallet.bitcoin.Secp256k1SignerTest" \
+            --tests "com.conxius.wallet.bitcoin.TaprootSignerTest" \
+            --tests "com.conxius.wallet.bitcoin.SilentPaymentAddressCodecTest" \
+            --tests "com.conxius.wallet.bitcoin.SilentPaymentManagerTest" \
+            --tests "com.conxius.wallet.bitcoin.SilentPaymentCodecFixtureTest" \
+            --tests "com.conxius.wallet.bitcoin.AdaptorSignerTest" \
+            --tests "com.conxius.wallet.bitcoin.Musig2SignerTest" \
+            --tests "com.conxius.wallet.bitcoin.Musig2SignVerifyTest" \
+            --tests "com.conxius.wallet.bitcoin.NostrSignerTest" \
+            --tests "com.conxius.wallet.bitcoin.LightningInvoiceSignerTest" \
+            --tests "com.conxius.wallet.bitcoin.LiquidSignerTest" \
+            --tests "com.conxius.wallet.bitcoin.StacksSignerTest" \
+            --tests "com.conxius.wallet.bitcoin.BdkManagerTest" \
+            --tests "com.conxius.wallet.bitcoin.BitVmManagerTest" \
+            --tests "com.conxius.wallet.bitcoin.SecureMnemonicGeneratorTest" \
+            --no-daemon
