@@ -101,6 +101,11 @@ type SecureEnclavePlugin = {
     network?: string;
     digest: string;
   }): Promise<{ signature: string }>;
+  silentPaymentAddress(options: {
+    scanPath?: string;
+    spendPath?: string;
+    network?: string;
+  }): Promise<{ address: string }>;
   musig2AggregatePubkeys(options: {
     pubkeys: string[];
   }): Promise<{ aggregatePubkey: string }>;
@@ -515,6 +520,18 @@ export async function schnorrSignDigestNative(options: {
 }): Promise<{ signature: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.schnorrSignDigest(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-352 silent payment address derivation. */
+export async function silentPaymentAddressNative(options: {
+  scanPath?: string;
+  spendPath?: string;
+  network?: string;
+}): Promise<{ address: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.silentPaymentAddress(options);
   }
   throw new Error("Native Enclave not available");
 }
