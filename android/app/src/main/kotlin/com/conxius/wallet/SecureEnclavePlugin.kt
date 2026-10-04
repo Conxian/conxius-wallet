@@ -3,6 +3,7 @@ package com.conxius.wallet
 import com.conxius.wallet.bitcoin.EvmSigner
 import com.conxius.wallet.bitcoin.LiquidSigner
 import com.conxius.wallet.bitcoin.Musig2Signer
+import com.conxius.wallet.bitcoin.NostrSigner
 import com.conxius.wallet.bitcoin.Secp256k1Signer
 import com.conxius.wallet.bitcoin.StacksSigner
 import com.conxius.wallet.bitcoin.TaprootSigner
@@ -37,6 +38,7 @@ class SecureEnclavePlugin : Plugin() {
         const val STACKS_DEFAULT_PATH = "m/44'/5757'/0'/0/0"
         const val LIQUID_DEFAULT_PATH = "m/84'/0'/0'/0/0"
         const val TAPROOT_DEFAULT_PATH = "m/86'/0'/0'/0/0"
+        const val NOSTR_DEFAULT_PATH = "m/44'/1237'/0'/0/0"
     }
 
     private val pluginScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -535,6 +537,69 @@ class SecureEnclavePlugin : Plugin() {
         val signature = Musig2Signer.partialSigAggregate(partialSigs, aggnonce, pubkeys, tweaks, isXonly, message)
         val ret = JSObject()
         ret.put("signature", Hex.toHexString(signature))
+        call.resolve(ret)
+    }
+
+    // ── Nostr (NIP-01 / NIP-06 / NIP-47) non-custodial event signing ────────
+
+    /** 32-byte x-only Nostr identity pubkey (hex) at the NIP-06 path. */
+    @PluginMethod
+    fun nostrGetPubkey(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: NOSTR_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        pluginScope.launch {
+            try {
+                val pubkey = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    NostrSigner.publicKeyHex(privKey)
+                }
+                val ret = JSObject()
+                ret.put("pubkey", pubkey)
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Nostr pubkey derivation failed")
+            }
+        }
+    }
+
+    /** NIP-01 event id + BIP-340 Schnorr signature over the canonical serialization. */
+    @PluginMethod
+    fun nostrSignEvent(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: NOSTR_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val serialized = call.getString("serialized") ?: return reject(call, "serialized required")
+        pluginScope.launch {
+            try {
+                val id = NostrSigner.eventId(serialized)
+                val signature = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    val auxRand = ByteArray(32)
+                    SecureRandom().nextBytes(auxRand)
+                    NostrSigner.signEventId(privKey, id, auxRand)
+                }
+                val ret = JSObject()
+                ret.put("id", Hex.toHexString(id))
+                ret.put("signature", Hex.toHexString(signature))
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Nostr event signing failed")
+            }
+        }
+    }
+
+    /** BIP-340 verification of a Nostr event signature. */
+    @PluginMethod
+    fun nostrVerifyEvent(call: PluginCall) {
+        val pubkey = Hex.decode(call.getString("pubkey") ?: return reject(call, "pubkey required"))
+        val id = Hex.decode(call.getString("id") ?: return reject(call, "id required"))
+        val signature = Hex.decode(call.getString("signature") ?: return reject(call, "signature required"))
+        val valid = NostrSigner.verifyEventSignature(pubkey, id, signature)
+        val ret = JSObject()
+        ret.put("valid", valid)
         call.resolve(ret)
     }
 
