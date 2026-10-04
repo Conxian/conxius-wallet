@@ -1,6 +1,8 @@
 package com.conxius.wallet
 
+import com.conxius.wallet.bitcoin.AdaptorSigner
 import com.conxius.wallet.bitcoin.EvmSigner
+import com.conxius.wallet.bitcoin.LightningInvoiceSigner
 import com.conxius.wallet.bitcoin.LiquidSigner
 import com.conxius.wallet.bitcoin.Musig2Signer
 import com.conxius.wallet.bitcoin.NostrSigner
@@ -39,6 +41,8 @@ class SecureEnclavePlugin : Plugin() {
         const val LIQUID_DEFAULT_PATH = "m/84'/0'/0'/0/0"
         const val TAPROOT_DEFAULT_PATH = "m/86'/0'/0'/0/0"
         const val NOSTR_DEFAULT_PATH = "m/44'/1237'/0'/0/0"
+        const val DLC_DEFAULT_PATH = "m/86'/0'/0'/0/0"
+        const val LIGHTNING_DEFAULT_PATH = "m/84'/0'/0'/0/0"
     }
 
     private val pluginScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -600,6 +604,118 @@ class SecureEnclavePlugin : Plugin() {
         val valid = NostrSigner.verifyEventSignature(pubkey, id, signature)
         val ret = JSObject()
         ret.put("valid", valid)
+        call.resolve(ret)
+    }
+
+    // ── DLC (Schnorr adaptor signatures) ─────────────────────────────────────
+
+    /** 64-byte adaptor pre-signature `R_x || s'` over a 32-byte message, explicit nonce. */
+    @PluginMethod
+    fun dlcAdaptorSign(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: DLC_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        val nonce = parseHexBigInteger(call.getString("nonce") ?: return reject(call, "nonce required"))
+        pluginScope.launch {
+            try {
+                val signature = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    AdaptorSigner.adaptorSign(privKey, message, nonce)
+                }
+                val ret = JSObject()
+                ret.put("signature", Hex.toHexString(signature))
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "DLC adaptor signing failed")
+            }
+        }
+    }
+
+    /** BIP-340 verification of a DLC adaptor pre-signature. */
+    @PluginMethod
+    fun dlcAdaptorVerify(call: PluginCall) {
+        val pubkey = Hex.decode(call.getString("pubkey") ?: return reject(call, "pubkey required"))
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        val signature = Hex.decode(call.getString("signature") ?: return reject(call, "signature required"))
+        val ret = JSObject()
+        ret.put("valid", AdaptorSigner.adaptorVerify(pubkey, message, signature))
+        call.resolve(ret)
+    }
+
+    /** One-time adaptor point `T = t·G` (33-byte compressed) for an oracle secret. */
+    @PluginMethod
+    fun dlcAdaptorPoint(call: PluginCall) {
+        val secret = parseHexBigInteger(call.getString("secret") ?: return reject(call, "secret required"))
+        val ret = JSObject()
+        ret.put("point", Hex.toHexString(AdaptorSigner.adaptorPoint(secret)))
+        call.resolve(ret)
+    }
+
+    /** Completes a pre-signature with the oracle secret → 64-byte full signature. */
+    @PluginMethod
+    fun dlcCompleteSignature(call: PluginCall) {
+        val signature = Hex.decode(call.getString("signature") ?: return reject(call, "signature required"))
+        val secret = parseHexBigInteger(call.getString("secret") ?: return reject(call, "secret required"))
+        val ret = JSObject()
+        ret.put("signature", Hex.toHexString(AdaptorSigner.completeSignature(signature, secret)))
+        call.resolve(ret)
+    }
+
+    /** Recovers the oracle secret `t = s - s'` from the pre- and full signatures. */
+    @PluginMethod
+    fun dlcExtractSecret(call: PluginCall) {
+        val adaptorSig = Hex.decode(call.getString("adaptorSignature") ?: return reject(call, "adaptorSignature required"))
+        val fullSig = Hex.decode(call.getString("fullSignature") ?: return reject(call, "fullSignature required"))
+        val ret = JSObject()
+        ret.put("secret", AdaptorSigner.extractAdaptorSecret(adaptorSig, fullSig).toString(16))
+        call.resolve(ret)
+    }
+
+    // ── Lightning (BOLT-11) invoice signing ──────────────────────────────────
+
+    /** 32-byte BOLT-11 to-be-signed message hash for an invoice. */
+    @PluginMethod
+    fun lightningInvoiceMessageHash(call: PluginCall) {
+        val invoice = call.getString("invoice") ?: return reject(call, "invoice required")
+        val ret = JSObject()
+        ret.put("message", Hex.toHexString(LightningInvoiceSigner.invoiceMessageHash(invoice)))
+        call.resolve(ret)
+    }
+
+    /** 65-byte compact ECDSA signature over the invoice message hash. */
+    @PluginMethod
+    fun lightningSignInvoice(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: LIGHTNING_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val invoice = call.getString("invoice") ?: return reject(call, "invoice required")
+        pluginScope.launch {
+            try {
+                val message = LightningInvoiceSigner.invoiceMessageHash(invoice)
+                val signature = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    LightningInvoiceSigner.signDigest(privKey, message)
+                }
+                val ret = JSObject()
+                ret.put("message", Hex.toHexString(message))
+                ret.put("signature", Hex.toHexString(signature))
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Lightning invoice signing failed")
+            }
+        }
+    }
+
+    /** 65-byte uncompressed public key recovered from a BOLT-11 signature. */
+    @PluginMethod
+    fun lightningRecoverInvoicePublicKey(call: PluginCall) {
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        val signature = Hex.decode(call.getString("signature") ?: return reject(call, "signature required"))
+        val ret = JSObject()
+        ret.put("publicKey", Hex.toHexString(LightningInvoiceSigner.recoverPublicKey(message, signature)))
         call.resolve(ret)
     }
 

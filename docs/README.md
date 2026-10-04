@@ -25,7 +25,7 @@ Welcome to the official technical documentation for the Conxius Wallet, the sove
 - [Operations Overview](operations/)
 - [Operating Model](operations/OPERATING_MODEL.md)
 - [Baseline Review Templates & Governance Pack](operations/BASELINE_REVIEW_TEMPLATES.md)
-- [BIP-110 Client-Side Alignment](operations/BIP110_COMPLIANCE.md)
+- [Inscription-Resistant Clean-Block Fee Model](operations/CLEAN_BLOCK_FEE_MODEL.md)
 - [KeyMint / StrongBox and Play Integrity Qualification](reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md)
 - [Production Artifact Contracts](operations/PRODUCTION_ARTIFACT_CONTRACTS.md)
 - [SAB Wallet Map](operations/SAB_WALLET_MAP.md)

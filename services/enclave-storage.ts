@@ -159,6 +159,40 @@ type SecureEnclavePlugin = {
     id: string;
     signature: string;
   }): Promise<{ valid: boolean }>;
+  dlcAdaptorSign(options: {
+    path?: string;
+    network?: string;
+    message: string;
+    nonce: string;
+  }): Promise<{ signature: string }>;
+  dlcAdaptorVerify(options: {
+    pubkey: string;
+    message: string;
+    signature: string;
+  }): Promise<{ valid: boolean }>;
+  dlcAdaptorPoint(options: {
+    secret: string;
+  }): Promise<{ point: string }>;
+  dlcCompleteSignature(options: {
+    signature: string;
+    secret: string;
+  }): Promise<{ signature: string }>;
+  dlcExtractSecret(options: {
+    adaptorSignature: string;
+    fullSignature: string;
+  }): Promise<{ secret: string }>;
+  lightningInvoiceMessageHash(options: {
+    invoice: string;
+  }): Promise<{ message: string }>;
+  lightningSignInvoice(options: {
+    path?: string;
+    network?: string;
+    invoice: string;
+  }): Promise<{ message: string; signature: string }>;
+  lightningRecoverInvoicePublicKey(options: {
+    message: string;
+    signature: string;
+  }): Promise<{ publicKey: string }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -627,6 +661,100 @@ export async function nostrVerifyEventNative(options: {
 }): Promise<{ valid: boolean }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.nostrVerifyEvent(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+// ─── DLC (Schnorr adaptor signatures) ────────────────────────────────────────
+
+/** Native-only DLC adaptor pre-signature `R_x || s'` with an explicit contract nonce. */
+export async function dlcAdaptorSignNative(options: {
+  path?: string;
+  network?: string;
+  message: string;
+  nonce: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.dlcAdaptorSign(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-340 verification of a DLC adaptor pre-signature. */
+export async function dlcAdaptorVerifyNative(options: {
+  pubkey: string;
+  message: string;
+  signature: string;
+}): Promise<{ valid: boolean }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.dlcAdaptorVerify(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only DLC one-time adaptor point `T = t·G` (33-byte compressed). */
+export async function dlcAdaptorPointNative(options: {
+  secret: string;
+}): Promise<{ point: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.dlcAdaptorPoint(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only DLC pre-signature completion with the oracle secret. */
+export async function dlcCompleteSignatureNative(options: {
+  signature: string;
+  secret: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.dlcCompleteSignature(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only DLC oracle-secret extraction `t = s - s'`. */
+export async function dlcExtractSecretNative(options: {
+  adaptorSignature: string;
+  fullSignature: string;
+}): Promise<{ secret: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.dlcExtractSecret(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+// ─── Lightning (BOLT-11) invoice signing ─────────────────────────────────────
+
+/** Native-only BOLT-11 to-be-signed message hash (Bech32 decode + SHA256). */
+export async function lightningInvoiceMessageHashNative(options: {
+  invoice: string;
+}): Promise<{ message: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.lightningInvoiceMessageHash(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BOLT-11 invoice signing: 65-byte compact ECDSA `r || s || recovery-id`. */
+export async function lightningSignInvoiceNative(options: {
+  path?: string;
+  network?: string;
+  invoice: string;
+}): Promise<{ message: string; signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.lightningSignInvoice(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BOLT-11 signature public-key recovery (65-byte uncompressed). */
+export async function lightningRecoverInvoicePublicKeyNative(options: {
+  message: string;
+  signature: string;
+}): Promise<{ publicKey: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.lightningRecoverInvoicePublicKey(options);
   }
   throw new Error("Native Enclave not available");
 }
