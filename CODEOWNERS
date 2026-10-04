@@ -5,7 +5,6 @@
 
 # Security and governance-sensitive files
 /CODEOWNERS @botshelomokoka @admin-conxian-labs
-/.github/CODEOWNERS @botshelomokoka @admin-conxian-labs
 /SECURITY.md @botshelomokoka @admin-conxian-labs
 /SUPPORT.md @botshelomokoka @admin-conxian-labs
 /CODE_OF_CONDUCT.md @botshelomokoka @admin-conxian-labs

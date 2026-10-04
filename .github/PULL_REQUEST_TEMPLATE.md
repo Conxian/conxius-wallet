@@ -17,7 +17,7 @@
 
 ## Sensitive Files & Subsystems (CODEOWNERS-enforced)
 
-- `CODEOWNERS` / `.github/CODEOWNERS`
+- `CODEOWNERS`
 - `SECURITY.md` / `SUPPORT.md` / `CONTRIBUTING.md` / `LICENSE` / `CHANGELOG.md`
 - `.github/ISSUE_TEMPLATE/**` / `.github/PULL_REQUEST_TEMPLATE*`
 - `.github/workflows/**` / `.github/release.yml`
