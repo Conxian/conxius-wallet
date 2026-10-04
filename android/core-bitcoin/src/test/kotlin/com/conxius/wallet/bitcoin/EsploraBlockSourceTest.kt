@@ -348,7 +348,7 @@ class EsploraBlockSourceTest {
         assertEquals(26, batches.single().transactions.size)
         assertTrue(batches.single().isFinalBatchForBlock)
         assertEquals((0 until 26).map { it.toLong() }, batches.single().transactions.map { it.transactionIndex })
-        assertEquals(listOf("/blocks/tip/height", "/blocks/tip/hash", "/block-height/100", "/block-height/99", "/block/$blockHash", "/block/$blockHash/txids", "/block/$blockHash/txs/0", "/block/$blockHash/txs/25"), client.paths)
+        assertEquals(listOf("/blocks/tip/height", "/blocks/tip/hash", "/block-height/100", "/block/$blockHash", "/block-height/99", "/block/$blockHash/txids", "/block/$blockHash/txs/0", "/block/$blockHash/txs/25"), client.paths)
     }
 
     @Test
