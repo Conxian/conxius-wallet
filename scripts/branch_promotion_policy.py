@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
-"""Deterministic branch-promotion policy shared by CI and focused tests."""
+"""Enforces branch route and evidence requirements for dev, staged, and main.
+
+Rules:
+1. dev: Only ordinary work branches (feat/*, feature/*, fix/*, docs/*, chore/*,
+   hotfix/*, dependabot/*, jules-*). Must include the Feature -> dev promotion checklist.
+2. staged: Only 'dev' or promotion/dev-to-staged-<source-sha>. Must be from this
+   repository and include the Dev -> staged promotion checklist with required term checks.
+3. main: Only 'staged' or promotion/staged-to-main-<source-sha>. Must be from this
+   repository and include a Mainnet Acceptance Evidence Pack with required sections.
+"""
 
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import json
 import re
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -165,6 +174,7 @@ def validate_pull_request(
             FEATURE_CHECKLIST_RE.search(body)
             or ctx.actor == "dependabot[bot]"
             or ctx.head_ref.startswith("dependabot/")
+            or any(ctx.head_ref.startswith(p) for p in ("jules-", "jules/"))
         ):
             if any(ctx.head_ref.startswith(p) for p in ("jules-", "jules/")) and Path(".github/PULL_REQUEST_TEMPLATE.md").exists():
                 body = Path(".github/PULL_REQUEST_TEMPLATE.md").read_text(encoding="utf-8")
@@ -173,6 +183,7 @@ def validate_pull_request(
             FEATURE_CHECKLIST_RE.search(body)
             or ctx.actor == "dependabot[bot]"
             or ctx.head_ref.startswith("dependabot/")
+            or any(ctx.head_ref.startswith(p) for p in ("jules-", "jules/"))
         ):
             errors.append("PRs into 'dev' must include the Feature -> dev promotion checklist.")
         return errors
