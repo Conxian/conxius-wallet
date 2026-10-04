@@ -1,8 +1,13 @@
 package com.conxius.wallet
 
+import com.conxius.wallet.bitcoin.AdaptorSigner
 import com.conxius.wallet.bitcoin.EvmSigner
+import com.conxius.wallet.bitcoin.LightningInvoiceSigner
 import com.conxius.wallet.bitcoin.LiquidSigner
+import com.conxius.wallet.bitcoin.Musig2Signer
+import com.conxius.wallet.bitcoin.NostrSigner
 import com.conxius.wallet.bitcoin.Secp256k1Signer
+import com.conxius.wallet.bitcoin.SilentPaymentAddress
 import com.conxius.wallet.bitcoin.StacksSigner
 import com.conxius.wallet.bitcoin.TaprootSigner
 import com.getcapacitor.JSArray
@@ -36,6 +41,11 @@ class SecureEnclavePlugin : Plugin() {
         const val STACKS_DEFAULT_PATH = "m/44'/5757'/0'/0/0"
         const val LIQUID_DEFAULT_PATH = "m/84'/0'/0'/0/0"
         const val TAPROOT_DEFAULT_PATH = "m/86'/0'/0'/0/0"
+        const val NOSTR_DEFAULT_PATH = "m/44'/1237'/0'/0/0"
+        const val DLC_DEFAULT_PATH = "m/86'/0'/0'/0/0"
+        const val LIGHTNING_DEFAULT_PATH = "m/84'/0'/0'/0/0"
+        const val SILENT_PAYMENT_SCAN_DEFAULT_PATH = "m/352'/0'/0'/1/0"
+        const val SILENT_PAYMENT_SPEND_DEFAULT_PATH = "m/352'/0'/0'/0/0"
     }
 
     private val pluginScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -403,6 +413,343 @@ class SecureEnclavePlugin : Plugin() {
         }
     }
 
+    /** BIP-352 silent payment address from scan/spend derivation paths (returns `sp`/`tsp` bech32m). */
+    @PluginMethod
+    fun silentPaymentAddress(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val scanPath = call.getString("scanPath") ?: SILENT_PAYMENT_SCAN_DEFAULT_PATH
+        val spendPath = call.getString("spendPath") ?: SILENT_PAYMENT_SPEND_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        pluginScope.launch {
+            try {
+                val address = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val scanPriv = Secp256k1Signer.derivePrivateKey(mnemonic, scanPath, network)
+                    val spendPriv = Secp256k1Signer.derivePrivateKey(mnemonic, spendPath, network)
+                    SilentPaymentAddress.encode(
+                        Secp256k1Signer.publicKey(scanPriv),
+                        Secp256k1Signer.publicKey(spendPriv),
+                        network,
+                    )
+                }
+                val ret = JSObject()
+                ret.put("address", address)
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Silent payment address derivation failed")
+            }
+        }
+    }
+
+    // ── MuSig2 (BIP-327) n-of-n Schnorr multisig ────────────────────────────────
+
+    /** BIP-327 KeyAgg: 32-byte x-only aggregate public key from 33-byte compressed keys. */
+    @PluginMethod
+    fun musig2AggregatePubkeys(call: PluginCall) {
+        val pubkeys = hexList(call, "pubkeys") ?: return reject(call, "pubkeys required")
+        if (pubkeys.isEmpty()) return reject(call, "pubkeys required")
+        val aggregate = Musig2Signer.keyAggregate(pubkeys.map { Hex.decode(it) })
+        val ret = JSObject()
+        ret.put("aggregatePubkey", Hex.toHexString(aggregate))
+        call.resolve(ret)
+    }
+
+    /** BIP-327 KeySort: canonical lexicographic order of 33-byte compressed keys. */
+    @PluginMethod
+    fun musig2SortPubkeys(call: PluginCall) {
+        val pubkeys = hexList(call, "pubkeys") ?: return reject(call, "pubkeys required")
+        val sorted = Musig2Signer.keySort(pubkeys.map { Hex.decode(it) })
+        val arr = JSArray()
+        sorted.forEach { arr.put(Hex.toHexString(it)) }
+        val ret = JSObject()
+        ret.put("sortedPubkeys", arr)
+        call.resolve(ret)
+    }
+
+    /**
+     * BIP-327 NonceGen for the wallet key. `aggpk` (x-only), `message` and `extraIn`
+     * are optional hex strings; fresh `rand'` is drawn internally with [SecureRandom].
+     * Returns (secnonce 97 bytes, pubnonce 66 bytes) as hex.
+     */
+    @PluginMethod
+    fun musig2GenerateNonce(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: TAPROOT_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val aggpk = call.getString("aggpk")?.let { Hex.decode(it) }
+        val message = call.getString("message")?.let { Hex.decode(it) }
+        val extra = call.getString("extra")?.let { Hex.decode(it) }
+        pluginScope.launch {
+            try {
+                val (secnonce, pubnonce) = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    val sk = Musig2Signer.secretScalar(privKey)
+                    val pk = Secp256k1Signer.publicKey(privKey)
+                    val random = ByteArray(32)
+                    SecureRandom().nextBytes(random)
+                    Musig2Signer.nonceGen(sk, pk, aggpk, message, extra, random)
+                }
+                val ret = JSObject()
+                ret.put("secnonce", Hex.toHexString(secnonce))
+                ret.put("pubnonce", Hex.toHexString(pubnonce))
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "MuSig2 nonce generation failed")
+            }
+        }
+    }
+
+    /** BIP-327 NonceAgg: 66-byte aggregate nonce from 66-byte pubnonces. */
+    @PluginMethod
+    fun musig2AggregateNonces(call: PluginCall) {
+        val pubnonces = hexList(call, "pubnonces") ?: return reject(call, "pubnonces required")
+        if (pubnonces.isEmpty()) return reject(call, "pubnonces required")
+        val aggregate = Musig2Signer.nonceAggregate(pubnonces.map { Hex.decode(it) })
+        val ret = JSObject()
+        ret.put("aggregateNonce", Hex.toHexString(aggregate))
+        call.resolve(ret)
+    }
+
+    /** BIP-327 Sign: 32-byte partial signature for the wallet key. */
+    @PluginMethod
+    fun musig2SignPartial(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: TAPROOT_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val secnonce = Hex.decode(call.getString("secnonce") ?: return reject(call, "secnonce required"))
+        val aggnonce = Hex.decode(call.getString("aggnonce") ?: return reject(call, "aggnonce required"))
+        val pubkeys = hexList(call, "pubkeys")?.map { Hex.decode(it) } ?: return reject(call, "pubkeys required")
+        val tweaks = hexList(call, "tweaks")?.map { Hex.decode(it) } ?: emptyList()
+        val isXonly = boolList(call, "isXonly") ?: emptyList()
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        pluginScope.launch {
+            try {
+                val partial = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    val sk = Musig2Signer.secretScalar(privKey)
+                    Musig2Signer.signPartial(secnonce, sk, aggnonce, pubkeys, tweaks, isXonly, message)
+                }
+                val ret = JSObject()
+                ret.put("partialSignature", Hex.toHexString(partial))
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "MuSig2 partial signing failed")
+            }
+        }
+    }
+
+    /** BIP-327 PartialSigVerify: blame-free boolean check of a partial signature. */
+    @PluginMethod
+    fun musig2VerifyPartial(call: PluginCall) {
+        val psig = Hex.decode(call.getString("partialSignature") ?: return reject(call, "partialSignature required"))
+        val pubnonce = Hex.decode(call.getString("pubnonce") ?: return reject(call, "pubnonce required"))
+        val pubnonces = hexList(call, "pubnonces")?.map { Hex.decode(it) } ?: return reject(call, "pubnonces required")
+        val pubkeys = hexList(call, "pubkeys")?.map { Hex.decode(it) } ?: return reject(call, "pubkeys required")
+        val tweaks = hexList(call, "tweaks")?.map { Hex.decode(it) } ?: emptyList()
+        val isXonly = boolList(call, "isXonly") ?: emptyList()
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        val signerIndex = call.getInt("signerIndex") ?: return reject(call, "signerIndex required")
+        val valid = Musig2Signer.partialSigVerify(
+            psig, pubnonce, pubnonces, pubkeys, tweaks, isXonly, message, signerIndex,
+        )
+        val ret = JSObject()
+        ret.put("valid", valid)
+        call.resolve(ret)
+    }
+
+    /** BIP-327 PartialSigAgg: 64-byte BIP-340 signature from partial signatures. */
+    @PluginMethod
+    fun musig2AggregateSignatures(call: PluginCall) {
+        val partialSigs = hexList(call, "partialSignatures")?.map { Hex.decode(it) }
+            ?: return reject(call, "partialSignatures required")
+        val aggnonce = Hex.decode(call.getString("aggnonce") ?: return reject(call, "aggnonce required"))
+        val pubkeys = hexList(call, "pubkeys")?.map { Hex.decode(it) } ?: return reject(call, "pubkeys required")
+        val tweaks = hexList(call, "tweaks")?.map { Hex.decode(it) } ?: emptyList()
+        val isXonly = boolList(call, "isXonly") ?: emptyList()
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        val signature = Musig2Signer.partialSigAggregate(partialSigs, aggnonce, pubkeys, tweaks, isXonly, message)
+        val ret = JSObject()
+        ret.put("signature", Hex.toHexString(signature))
+        call.resolve(ret)
+    }
+
+    // ── Nostr (NIP-01 / NIP-06 / NIP-47) non-custodial event signing ────────
+
+    /** 32-byte x-only Nostr identity pubkey (hex) at the NIP-06 path. */
+    @PluginMethod
+    fun nostrGetPubkey(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: NOSTR_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        pluginScope.launch {
+            try {
+                val pubkey = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    NostrSigner.publicKeyHex(privKey)
+                }
+                val ret = JSObject()
+                ret.put("pubkey", pubkey)
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Nostr pubkey derivation failed")
+            }
+        }
+    }
+
+    /** NIP-01 event id + BIP-340 Schnorr signature over the canonical serialization. */
+    @PluginMethod
+    fun nostrSignEvent(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: NOSTR_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val serialized = call.getString("serialized") ?: return reject(call, "serialized required")
+        pluginScope.launch {
+            try {
+                val id = NostrSigner.eventId(serialized)
+                val signature = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    val auxRand = ByteArray(32)
+                    SecureRandom().nextBytes(auxRand)
+                    NostrSigner.signEventId(privKey, id, auxRand)
+                }
+                val ret = JSObject()
+                ret.put("id", Hex.toHexString(id))
+                ret.put("signature", Hex.toHexString(signature))
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Nostr event signing failed")
+            }
+        }
+    }
+
+    /** BIP-340 verification of a Nostr event signature. */
+    @PluginMethod
+    fun nostrVerifyEvent(call: PluginCall) {
+        val pubkey = Hex.decode(call.getString("pubkey") ?: return reject(call, "pubkey required"))
+        val id = Hex.decode(call.getString("id") ?: return reject(call, "id required"))
+        val signature = Hex.decode(call.getString("signature") ?: return reject(call, "signature required"))
+        val valid = NostrSigner.verifyEventSignature(pubkey, id, signature)
+        val ret = JSObject()
+        ret.put("valid", valid)
+        call.resolve(ret)
+    }
+
+    // ── DLC (Schnorr adaptor signatures) ─────────────────────────────────────
+
+    /** 64-byte adaptor pre-signature `R_x || s'` over a 32-byte message, explicit nonce. */
+    @PluginMethod
+    fun dlcAdaptorSign(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: DLC_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        val nonce = parseHexBigInteger(call.getString("nonce") ?: return reject(call, "nonce required"))
+        pluginScope.launch {
+            try {
+                val signature = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    AdaptorSigner.adaptorSign(privKey, message, nonce)
+                }
+                val ret = JSObject()
+                ret.put("signature", Hex.toHexString(signature))
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "DLC adaptor signing failed")
+            }
+        }
+    }
+
+    /** BIP-340 verification of a DLC adaptor pre-signature. */
+    @PluginMethod
+    fun dlcAdaptorVerify(call: PluginCall) {
+        val pubkey = Hex.decode(call.getString("pubkey") ?: return reject(call, "pubkey required"))
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        val signature = Hex.decode(call.getString("signature") ?: return reject(call, "signature required"))
+        val ret = JSObject()
+        ret.put("valid", AdaptorSigner.adaptorVerify(pubkey, message, signature))
+        call.resolve(ret)
+    }
+
+    /** One-time adaptor point `T = t·G` (33-byte compressed) for an oracle secret. */
+    @PluginMethod
+    fun dlcAdaptorPoint(call: PluginCall) {
+        val secret = parseHexBigInteger(call.getString("secret") ?: return reject(call, "secret required"))
+        val ret = JSObject()
+        ret.put("point", Hex.toHexString(AdaptorSigner.adaptorPoint(secret)))
+        call.resolve(ret)
+    }
+
+    /** Completes a pre-signature with the oracle secret → 64-byte full signature. */
+    @PluginMethod
+    fun dlcCompleteSignature(call: PluginCall) {
+        val signature = Hex.decode(call.getString("signature") ?: return reject(call, "signature required"))
+        val secret = parseHexBigInteger(call.getString("secret") ?: return reject(call, "secret required"))
+        val ret = JSObject()
+        ret.put("signature", Hex.toHexString(AdaptorSigner.completeSignature(signature, secret)))
+        call.resolve(ret)
+    }
+
+    /** Recovers the oracle secret `t = s - s'` from the pre- and full signatures. */
+    @PluginMethod
+    fun dlcExtractSecret(call: PluginCall) {
+        val adaptorSig = Hex.decode(call.getString("adaptorSignature") ?: return reject(call, "adaptorSignature required"))
+        val fullSig = Hex.decode(call.getString("fullSignature") ?: return reject(call, "fullSignature required"))
+        val ret = JSObject()
+        ret.put("secret", AdaptorSigner.extractAdaptorSecret(adaptorSig, fullSig).toString(16))
+        call.resolve(ret)
+    }
+
+    // ── Lightning (BOLT-11) invoice signing ──────────────────────────────────
+
+    /** 32-byte BOLT-11 to-be-signed message hash for an invoice. */
+    @PluginMethod
+    fun lightningInvoiceMessageHash(call: PluginCall) {
+        val invoice = call.getString("invoice") ?: return reject(call, "invoice required")
+        val ret = JSObject()
+        ret.put("message", Hex.toHexString(LightningInvoiceSigner.invoiceMessageHash(invoice)))
+        call.resolve(ret)
+    }
+
+    /** 65-byte compact ECDSA signature over the invoice message hash. */
+    @PluginMethod
+    fun lightningSignInvoice(call: PluginCall) {
+        val application = app ?: return reject(call, "application unavailable")
+        val path = call.getString("path") ?: LIGHTNING_DEFAULT_PATH
+        val network = call.getString("network") ?: "mainnet"
+        val invoice = call.getString("invoice") ?: return reject(call, "invoice required")
+        pluginScope.launch {
+            try {
+                val message = LightningInvoiceSigner.invoiceMessageHash(invoice)
+                val signature = application.walletSeedProvider.withSeed { material ->
+                    val mnemonic = String(material.mnemonicBytes, Charsets.UTF_8)
+                    val privKey = Secp256k1Signer.derivePrivateKey(mnemonic, path, network)
+                    LightningInvoiceSigner.signDigest(privKey, message)
+                }
+                val ret = JSObject()
+                ret.put("message", Hex.toHexString(message))
+                ret.put("signature", Hex.toHexString(signature))
+                call.resolve(ret)
+            } catch (e: Exception) {
+                call.reject(e.message ?: "Lightning invoice signing failed")
+            }
+        }
+    }
+
+    /** 65-byte uncompressed public key recovered from a BOLT-11 signature. */
+    @PluginMethod
+    fun lightningRecoverInvoicePublicKey(call: PluginCall) {
+        val message = Hex.decode(call.getString("message") ?: return reject(call, "message required"))
+        val signature = Hex.decode(call.getString("signature") ?: return reject(call, "signature required"))
+        val ret = JSObject()
+        ret.put("publicKey", Hex.toHexString(LightningInvoiceSigner.recoverPublicKey(message, signature)))
+        call.resolve(ret)
+    }
+
     // ── Secondary vault-state storage (seed itself lives in Room/StrongBox) ─────────
 
     @PluginMethod
@@ -471,6 +818,16 @@ class SecureEnclavePlugin : Plugin() {
     private fun parseHexBytes(value: String): ByteArray {
         val cleaned = value.removePrefix("0x")
         return if (cleaned.isEmpty()) byteArrayOf() else Hex.decode(cleaned)
+    }
+
+    private fun hexList(call: PluginCall, key: String): List<String>? {
+        val arr = call.getArray(key) ?: return null
+        return (0 until arr.length()).map { arr.getString(it) ?: "" }
+    }
+
+    private fun boolList(call: PluginCall, key: String): List<Boolean>? {
+        val arr = call.getArray(key) ?: return null
+        return (0 until arr.length()).map { arr.getBoolean(it) }
     }
 
     private fun signHashes(mnemonic: String, path: String, network: String, hashHexList: List<String>): JSArray {

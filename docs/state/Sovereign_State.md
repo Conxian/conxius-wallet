@@ -77,6 +77,20 @@ environment. The issue-355 benchmark is host-only; compact-filter discovery, spe
 recovery, native address encoding, authoritative spentness, labels/passphrases, raw/merkle proof
 verification, and deeper reorg recovery remain outside this merged slice.
 
+## Implementation state note (updated 2026-10-04)
+
+PR #663 repaired four `core-bitcoin` conformance suites (`EvmSignerTest`,
+`ArkManagerTest`, `ProtocolManagerTest`, `EsploraBlockSourceTest`) that CI had
+been compiling but never executing, and CI now runs the full
+`:core-bitcoin:testDebugUnitTest` source set with no allowlist. Root causes were
+test-only (Android `Log`/`org.json` "not mocked" stubs in JVM tests, two
+`EvmSigner` test-vector/assertion errors) plus one real correctness bug: the
+BIP-352 Esplora parser inverted `TaprootOutput.isUnspent` (`spentFlag == true`
+instead of `== false`), which would have mislabeled unspent taproot outputs as
+spent during receiver scanning. Production `EvmSigner` (EIP-155/1559/712) was
+re-verified correct against `eth-account` and a standalone BouncyCastle 1.86
+reference (RFC-6979 output matches libsecp256k1).
+
 ## 🛡️ Security Architecture
 - **CXN Guardian**: Local privacy filtering active for all AI/Network egress.
 - **The Conclave**: Android Keystore-backed mnemonic protection, requesting StrongBox where supported with an explicit TEE fallback for existing AES storage; universal StrongBox backing and device qualification are not claimed.

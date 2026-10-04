@@ -1,6 +1,7 @@
 package com.conxius.wallet.bitcoin
 
 import org.bouncycastle.util.encoders.Hex
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -69,10 +70,10 @@ class EvmSignerTest {
             data = byteArrayOf(),
         )
         assertEquals(
-            "02f8720180843b9aca008477359400825208943535353535353535353535353535" +
-                "3535353535880de0b6b3a764000080c080a09a87e270431071f37718dfa32412" +
-                "0bcf9fa09f526a3407e1bf82a6e321115297a07e679504320e1dbeb7ea11d538" +
-                "dcf0f79f090545ea7c11f68e0fddd32c23e860",
+            "02f8720180843b9aca0084773594008252089435353535353535353535" +
+                "35353535353535353535880de0b6b3a764000080c080a09a87e2704310" +
+                "71f37718dfa324120bcf9fa09f526a3407e1bf82a6e321115297a07e67" +
+                "9504320e1dbeb7ea11d538dcf0f79f090545ea7c11f68e0fddd32c23e860",
             Hex.toHexString(raw),
         )
     }
@@ -100,7 +101,7 @@ class EvmSignerTest {
             "ec098504a817c800825208943535353535353535353535353535353535353535" +
                 "880de0b6b3a764000080018080",
         )
-        assertEquals(digest, EvmSigner.keccak256(unsignedPayload))
+        assertArrayEquals(digest, EvmSigner.keccak256(unsignedPayload))
     }
 
     @Test

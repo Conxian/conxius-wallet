@@ -1,11 +1,22 @@
-# BIP-110 Client-Side Alignment
+# Inscription-Resistant Clean-Block Fee Model
 
-**Status (July 20, 2026): client-side alignment only; not consensus compliance.**
+**Status (updated 2026-10-03): client-side fee heuristic; not BIP-110.**
 
-Conxius Wallet uses BIP-110 principles to make Bitcoin fee recommendations less
-sensitive to inscription-heavy transactions. This document describes wallet
-policy and measurement behavior. It does **not** claim that BIP-110 is active on
-any network, enforce consensus rules, or make the wallet a BIP-110 validator.
+> **Correction (label fix).** This document was previously titled
+> "BIP-110 Client-Side Alignment". That label is wrong and has been removed.
+> [BIP-110](https://bips.dev/110/) is *"Reduced Data Temporary Softfork"* — a
+> **consensus (soft-fork)** proposal that temporarily limits data-field sizes
+> (OP_RETURN ≤ 83 B, pushdata ≤ 256 B, taproot annex invalid, etc.). It has
+> **nothing to do with fee estimation**, and its status is **Closed**
+> (marked 2026-08-09, after a chain split with stalled mining). It was never
+> active on mainnet and there are no mainnet proofs or results to align with.
+> The wallet does **not** implement or follow BIP-110.
+
+Conxius Wallet uses a bounded, inscription-resistant clean-block fee model to
+make Bitcoin fee recommendations less sensitive to inscription-heavy
+transactions. This document describes wallet policy and measurement behavior. It
+does **not** claim that any BIP is active, enforce consensus rules, or make the
+wallet a consensus validator.
 
 ## Clean-block fee model
 
@@ -111,4 +122,10 @@ See also:
 
 - [Implementation Registry](../protocols/IMPLEMENTATION_REGISTRY.md)
 - [Silent Payments (BIP-352)](../protocols/silent-payments.md)
-- [Upstream Conxian BIP-110 alignment](https://github.com/Conxian/lib-conxian-core/blob/main/docs/BIP110_ALIGNMENT.md)
+
+> **Upstream note.** `lib-conxian-core` has a `docs/BIP110_ALIGNMENT.md` that
+> describes a "BIP-110 Compliance Matrix" and cites BIP-110 as `Complete`. That
+> citation is stale: BIP-110 is now **Closed** (2026-08-09) and is a consensus
+> data-size softfork, not a fee/alignment contract. The core doc should be
+> relabeled accordingly (tracked as an upstream recommendation, not a wallet
+> dependency — the wallet does not consume `lib-conxian-core` at build time).

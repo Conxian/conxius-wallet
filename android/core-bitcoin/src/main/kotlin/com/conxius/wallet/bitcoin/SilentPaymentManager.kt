@@ -23,19 +23,13 @@ class SilentPaymentManager(
     }
 
     /**
-     * Address derivation is intentionally fail-closed until the native address codec is added.
-     * Public keys are byte arrays here; this API does not accept or return key hex strings.
+     * Derive the BIP-352 silent payment address for a scan/spend keypair.
      *
-     * Use the future native address codec once it is available; this placeholder is retained only
-     * for source compatibility and must not be used by production callers.
+     * Both keys are 33-byte compressed secp256k1 public keys (scan first, then spend); the returned
+     * address is a `sp`/`tsp` bech32m string. This API never accepts or returns key hex strings.
      */
-    @Deprecated(
-        message = "Address derivation is not implemented; migrate to the native address codec when available",
-        level = DeprecationLevel.WARNING,
-    )
-    @Suppress("UNUSED_PARAMETER")
-    fun deriveSilentAddress(scanPublicKey: ByteArray, spendPublicKey: ByteArray): String {
-        throw NativeSilentPaymentException(NativeErrorCode.INTERNAL)
+    fun deriveSilentAddress(scanPublicKey: ByteArray, spendPublicKey: ByteArray, network: String = "mainnet"): String {
+        return SilentPaymentAddress.encode(scanPublicKey, spendPublicKey, network)
     }
 
     /** Scan the supplied structured transaction batches for one bounded block range. */

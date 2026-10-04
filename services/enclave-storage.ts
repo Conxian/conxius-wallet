@@ -101,6 +101,103 @@ type SecureEnclavePlugin = {
     network?: string;
     digest: string;
   }): Promise<{ signature: string }>;
+  silentPaymentAddress(options: {
+    scanPath?: string;
+    spendPath?: string;
+    network?: string;
+  }): Promise<{ address: string }>;
+  musig2AggregatePubkeys(options: {
+    pubkeys: string[];
+  }): Promise<{ aggregatePubkey: string }>;
+  musig2SortPubkeys(options: {
+    pubkeys: string[];
+  }): Promise<{ sortedPubkeys: string[] }>;
+  musig2GenerateNonce(options: {
+    path: string;
+    network?: string;
+    aggpk?: string;
+    message?: string;
+    extra?: string;
+  }): Promise<{ secnonce: string; pubnonce: string }>;
+  musig2AggregateNonces(options: {
+    pubnonces: string[];
+  }): Promise<{ aggregateNonce: string }>;
+  musig2SignPartial(options: {
+    path: string;
+    network?: string;
+    secnonce: string;
+    aggnonce: string;
+    pubkeys: string[];
+    tweaks?: string[];
+    isXonly?: boolean[];
+    message: string;
+  }): Promise<{ partialSignature: string }>;
+  musig2VerifyPartial(options: {
+    partialSignature: string;
+    pubnonce: string;
+    pubnonces: string[];
+    pubkeys: string[];
+    tweaks?: string[];
+    isXonly?: boolean[];
+    message: string;
+    signerIndex: number;
+  }): Promise<{ valid: boolean }>;
+  musig2AggregateSignatures(options: {
+    partialSignatures: string[];
+    aggnonce: string;
+    pubkeys: string[];
+    tweaks?: string[];
+    isXonly?: boolean[];
+    message: string;
+  }): Promise<{ signature: string }>;
+  nostrGetPubkey(options: {
+    path?: string;
+    network?: string;
+  }): Promise<{ pubkey: string }>;
+  nostrSignEvent(options: {
+    path?: string;
+    network?: string;
+    serialized: string;
+  }): Promise<{ id: string; signature: string }>;
+  nostrVerifyEvent(options: {
+    pubkey: string;
+    id: string;
+    signature: string;
+  }): Promise<{ valid: boolean }>;
+  dlcAdaptorSign(options: {
+    path?: string;
+    network?: string;
+    message: string;
+    nonce: string;
+  }): Promise<{ signature: string }>;
+  dlcAdaptorVerify(options: {
+    pubkey: string;
+    message: string;
+    signature: string;
+  }): Promise<{ valid: boolean }>;
+  dlcAdaptorPoint(options: {
+    secret: string;
+  }): Promise<{ point: string }>;
+  dlcCompleteSignature(options: {
+    signature: string;
+    secret: string;
+  }): Promise<{ signature: string }>;
+  dlcExtractSecret(options: {
+    adaptorSignature: string;
+    fullSignature: string;
+  }): Promise<{ secret: string }>;
+  lightningInvoiceMessageHash(options: {
+    invoice: string;
+  }): Promise<{ message: string }>;
+  lightningSignInvoice(options: {
+    path?: string;
+    network?: string;
+    invoice: string;
+  }): Promise<{ message: string; signature: string }>;
+  lightningRecoverInvoicePublicKey(options: {
+    message: string;
+    signature: string;
+  }): Promise<{ publicKey: string }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -423,6 +520,258 @@ export async function schnorrSignDigestNative(options: {
 }): Promise<{ signature: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.schnorrSignDigest(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-352 silent payment address derivation. */
+export async function silentPaymentAddressNative(options: {
+  scanPath?: string;
+  spendPath?: string;
+  network?: string;
+}): Promise<{ address: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.silentPaymentAddress(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+// ─── MuSig2 (BIP-327) n-of-n Schnorr multisig ───────────────────────────────
+
+export type Musig2AggregatePubkeysOptions = { pubkeys: string[] };
+export type Musig2SortPubkeysOptions = { pubkeys: string[] };
+export type Musig2GenerateNonceOptions = {
+  path: string;
+  network?: string;
+  aggpk?: string;
+  message?: string;
+  extra?: string;
+};
+export type Musig2AggregateNoncesOptions = { pubnonces: string[] };
+export type Musig2SignPartialOptions = {
+  path: string;
+  network?: string;
+  secnonce: string;
+  aggnonce: string;
+  pubkeys: string[];
+  tweaks?: string[];
+  isXonly?: boolean[];
+  message: string;
+};
+export type Musig2VerifyPartialOptions = {
+  partialSignature: string;
+  pubnonce: string;
+  pubnonces: string[];
+  pubkeys: string[];
+  tweaks?: string[];
+  isXonly?: boolean[];
+  message: string;
+  signerIndex: number;
+};
+export type Musig2AggregateSignaturesOptions = {
+  partialSignatures: string[];
+  aggnonce: string;
+  pubkeys: string[];
+  tweaks?: string[];
+  isXonly?: boolean[];
+  message: string;
+};
+
+/** Native-only BIP-327 KeyAgg of 33-byte compressed keys into an x-only aggregate. */
+export async function musig2AggregatePubkeysNative(
+  options: Musig2AggregatePubkeysOptions,
+): Promise<{ aggregatePubkey: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2AggregatePubkeys(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 KeySort (lexicographic order of compressed keys). */
+export async function musig2SortPubkeysNative(
+  options: Musig2SortPubkeysOptions,
+): Promise<{ sortedPubkeys: string[] }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2SortPubkeys(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 NonceGen for the wallet key; returns (secnonce, pubnonce). */
+export async function musig2GenerateNonceNative(
+  options: Musig2GenerateNonceOptions,
+): Promise<{ secnonce: string; pubnonce: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2GenerateNonce(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 NonceAgg of 66-byte pubnonces. */
+export async function musig2AggregateNoncesNative(
+  options: Musig2AggregateNoncesOptions,
+): Promise<{ aggregateNonce: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2AggregateNonces(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 Sign for the wallet key; returns the 32-byte partial signature. */
+export async function musig2SignPartialNative(
+  options: Musig2SignPartialOptions,
+): Promise<{ partialSignature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2SignPartial(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 PartialSigVerify (blame-free boolean check). */
+export async function musig2VerifyPartialNative(
+  options: Musig2VerifyPartialOptions,
+): Promise<{ valid: boolean }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2VerifyPartial(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 PartialSigAgg; returns the 64-byte BIP-340 signature. */
+export async function musig2AggregateSignaturesNative(
+  options: Musig2AggregateSignaturesOptions,
+): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2AggregateSignatures(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only Nostr (NIP-01) identity pubkey: 32-byte x-only hex at the NIP-06 path. */
+export async function nostrGetPubkeyNative(options: {
+  path?: string;
+  network?: string;
+}): Promise<{ pubkey: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.nostrGetPubkey(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only Nostr event signing: id + BIP-340 Schnorr signature over the serialized event. */
+export async function nostrSignEventNative(options: {
+  path?: string;
+  network?: string;
+  serialized: string;
+}): Promise<{ id: string; signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.nostrSignEvent(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only Nostr event signature verification (BIP-340). */
+export async function nostrVerifyEventNative(options: {
+  pubkey: string;
+  id: string;
+  signature: string;
+}): Promise<{ valid: boolean }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.nostrVerifyEvent(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+// ─── DLC (Schnorr adaptor signatures) ────────────────────────────────────────
+
+/** Native-only DLC adaptor pre-signature `R_x || s'` with an explicit contract nonce. */
+export async function dlcAdaptorSignNative(options: {
+  path?: string;
+  network?: string;
+  message: string;
+  nonce: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.dlcAdaptorSign(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-340 verification of a DLC adaptor pre-signature. */
+export async function dlcAdaptorVerifyNative(options: {
+  pubkey: string;
+  message: string;
+  signature: string;
+}): Promise<{ valid: boolean }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.dlcAdaptorVerify(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only DLC one-time adaptor point `T = t·G` (33-byte compressed). */
+export async function dlcAdaptorPointNative(options: {
+  secret: string;
+}): Promise<{ point: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.dlcAdaptorPoint(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only DLC pre-signature completion with the oracle secret. */
+export async function dlcCompleteSignatureNative(options: {
+  signature: string;
+  secret: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.dlcCompleteSignature(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only DLC oracle-secret extraction `t = s - s'`. */
+export async function dlcExtractSecretNative(options: {
+  adaptorSignature: string;
+  fullSignature: string;
+}): Promise<{ secret: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.dlcExtractSecret(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+// ─── Lightning (BOLT-11) invoice signing ─────────────────────────────────────
+
+/** Native-only BOLT-11 to-be-signed message hash (Bech32 decode + SHA256). */
+export async function lightningInvoiceMessageHashNative(options: {
+  invoice: string;
+}): Promise<{ message: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.lightningInvoiceMessageHash(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BOLT-11 invoice signing: 65-byte compact ECDSA `r || s || recovery-id`. */
+export async function lightningSignInvoiceNative(options: {
+  path?: string;
+  network?: string;
+  invoice: string;
+}): Promise<{ message: string; signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.lightningSignInvoice(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BOLT-11 signature public-key recovery (65-byte uncompressed). */
+export async function lightningRecoverInvoicePublicKeyNative(options: {
+  message: string;
+  signature: string;
+}): Promise<{ publicKey: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.lightningRecoverInvoicePublicKey(options);
   }
   throw new Error("Native Enclave not available");
 }

@@ -395,6 +395,6 @@ jobs:
       - name: Run Android unit tests
         working-directory: android
         run: ./gradlew :app:testDebugUnitTest --no-daemon
-      - name: Run Bitcoin signing conformance tests
+      - name: Run Bitcoin core conformance tests
         working-directory: android
-        run: ./gradlew :core-bitcoin:testDebugUnitTest --tests "com.conxius.wallet.bitcoin.Secp256k1SignerTest" --no-daemon
+        run: ./gradlew :core-bitcoin:testDebugUnitTest --no-daemon

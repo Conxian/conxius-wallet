@@ -50,11 +50,13 @@ SDK canonical rail/trust/replay work, CON-1517/CON-1543, provider operations,
 and CON-1512 are dependencies or adjacent tracks, not completed by this wallet
 containment change.
 
-### Bitcoin fee-estimation alignment
+### Bitcoin fee-estimation (inscription-resistant clean-block model)
 
-The wallet now has a bounded, client-side BIP-110 alignment path for fee
-recommendations: confirmed-block samples are filtered for narrowly detected
-inscription envelopes, deterministic clean-sample percentiles are used when
+The wallet now has a bounded, client-side inscription-resistant clean-block path
+for fee recommendations (previously mislabeled "BIP-110 alignment"; BIP-110 is a
+Closed consensus softfork, not a fee proposal): confirmed-block samples are
+filtered for narrowly detected inscription envelopes, deterministic clean-sample
+percentiles are used when
 enough data is available, and the existing endpoint/fixed-rate fallbacks remain
 in place. This is not consensus enforcement and remains subject to COO review
 before promotion to `main`.

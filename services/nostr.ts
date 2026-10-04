@@ -1,6 +1,5 @@
 
-import { getDerivedSecretNative } from './enclave-storage';
-import * as tiny from 'tiny-secp256k1';
+import { nostrGetPubkeyNative, nostrSignEventNative } from './enclave-storage';
 import { bech32 } from 'bech32';
 
 /**
@@ -18,44 +17,20 @@ export interface NostrEvent {
   sig?: string;
 }
 
-export const generateNostrKeypair = async (vault: string = 'primary_vault') => {
+export const generateNostrKeypair = async () => {
   try {
-      // NIP-06: m/44'/1237'/0'/0/0
+      // NIP-06: m/44'/1237'/0'/0/0 — derived and held in the native enclave.
       const path = "m/44'/1237'/0'/0/0";
-      
-      const res = await getDerivedSecretNative({
-          vault,
-          path
-      });
-      
-      const secretHex = res.secret;
-      const privBuffer = Buffer.from(secretHex, 'hex');
-      let pubKeyHex = '';
-      let npub = '';
+      const { pubkey: pubKeyHex } = await nostrGetPubkeyNative({ path });
 
-      try {
-        // Verify private key is valid
-        if (!tiny.isPrivate(privBuffer)) {
-            throw new Error("Invalid private key derived");
-        }
+      // Encode npub (bech32) from the 32-byte x-only pubkey.
+      const pubKeyX = Buffer.from(pubKeyHex, 'hex');
+      const words = bech32.toWords(pubKeyX);
+      const npub = bech32.encode('npub', words, 1500); // 1500 is limit, standard
 
-        const pubKey = tiny.pointFromScalar(privBuffer);
-        if (!pubKey) throw new Error("Public key derivation failed");
-        const pubKeyX = pubKey.subarray(1, 33); // Drop prefix
-        pubKeyHex = Buffer.from(pubKeyX).toString('hex');
-
-        // Encode npub (bech32)
-        const words = bech32.toWords(pubKeyX);
-        npub = bech32.encode('npub', words, 1500); // 1500 is limit, standard
-      } finally {
-        // Memory Hardening: Zero-fill private key buffer after use
-        privBuffer.fill(0);
-      }
-      
       return {
-        nsec: `ENCLAVE_SECURED_KEY`, // UI display only
+        nsec: `ENCLAVE_SECURED_KEY`, // UI display only — the secret never leaves the native enclave
         npub: npub,
-        rawPriv: secretHex, // INTERNAL USE ONLY
         pubKeyHex: pubKeyHex
       };
   } catch (e) {
@@ -74,11 +49,11 @@ export const createNostrEvent = (content: string, pubkey: string, kind: number =
   };
 };
 
-export const signNostrEvent = async (event: NostrEvent, rawPrivHex: string): Promise<NostrEvent> => {
-  console.log("[NOSTR] Signing event with derived enclave key...");
-  
-  // Real cryptographic ID calculation (SHA256 of serialized event)
-  const encoder = new TextEncoder();
+export const signNostrEvent = async (event: NostrEvent): Promise<NostrEvent> => {
+  console.log("[NOSTR] Signing event with native enclave key...");
+
+  // NIP-01 canonical serialization (non-secret); the id + BIP-340 signature are
+  // computed and signed inside the native enclave.
   const serialized = JSON.stringify([
     0,
     event.pubkey,
@@ -87,24 +62,8 @@ export const signNostrEvent = async (event: NostrEvent, rawPrivHex: string): Pro
     event.tags,
     event.content
   ]);
-  
-  const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(serialized));
-  const id = Array.from(new Uint8Array(hashBuffer))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-    
-  const idBuffer = Buffer.from(id, 'hex');
-  const privBuffer = Buffer.from(rawPrivHex, 'hex');
-  let sig = '';
 
-  try {
-      // Sign using Schnorr
-      const sigBuffer = tiny.signSchnorr(idBuffer, privBuffer);
-      sig = Buffer.from(sigBuffer).toString('hex');
-  } finally {
-      // Memory Hardening: Zero-fill private key buffer after signing
-      privBuffer.fill(0);
-  }
+  const { id, signature: sig } = await nostrSignEventNative({ serialized });
 
   return { ...event, id, sig };
 };
