@@ -48,6 +48,36 @@ object TaprootSigner {
         return xOnlyBytes(r) + to32Bytes(s)
     }
 
+    /**
+     * BIP-340 Schnorr verification. Returns true iff [signature] (64 bytes:
+     * `R_x || s`) is a valid signature by the x-only [pubkeyXOnly] over the
+     * 32-byte [message].
+     */
+    fun schnorrVerify(pubkeyXOnly: ByteArray, message: ByteArray, signature: ByteArray): Boolean {
+        require(message.size == 32) { "BIP-340 message must be 32 bytes" }
+        require(pubkeyXOnly.size == 32) { "BIP-340 pubkey must be 32 bytes" }
+        require(signature.size == 64) { "BIP-340 signature must be 64 bytes" }
+        val rBytes = signature.copyOfRange(0, 32)
+        val sBytes = signature.copyOfRange(32, 64)
+        val r = BigInteger(1, rBytes)
+        val s = BigInteger(1, sBytes)
+        if (r.signum() <= 0 || r >= N || s.signum() <= 0 || s >= N) return false
+        val P = try {
+            liftX(pubkeyXOnly)
+        } catch (e: IllegalArgumentException) {
+            return false
+        }
+        val R = try {
+            liftX(rBytes)
+        } catch (e: IllegalArgumentException) {
+            return false
+        }
+        val e = BigInteger(1, taggedHash("BIP0340/challenge", rBytes + pubkeyXOnly + message)).mod(N)
+        val lhs = CURVE.g.multiply(s).normalize()
+        val rhs = R.add(P.multiply(e)).normalize()
+        return lhs == rhs
+    }
+
     // ── BIP-341 taproot output key ───────────────────────────────────────────
 
     /** BIP-341 taproot tweak: `output = internal + int(hash_TapTweak(internal))·G`. */

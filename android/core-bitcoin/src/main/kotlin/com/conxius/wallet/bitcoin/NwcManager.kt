@@ -1,28 +1,28 @@
 package com.conxius.wallet.bitcoin
 
-import android.util.Log
+import java.math.BigInteger
 
 /**
- * NwcManager: Native Bridge for Nostr Wallet Connect (NIP-47).
+ * Nostr Wallet Connect (NIP-47) Manager.
+ *
+ * Thin, stateless facade over [NostrSigner] for the non-custodial signing and
+ * verification of NIP-01 events. Owns no keys: the identity scalar is derived by
+ * the caller from the wallet seed at the NIP-06 path (`m/44'/1237'/0'/0/0`).
+ * The NWC relay transport (NIP-04/44 encryption + a Nostr relay) is
+ * provider-gated and lives in the TS layer.
  */
 class NwcManager {
-    private val TAG = "NwcManager"
+    /** 32-byte x-only Nostr identity pubkey (hex) for a private scalar. */
+    fun publicKeyHex(privateKey: BigInteger): String = NostrSigner.publicKeyHex(privateKey)
 
-    /**
-     * Parses and validates an NWC request event.
-     */
-    fun parseEvent(json: String): String {
-        Log.d(TAG, "Parsing NWC Event")
-        return ProductionRuntimeGuard.failClosed("NWC event parsing", "{\"method\": \"pay_invoice\"}")
-    }
+    /** NIP-01 event id (32 bytes) from the canonical serialized event. */
+    fun eventId(serialized: String): ByteArray = NostrSigner.eventId(serialized)
 
-    /**
-     * Signs an NWC response event.
-     */
-    fun signResponse(id: String, result: String): String {
-        return ProductionRuntimeGuard.failClosed(
-            "NWC response signing",
-            "nwc_res_sig_${System.currentTimeMillis()}"
-        )
-    }
+    /** BIP-340 Schnorr signature over the 32-byte event id. */
+    fun signEvent(privateKey: BigInteger, id: ByteArray, auxRand: ByteArray = ByteArray(32)): ByteArray =
+        NostrSigner.signEventId(privateKey, id, auxRand)
+
+    /** BIP-340 verification of an event signature. */
+    fun verifyEvent(pubkeyXOnly: ByteArray, id: ByteArray, signature: ByteArray): Boolean =
+        NostrSigner.verifyEventSignature(pubkeyXOnly, id, signature)
 }
