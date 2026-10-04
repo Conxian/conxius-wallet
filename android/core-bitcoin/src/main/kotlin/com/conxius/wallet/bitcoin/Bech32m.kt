@@ -38,7 +38,9 @@ object Bech32m {
         }
         require(!(hasLower && hasUpper)) { "mixed-case bech32 string" }
         val lower = address.lowercase()
-        require(lower.length in 8..90) { "invalid bech32 length" }
+        // BIP-173 recommends a 90-char cap, but BIP-352 silent payment addresses
+        // (66-byte scan||spend payload) legitimately run to ~117 chars.
+        require(lower.length in 8..1023) { "invalid bech32 length" }
         val pos = lower.lastIndexOf('1')
         require(pos in 1..(lower.length - 7)) { "invalid bech32 separator" }
         val hrp = lower.substring(0, pos)
