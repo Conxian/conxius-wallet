@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.bouncycastle.util.encoders.Hex
 
 class WalletViewModel(
     private val repository: WalletRepository,
@@ -212,8 +213,12 @@ class WalletViewModel(
     fun parseNwcRequest(eventJson: String) {
         viewModelScope.launch {
             try {
-                val parsed = nwcManager.parseEvent(eventJson)
-                _error.value = "NWC Request Parsed: $parsed"
+                val event = org.json.JSONObject(eventJson)
+                val pubkey = Hex.decode(event.getString("pubkey"))
+                val id = Hex.decode(event.getString("id"))
+                val sig = Hex.decode(event.getString("sig"))
+                val valid = nwcManager.verifyEvent(pubkey, id, sig)
+                _error.value = if (valid) "NWC event signature valid" else "NWC event signature INVALID"
             } catch (e: Exception) {
                 _error.value = "NWC failed: ${e.message}"
             }

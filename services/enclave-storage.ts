@@ -145,6 +145,20 @@ type SecureEnclavePlugin = {
     isXonly?: boolean[];
     message: string;
   }): Promise<{ signature: string }>;
+  nostrGetPubkey(options: {
+    path?: string;
+    network?: string;
+  }): Promise<{ pubkey: string }>;
+  nostrSignEvent(options: {
+    path?: string;
+    network?: string;
+    serialized: string;
+  }): Promise<{ id: string; signature: string }>;
+  nostrVerifyEvent(options: {
+    pubkey: string;
+    id: string;
+    signature: string;
+  }): Promise<{ valid: boolean }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -578,6 +592,41 @@ export async function musig2AggregateSignaturesNative(
 ): Promise<{ signature: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.musig2AggregateSignatures(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only Nostr (NIP-01) identity pubkey: 32-byte x-only hex at the NIP-06 path. */
+export async function nostrGetPubkeyNative(options: {
+  path?: string;
+  network?: string;
+}): Promise<{ pubkey: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.nostrGetPubkey(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only Nostr event signing: id + BIP-340 Schnorr signature over the serialized event. */
+export async function nostrSignEventNative(options: {
+  path?: string;
+  network?: string;
+  serialized: string;
+}): Promise<{ id: string; signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.nostrSignEvent(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only Nostr event signature verification (BIP-340). */
+export async function nostrVerifyEventNative(options: {
+  pubkey: string;
+  id: string;
+  signature: string;
+}): Promise<{ valid: boolean }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.nostrVerifyEvent(options);
   }
   throw new Error("Native Enclave not available");
 }
