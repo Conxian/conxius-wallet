@@ -192,10 +192,21 @@ class SilentPaymentManagerTest {
     }
 
     @Test
-    fun addressDerivationRemainsFailClosedAndNativeLoaderHasStableAbsenceCode() {
+    fun addressDerivationDelegatesToCodec() {
+        val manager = SilentPaymentManager()
+        val scan = byteArrayOf(0x02) + ByteArray(32)
+        val spend = byteArrayOf(0x03) + ByteArray(32)
+        val address = manager.deriveSilentAddress(scan, spend)
+        assertEquals("sp", address.substringBefore('1'))
+        // BIP-352 addresses carry a 66-byte payload and exceed BIP-173's 90-char cap.
+        assertTrue(address.length > 90)
+    }
+
+    @Test
+    fun addressDerivationRejectsNonCompressedKeys() {
         val manager = SilentPaymentManager()
         val error = runCatching { manager.deriveSilentAddress(ByteArray(33), ByteArray(33)) }.exceptionOrNull()
-        assertEquals(NativeErrorCode.INTERNAL, (error as NativeSilentPaymentException).code)
+        assertTrue(error is IllegalArgumentException)
     }
 
     private fun resultFor(batch: SilentPaymentBatch): SilentPaymentScanResult =
