@@ -122,8 +122,8 @@ object EvmSigner {
         return sig.r + sig.s + byteArrayOf((sig.recoveryId + 27).toByte())
     }
 
-    /** Recovers the EIP-55 address that produced [signature] over [digest]. */
-    fun recoverAddress(digest: ByteArray, signature: Signature): String {
+    /** Recovers the 65-byte uncompressed public key (0x04 || x || y) behind [signature] over [digest]. */
+    fun recoverPublicKey(digest: ByteArray, signature: Signature): ByteArray {
         val r = BigInteger(1, signature.r)
         val s = BigInteger(1, signature.s)
         val z = BigInteger(1, digest)
@@ -132,9 +132,14 @@ object EvmSigner {
         val pointR = decompressPoint(x, oddY)
         val rInv = r.modInverse(N)
         val q = pointR.multiply(s).subtract(CURVE.g.multiply(z)).multiply(rInv).normalize()
-        val pub = toFixed32(q.affineXCoord.toBigInteger()) + toFixed32(q.affineYCoord.toBigInteger())
-        return addressFromPublicKey(pub)
+        return byteArrayOf(0x04) +
+            toFixed32(q.affineXCoord.toBigInteger()) +
+            toFixed32(q.affineYCoord.toBigInteger())
     }
+
+    /** Recovers the EIP-55 address that produced [signature] over [digest]. */
+    fun recoverAddress(digest: ByteArray, signature: Signature): String =
+        addressFromPublicKey(recoverPublicKey(digest, signature))
 
     // ── Transaction signing ─────────────────────────────────────────────────────
 

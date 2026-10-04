@@ -22,12 +22,18 @@ To maintain boundary clarity and prevent dependency sprawl, ownership of core SD
 | **Clarity SDK** | `conxian-nexus` | Protocol, Orbit | DEVELOPMENT |
 | **BitVM2 (Rust)** | `lib-conxian-core` (future verifier boundary) | Gateway, Nexus | RESEARCH / QUARANTINED |
 | **FDC3 (Native)** | `conxius-wallet` | Enterprise Plugins | RESEARCH |
-| **Enclave Primitives**| `conxius-enclave-sdk` | Wallet (:core-crypto) | SECURITY-CRITICAL |
+| **Enclave Primitives**| `conxius-enclave-sdk` | (Rust/WASM + Nitro surfaces; **not** consumed by the wallet at build time) | SECURITY-CRITICAL |
 
 ## 2. Version Policy
 
 ### 2.1. Shared Core (lib-conxian-core)
-- App-layer repositories MUST consume `lib-conxian-core` via pinned Git revisions or tagged releases.
+- **Reality (2026-10-04):** `conxius-wallet` does **not** consume `lib-conxian-core` at build
+  time. The wallet maintains a self-contained Kotlin implementation of the overlapping
+  primitives (`:core-bitcoin` on BouncyCastle/BDK; `:core-crypto` on AndroidX
+  KeyMint/StrongBox) so non-custodial signing stays inside Android secure hardware
+  with no Rust→JNI/WASM bridge. `lib-conxian-core` remains the canonical shared layer for
+  the WASM/enclave surfaces (gateway, nexus, UI). Any repo that *does* adopt the core
+  MUST pin it via Git revisions or tagged releases.
 - Breaking changes in the core MUST be accompanied by a version bump and migration guide.
 
 ### 2.2. Native Android Managers

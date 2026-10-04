@@ -1,16 +1,35 @@
 package com.conxius.wallet.bitcoin
 
 import android.util.Log
+import java.math.BigInteger
 
 /**
- * Lightning Manager (v1.1)
- * Native bridge for Lightning Network operations (Breez SDK, Greenlight, etc.)
+ * Lightning Manager.
+ *
+ * Thin, stateless facade over [LightningInvoiceSigner] for the BOLT-11 invoice
+ * signing primitives: the to-be-signed message hash (Bech32 decode + SHA256) and
+ * the compact ECDSA signature over it. Channel management and payment routing
+ * (Breez/LDK) remain provider-gated and stay fail-closed below.
  */
 class LightningManager {
     private val TAG = "LightningManager"
 
+    /** 32-byte BOLT-11 to-be-signed message hash for [invoice]. */
+    fun invoiceMessageHash(invoice: String): ByteArray =
+        LightningInvoiceSigner.invoiceMessageHash(invoice)
+
+    /** 65-byte compact ECDSA signature `r || s || recovery-id` over a 32-byte message. */
+    fun signInvoiceDigest(privateKey: BigInteger, message: ByteArray): ByteArray =
+        LightningInvoiceSigner.signDigest(privateKey, message)
+
+    /** 65-byte uncompressed public key recovered from a BOLT-11 signature. */
+    fun recoverInvoicePublicKey(message: ByteArray, signature: ByteArray): ByteArray =
+        LightningInvoiceSigner.recoverPublicKey(message, signature)
+
     /**
-     * Signs a BOLT11 invoice for payment or authorization.
+     * Full-invoice signing (reconstruct the invoice with a signature field).
+     * Fail-closed: requires key custody + invoice reconstruction beyond the
+     * native [signInvoiceDigest] primitive.
      */
     fun signInvoice(invoice: String): String {
         Log.d(TAG, "Signing Lightning Invoice")
@@ -21,7 +40,8 @@ class LightningManager {
     }
 
     /**
-     * Connects to a remote peer for channel management.
+     * Connects to a remote peer for channel management. Fail-closed: requires
+     * Breez/LDK (provider-gated) beyond the native invoice-signing primitive.
      */
     fun connectPeer(peerId: String, host: String, port: Int): Boolean {
         Log.d(TAG, "Connecting to Lightning Peer: $peerId")

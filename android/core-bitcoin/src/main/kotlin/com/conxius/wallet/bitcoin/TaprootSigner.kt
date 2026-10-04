@@ -41,6 +41,22 @@ object TaprootSigner {
         val d = if (hasEvenY(p)) d0 else N.subtract(d0)
         val t = xorBytes(to32Bytes(d), taggedHash("BIP0340/aux", auxRand))
         val k0 = BigInteger(1, taggedHash("BIP0340/nonce", t + xOnlyBytes(p) + message)).mod(N)
+        return signWithNonce(d, p, message, k0)
+    }
+
+    /**
+     * BIP-340 Schnorr signature with an explicit nonce scalar [nonce]. Used by
+     * DLC adaptor signatures, where the nonce is a published contract nonce.
+     */
+    fun schnorrSignWithNonce(privateKey: BigInteger, message: ByteArray, nonce: BigInteger): ByteArray {
+        require(message.size == 32) { "BIP-340 message must be 32 bytes" }
+        val d0 = privateKey.mod(N)
+        val p = CURVE.g.multiply(d0).normalize()
+        val d = if (hasEvenY(p)) d0 else N.subtract(d0)
+        return signWithNonce(d, p, message, nonce)
+    }
+
+    private fun signWithNonce(d: BigInteger, p: org.bouncycastle.math.ec.ECPoint, message: ByteArray, k0: BigInteger): ByteArray {
         val r = CURVE.g.multiply(k0).normalize()
         val k = if (hasEvenY(r)) k0 else N.subtract(k0)
         val e = BigInteger(1, taggedHash("BIP0340/challenge", xOnlyBytes(r) + xOnlyBytes(p) + message)).mod(N)

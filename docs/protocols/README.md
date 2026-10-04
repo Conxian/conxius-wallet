@@ -4,7 +4,7 @@ This directory documents the specific implementation details, standards, and res
 
 ## Core Protocols
 - [Bitcoin L1](bitcoin-l1.md)
-- [BIP-110 Client-Side Fee Alignment](../operations/BIP110_COMPLIANCE.md)
+- [Inscription-Resistant Clean-Block Fee Model](../operations/CLEAN_BLOCK_FEE_MODEL.md)
 - [Lightning Network](lightning.md)
 - [Stacks / sBTC](stacks.md)
 - [Liquid Sidechain](liquid.md)
