@@ -101,6 +101,50 @@ type SecureEnclavePlugin = {
     network?: string;
     digest: string;
   }): Promise<{ signature: string }>;
+  musig2AggregatePubkeys(options: {
+    pubkeys: string[];
+  }): Promise<{ aggregatePubkey: string }>;
+  musig2SortPubkeys(options: {
+    pubkeys: string[];
+  }): Promise<{ sortedPubkeys: string[] }>;
+  musig2GenerateNonce(options: {
+    path: string;
+    network?: string;
+    aggpk?: string;
+    message?: string;
+    extra?: string;
+  }): Promise<{ secnonce: string; pubnonce: string }>;
+  musig2AggregateNonces(options: {
+    pubnonces: string[];
+  }): Promise<{ aggregateNonce: string }>;
+  musig2SignPartial(options: {
+    path: string;
+    network?: string;
+    secnonce: string;
+    aggnonce: string;
+    pubkeys: string[];
+    tweaks?: string[];
+    isXonly?: boolean[];
+    message: string;
+  }): Promise<{ partialSignature: string }>;
+  musig2VerifyPartial(options: {
+    partialSignature: string;
+    pubnonce: string;
+    pubnonces: string[];
+    pubkeys: string[];
+    tweaks?: string[];
+    isXonly?: boolean[];
+    message: string;
+    signerIndex: number;
+  }): Promise<{ valid: boolean }>;
+  musig2AggregateSignatures(options: {
+    partialSignatures: string[];
+    aggnonce: string;
+    pubkeys: string[];
+    tweaks?: string[];
+    isXonly?: boolean[];
+    message: string;
+  }): Promise<{ signature: string }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -423,6 +467,117 @@ export async function schnorrSignDigestNative(options: {
 }): Promise<{ signature: string }> {
   if (await hasNativeSecureEnclave()) {
     return await SecureEnclave.schnorrSignDigest(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+// ─── MuSig2 (BIP-327) n-of-n Schnorr multisig ───────────────────────────────
+
+export type Musig2AggregatePubkeysOptions = { pubkeys: string[] };
+export type Musig2SortPubkeysOptions = { pubkeys: string[] };
+export type Musig2GenerateNonceOptions = {
+  path: string;
+  network?: string;
+  aggpk?: string;
+  message?: string;
+  extra?: string;
+};
+export type Musig2AggregateNoncesOptions = { pubnonces: string[] };
+export type Musig2SignPartialOptions = {
+  path: string;
+  network?: string;
+  secnonce: string;
+  aggnonce: string;
+  pubkeys: string[];
+  tweaks?: string[];
+  isXonly?: boolean[];
+  message: string;
+};
+export type Musig2VerifyPartialOptions = {
+  partialSignature: string;
+  pubnonce: string;
+  pubnonces: string[];
+  pubkeys: string[];
+  tweaks?: string[];
+  isXonly?: boolean[];
+  message: string;
+  signerIndex: number;
+};
+export type Musig2AggregateSignaturesOptions = {
+  partialSignatures: string[];
+  aggnonce: string;
+  pubkeys: string[];
+  tweaks?: string[];
+  isXonly?: boolean[];
+  message: string;
+};
+
+/** Native-only BIP-327 KeyAgg of 33-byte compressed keys into an x-only aggregate. */
+export async function musig2AggregatePubkeysNative(
+  options: Musig2AggregatePubkeysOptions,
+): Promise<{ aggregatePubkey: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2AggregatePubkeys(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 KeySort (lexicographic order of compressed keys). */
+export async function musig2SortPubkeysNative(
+  options: Musig2SortPubkeysOptions,
+): Promise<{ sortedPubkeys: string[] }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2SortPubkeys(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 NonceGen for the wallet key; returns (secnonce, pubnonce). */
+export async function musig2GenerateNonceNative(
+  options: Musig2GenerateNonceOptions,
+): Promise<{ secnonce: string; pubnonce: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2GenerateNonce(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 NonceAgg of 66-byte pubnonces. */
+export async function musig2AggregateNoncesNative(
+  options: Musig2AggregateNoncesOptions,
+): Promise<{ aggregateNonce: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2AggregateNonces(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 Sign for the wallet key; returns the 32-byte partial signature. */
+export async function musig2SignPartialNative(
+  options: Musig2SignPartialOptions,
+): Promise<{ partialSignature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2SignPartial(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 PartialSigVerify (blame-free boolean check). */
+export async function musig2VerifyPartialNative(
+  options: Musig2VerifyPartialOptions,
+): Promise<{ valid: boolean }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2VerifyPartial(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-327 PartialSigAgg; returns the 64-byte BIP-340 signature. */
+export async function musig2AggregateSignaturesNative(
+  options: Musig2AggregateSignaturesOptions,
+): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.musig2AggregateSignatures(options);
   }
   throw new Error("Native Enclave not available");
 }

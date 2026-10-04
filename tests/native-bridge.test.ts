@@ -25,4 +25,16 @@ describe('Native Bridge Integrity', () => {
     expect(pluginContent).toContain('fun taprootAddress(');
     expect(pluginContent).toContain('fun schnorrSignDigest(');
   });
+
+  it('should have native MuSig2 (BIP-327) bridge methods in SecureEnclavePlugin', () => {
+    const pluginContent = fs.readFileSync(path.join(process.cwd(), 'android/app/src/main/kotlin/com/conxius/wallet/SecureEnclavePlugin.kt'), 'utf8');
+
+    expect(pluginContent).toContain('fun musig2AggregatePubkeys(');
+    expect(pluginContent).toContain('fun musig2SortPubkeys(');
+    expect(pluginContent).toContain('fun musig2GenerateNonce(');
+    expect(pluginContent).toContain('fun musig2AggregateNonces(');
+    expect(pluginContent).toContain('fun musig2SignPartial(');
+    expect(pluginContent).toContain('fun musig2VerifyPartial(');
+    expect(pluginContent).toContain('fun musig2AggregateSignatures(');
+  });
 });
