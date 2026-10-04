@@ -121,9 +121,9 @@ export const buildMultiSigPsbt = (
 /**
  * Musig2 Support (M13 Implementation)
  */
-export const deriveMusig2TaprootAddress = (pubkeys: string[], network: Network): string => {
+export const deriveMusig2TaprootAddress = async (pubkeys: string[], network: Network): Promise<string> => {
     const net = network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
-    const aggregated = musig2Aggregate(pubkeys.map(hex => Buffer.from(hex, 'hex')));
+    const aggregated = Buffer.from(await musig2Aggregate(pubkeys), 'hex');
 
     try {
         const { address } = bitcoin.payments.p2tr({

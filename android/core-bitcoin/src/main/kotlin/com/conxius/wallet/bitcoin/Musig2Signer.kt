@@ -199,6 +199,9 @@ object Musig2Signer {
         return xbytes(sv.r) + to32Bytes(s)
     }
 
+    /** 32-byte big-endian scalar encoding of a secret key value. */
+    fun secretScalar(secret: BigInteger): ByteArray = to32Bytes(secret.mod(N))
+
     // ── Key aggregation internals ───────────────────────────────────────────
 
     private fun keyAgg(pubkeys: List<ByteArray>): KeyAggContext {
