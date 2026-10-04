@@ -1,5 +1,8 @@
 import { AppState, Network } from '../types';
 import { fetchWithRetry } from './network';
+import { taprootAddressNative, schnorrSignDigestNative } from './enclave-storage';
+
+export const TAPROOT_DEFAULT_PATH = "m/86'/0'/0'/0/0";
 
 export interface BabylonStakingInfo {
     totalStaked: number;
@@ -74,6 +77,31 @@ export async function createBabylonStakeTransaction(
         feeSats: data.result.fee,
         finalityProviderPk: data.result.finallyProviderPublicKey
     };
+}
+
+/**
+ * Native BIP-86 single-key P2TR taproot staking address. The private key never
+ * crosses into JavaScript; native derives the address via the Secure Enclave.
+ */
+export async function deriveTaprootAddress(
+  path: string = TAPROOT_DEFAULT_PATH,
+  network: string = 'mainnet',
+): Promise<string> {
+  const { address } = await taprootAddressNative({ path, network });
+  return address;
+}
+
+/**
+ * Native BIP-340 Schnorr keypath signature over a 32-byte taproot transaction
+ * digest (hex), returning the 64-byte signature hex (`R_x || s`).
+ */
+export async function signSchnorrDigest(
+  digest: string,
+  path: string = TAPROOT_DEFAULT_PATH,
+  network: string = 'mainnet',
+): Promise<string> {
+  const { signature } = await schnorrSignDigestNative({ path, network, digest });
+  return signature;
 }
 
 /**

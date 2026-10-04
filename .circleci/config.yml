@@ -13,7 +13,7 @@ executors:
 
   node-executor:
     docker:
-      - image: cimg/node:22.19.0
+      - image: cimg/node:24.13.0
     resource_class: medium
 
 jobs:

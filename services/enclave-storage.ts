@@ -47,6 +47,60 @@ type SecureEnclavePlugin = {
     pin?: string;
   }): Promise<{ btcPubkey: string; stxPubkey: string; liquidPubkey: string; evmAddress: string; taprootAddress?: string }>;
   getSecurityLevel(): Promise<{ level: string; isStrongBox: boolean }>;
+  broadcastTransaction(options: {
+    transactionHex: string;
+    network?: string;
+  }): Promise<{ txid: string }>;
+  evmAddress(options: {
+    path: string;
+    network?: string;
+  }): Promise<{ address: string }>;
+  evmSignTransaction(options: {
+    path: string;
+    network?: string;
+    type?: 'legacy' | 'eip1559';
+    chainId: string;
+    nonce: string;
+    gasLimit: string;
+    to: string;
+    value?: string;
+    data?: string;
+    gasPrice?: string;
+    maxPriorityFeePerGas?: string;
+    maxFeePerGas?: string;
+  }): Promise<{ rawTransaction: string }>;
+  evmSignDigest(options: {
+    path: string;
+    network?: string;
+    digest: string;
+  }): Promise<{ signature: string }>;
+  stacksAddress(options: {
+    path: string;
+    network?: string;
+  }): Promise<{ address: string }>;
+  stacksSignDigest(options: {
+    path: string;
+    network?: string;
+    digest: string;
+  }): Promise<{ signature: string }>;
+  liquidAddress(options: {
+    path: string;
+    network?: string;
+  }): Promise<{ address: string }>;
+  liquidSignDigest(options: {
+    path: string;
+    network?: string;
+    digest: string;
+  }): Promise<{ signature: string }>;
+  taprootAddress(options: {
+    path: string;
+    network?: string;
+  }): Promise<{ address: string }>;
+  schnorrSignDigest(options: {
+    path: string;
+    network?: string;
+    digest: string;
+  }): Promise<{ signature: string }>;
 };
 
 const SecureEnclave = registerPlugin<SecureEnclavePlugin>('SecureEnclave');
@@ -247,6 +301,130 @@ export async function getSecurityLevelNative(): Promise<{ level: string; isStron
     return await SecureEnclave.getSecurityLevel();
   }
   return { level: 'WEB', isStrongBox: false };
+}
+
+/** Native-only broadcast boundary: submits a signed transaction to the Bitcoin network. */
+export async function broadcastNative(options: {
+  transactionHex: string;
+  network?: string;
+}): Promise<{ txid: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.broadcastTransaction(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only EVM address derivation (EIP-55 checksummed). */
+export async function evmAddressNative(options: {
+  path: string;
+  network?: string;
+}): Promise<{ address: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.evmAddress(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only EVM transaction signing (EIP-155 legacy or EIP-1559). */
+export async function evmSignTransactionNative(options: {
+  path: string;
+  network?: string;
+  type?: 'legacy' | 'eip1559';
+  chainId: string;
+  nonce: string;
+  gasLimit: string;
+  to: string;
+  value?: string;
+  data?: string;
+  gasPrice?: string;
+  maxPriorityFeePerGas?: string;
+  maxFeePerGas?: string;
+}): Promise<{ rawTransaction: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.evmSignTransaction(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only 32-byte digest signing (e.g. EIP-712), returning `r || s || v`. */
+export async function evmSignDigestNative(options: {
+  path: string;
+  network?: string;
+  digest: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.evmSignDigest(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only c32check Stacks address derivation (SIP-005). */
+export async function stacksAddressNative(options: {
+  path: string;
+  network?: string;
+}): Promise<{ address: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.stacksAddress(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only Stacks SHA512/256 digest signing, returning `r || s || recoveryId`. */
+export async function stacksSignDigestNative(options: {
+  path: string;
+  network?: string;
+  digest: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.stacksSignDigest(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only unconfidential Liquid P2WPKH (bech32) address derivation. */
+export async function liquidAddressNative(options: {
+  path: string;
+  network?: string;
+}): Promise<{ address: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.liquidAddress(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only Liquid Elements sighash signing, returning `DER(r, s) || 0x01`. */
+export async function liquidSignDigestNative(options: {
+  path: string;
+  network?: string;
+  digest: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.liquidSignDigest(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-86 single-key P2TR taproot address derivation. */
+export async function taprootAddressNative(options: {
+  path: string;
+  network?: string;
+}): Promise<{ address: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.taprootAddress(options);
+  }
+  throw new Error("Native Enclave not available");
+}
+
+/** Native-only BIP-340 Schnorr keypath signing of a 32-byte digest. */
+export async function schnorrSignDigestNative(options: {
+  path: string;
+  network?: string;
+  digest: string;
+}): Promise<{ signature: string }> {
+  if (await hasNativeSecureEnclave()) {
+    return await SecureEnclave.schnorrSignDigest(options);
+  }
+  throw new Error("Native Enclave not available");
 }
 
 export const STORAGE_KEY = 'conxius_vault';

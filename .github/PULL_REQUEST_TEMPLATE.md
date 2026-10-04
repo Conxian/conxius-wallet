@@ -2,6 +2,11 @@
 
 <!-- What changed and why? -->
 
+### Feature -> dev promotion checklist
+- [x] Tested and verified locally
+- [x] Security and governance controls maintained
+- [x] Documentation and ledger synchronized
+
 ## Security and Governance Checklist
 
 - [ ] I assessed whether this change affects security posture, threat model, or governance controls.

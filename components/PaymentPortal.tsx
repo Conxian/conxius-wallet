@@ -206,7 +206,11 @@ const PaymentPortal: React.FC = () => {
                  context.notify('error', 'Bitcoin broadcast unavailable: no qualified provider receipt is configured.');
                  return;
              }
-             context.notify('error', 'Bitcoin broadcast artifact was rejected before submission.');
+             if (broadcast.kind === 'rejected') {
+                 context.notify('error', 'Bitcoin broadcast artifact was rejected before submission.');
+                 return;
+             }
+             context.notify('success', 'Payment broadcast.', broadcast.txid);
         }
     } catch (e: any) {
         context.notify('error', e.message, 'Payment Failed');

@@ -198,17 +198,6 @@ class WalletViewModel(
         unlock("")
     }
 
-    fun createStakingTx(stakerPk: String, amount: Long) {
-        viewModelScope.launch {
-            try {
-                val txid = babylonManager.createStakingTx(stakerPk, amount, 100, org.bitcoindevkit.Network.BITCOIN)
-                _error.value = "Babylon Staking Signed: $txid"
-            } catch (e: Exception) {
-                _error.value = "Babylon failed: ${e.message}"
-            }
-        }
-    }
-
     fun createDlcOffer(oraclePk: String, event: String, collateral: Long) {
         viewModelScope.launch {
             try {
@@ -260,39 +249,6 @@ class WalletViewModel(
                 _error.value = "Maven Request Signed: $sig"
             } catch (e: Exception) {
                 _error.value = "Maven failed: ${e.message}"
-            }
-        }
-    }
-
-    fun deriveLiquidAddress() {
-        viewModelScope.launch {
-            try {
-                val address = liquidManager.deriveConfidentialAddress()
-                _error.value = "Confidential Address: $address"
-            } catch (e: Exception) {
-                _error.value = "Liquid failed: ${e.message}"
-            }
-        }
-    }
-
-    fun signEvmTransaction(data: ByteArray) {
-        viewModelScope.launch {
-            try {
-                val sig = evmManager.signTransaction(data, 1)
-                _error.value = "EVM Transaction Signed: $sig"
-            } catch (e: Exception) {
-                _error.value = "EVM signing failed: ${e.message}"
-            }
-        }
-    }
-
-    fun signStacksTx(payload: ByteArray) {
-        viewModelScope.launch {
-            try {
-                val sig = stacksManager.signStacksTransaction(payload)
-                _error.value = "Stacks Tx Signed: $sig"
-            } catch (e: Exception) {
-                _error.value = "Stacks signing failed: ${e.message}"
             }
         }
     }
