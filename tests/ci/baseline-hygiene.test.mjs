@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const repositoryRoot = resolve(dirname(new URL(import.meta.url).pathname), '../..');
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const scannerPath = resolve(repositoryRoot, 'scripts/ci/baseline_hygiene_scanner.py');
 
 describe('baseline hygiene scanner', () => {
