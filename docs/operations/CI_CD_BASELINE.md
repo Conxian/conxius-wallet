@@ -14,6 +14,7 @@ protection or a ruleset to require these exact check names for pull requests
 targeting `main`:
 
 - `Workflow Pin Verification`
+- `Baseline Hygiene Scanner`
 - `Lint`
 - `Typecheck` (the job verifies the dual-toolchain manifest and runs both the
   TypeScript 6 and TypeScript 7 compiler paths; this is not a TypeScript

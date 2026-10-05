@@ -46,6 +46,7 @@
     "typecheck:dual": "pnpm run check:typescript-toolchain && pnpm run typecheck:ts6 && pnpm run typecheck:ts7",
     "verify": "bash scripts/ci/verify_local.sh",
     "check:typescript-compat": "node scripts/ci/check_typescript_compatibility.mjs",
+    "audit:baseline-hygiene": "python3 scripts/ci/baseline_hygiene_scanner.py",
     "check:release-version": "node scripts/ci/check_release_version.mjs",
     "check:workflow-pins": "python3 scripts/ci/check_workflow_pins.py",
     "check:android-security": "bash scripts/ci/validate_android_security.sh",

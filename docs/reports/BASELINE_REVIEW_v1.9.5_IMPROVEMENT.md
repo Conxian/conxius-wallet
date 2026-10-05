@@ -11,6 +11,11 @@ Following the ecosystem-wide alignment to v1.9.5, this review confirms the succe
 - **Changelog Hardening**: Updated `CHANGELOG.md` to reflect the v1.9.5 release and cumulative improvements since June 2026.
 - **CI & Build Toolchain Hygiene**: Relocated `overrides` to top-level in `package.json` for pnpm 11+ specification compliance (eliminating `[WARN] The "pnpm" field in package.json is no longer read by pnpm`), modernized `vite.config.ts` to use `import.meta.dirname` over deprecated `__dirname`, and typed worker format as `es` to enforce zero-warning compilation.
 
+## Baseline Security & Governance Containment Pass
+- **`.gitignore` Hardening**: Explicitly covered `.playwright/` and `blob-report/` generated artifact paths alongside `test-results/`, `playwright-report/`, `coverage/`, `dist/`, and `build/`.
+- **Hygiene Scanner Enhancement**: Expanded `scripts/ci/baseline_hygiene_scanner.py` to cover all runtime/generated artifact patterns (`.playwright`, `blob-report`, `coverage`, `dist`, `build`, etc.) and sensitive file patterns.
+- **CI/Local Integration**: Added `audit:baseline-hygiene` to `package.json`, integrated baseline scanner into `scripts/ci/verify_local.sh`, `.github/workflows/ci.yml`, and added dedicated test coverage in `tests/ci/baseline-hygiene.test.mjs`.
+
 ## Verification
 - Build: TSC + Vite (PASSED)
 - Logic: Clarity 4.0 alignment verified in local contracts (Verified 13 contracts).

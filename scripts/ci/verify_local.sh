@@ -19,6 +19,7 @@ if [[ "$PNPM_VERSION" != "$EXPECTED_PNPM_VERSION" ]]; then
 fi
 
 echo "--- 🛡️ Security & Logic Audit ---"
+python3 scripts/ci/baseline_hygiene_scanner.py
 bash scripts/ci/check_runtime_contamination.sh
 
 echo "--- 🔀 TypeScript Dual Toolchain ---"
