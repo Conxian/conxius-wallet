@@ -22,6 +22,7 @@ overrides:
   "@xmldom/xmldom": ">=0.9.12"
   stream-json: ">=3.4.1"
   toml: ">=4.1.2"
+  source-map-js: ">=1.2.2"
 
 minimumReleaseAge: 60
 minimumReleaseAgeExclude:
