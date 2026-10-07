@@ -233,6 +233,24 @@
           "bundled": false
         }
       ]
+    },
+    "1241210": {
+      "github_advisory_id": "GHSA-477h-4r7f-fvrx",
+      "module_name": "pbkdf2",
+      "severity": "moderate",
+      "findings": [
+        {
+          "version": "3.1.5",
+          "paths": [
+            ".>vite-plugin-node-polyfills>node-stdlib-browser>crypto-browserify>browserify-sign>parse-asn1>pbkdf2",
+            ".>vite-plugin-node-polyfills>node-stdlib-browser>crypto-browserify>pbkdf2",
+            ".>vite-plugin-node-polyfills>node-stdlib-browser>crypto-browserify>public-encrypt>parse-asn1>pbkdf2"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ]
     }
   },
   "metadata": {

@@ -100,6 +100,24 @@
         "The production web build statically bundles runtime code without running sourcemap parsing on untrusted input.",
         "source-map-js is used solely by build-time PostCSS/Vite plugins during compilation."
       ]
+    },
+    {
+      "advisory": "GHSA-477h-4r7f-fvrx",
+      "package": "pbkdf2",
+      "severity": "moderate",
+      "observedVersions": [
+        "3.1.5"
+      ],
+      "pathCount": 3,
+      "roleClassification": "development",
+      "reachabilityFingerprint": "8462bc4935a0d251d3467a1f5fe9dc1ff3d1036e31b9df1fc9fd2bc081b7371e",
+      "disposition": "not-affected",
+      "reviewedOn": "2026-07-22",
+      "rationale": "This advisory affects pbkdf2@3.1.5 in development tooling. Production runtime cryptographic operations use native browser/Android WebCrypto and Enclave primitives.",
+      "evidence": [
+        "pbkdf2@3.1.5 is confined to dev/testing package trees.",
+        "Production key derivation uses StrongBox and native WebCrypto API."
+      ]
     }
   ]
 }
