@@ -41,8 +41,7 @@ class ArkManager {
         val output = ByteArray(32)
         blake2s.doFinal(output, 0)
 
-        return ProductionRuntimeGuard.failClosed(
-            "Ark V-UTXO PRF derivation",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.ARK,
             output
         )
     }
@@ -55,8 +54,7 @@ class ArkManager {
         Log.d(TAG, "Signing Ark Forfeit for $vutxoId ($amountSats sats)")
 
         // Schnorr signing logic via Enclave
-        return ProductionRuntimeGuard.failClosed(
-            "Ark forfeit signing",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.ARK,
             "ark_forfeit_sig_${vutxoId.take(8)}"
         )
     }
@@ -66,8 +64,7 @@ class ArkManager {
      */
     fun createLiftRequest(amountSats: Long, cosignerPk: String): String {
         Log.d(TAG, "Creating Ark Lift Request for $amountSats sats")
-        return ProductionRuntimeGuard.failClosed(
-            "Ark lift request",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.ARK,
             "ark_lift_psbt_base64"
         )
     }

@@ -33,8 +33,7 @@ class LightningManager {
      */
     fun signInvoice(invoice: String): String {
         Log.d(TAG, "Signing Lightning Invoice")
-        return ProductionRuntimeGuard.failClosed(
-            "Lightning invoice signing",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.LIGHTNING,
             "lightning_invoice_sig_enclave_${System.currentTimeMillis()}"
         )
     }
@@ -45,7 +44,7 @@ class LightningManager {
      */
     fun connectPeer(peerId: String, host: String, port: Int): Boolean {
         Log.d(TAG, "Connecting to Lightning Peer: $peerId")
-        return ProductionRuntimeGuard.failClosed("Lightning peer connection", true)
+        return ProductionRuntimeGuard.failClosed(FeatureGate.LIGHTNING, true)
     }
 
     /**

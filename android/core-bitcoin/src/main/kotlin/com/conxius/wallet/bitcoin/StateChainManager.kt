@@ -14,8 +14,7 @@ class StateChainManager {
      */
     fun signTransfer(utxoId: String, recipientPk: String, fee: Long): String {
         Log.d(TAG, "Signing StateChain Transfer for $utxoId")
-        return ProductionRuntimeGuard.failClosed(
-            "StateChain transfer signing",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.STATE_CHAIN,
             "statechain_sig_${System.currentTimeMillis()}"
         )
     }
@@ -24,6 +23,6 @@ class StateChainManager {
      * Verifies a state chain commitment.
      */
     fun verifyCommitment(commitment: String): Boolean {
-        return ProductionRuntimeGuard.failClosed("StateChain commitment verification", true)
+        return ProductionRuntimeGuard.failClosed(FeatureGate.STATE_CHAIN, true)
     }
 }
