@@ -15,15 +15,18 @@
 - [ ] If sensitive files changed, I requested and obtained required CODEOWNERS review.
 - [ ] I linked the tracking issue (for example, `CON-176`).
 
-## Sensitive Files (CODEOWNERS-enforced)
+## Sensitive Files & Subsystems (CODEOWNERS-enforced)
 
 - `CODEOWNERS`
-- `SECURITY.md`
-- `SUPPORT.md`
-- `.github/ISSUE_TEMPLATE/**`
-- `.github/PULL_REQUEST_TEMPLATE*`
-- `.github/workflows/**`
-- `.github/release.yml`
+- `SECURITY.md` / `SUPPORT.md` / `CONTRIBUTING.md` / `LICENSE` / `CHANGELOG.md`
+- `.github/ISSUE_TEMPLATE/**` / `.github/PULL_REQUEST_TEMPLATE*`
+- `.github/workflows/**` / `.github/release.yml`
+- `/android/` (Native Android Core Modules & Cryptographic Enclaves)
+- `/native/` (Native Silent Payments Crates)
+- `/services/` (Protocol Services & Execution Engine)
+- `/contracts/` & `/core/` (Clarity Smart Contracts)
+- `/scripts/` & `/.github/` (Build Toolchain & CI Infrastructure)
+- `/docs/` (Technical Architecture & Specifications)
 
 ## Linked issue
 
