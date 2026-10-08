@@ -57,9 +57,9 @@ describe('dependency audit disposition policy', () => {
   it('accepts the current fixture report and versioned ledger', () => {
     const result = evaluate();
 
-    expect(result.audit.findings).toHaveLength(6);
-    expect(result.dispositionCounts).toEqual({ 'not-affected': 3, exception: 3 });
-    expect(result.approvalStatusCounts).toEqual({ pending: 3, approved: 0, 'not-applicable': 3 });
+    expect(result.audit.findings).toHaveLength(5);
+    expect(result.dispositionCounts).toEqual({ 'not-affected': 2, exception: 3 });
+    expect(result.approvalStatusCounts).toEqual({ pending: 3, approved: 0, 'not-applicable': 2 });
     expect(result.pendingExceptions.map((record) => record.advisory)).toEqual([
       'GHSA-3gc7-fjrx-p6mg',
       'GHSA-848j-6mx2-7j84',
@@ -94,12 +94,6 @@ describe('dependency audit disposition policy', () => {
         pathCount: 6,
         roleClassification: 'production',
         reachabilityFingerprint: '3d6fc41b5455218442338fb6efd310216ba22e4c7bdb5be80d0ecd0b2e9b20af',
-      },
-      {
-        advisory: 'GHSA-68fv-2mgg-jv7q',
-        pathCount: 31,
-        roleClassification: 'production',
-        reachabilityFingerprint: '979775e89464a658c548f80f0535cb5b68471bb0490c068a14b478d4869b9015',
       },
       {
         advisory: 'GHSA-477h-4r7f-fvrx',
@@ -257,8 +251,8 @@ describe('dependency audit disposition policy', () => {
       generatedAt: '2026-07-22T12:00:00.000Z',
       nodeVersion: 'v22.23.1',
       pnpmVersion: '11.13.0',
-      counts: { advisories: 6, packages: 6, observedVersions: 6, paths: 165 },
-      dispositions: { approvalStatusCounts: { pending: 3, approved: 0, 'not-applicable': 3 } },
+      counts: { advisories: 5, packages: 5, observedVersions: 5, paths: 134 },
+      dispositions: { approvalStatusCounts: { pending: 3, approved: 0, 'not-applicable': 2 } },
       lockfile: { path: 'pnpm-lock.yaml' },
     });
     expect(statSync(evidencePath).mode & 0o777).toBe(0o600);

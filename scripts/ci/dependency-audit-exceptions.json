@@ -84,24 +84,6 @@
       }
     },
     {
-      "advisory": "GHSA-68fv-2mgg-jv7q",
-      "package": "source-map-js",
-      "severity": "high",
-      "observedVersions": [
-        "1.2.1"
-      ],
-      "pathCount": 31,
-      "roleClassification": "production",
-      "reachabilityFingerprint": "979775e89464a658c548f80f0535cb5b68471bb0490c068a14b478d4869b9015",
-      "disposition": "not-affected",
-      "reviewedOn": "2026-07-22",
-      "rationale": "This advisory affects sourcemap parsing in build/dev tooling (postcss, vite, tailwindcss, jsdom). Production runtime execution does not expose source-map-js parsing to untrusted sourcemaps.",
-      "evidence": [
-        "The production web build statically bundles runtime code without running sourcemap parsing on untrusted input.",
-        "source-map-js is used solely by build-time PostCSS/Vite plugins during compilation."
-      ]
-    },
-    {
       "advisory": "GHSA-477h-4r7f-fvrx",
       "package": "pbkdf2",
       "severity": "moderate",
