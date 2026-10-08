@@ -17,7 +17,7 @@ class RgbManager {
      */
     fun validateConsignment(consignmentHex: String): Boolean {
         Log.d(TAG, "Validating RGB Consignment...")
-        return ProductionRuntimeGuard.failClosed("RGB consignment validation", true)
+        return ProductionRuntimeGuard.failClosed(FeatureGate.RGB, true)
     }
 
     /**
@@ -25,8 +25,7 @@ class RgbManager {
      */
     fun issueAsset(name: String, symbol: String, amount: Long, schema: String): String {
         Log.d(TAG, "Issuing RGB Asset: $name ($symbol)")
-        return ProductionRuntimeGuard.failClosed(
-            "RGB asset issuance",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.RGB,
             "rgb:genesis_${System.currentTimeMillis()}"
         )
     }
@@ -35,8 +34,7 @@ class RgbManager {
      * Prepares a state transition for an RGB transfer.
      */
     fun prepareTransition(assetId: String, amount: Long, beneficiary: String): String {
-        return ProductionRuntimeGuard.failClosed(
-            "RGB state transition",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.RGB,
             "rgb_transition_unsigned_hex"
         )
     }

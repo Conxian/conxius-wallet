@@ -15,8 +15,7 @@ class MavenManager {
      */
     fun signServiceRequest(payload: String): String {
         Log.d(TAG, "Signing Maven AI Request")
-        return ProductionRuntimeGuard.failClosed(
-            "Maven AI service request signing",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.MAVEN,
             "maven_sig_${System.currentTimeMillis()}"
         )
     }
@@ -25,8 +24,7 @@ class MavenManager {
      * Authorizes a compute allocation for an AI agent.
      */
     fun authorizeCompute(agentId: String, sats: Long): String {
-        return ProductionRuntimeGuard.failClosed(
-            "Maven compute authorization",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.MAVEN,
             "maven_compute_auth_txid"
         )
     }

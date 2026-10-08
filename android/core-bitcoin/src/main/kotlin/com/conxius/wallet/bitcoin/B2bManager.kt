@@ -16,8 +16,7 @@ class B2bManager {
      */
     fun signInvoice(id: String, amountSats: Long): String {
         Log.d(TAG, "Signing B2B Invoice: $id for $amountSats sats")
-        return ProductionRuntimeGuard.failClosed(
-            "B2B invoice signing",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.B2B,
             "b2b_inv_sig_${System.currentTimeMillis()}"
         )
     }
@@ -27,8 +26,7 @@ class B2bManager {
      */
     fun authorizeShieldedBatch(batchId: String, totalAmount: Long): String {
         Log.d(TAG, "Authorizing Shielded Batch: $batchId")
-        return ProductionRuntimeGuard.failClosed(
-            "B2B shielded batch authorization",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.B2B,
             "b2b_batch_auth_${System.currentTimeMillis()}"
         )
     }
@@ -37,8 +35,7 @@ class B2bManager {
      * Generates a proof of reserves for a corporate profile.
      */
     fun generateProofOfReserves(assets: List<String>): String {
-        return ProductionRuntimeGuard.failClosed(
-            "B2B proof-of-reserves generation",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.B2B,
             "b2b_por_sim_proof"
         )
     }
