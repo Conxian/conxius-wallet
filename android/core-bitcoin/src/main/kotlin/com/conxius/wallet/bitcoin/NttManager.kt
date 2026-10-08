@@ -15,8 +15,7 @@ class NttManager {
      */
     fun createTransferPayload(amount: Long, recipient: String, targetChain: Int): String {
         Log.d(TAG, "Creating NTT Payload for $amount to $targetChain")
-        return ProductionRuntimeGuard.failClosed(
-            "NTT payload creation",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.NTT,
             "ntt_payload_sim_hex_${System.currentTimeMillis()}"
         )
     }
@@ -25,8 +24,7 @@ class NttManager {
      * Authorizes an NTT redemption on the destination chain.
      */
     fun authorizeRedemption(vaa: ByteArray): String {
-        return ProductionRuntimeGuard.failClosed(
-            "NTT redemption authorization",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.NTT,
             "ntt_redemption_sig_hex"
         )
     }
