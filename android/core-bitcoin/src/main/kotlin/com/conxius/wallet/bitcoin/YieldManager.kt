@@ -13,8 +13,7 @@ class YieldManager {
      */
     fun signYieldTx(payload: ByteArray): String {
         Log.d(TAG, "Signing Yield Transaction (${payload.size} bytes)")
-        return ProductionRuntimeGuard.failClosed(
-            "Yield transaction signing",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.YIELD,
             "yield_sig_hex_00112233"
         )
     }

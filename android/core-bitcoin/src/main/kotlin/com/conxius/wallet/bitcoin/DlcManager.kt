@@ -43,8 +43,7 @@ class DlcManager {
      */
     fun createOffer(oraclePk: String, eventDesc: String, collateral: Long): String {
         Log.d(TAG, "Creating DLC Offer for event: $eventDesc")
-        return ProductionRuntimeGuard.failClosed(
-            "DLC offer creation",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.DLC,
             "{\"id\": \"dlc_offer_${System.currentTimeMillis()}\", \"oracle\": \"$oraclePk\", \"collateral\": $collateral}"
         )
     }
@@ -52,8 +51,7 @@ class DlcManager {
     /** Accepts a DLC Offer. Fail-closed: acceptance needs a qualified oracle adapter. */
     fun acceptOffer(offerJson: String): String {
         Log.d(TAG, "Accepting DLC Offer")
-        return ProductionRuntimeGuard.failClosed(
-            "DLC offer acceptance",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.DLC,
             "{\"status\": \"accepted\", \"contractId\": \"dlc_con_sim_${System.currentTimeMillis()}\"}"
         )
     }
@@ -61,8 +59,7 @@ class DlcManager {
     /** Settles a DLC from an oracle attestation. Fail-closed: settlement needs the oracle's revealed secret. */
     fun settleDlc(contractId: String, oracleAttestation: String): String {
         Log.d(TAG, "Settling DLC $contractId with attestation")
-        return ProductionRuntimeGuard.failClosed(
-            "DLC settlement",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.DLC,
             "dlc_settlement_sim_txid_${System.currentTimeMillis()}"
         )
     }

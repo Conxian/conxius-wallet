@@ -1,6 +1,6 @@
 # Conxian Labs Administrative Registry - Governance
 
-# Verified maintainers with admin access
+# Global fallback for verified maintainers with admin access
 * @botshelomokoka @admin-conxian-labs
 
 # Security and governance-sensitive files
@@ -8,14 +8,36 @@
 /SECURITY.md @botshelomokoka @admin-conxian-labs
 /SUPPORT.md @botshelomokoka @admin-conxian-labs
 /CODE_OF_CONDUCT.md @botshelomokoka @admin-conxian-labs
+/CONTRIBUTING.md @botshelomokoka @admin-conxian-labs
+/LICENSE @botshelomokoka @admin-conxian-labs
+/CHANGELOG.md @botshelomokoka @admin-conxian-labs
 /.github/release.yml @botshelomokoka @admin-conxian-labs
 /.github/ISSUE_TEMPLATE/** @botshelomokoka @admin-conxian-labs
 /.github/PULL_REQUEST_TEMPLATE* @botshelomokoka @admin-conxian-labs
 /.github/workflows/** @botshelomokoka @admin-conxian-labs
 
-# Financial and strategic registries
-/CONTRIBUTING.md @botshelomokoka @admin-conxian-labs
+# Native Android Core Modules & Cryptographic Enclaves
+/android/ @botshelomokoka @admin-conxian-labs
 
-# Architecture and Policy Docs
-/docs/architecture/SDK_OWNERSHIP_AND_VERSION_POLICY.md @botshelomokoka @admin-conxian-labs
-/docs/architecture/CONTROL_PLANE_MODULES_MAP.md @botshelomokoka @admin-conxian-labs
+# Native Silent Payments Crates (Rust & JNI)
+/native/ @botshelomokoka @admin-conxian-labs
+
+# Protocol Services, Execution Engine, & TypeScript Layer
+/services/ @botshelomokoka @admin-conxian-labs
+
+# Smart Contracts (Clarity Protocol Logic & Core)
+/contracts/ @botshelomokoka @admin-conxian-labs
+/core/ @botshelomokoka @admin-conxian-labs
+
+# Build Toolchain, Security Scripts, & CI Infrastructure
+/scripts/ @botshelomokoka @admin-conxian-labs
+/.github/ @botshelomokoka @admin-conxian-labs
+
+# Technical Architecture, Specifications, & Governance Docs
+/docs/ @botshelomokoka @admin-conxian-labs
+/BOS_KNOWLEDGE_GRAPH.md @botshelomokoka @admin-conxian-labs
+
+# Verification & Test Suites (Unit, E2E, Benchmarks)
+/tests/ @botshelomokoka @admin-conxian-labs
+/e2e/ @botshelomokoka @admin-conxian-labs
+/benchmarks/ @botshelomokoka @admin-conxian-labs

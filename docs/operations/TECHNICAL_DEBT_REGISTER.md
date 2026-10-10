@@ -10,6 +10,15 @@
 **Historical baseline:** The pre-#429 measurements below are retained as historical evidence where explicitly labeled; they do not describe the current main commit.
 **Target milestone:** M16 / v1.9.5 release baseline, before production promotion.
 
+**2026-10-08 state refresh (verified against source):** native L1 signing and
+broadcast are now implemented — `SecureEnclavePlugin.signBatch`
+(`Secp256k1Signer.signHash`) and `broadcastTransaction` (Blockstream API POST)
+are real paths, not stubs. `BdkManager` remains sync/getBalance-only (no direct
+broadcast). 12 non-L1 Managers (`Dlc`, `Breez`, `Maven`, `Insurance`,
+`StateChain`, `Yield`, `Ntt`, `Ark`, `Lightning`, `B2b`, `Rgb`,
+`Interoperability`) remain fail-closed. This narrows, but does not close,
+TD-P0-002 (BDK broadcast + non-L1 manager coverage remain).
+
 This register is the source of truth for release-baseline debt. Historical audit
 and status documents remain useful evidence, but their completion checkboxes do
 not override the status recorded here. An item is only marked **Completed** when

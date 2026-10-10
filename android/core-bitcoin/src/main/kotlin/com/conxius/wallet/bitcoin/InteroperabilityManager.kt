@@ -14,8 +14,7 @@ class InteroperabilityManager {
      */
     fun signSwap(payload: ByteArray): String {
         Log.d(TAG, "Signing Swap Payload (${payload.size} bytes)")
-        return ProductionRuntimeGuard.failClosed(
-            "Interoperability swap signing",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.INTEROPERABILITY,
             "swap_sig_hex_00112233"
         )
     }

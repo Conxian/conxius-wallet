@@ -13,8 +13,7 @@ class InsuranceManager {
      */
     fun signCoverPurchase(policyId: String, premiumSats: Long): String {
         Log.d(TAG, "Signing Insurance Cover Purchase for policy: $policyId")
-        return ProductionRuntimeGuard.failClosed(
-            "Insurance cover purchase",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.INSURANCE,
             "ins_sig_hex_${System.currentTimeMillis()}"
         )
     }
@@ -23,8 +22,7 @@ class InsuranceManager {
      * Files an automated claim based on parametric triggers.
      */
     fun fileClaim(policyId: String, proof: String): String {
-        return ProductionRuntimeGuard.failClosed(
-            "Insurance claim filing",
+        return ProductionRuntimeGuard.failClosed(FeatureGate.INSURANCE,
             "ins_claim_txid_00112233"
         )
     }
