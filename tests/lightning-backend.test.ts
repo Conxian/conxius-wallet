@@ -46,9 +46,10 @@ describe('LdkNodeBackend & Lightning Backend Provider', () => {
   });
 
   it('instantiates LdkNodeBackend for configured LND or Greenlight or Breez', () => {
-    const lndBackend = getLightningBackend({ type: 'LND', endpoint: 'https://lnd.example.com:10009', apiKey: 'admin-macaroon' });
+    const lndBackend = getLightningBackend({ type: 'LND', endpoint: 'https://lnd.example.com:10009', apiKey: 'admin-macaroon' }) as LdkNodeBackend;
     expect(lndBackend).toBeInstanceOf(LdkNodeBackend);
     expect(lndBackend.configured).toBe(true);
+    expect(lndBackend.getConfig()).toEqual({ type: 'LND', endpoint: 'https://lnd.example.com:10009', apiKey: 'admin-macaroon' });
 
     const breezBackend = getLightningBackend({ type: 'Breez' });
     expect(breezBackend).toBeInstanceOf(LdkNodeBackend);
@@ -57,6 +58,11 @@ describe('LdkNodeBackend & Lightning Backend Provider', () => {
     const greenlightBackend = getLightningBackend({ type: 'Greenlight' });
     expect(greenlightBackend).toBeInstanceOf(LdkNodeBackend);
     expect(greenlightBackend.configured).toBe(true);
+  });
+
+  it('handles empty or whitespace-only endpoint/apiKey strings as unconfigured LND', () => {
+    const lndBackendBlank = getLightningBackend({ type: 'LND', endpoint: '   ', apiKey: '   ' });
+    expect(lndBackendBlank.configured).toBe(false);
   });
 
   it('delegates to payLightningInvoice / payLnurl in non-production mode', async () => {
