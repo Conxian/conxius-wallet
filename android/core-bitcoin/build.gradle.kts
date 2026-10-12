@@ -46,7 +46,7 @@ dependencies {
     testImplementation(libs.junit)
     // Real org.json implementation for JVM unit tests; Android's `org.json` is a
     // mockable framework stub that throws "not mocked" outside a device.
-    testImplementation("org.json:json:20240303")
+    testImplementation("org.json:json:20260814")
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
 }
