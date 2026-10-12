@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { humanizeRule, checkPolicyCompliance, generatePolicyScript, DEFAULT_POLICIES } from '../services/smart-wallet';
 import { taggedHash, computeTapTweak, tweakTaprootPubkey } from '../services/ecc';
+import { UTXO } from '../types';
 
 describe('Smart Wallet: Policy Logic & BIP-341 Taproot Tweaking', () => {
   it('should humanize Miniscript rules correctly', () => {
@@ -27,8 +28,26 @@ describe('Smart Wallet: Policy Logic & BIP-341 Taproot Tweaking', () => {
 
   it('should enforce velocity limit policy compliance', () => {
     const velocityPolicy = DEFAULT_POLICIES.find(p => p.type === 'VelocityLimit')!;
-    const compliantUtxos = [{ txid: 'a', vout: 0, amount: 500000, scriptPubKey: '00' }];
-    const nonCompliantUtxos = [{ txid: 'b', vout: 0, amount: 2000000, scriptPubKey: '00' }];
+    const compliantUtxos: UTXO[] = [{
+      txid: 'a',
+      vout: 0,
+      amount: 500000,
+      address: 'bc1p1',
+      status: 'confirmed',
+      isFrozen: false,
+      derivationPath: "m/86'/0'/0'/0/0",
+      privacyRisk: 'Low'
+    }];
+    const nonCompliantUtxos: UTXO[] = [{
+      txid: 'b',
+      vout: 0,
+      amount: 2000000,
+      address: 'bc1p2',
+      status: 'confirmed',
+      isFrozen: false,
+      derivationPath: "m/86'/0'/0'/0/1",
+      privacyRisk: 'Low'
+    }];
 
     expect(checkPolicyCompliance(compliantUtxos, velocityPolicy)).toBe(true);
     expect(checkPolicyCompliance(nonCompliantUtxos, velocityPolicy)).toBe(false);
