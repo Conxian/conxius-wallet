@@ -1,4 +1,5 @@
 import { secp256k1 as nobleSecp, schnorr } from '@noble/curves/secp256k1.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 
 /**
  * ECC Engine Fusion
@@ -6,8 +7,35 @@ import { secp256k1 as nobleSecp, schnorr } from '@noble/curves/secp256k1.js';
  */
 
 /**
- * Tweaks a public key for Taproot.
- * Uses BigInt-level coordinate access (hasEvenY).
+ * Computes a BIP-340/341 Tagged Hash.
+ * TaggedHash(tag, msg) = SHA256(SHA256(tag) || SHA256(tag) || msg)
+ */
+export function taggedHash(tag: string, data: Uint8Array): Uint8Array {
+    const tagHash = sha256(Buffer.from(tag, 'utf8'));
+    const buffer = new Uint8Array(tagHash.length * 2 + data.length);
+    buffer.set(tagHash, 0);
+    buffer.set(tagHash, tagHash.length);
+    buffer.set(data, tagHash.length * 2);
+    return sha256(buffer);
+}
+
+/**
+ * Computes BIP-341 TapTweak hash for a given internal x-only public key and optional merkle root.
+ * TapTweak = TaggedHash("TapTweak", P || merkleRoot)
+ */
+export function computeTapTweak(internalPubKey: Uint8Array, merkleRoot?: Uint8Array): Uint8Array {
+    const pubKeyX = internalPubKey.length === 32 ? internalPubKey : internalPubKey.slice(1, 33);
+    const data = new Uint8Array(32 + (merkleRoot ? merkleRoot.length : 0));
+    data.set(pubKeyX, 0);
+    if (merkleRoot) {
+        data.set(merkleRoot, 32);
+    }
+    return taggedHash('TapTweak', data);
+}
+
+/**
+ * Tweaks a public key for Taproot following BIP-341.
+ * Handles x-only public keys, tweaking, and coordinate parity.
  */
 export function tweakTaprootPubkey(publicKey: Uint8Array, tweak: Uint8Array): Uint8Array {
     const Point = (nobleSecp as any).Point;
