@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { humanizeRule, checkPolicyCompliance, generatePolicyScript, DEFAULT_POLICIES } from '../services/smart-wallet';
+import { taggedHash, computeTapTweak, tweakTaprootPubkey } from '../services/ecc';
+import { UTXO } from '../types';
 
-describe('Smart Wallet: Policy Logic', () => {
+describe('Smart Wallet: Policy Logic & BIP-341 Taproot Tweaking', () => {
   it('should humanize Miniscript rules correctly', () => {
     const rules = "and(pk(key1),older(1000))";
     const human = humanizeRule(rules);
@@ -24,7 +26,47 @@ describe('Smart Wallet: Policy Logic', () => {
     expect(checkPolicyCompliance([], policy)).toBe(true);
   });
 
-  it('should derive a valid Taproot (P2TR) scriptPubKey for a policy', () => {
+  it('should enforce velocity limit policy compliance', () => {
+    const velocityPolicy = DEFAULT_POLICIES.find(p => p.type === 'VelocityLimit')!;
+    const compliantUtxos: UTXO[] = [{
+      txid: 'a',
+      vout: 0,
+      amount: 500000,
+      address: 'bc1p1',
+      status: 'confirmed',
+      isFrozen: false,
+      derivationPath: "m/86'/0'/0'/0/0",
+      privacyRisk: 'Low'
+    }];
+    const nonCompliantUtxos: UTXO[] = [{
+      txid: 'b',
+      vout: 0,
+      amount: 2000000,
+      address: 'bc1p2',
+      status: 'confirmed',
+      isFrozen: false,
+      derivationPath: "m/86'/0'/0'/0/1",
+      privacyRisk: 'Low'
+    }];
+
+    expect(checkPolicyCompliance(compliantUtxos, velocityPolicy)).toBe(true);
+    expect(checkPolicyCompliance(nonCompliantUtxos, velocityPolicy)).toBe(false);
+  });
+
+  it('should compute valid BIP-341 tagged hashes and TapTweaks', () => {
+    const internalPubKey = new Uint8Array(32).fill(2);
+    const tag = 'TapTweak';
+    const hash = taggedHash(tag, internalPubKey);
+
+    expect(hash).toBeInstanceOf(Uint8Array);
+    expect(hash.length).toBe(32);
+
+    const tweak = computeTapTweak(internalPubKey);
+    expect(tweak).toBeInstanceOf(Uint8Array);
+    expect(tweak.length).toBe(32);
+  });
+
+  it('should derive a valid Taproot (P2TR) scriptPubKey for a policy via BIP-341', () => {
     const internalPubKey = new Uint8Array(32).fill(2); // 32-byte dummy x-only pubkey
     const policy = DEFAULT_POLICIES[0];
     const script = generatePolicyScript(policy, internalPubKey);
