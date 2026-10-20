@@ -8,7 +8,7 @@ permalink: /changelog
 
 All notable changes to the Conxius Wallet project will be documented in this file.
 
-## [Unreleased]
+## Pending maintenance (20 October 2026)
 
 ### Fixed
 - Restore explicit feature-checklist requirements after the actor/numeric-suffix expansion, preserving current runtime and independently owned audit records (#357).
