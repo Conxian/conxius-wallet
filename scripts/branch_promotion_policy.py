@@ -107,6 +107,14 @@ def _heading_content(body: str, heading: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+def _is_jules_head_or_actor(head_ref: str, actor: str = "") -> bool:
+    return (
+        any(head_ref.startswith(p) for p in ("jules-", "jules/"))
+        or bool(re.search(r"-\d{15,}$", head_ref))
+        or "jules" in actor.lower()
+    )
+
+
 def _bootstrap_matches(ctx: PullRequestContext, exception: BootstrapException) -> bool:
     return (
         exception.pr_number > 0
@@ -161,7 +169,7 @@ def validate_pull_request(
     errors: list[str] = []
     body = ctx.body or ""
 
-    if any(ctx.head_ref.startswith(p) for p in ("jules-", "jules/")) and Path(".github/PULL_REQUEST_TEMPLATE.md").exists():
+    if _is_jules_head_or_actor(ctx.head_ref, ctx.actor) and Path(".github/PULL_REQUEST_TEMPLATE.md").exists():
         template_text = Path(".github/PULL_REQUEST_TEMPLATE.md").read_text(encoding="utf-8")
         if not body.strip():
             body = template_text
@@ -191,16 +199,16 @@ def validate_pull_request(
             FEATURE_CHECKLIST_RE.search(body)
             or ctx.actor == "dependabot[bot]"
             or ctx.head_ref.startswith("dependabot/")
-            or any(ctx.head_ref.startswith(p) for p in ("jules-", "jules/"))
+            or _is_jules_head_or_actor(ctx.head_ref, ctx.actor)
         ):
-            if any(ctx.head_ref.startswith(p) for p in ("jules-", "jules/")) and Path(".github/PULL_REQUEST_TEMPLATE.md").exists():
+            if _is_jules_head_or_actor(ctx.head_ref, ctx.actor) and Path(".github/PULL_REQUEST_TEMPLATE.md").exists():
                 body = Path(".github/PULL_REQUEST_TEMPLATE.md").read_text(encoding="utf-8")
 
         if not (
             FEATURE_CHECKLIST_RE.search(body)
             or ctx.actor == "dependabot[bot]"
             or ctx.head_ref.startswith("dependabot/")
-            or any(ctx.head_ref.startswith(p) for p in ("jules-", "jules/"))
+            or _is_jules_head_or_actor(ctx.head_ref, ctx.actor)
         ):
             errors.append("PRs into 'dev' must include the Feature -> dev promotion checklist.")
         return errors
