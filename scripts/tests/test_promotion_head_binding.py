@@ -169,7 +169,6 @@ class PromotionHeadBindingTests(unittest.TestCase):
     def test_existing_work_and_reconciliation_routes_are_preserved(self):
         for head, base, body in (
             ("fix/example", "dev", "### Feature -> dev promotion checklist"),
-            ("fix/vite-config-rolldown-modernization-12685228238705659500", "dev", "Simple PR description without explicit checklist header"),
             ("dev", "staged", STAGED),
             ("staged", "main", MAIN),
             ("backmerge/main-to-staged", "staged", ""),
@@ -182,13 +181,20 @@ class PromotionHeadBindingTests(unittest.TestCase):
             with self.subTest(head=head):
                 self.assertEqual([], errors(data))
 
-    def test_jules_agent_branch_and_actor_detection(self):
-        data = event(LANES[0])
-        data["pull_request"]["head"]["ref"] = "fix/my-feature-123456789012345"
-        data["pull_request"]["base"]["ref"] = "dev"
-        data["pull_request"]["body"] = "Agent PR description"
-        data["pull_request"]["user"]["login"] = "jules[bot]"
-        self.assertEqual([], errors(data))
+    def test_actor_and_numeric_suffix_cannot_replace_feature_checklist(self):
+        for head, actor in (
+            ("fix/example-123456789012345", "contributor"),
+            ("fix/example", "jules[bot]"),
+        ):
+            data = event(LANES[0])
+            data["pull_request"]["head"]["ref"] = head
+            data["pull_request"]["base"]["ref"] = "dev"
+            data["pull_request"]["body"] = "Description without a feature checklist"
+            data["pull_request"]["user"]["login"] = actor
+            with self.subTest(head=head, actor=actor):
+                self.assertTrue(any("Feature -> dev" in message for message in errors(data)))
+            data["pull_request"]["body"] = "### Feature -> dev promotion checklist"
+            self.assertEqual([], errors(data))
 
     def test_process_exit_codes_use_actual_event_head(self):
         with tempfile.TemporaryDirectory() as directory:
