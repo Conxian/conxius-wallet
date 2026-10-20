@@ -20,10 +20,7 @@ export default defineConfig(() => {
         }
       },
       optimizeDeps: {
-        include: ['json-bigint', 'algosdk'],
-        esbuildOptions: {
-           target: 'esnext'
-        }
+        include: ['json-bigint', 'algosdk']
       },
       test: {
         globals: true,
