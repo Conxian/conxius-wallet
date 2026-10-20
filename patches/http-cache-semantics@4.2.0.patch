@@ -1,0 +1,16 @@
+diff --git a/index.js b/index.js
+index f01e9a16b4781dc24c8f43dc7a4c8e6d1e4ae5eb..a0f93bc4f9e443322fcf424155b52570961edbc3 100644
+--- a/index.js
++++ b/index.js
+@@ -423,6 +423,11 @@ module.exports = class CachePolicy {
+         // the stored response is either:
+         // fresh, or allowed to be served stale
+         if (this.stale()) {
++            // A zero freshness lifetime can encode a security restriction.
++            // Client stale directives must not turn such an entry into a hit.
++            if (this.maxAge() <= 0) {
++                return this._evaluateRequestMissResult(req);
++            }
+             // If a value is present, then the client is willing to accept a response that has
+             // exceeded its freshness lifetime by no more than the specified number of seconds
+             const allowsStaleWithoutRevalidation = 'max-stale' in requestCC &&
