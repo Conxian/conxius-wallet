@@ -9,7 +9,7 @@ Following the ecosystem-wide alignment to v1.9.5, this review confirms the succe
 - **Linear Issue Audit**: Conducted a holistic audit of open issues. Verified that several high-severity reported bugs (CON-1424, CON-1428, etc.) were cross-repo artifacts not applicable to the `conxius-wallet` codebase, and documented these findings to clear the backlog.
 - **Deduplication**: Merged redundant hardening issues (CON-1360 into CON-1382).
 - **Changelog Hardening**: Updated `CHANGELOG.md` to reflect the v1.9.5 release and cumulative improvements since June 2026.
-- **CI & Build Toolchain Hygiene**: Relocated `overrides` to top-level in `package.json` for pnpm 11+ specification compliance (eliminating `[WARN] The "pnpm" field in package.json is no longer read by pnpm`), modernized `vite.config.ts` to use `import.meta.dirname` over deprecated `__dirname`, and typed worker format as `es` to enforce zero-warning compilation.
+- **CI & Build Toolchain Hygiene**: Relocated `overrides` to top-level in `package.json` for pnpm 11+ specification compliance (eliminating `[WARN] The "pnpm" field in package.json is no longer read by pnpm`), modernized `vite.config.ts` to use `import.meta.dirname` over deprecated `__dirname`, typed worker format as `es`, and removed deprecated `optimizeDeps.esbuildOptions` in `vite.config.ts` to align with Vite 8 / Rolldown dependency optimization defaults.
 
 ## Verification
 - Build: TSC + Vite (PASSED)
