@@ -8,6 +8,11 @@ permalink: /changelog
 
 All notable changes to the Conxius Wallet project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- Apply a pinned HTTP cache dependency patch preventing stale reuse of zero-lifetime entries, with installed-package regression coverage. Keep advisory/exception and independent acceptance gates visible (#357).
+
 ## [1.9.5] - 2026-07-08
 
 ### Added
