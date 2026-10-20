@@ -25,6 +25,9 @@ overrides:
   stream-json: '>=3.4.1'
   toml: '>=4.1.2'
 
+patchedDependencies:
+  http-cache-semantics@4.2.0: bffe557e7951415eec02df1675716e8d67db0693260cbcb2cf885907e2a45486
+
 importers:
 
   .:
@@ -8155,7 +8158,7 @@ snapshots:
     dependencies:
       '@types/http-cache-semantics': 4.2.0
       get-stream: 9.0.1
-      http-cache-semantics: 4.2.0
+      http-cache-semantics: 4.2.0(patch_hash=bffe557e7951415eec02df1675716e8d67db0693260cbcb2cf885907e2a45486)
       keyv: 5.6.0
       mimic-response: 4.0.0
       normalize-url: 8.1.1
@@ -8165,7 +8168,7 @@ snapshots:
     dependencies:
       clone-response: 1.0.3
       get-stream: 5.2.0
-      http-cache-semantics: 4.2.0
+      http-cache-semantics: 4.2.0(patch_hash=bffe557e7951415eec02df1675716e8d67db0693260cbcb2cf885907e2a45486)
       keyv: 4.5.4
       lowercase-keys: 2.0.0
       normalize-url: 6.1.0
@@ -8996,7 +8999,7 @@ snapshots:
     transitivePeerDependencies:
       - '@noble/hashes'
 
-  http-cache-semantics@4.2.0: {}
+  http-cache-semantics@4.2.0(patch_hash=bffe557e7951415eec02df1675716e8d67db0693260cbcb2cf885907e2a45486): {}
 
   http-status-codes@2.3.0: {}
 

@@ -11,6 +11,7 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 ## Pending maintenance (20 October 2026)
 
 ### Fixed
+- Apply a pinned HTTP cache dependency patch preventing stale reuse of zero-lifetime entries, with installed-package regression coverage. Keep advisory/exception and independent acceptance gates visible (#357).
 - Restore explicit feature-checklist requirements after the actor/numeric-suffix expansion, preserving current runtime and independently owned audit records (#357).
 
 ## [1.9.5] - 2026-07-08
