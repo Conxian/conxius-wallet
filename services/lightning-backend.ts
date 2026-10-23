@@ -21,8 +21,15 @@ export class LdkNodeBackend implements LightningBackend {
   constructor(private readonly config: LnBackendConfig) {
     this.configured = Boolean(
       config.type !== 'None' &&
-      (config.endpoint || config.type === 'Breez' || config.type === 'Greenlight')
+      (Boolean(config.endpoint && config.endpoint.trim().length > 0) || config.type === 'Breez' || config.type === 'Greenlight')
     );
+  }
+
+  /**
+   * Helper to inspect config parameters cleanly.
+   */
+  getConfig(): Readonly<LnBackendConfig> {
+    return Object.freeze({ ...this.config });
   }
 
   async payInvoice(request: LightningInvoicePaymentRequest, isProduction?: boolean): Promise<ValueOperationExecutionOutcome> {
@@ -55,7 +62,7 @@ export function getLightningBackend(cfg?: LnBackendConfig): LightningBackend {
   if (!cfg || cfg.type === 'None') return new UnsupportedBackend(false);
 
   const isConfigured = Boolean(
-    (cfg.type === 'LND' && Boolean(cfg.endpoint && cfg.apiKey)) ||
+    (cfg.type === 'LND' && Boolean(cfg.endpoint && cfg.endpoint.trim().length > 0 && cfg.apiKey && cfg.apiKey.trim().length > 0)) ||
     cfg.type === 'Greenlight' ||
     cfg.type === 'Breez' ||
     (cfg.endpoint && cfg.endpoint.trim().length > 0)

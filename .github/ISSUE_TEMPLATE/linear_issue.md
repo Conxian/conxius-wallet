@@ -20,6 +20,6 @@ assignees: []
 - [ ] Zero Secret Egress verified
 
 ## Environment
-- **Node**: 22.x
+- **Node**: 24.x
 - **pnpm**: 11.13.0
 - **Android**: Gradle 9.x / Kotlin 2.4.x

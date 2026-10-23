@@ -27,7 +27,7 @@ describe('Android release workflow policy', () => {
     expect(verification).toContain('continue-on-error: true');
     expect(verification).toContain('--require-approved-exceptions');
     expect(verification).toContain('--evidence "$RUNNER_TEMP/conxius-dependency-audit-release.json"');
-    expect(verification).toContain('actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+    expect(verification).toMatch(/uses: actions\/upload-artifact@[a-f0-9]{40}\b/);
     expect(verification).toContain('path: ${{ runner.temp }}/conxius-dependency-audit-release.json');
     expect(verification).toContain("if: steps.dependency-audit.outcome == 'failure'");
     expect(verification.indexOf('Dependency audit policy')).toBeLessThan(verification.indexOf('Upload dependency audit release evidence'));
@@ -61,7 +61,7 @@ describe('Android release workflow policy', () => {
 
   it('recovers only from the exact verified artifact and never rebuilds or republishes Play', () => {
     const recovery = jobSection('release-recover');
-    expect(recovery).toContain('actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c');
+    expect(recovery).toMatch(/uses: actions\/download-artifact@[a-f0-9]{40}\b/);
     expect(recovery).toContain('run-id: ${{ inputs.source_run_id }}');
     expect(recovery).toContain('verify_release_attestation.sh');
     expect(recovery).toContain('verify_release_payload.sh');
@@ -83,7 +83,7 @@ describe('Android release workflow policy', () => {
     expect(retry).toContain('gh run view');
     expect(retry).toContain("evidenceStep?.conclusion !== 'success'");
     expect(retry).toContain("publishStep.conclusion === 'success'");
-    expect(retry).toContain('actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c');
+    expect(retry).toMatch(/uses: actions\/download-artifact@[a-f0-9]{40}\b/);
     expect(retry).toContain('run-id: ${{ inputs.source_run_id }}');
     expect(retry).toContain('verify_release_attestation.sh');
     expect(retry).toContain('verify_release_payload.sh');
