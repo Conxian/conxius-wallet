@@ -1,8 +1,8 @@
 diff --git a/index.js b/index.js
-index f01e9a16b4781dc24c8f43dc7a4c8e6d1e4ae5eb..a0f93bc4f9e443322fcf424155b52570961edbc3 100644
+index 56c26025074cbcf218e3ec4d810662da93f8024e..481b204a40c3d0ad33b285ccccfdf11bfd00a860 100644
 --- a/index.js
 +++ b/index.js
-@@ -423,6 +423,11 @@ module.exports = class CachePolicy {
+@@ -424,6 +424,11 @@ module.exports = class CachePolicy {
          // the stored response is either:
          // fresh, or allowed to be served stale
          if (this.stale()) {
