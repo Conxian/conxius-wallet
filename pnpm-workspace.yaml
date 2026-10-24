@@ -23,6 +23,9 @@ overrides:
   "@xmldom/xmldom": ">=0.9.12"
   stream-json: "3.7.0"
   toml: ">=4.1.2"
+  "zod@^4": "4.6.7"
+  http-cache-semantics: "4.3.0"
+  pbkdf2: "3.1.7"
 
 minimumReleaseAge: 60
 minimumReleaseAgeExclude:
@@ -44,4 +47,4 @@ allowBuilds:
   "tiny-secp256k1": true
   "utf-8-validate": true
 patchedDependencies:
-  http-cache-semantics@4.2.0: patches/http-cache-semantics@4.2.0.patch
+  http-cache-semantics@4.3.0: patches/http-cache-semantics@4.3.0.patch

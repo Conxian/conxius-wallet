@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 2,
+  "records": [
+    {
+      "advisory": "GHSA-3gc7-fjrx-p6mg",
+      "package": "bigint-buffer",
+      "severity": "high",
+      "observedVersions": [
+        "1.1.5"
+      ],
+      "pathCount": 14,
+      "roleClassification": "production",
+      "reachabilityFingerprint": "9986acccd9f9294e02f9d2813c7b54e100778b307993ead4a11f04e3d505b470",
+      "disposition": "exception",
+      "reviewedOn": "2026-07-22",
+      "owner": "Conxian security maintainers",
+      "rationale": "The advisory marks bigint-buffer versions through 1.1.5 as vulnerable and lists >=1.1.6 as patched, but npm currently publishes no 1.1.6 or later release. The production Wormhole/Solana paths remain on bigint-buffer@1.1.5; forcing the nonexistent patched version would break reproducible installation.",
+      "remediation": "Adopt the first upstream bigint-buffer release containing the fix, or replace the Wormhole/Solana dependency path with a validated alternative before the exception expires.",
+      "expiresOn": "2027-01-19",
+      "approval": {
+        "status": "pending",
+        "reference": "CON-1525; GitHub #399 (tracking context only; not approval evidence)"
+      }
+    },
+    {
+      "advisory": "GHSA-848j-6mx2-7j84",
+      "package": "elliptic",
+      "severity": "low",
+      "observedVersions": [
+        "6.6.1"
+      ],
+      "pathCount": 100,
+      "roleClassification": "production",
+      "reachabilityFingerprint": "de8cf46ae22c223b19e7ff856c9fb13c107a868c05edf08eef969ffbcd31c000",
+      "disposition": "exception",
+      "reviewedOn": "2026-07-22",
+      "owner": "Conxian security maintainers",
+      "rationale": "The advisory marks elliptic versions through 6.6.1 as vulnerable and lists >=6.6.2 as patched, but npm currently publishes no 6.6.2 release. The production Wormhole/CosmJS and Payjoin paths remain on elliptic@6.6.1 while the dependency paths are evaluated for a compatible fix.",
+      "remediation": "Adopt the first upstream elliptic release containing the fix, or replace the affected Wormhole/CosmJS and Payjoin dependency paths with validated alternatives before the exception expires.",
+      "expiresOn": "2027-01-19",
+      "approval": {
+        "status": "pending",
+        "reference": "CON-1525; GitHub #399 (tracking context only; not approval evidence)"
+      }
+    },
+    {
+      "advisory": "GHSA-g7r4-m6w7-qqqr",
+      "package": "esbuild",
+      "severity": "low",
+      "observedVersions": [
+        "0.27.3"
+      ],
+      "pathCount": 11,
+      "roleClassification": "optional",
+      "reachabilityFingerprint": "8403166e6fe14aadee4fa43b24d5fb6dba5c25fe309eb8729aeafdc6351cd7e3",
+      "disposition": "not-affected",
+      "reviewedOn": "2026-07-22",
+      "rationale": "This advisory is confined to the local Vite development-server response-read surface. Production and release artifacts do not run or expose that development server.",
+      "evidence": [
+        "The production command is `pnpm run build`, which emits the static `dist` artifact and does not start a Vite development server.",
+        "The `Web build` step in `.github/workflows/android-release.yml` runs `pnpm run build` before Android packaging; the release workflow has no Vite development-server step.",
+        "esbuild@0.28.1 was tested and breaks `vite-plugin-top-level-await` production builds, so esbuild@0.27.3 is retained for compatibility while this advisory remains explicitly tracked."
+      ]
+    },
+    {
+      "advisory": "GHSA-ch52-4w7c-c8xp",
+      "package": "http-cache-semantics",
+      "severity": "high",
+      "observedVersions": [
+        "4.2.0"
+      ],
+      "pathCount": 6,
+      "roleClassification": "production",
+      "reachabilityFingerprint": "3d6fc41b5455218442338fb6efd310216ba22e4c7bdb5be80d0ecd0b2e9b20af",
+      "disposition": "exception",
+      "reviewedOn": "2026-07-22",
+      "owner": "Conxian security maintainers",
+      "rationale": "The advisory marks http-cache-semantics 4.2.0 as vulnerable and lists >=4.2.1 as patched, but npm currently publishes no 4.2.1 or later release (latest is 4.2.0). The Wormhole/Aptos production paths remain on http-cache-semantics@4.2.0 via the got/cacheable-request chain; forcing a nonexistent patched version would break reproducible installation.",
+      "remediation": "Adopt the first upstream http-cache-semantics release containing the fix (>=4.2.1), or replace the Wormhole/Aptos dependency path with a validated alternative before the exception expires.",
+      "expiresOn": "2027-01-19",
+      "approval": {
+        "status": "pending",
+        "reference": "CON-1525; GitHub #399 (tracking context only; not approval evidence)"
+      }
+    },
+    {
+      "advisory": "GHSA-477h-4r7f-fvrx",
+      "package": "pbkdf2",
+      "severity": "moderate",
+      "observedVersions": [
+        "3.1.5"
+      ],
+      "pathCount": 3,
+      "roleClassification": "development",
+      "reachabilityFingerprint": "8462bc4935a0d251d3467a1f5fe9dc1ff3d1036e31b9df1fc9fd2bc081b7371e",
+      "disposition": "not-affected",
+      "reviewedOn": "2026-07-22",
+      "rationale": "This advisory affects pbkdf2@3.1.5 in development tooling. Production runtime cryptographic operations use native browser/Android WebCrypto and Enclave primitives.",
+      "evidence": [
+        "pbkdf2@3.1.5 is confined to dev/testing package trees.",
+        "Production key derivation uses StrongBox and native WebCrypto API."
+      ]
+    }
+  ]
+}
