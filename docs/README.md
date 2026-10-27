@@ -14,6 +14,10 @@ Welcome to the official technical documentation for the Conxius Wallet, the sove
 - [Wasm-First Gateway Strategy](architecture/proposals/WASM_FIRST_GATEWAY_STRATEGY.md)
 - [Bridge & Messaging Trust Tiers](architecture/APPROVED_BRIDGE_AND_MESSAGING_SYSTEMS_BY_TRUST_TIER.md)
 
+## 📖 Knowledge Base (KB)
+- [Knowledge Base Overview](kb/)
+- [Nexus & Decentralized Systems Integration Guide](kb/NEXUS_DECENTRALIZED_SYSTEMS_KB.md)
+
 ## 📋 Business, State & Product
 - [Business Overview](business/)
 - [State & Implementation](state/)
@@ -24,6 +28,7 @@ Welcome to the official technical documentation for the Conxius Wallet, the sove
 ## 🛡️ Operations & Security
 - [Operations Overview](operations/)
 - [Operating Model](operations/OPERATING_MODEL.md)
+- [GitHub Projects & Issues Management Guide](operations/GITHUB_PROJECTS_AND_ISSUES_MANAGEMENT_GUIDE.md)
 - [Baseline Review Templates & Governance Pack](operations/BASELINE_REVIEW_TEMPLATES.md)
 - [Inscription-Resistant Clean-Block Fee Model](operations/CLEAN_BLOCK_FEE_MODEL.md)
 - [KeyMint / StrongBox and Play Integrity Qualification](reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md)
@@ -35,6 +40,7 @@ Welcome to the official technical documentation for the Conxius Wallet, the sove
 - [Archive Overview](archive/)
 
 ## 🧪 Research & Reports
+- [Nexus & Decentralized Systems Production Readiness & Opportunities Research](reports/NEXUS_DECENTRALIZED_SYSTEMS_RESEARCH.md)
 - [KeyMint / StrongBox and Play Integrity Qualification](reports/CON_1544_KEYMINT_AUTHORIZATION_BOUNDARY.md)
 - [SDK Research](reports/SDK_RESEARCH.md)
 - [FDC3 Interoperability Proposal](reports/FDC3_INTEROPERABILITY_PROPOSAL.md)
