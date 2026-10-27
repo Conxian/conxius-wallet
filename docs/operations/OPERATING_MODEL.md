@@ -9,7 +9,7 @@ This document defines the operational governance and decision-making framework f
 - **Founder**: Primary anchor for strategic direction and protocol-level decisions.
 - **COO (Sizwe Nkosi)**: Responsible for interim review, operational approval, and launch-gate sign-off.
   - *Interim Approval Path*: COO review is required for all "High" and "Urgent" issues before final promotion from `staged` to `main`.
-  - *Communication*: Review outcomes are recorded in Linear comments.
+  - *Communication*: Record review outcomes and source-bound approval evidence on the owning GitHub issue or pull request, following [Conxian/.github#43](https://github.com/Conxian/.github/issues/43).
 
 ### 2. Engineering & Security
 - **Lead Engineer**: Accountable for technical implementation and "Fast Track" verification.

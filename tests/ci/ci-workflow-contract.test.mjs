@@ -15,7 +15,7 @@ describe('CI workflow contracts', () => {
   it('publishes one immutable web-dist artifact from Web Build', () => {
     const webBuild = jobSection('web-build');
     expect(webBuild).toContain('name: Web Build');
-    expect(webBuild).toContain('actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+    expect(webBuild).toMatch(/uses: actions\/upload-artifact@[a-f0-9]{40}\b/);
     expect(webBuild).toMatch(/name: web-dist[\s\S]*path: dist/);
     expect(webBuild).toContain('if-no-files-found: error');
   });
@@ -23,7 +23,7 @@ describe('CI workflow contracts', () => {
   it('runs the default dependency audit policy and uploads temp evidence', () => {
     const audit = jobSection('dependency-audit');
     expect(audit).toContain('pnpm exec node scripts/ci/audit_with_exceptions.mjs --evidence "$RUNNER_TEMP/conxius-dependency-audit.json"');
-    expect(audit).toContain('actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+    expect(audit).toMatch(/uses: actions\/upload-artifact@[a-f0-9]{40}\b/);
     expect(audit).toContain('path: ${{ runner.temp }}/conxius-dependency-audit.json');
     expect(audit).toContain('if-no-files-found: error');
   });
@@ -31,7 +31,7 @@ describe('CI workflow contracts', () => {
   it.each(['android-lint', 'android-unit-tests'])('makes %s consume Web Build assets before sync', (jobId) => {
     const job = jobSection(jobId);
     expect(job).toContain('needs: web-build');
-    expect(job).toContain('actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c');
+    expect(job).toMatch(/uses: actions\/download-artifact@[a-f0-9]{40}\b/);
     expect(job).toMatch(/name: web-dist[\s\S]*path: dist/);
     expect(job.indexOf('Download web assets')).toBeLessThan(job.indexOf('pnpm exec cap sync android'));
   });

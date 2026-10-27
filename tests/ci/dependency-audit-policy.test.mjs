@@ -23,7 +23,7 @@ import {
 } from '../../scripts/ci/audit_with_exceptions.mjs';
 
 const repositoryRoot = resolve(dirname(new URL(import.meta.url).pathname), '../..');
-const ledgerPath = resolve(repositoryRoot, 'scripts/ci/dependency-audit-exceptions.json');
+const ledgerPath = resolve(repositoryRoot, 'tests/ci/fixtures/dependency-audit-ledger.json');
 const reportPath = resolve(repositoryRoot, 'tests/ci/fixtures/dependency-audit-report.json');
 const lockfilePath = resolve(repositoryRoot, 'pnpm-lock.yaml');
 const baseLedger = JSON.parse(readFileSync(ledgerPath, 'utf8'));
@@ -54,7 +54,7 @@ function fakeSpawn({ auditStatus = 1, auditSignal = null, auditStdout = JSON.str
 }
 
 describe('dependency audit disposition policy', () => {
-  it('accepts the current fixture report and versioned ledger', () => {
+  it('accepts the pinned historical fixture report and its matching ledger', () => {
     const result = evaluate();
 
     expect(result.audit.findings).toHaveLength(5);

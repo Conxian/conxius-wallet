@@ -1,12 +1,9 @@
-import * as bitcoin from 'bitcoinjs-lib';
-import { Network, UTXO } from '../types';
-import { tweakTaprootPubkey } from './ecc';
-import { sha256 } from '@noble/hashes/sha2.js';
+import { UTXO } from '../types';
 
 /**
  * Sovereign Smart Wallet Service (v1.2)
- * Implements Miniscript-compatible descriptor management and spending policies.
- * Supporting Taproot-native programmable custody.
+ * Policy descriptions and a bounded UTXO amount preflight only.
+ * Miniscript compilation and transaction satisfaction are not implemented here.
  */
 
 export interface SpendingPolicy {
@@ -63,46 +60,37 @@ export const DEFAULT_POLICIES: SpendingPolicy[] = [
 ];
 
 /**
- * Evaluates if a set of UTXOs satisfies a specific spending policy.
+ * Checks only the local amount preflight for VelocityLimit policies.
+ * A true result is not signing authority or proof of transaction satisfaction.
+ * Policies requiring signatures, transaction age or recovery evidence fail closed.
  */
 export const checkPolicyCompliance = (utxos: UTXO[], policy: SpendingPolicy): boolean => {
     if (!policy.isActive) return true;
 
-    // In a real implementation, this would use a Miniscript satisfier
-    // and check the locktime/sequence of the proposed transaction.
-    console.log(`[Smart-Wallet] Auditing UTXOs against policy: ${policy.name}`);
-
-    if (policy.type === 'VelocityLimit') {
-        const totalValue = utxos.reduce((acc, u) => acc + u.amount, 0);
-        const limit = policy.metadata?.limitSats || 1000000;
-        if (totalValue > limit) {
-            console.warn(`[Smart-Wallet] Velocity Limit Exceeded: ${totalValue} > ${limit}. Enforcement Required.`);
-            return false;
-        }
+    if (policy.type !== 'VelocityLimit') return false;
+    const limit = policy.metadata?.limitSats ?? 1000000;
+    if (!Number.isSafeInteger(limit) || limit < 0) return false;
+    let totalValue = 0;
+    for (const utxo of utxos) {
+        if (!Number.isSafeInteger(utxo.amount) || utxo.amount < 0) return false;
+        totalValue += utxo.amount;
+        if (!Number.isSafeInteger(totalValue) || totalValue > limit) return false;
     }
-
     return true;
 };
 
 /**
- * Generates a Bitcoin Output Script based on a Miniscript policy and public key.
- * Derives a Taproot (P2TR) scriptPubKey via BIP-341 key tweaking.
+ * Preserves the public API but refuses funding-script generation until a reviewed
+ * compiler, key binding and spend-path validation contract exist. UTF-8 policy
+ * expression text is not compiled Bitcoin Script.
  */
 export const generatePolicyScript = (
-    policy: SpendingPolicy,
-    internalPubKey: Uint8Array
+    _policy: SpendingPolicy,
+    _internalPubKey: Uint8Array
 ): Buffer => {
-    // 1. Hash the policy rules to compute the script tree merkle root / tweak
-    const scriptHash = sha256(Buffer.from(policy.rules, 'utf8'));
-
-    // 2. Tweak internal x-only public key with policy script merkle root
-    const tweakedPubKey = tweakTaprootPubkey(internalPubKey, scriptHash);
-
-    // 3. Return P2TR scriptPubKey: OP_1 (0x51) + 32-byte push (0x20) + tweaked x-only pubkey
-    return Buffer.concat([
-        Buffer.from([0x51, 0x20]),
-        Buffer.from(tweakedPubKey)
-    ]);
+    void _policy;
+    void _internalPubKey;
+    throw new Error('Unsupported policy script generation: verified Miniscript compilation is required');
 };
 
 /**

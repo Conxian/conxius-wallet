@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/Conxian/conxius-wallet/actions/workflows/ci.yml/badge.svg) ![Security](https://img.shields.io/badge/Security-CXN%20Guardian-orange)
 
-Conxius is a non-custodial, sovereign-first wallet for the Bitcoin ecosystem, combining hardware-isolated security with modern Bitcoin-layer integrations and services.
+Conxius is a local-first, non-custodial universal-chain wallet with Bitcoin L1 as its canonical trust/finality root. Read [capability truth](docs/operations/CAPABILITY_TRUTH.md) before interpreting protocol/manager catalogs as live support or production signing qualification.
 
 ## Purpose
 
