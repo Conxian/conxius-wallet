@@ -1,0 +1,92 @@
+name: Decentralized System Integration & Issue Mitigation
+description: Propose, evaluate, or track a decentralized system integration for operational issue mitigation, production readiness, and business monetization.
+title: "[SYSTEM-INT] Integrate [System Name] for [Issue Mitigated]"
+labels: ["Decentralized-System", "Production-Readiness", "Business-Opportunity"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Decentralized System Integration & Operational Issue Mitigation
+        Use this template to track protocol capabilities, fail-closed guards, operational issue mitigations, production readiness scores, and business revenue opportunities.
+  - type: input
+    id: target_system
+    attributes:
+      label: Target Decentralized System
+      description: Name of the protocol or decentralized system (e.g., Ark V-UTXO, Liquid, Silent Payments, BitVM2, Stacks, Nostr, FDC3, IPFS, etc.).
+      placeholder: "e.g., Liquid Sidechain & Confidential Assets"
+    validations:
+      required: true
+  - type: dropdown
+    id: issue_mitigated
+    attributes:
+      label: Operational Issue Mitigated
+      description: Primary operational failure mode or bottleneck addressed by this system.
+      options:
+        - "L1 Block Space Congestion & Fee Spikes"
+        - "Single Network State Outages & Liveness Halts"
+        - "Privacy Leaks & On-Chain Address Tracking"
+        - "Cross-Chain Trust Deficits & Settlement Halts"
+        - "Enterprise Interoperability & ERP Gateway Gaps"
+        - "Client-Side State Pruning & Offline Validation"
+        - "Audit Trail Loss & Centralized Storage Risks"
+        - "Hardware Compromise & Key Exfiltration"
+    validations:
+      required: true
+  - type: dropdown
+    id: protocol_layer
+    attributes:
+      label: Protocol Layer Classification
+      options:
+        - Layer 1
+        - Layer 2 / State Channel
+        - Sidechain
+        - Privacy / Anonymity
+        - Interoperability / Cross-Chain
+        - Decentralized Storage
+        - Hardware Enclave Surface
+    validations:
+      required: true
+  - type: textarea
+    id: production_readiness
+    attributes:
+      label: Production Readiness Score (1-15) & Gap Breakdown
+      description: Score out of 15 based on Maturity (5), Mobile-Friendliness (5), and Security / Fail-Closed Guards (5).
+      placeholder: |
+        Current Score: 14/15
+        - Maturity: 4/5 (Elements-based sidechain)
+        - Mobile-Friendliness: 5/5 (Native Android LiquidSigner)
+        - Security: 5/5 (ProductionRuntimeGuard fail-closed enforcement)
+        Remaining Gaps: Mobile evidence verification and confidential asset unblinding test suites.
+    validations:
+      required: true
+  - type: dropdown
+    id: fail_closed_enforcement
+    attributes:
+      label: Fail-Closed Guard Enforcement Status
+      description: Confirm if ProductionRuntimeGuard or wallet value-operation gate is active.
+      options:
+        - "Fully Enforced (Production Runtime Guard active)"
+        - "Quarantined / Contained (Returns typed unsupported outcome)"
+        - "In Development (Fail-closed guard pending)"
+    validations:
+      required: true
+  - type: textarea
+    id: business_opportunity
+    attributes:
+      label: Business Opportunity & Monetization Stream
+      description: Detail B2C micro-fees, B2B Enterprise Gateway SLAs, Staking commissions, or SDK licensing.
+      placeholder: |
+        - B2C: 0.10% fee on confidential Liquid swaps.
+        - B2B: Tier 2 Enterprise Gateway contract for corporate treasury Liquid nodes ($25k/yr).
+    validations:
+      required: true
+  - type: textarea
+    id: evidence_and_tests
+    attributes:
+      label: Local Evidence & Test Suite Commands
+      description: Provide commands and verification logs confirming correctness (e.g., pnpm test tests/liquid.test.ts, pnpm run verify).
+      placeholder: |
+        - Test command: pnpm test tests/liquid.test.ts
+        - Hygiene scan: pnpm run audit:baseline-hygiene
+    validations:
+      required: true
