@@ -127,24 +127,3 @@ results are never authoritative and cannot authorize signing.
 
 *Aligned with the current release-baseline evidence. Historical completion
 claims do not override the BitVM2 quarantine or the Technical Debt Register.*
-
-## VI. DECENTRALIZED SYSTEMS RESEARCH & MANAGEMENT FRAMEWORK
-
-Operational issue mitigations, production readiness scoring (1-15 scale), business opportunities, and GitHub Projects/KB management standards are documented in:
-- [Decentralized Systems Research & Opportunities Report](../reports/DECENTRALIZED_SYSTEMS_RESEARCH_AND_OPPORTUNITIES.md)
-- [Decentralized System Integration Issue Template](../../.github/ISSUE_TEMPLATE/decentralized_system_integration.yml)
-- [BOS Knowledge Graph](../../BOS_KNOWLEDGE_GRAPH.md)
-
-| Decentralized System | Primary Operational Issue Mitigated | Production Readiness | Management Governance |
-| :--- | :--- | :---: | :--- |
-| **Ark (V-UTXO)** | L1 Block Space Congestion & High Fee Spikes | **15/15** (Complete) | Fail-closed gate active pending covenant opcodes. |
-| **Agnostic Hardware SDK** | Hardware Compromise & Key Exfiltration | **15/15** (Production) | Multi-surface enclave registry (`enclave-storage.ts`). |
-| **Stacks / Clarity 4.0** | Cross-Chain Settlement & Revenue Automation | **15/15** (Production) | Native `StacksSigner` & Clarity 4.0 contracts. |
-| **Liquid (Sidechain)** | L1 Congestion & On-Chain Privacy Leaks | **14/15** (In Progress) | Fail-closed confidential address validation. |
-| **BIP-352 Silent Payments**| Address Tracking & Privacy Leaks | **13/15** (In Progress) | Native Rust/JNI filter scanner & codec. |
-| **FDC3 Interoperability** | Enterprise Treasury & ERP Gateway Gaps | **13/15** (Production) | Native `Fdc3Plugin.kt` Intent resolution. |
-| **Nostr / NWC (NIP-47)** | Single Point Network State & Liveness Halts | **13/15** (In Progress) | Stateless `NwcManager` & Schnorr signer. |
-| **Babylon Staking** | Cross-Chain Trust Deficits | **11/15** (In Progress) | Native Taproot Schnorr signing integrated. |
-| **BitVM2** | Trustless Zero-Knowledge Settlement | **11/15** (Quarantined) | 364-tap floor envelope validation only. |
-| **RGB / Taproot Assets** | Client-Side Pruning & Offline Validation | **11-12/15** (Contained) | Typed artifact binding; simulation contained. |
-| **IPFS / Filecoin / Arweave**| Audit Trail Loss & Storage Risks | **12/15** (In Progress) | Decentralized proof segment & artifact storage. |

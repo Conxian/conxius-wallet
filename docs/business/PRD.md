@@ -127,29 +127,3 @@ To enable seamless adoption across institutional, enterprise, and retail environ
 4. **Server Enclave**: AWS Nitro Enclaves / Intel SGX / AMD SEV attested confidential computing.
 5. **FIDO2 / Passkey**: W3C WebAuthn / FIDO2 CTAP2 browser-first passkeys.
 6. **POS (Point-of-Sale)**: EMVCo / Android POS Terminal Hardware Surface.
-
-## 7. DECENTRALIZED SYSTEMS RESEARCH, ISSUES & MANAGEMENT GOVERNANCE (v1.9.5)
-
-To ensure operational uptime, privacy, and institutional compliance, Conxius Wallet integrates multiple decentralized systems to address key operational failure modes experienced across layer 1 and layer 2 networks.
-
-### 7.1 Operational Issue Mitigations
-- **L1 Fee Spikes & Mempool Congestion:** Mitigated via **Ark V-UTXOs** (Blake2s PRF) and **Liquid Sidechain** (predictable 1-minute blocks).
-- **Network Liveness & Gateway Outages:** Mitigated via **StateChains**, **Nostr Relays (NIP-47)**, and **Nexus P2P Fallbacks**.
-- **Privacy & Address Tracking:** Mitigated via **BIP-352 Silent Payments (Rust/JNI)** and **Liquid Confidential Transactions**.
-- **Settlement & Cross-Chain Trust Deficits:** Mitigated via **BitVM2** (364-tap challenge-response floor), **Stacks / Clarity 4.0**, and **Babylon Staking**.
-- **Enterprise & ERP Interoperability:** Mitigated via **FDC3 v2.x Intent Resolution** and **ISO 20022 Enterprise Gateway Adapters**.
-- **Hardware Exfiltration & Key Compromise:** Mitigated via **Agnostic Hardware Surface SDK** (TEE, TPM, HSM, FIDO2, Nitro, POS).
-
-### 7.2 Business Revenue Model & SLA Tiering
-1. **B2C Micro-Fees:** Automatic 0.10%-0.25% fee collection on Liquid swaps, cross-chain transfers, and Ark routing via `core/revenue-automation.clar`.
-2. **B2B Gateway SaaS & SLAs:** Tier 2 Enterprise Gateway commercial contracts ($10k-$50k/year) providing 99.9% uptime SLAs for corporate treasury nodes.
-3. **Sovereign Yield Commissions:** 1.0% performance fee on auto-compounding Stacks PoX yield and 2%-5% commission on Babylon BTC staking rewards.
-4. **Hardware SDK Licensing:** B2B licensing of `AgnosticHardwareSurfaceRegistry` for institutional custodians.
-
-### 7.3 GitHub Projects & Knowledge Base Management Framework
-- **GitHub Issues:** Managed via `.github/ISSUE_TEMPLATE/decentralized_system_integration.yml`.
-- **GitHub Projects (v2):** Managed in **Conxian Protocol Governance & Production Readiness** board with custom fields (`Protocol Layer`, `Production Score`, `Issue Mitigation`, `Revenue Tier`, `SLA Level`).
-- **Knowledge Base Anti-Drift:** Entity mapping registered in `BOS_KNOWLEDGE_GRAPH.md` with implementation status updated synchronously in `docs/protocols/IMPLEMENTATION_REGISTRY.md`.
-
-For full research specifications, scoring matrices, and roadmap details, see:
-[Decentralized Systems Research & Opportunities Report](../reports/DECENTRALIZED_SYSTEMS_RESEARCH_AND_OPPORTUNITIES.md)
