@@ -135,7 +135,7 @@ const HandoffProtocol: React.FC = () => {
                  <span className="text-[10px] font-black uppercase tracking-widest text-brand-earth">Session Logs</span>
               </div>
               <div className="font-mono text-[9px] text-brand-earth space-y-2 bg-white/50 p-6 rounded-2xl border border-border min-h-[140px]">
-                 <p className="text-green-600">&gt; Relaying via wss://relay.conxian.io</p>
+                 <p className="text-green-600">&gt; Relaying via wss://relay.conxian.org</p>
                  <p>&gt; Handshaking: X3DH Key Exchange...</p>
                  <p>&gt; Identity Verified: 0x{generateRandomString(16)}...</p>
                  <p className="animate-pulse">&gt; Monitoring session heartbeat...</p>
