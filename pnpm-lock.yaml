@@ -112,8 +112,8 @@ importers:
         specifier: ^3.1.2
         version: 3.1.2
       bitcoinjs-lib:
-        specifier: ^7.0.4
-        version: 7.0.4(@typescript/typescript6@6.0.2)
+        specifier: ^7.0.5
+        version: 7.0.5(@typescript/typescript6@6.0.2)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -133,8 +133,8 @@ importers:
         specifier: ^6.0.2-liquid.38
         version: 6.0.2-liquid.38
       lucide-react:
-        specifier: ^1.61.0
-        version: 1.61.0(@types/react@19.3.0)(react@19.3.1)
+        specifier: ^1.62.0
+        version: 1.62.0(@types/react@19.3.0)(react@19.3.1)
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -154,8 +154,8 @@ importers:
         specifier: ^3.10.1
         version: 3.10.1(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react-is@19.2.4)(react@19.3.1)(redux@5.0.1)
       tiny-secp256k1:
-        specifier: ^2.2.4
-        version: 2.2.4
+        specifier: ^2.2.5
+        version: 2.2.5
       vite-plugin-top-level-await:
         specifier: ^1.6.0
         version: 1.6.0(@swc/helpers@0.5.23)(rollup@4.59.0)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.27.3)(jiti@2.7.0)(yaml@2.9.1))
@@ -2894,8 +2894,8 @@ packages:
     resolution: {integrity: sha512-tlf/r2DGMbF7ky1MgUqXHzypYHakkEnm0SZP23CJKIqNY/5uNAnMbFhMJdhjrL/7anfb/U8+AlpdjPWjPnAalg==}
     engines: {node: '>=8.0.0'}
 
-  bitcoinjs-lib@7.0.4:
-    resolution: {integrity: sha512-aAPVW36PHKDodJbLMdKQiuPAmXt50BQPBQUvyZWZRYFI8lkdg8EqcklmT1t8X6izAJ74rhaHuOOqkbVlDtJrPg==}
+  bitcoinjs-lib@7.0.5:
+    resolution: {integrity: sha512-xH24P1ile3QtyChzX1ITitcgpfZgDzG986gy1glbGXFsvcSnRX0P6p4m3nuTQfJ+j97va8py0leEK7xG8oxMqQ==}
     engines: {node: '>=18.0.0'}
 
   bitset@5.2.3:
@@ -4317,8 +4317,8 @@ packages:
     resolution: {integrity: sha512-ERJq3FOzJTxBbFjZ7iDs+NiK4VI9Wz+RdrrAB8dio1oV+YvdPzUEE4QNiT2VD51DkIbCYRUUzCRkssXCHqSnKQ==}
     engines: {node: 14 || >=16.14}
 
-  lucide-react@1.61.0:
-    resolution: {integrity: sha512-v2SQPPPNjnr+BlhL9Spuzmo5yR+hLkftfuE4E3jaxdNPgSH0hJKPcLJBP7yAta87jQNPsSERS59PJjCJ/CorBA==}
+  lucide-react@1.62.0:
+    resolution: {integrity: sha512-2i8QZZhkgYMA3oJvKYpCltHh54VnT/3rIPkDLHbzr3IJQBaCz8+7j7V2k2rczYd2aCqcBaMmNlWQ2KKeDfcxmw==}
     peerDependencies:
       '@types/react': '*'
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -5108,8 +5108,8 @@ packages:
     resolution: {integrity: sha512-eb+F6NabSnjbLwNoC+2o5ItbmP1kg7HliWue71JgLegQt6A5mTN8YbvTLCazdlg6e5SV6A+r8OGvZYskdlmhqQ==}
     engines: {node: '>=6.0.0'}
 
-  tiny-secp256k1@2.2.4:
-    resolution: {integrity: sha512-FoDTcToPqZE454Q04hH9o2EhxWsm7pOSpicyHkgTwKhdKWdsTUuqfP5MLq3g+VjAtl2vSx6JpXGdwA2qpYkI0Q==}
+  tiny-secp256k1@2.2.5:
+    resolution: {integrity: sha512-SayewBxdprZxU7VSugGb/LZsU3zOEtZnT7aCqSEIRtXRO4jpxS5IyWmvGEWVxCdaO8SSyB0OHf1B/VtC3szytg==}
     engines: {node: '>=14.0.0'}
 
   tinybench@2.9.0:
@@ -8857,7 +8857,7 @@ snapshots:
       typeforce: 1.18.0
       varuint-bitcoin: 1.1.2
 
-  bitcoinjs-lib@7.0.4(@typescript/typescript6@6.0.2):
+  bitcoinjs-lib@7.0.5(@typescript/typescript6@6.0.2):
     dependencies:
       '@noble/hashes': 1.8.0
       bech32: 2.0.0
@@ -10422,7 +10422,7 @@ snapshots:
 
   lru-cache@9.1.2: {}
 
-  lucide-react@1.61.0(@types/react@19.3.0)(react@19.3.1):
+  lucide-react@1.62.0(@types/react@19.3.0)(react@19.3.1):
     dependencies:
       react: 19.3.1
     optionalDependencies:
@@ -11302,7 +11302,7 @@ snapshots:
       elliptic: 6.6.1
       nan: 2.25.0
 
-  tiny-secp256k1@2.2.4:
+  tiny-secp256k1@2.2.5:
     dependencies:
       uint8array-tools: 0.0.7
 
