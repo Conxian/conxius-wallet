@@ -16,7 +16,7 @@ export function getExpectedPnpmVersion(rootDir = DEFAULT_REPOSITORY_ROOT) {
   } catch (_err) {
     // Fallback if package.json cannot be read or parsed
   }
-  return '11.13.0';
+  return '11.28.9';
 }
 
 export function detectPnpmVersion(env = process.env) {
@@ -79,7 +79,7 @@ export function runToolchainVersionCheck(options = {}) {
     const message = [
       '::error::Strict Toolchain Version Check Failed:',
       ...result.errors.map((err) => `  - ${err}`),
-      'Action: Ensure you are using Node.js 24.x or higher and pnpm 11.13.0 (e.g. corepack enable && corepack install pnpm@11.13.0).',
+      'Action: Ensure you are using Node.js 24.x or higher and pnpm 11.28.9 (e.g. corepack enable && corepack install pnpm@11.28.9).',
     ].join('\n');
     throw new Error(message);
   }
