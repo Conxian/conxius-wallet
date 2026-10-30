@@ -33,7 +33,7 @@ To maintain sovereign open-source protocol integrity while serving enterprise mi
 
 If you are an end-user of the Conxius Wallet and need assistance with using the application:
 
-- **Knowledge Base**: Check the [official documentation](https://docs.conxian.io) for guides and FAQs.
+- **Knowledge Base**: Check the [official documentation](https://docs.conxian.org) for guides and FAQs.
 - **Community Channels**: Join our [Discord](https://discord.gg/conxian) or [Telegram](https://t.me/conxian) for community-led support.
 - **Direct Support**: For account or transaction-related issues, please contact [support@conxian-labs.com](mailto:support@conxian-labs.com).
 
@@ -49,7 +49,7 @@ If you are a developer working with the Conxius Wallet codebase or looking to co
 
 Do **not** report security vulnerabilities in public issues or community channels.
 
-Please follow the private reporting process documented in [SECURITY.md](SECURITY.md) by emailing [security@conxian.io](mailto:security@conxian.io) or using GitHub's private vulnerability reporting.
+Please follow the private reporting process documented in [SECURITY.md](SECURITY.md) by emailing [security@conxian.org](mailto:security@conxian.org) or using GitHub's private vulnerability reporting.
 
 ## Project Maintenance
 
