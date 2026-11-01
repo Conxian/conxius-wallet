@@ -57,4 +57,4 @@ All notable changes to the Conxius Wallet project will be documented in this fil
 
 ### Security
 - Hardened Android .gitignore to protect keystores and private keys.
-- Standardized security contact to security@conxian.io.
+- Standardized security contact to security@conxian.org.

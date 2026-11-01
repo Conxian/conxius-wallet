@@ -86,7 +86,7 @@ pnpm run test:e2e
 
 ## Security
 
-Do not disclose vulnerabilities publicly. Use [SECURITY.md](SECURITY.md) or `security@conxian.io`.
+Do not disclose vulnerabilities publicly. Use [SECURITY.md](SECURITY.md) or `security@conxian.org`.
 
 ## Policies
 
@@ -105,7 +105,7 @@ Do not disclose vulnerabilities publicly. Use [SECURITY.md](SECURITY.md) or `sec
 
 - General: [info@conxian-labs.com](mailto:info@conxian-labs.com)
 - Support: [support@conxian-labs.com](mailto:support@conxian-labs.com)
-- Security: [security@conxian.io](mailto:security@conxian.io)
+- Security: [security@conxian.org](mailto:security@conxian.org)
 
 ## Code of Conduct
 

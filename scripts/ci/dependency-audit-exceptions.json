@@ -50,12 +50,12 @@
       "observedVersions": [
         "0.27.3"
       ],
-      "pathCount": 11,
-      "roleClassification": "optional",
-      "reachabilityFingerprint": "8403166e6fe14aadee4fa43b24d5fb6dba5c25fe309eb8729aeafdc6351cd7e3",
+      "pathCount": 12,
+      "roleClassification": "development",
+      "reachabilityFingerprint": "b18a4b9b6fc6841d2d0c6aed648958036d6a364a51dc5506bb933c20eff67381",
       "disposition": "not-affected",
-      "reviewedOn": "2026-07-22",
-      "rationale": "This advisory is confined to the local Vite development-server response-read surface. Production and release artifacts do not run or expose that development server.",
+      "reviewedOn": "2026-10-31",
+      "rationale": "This advisory is confined to the local Vite development-server response-read surface. Production and release artifacts do not run or expose that development server. esbuild is now declared as a direct devDependency (0.27.3) because vite-plugin-top-level-await requires it at runtime without declaring it and Vite 8 treats esbuild as an optional peer. esbuild@0.28.x was tested and breaks vite-plugin-top-level-await production builds, so esbuild@0.27.3 is retained while this advisory remains explicitly tracked.",
       "evidence": [
         "The production command is `pnpm run build`, which emits the static `dist` artifact and does not start a Vite development server.",
         "The `Web build` step in `.github/workflows/android-release.yml` runs `pnpm run build` before Android packaging; the release workflow has no Vite development-server step.",
@@ -82,6 +82,69 @@
         "Zod 4 consumers are upgraded separately to 4.6.7; fresh audit reports only Zod 3.25.76 at the single @conxian/market-sdk path.",
         "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
       ]
+    },
+    {
+      "advisory": "GHSA-mrwp-f3q8-3g9p",
+      "package": "follow-redirects",
+      "severity": "high",
+      "observedVersions": [
+        "1.16.1"
+      ],
+      "pathCount": 100,
+      "roleClassification": "production",
+      "reachabilityFingerprint": "2daed643fc55e15239ac3bda3b198d2750aaf6580bd66686541e69f26c3cedc2",
+      "disposition": "exception",
+      "reviewedOn": "2026-10-31",
+      "owner": "Conxian security maintainers",
+      "rationale": "The override pins follow-redirects to 1.16.1 (a prior remediation). Patched >=1.16.2 was published 2026-10-25 and is younger than the repository minimumReleaseAge (60 days), so pnpm rejects it. The affected Wormhole/Solana axios path remains on 1.16.1 until 1.16.2 ages past minimumReleaseAge.",
+      "remediation": "Bump the follow-redirects override to >=1.16.2 once it ages past minimumReleaseAge, then remove this entry.",
+      "expiresOn": "2027-01-29",
+      "approval": {
+        "status": "pending",
+        "reference": "PR #825 (tracking context only; not approval evidence)"
+      }
+    },
+    {
+      "advisory": "GHSA-g3hv-75wg-m249",
+      "package": "minimatch",
+      "severity": "moderate",
+      "observedVersions": [
+        "10.2.6"
+      ],
+      "pathCount": 38,
+      "roleClassification": "development",
+      "reachabilityFingerprint": "5531493cfdeb8a500845a1d8a58a79f6234bc2789d54b9acb92fdbb76d3bb6c0",
+      "disposition": "exception",
+      "reviewedOn": "2026-10-31",
+      "owner": "Conxian security maintainers",
+      "rationale": "minimatch 10.2.6 is reached only through dev tooling (eslint, @capacitor/cli>rimraf). Patched >=11.0.1 is a major bump published 2026-10-27 (younger than minimumReleaseAge) and requires consumer compatibility verification before adoption.",
+      "remediation": "Adopt minimatch >=11.0.1 once it ages and downstream eslint/rimraf compatibility is verified, then remove this entry.",
+      "expiresOn": "2027-01-29",
+      "approval": {
+        "status": "pending",
+        "reference": "PR #825 (tracking context only; not approval evidence)"
+      }
+    },
+    {
+      "advisory": "GHSA-3g3m-2fjr-6pw4",
+      "package": "glob",
+      "severity": "moderate",
+      "observedVersions": [
+        "13.0.6"
+      ],
+      "pathCount": 1,
+      "roleClassification": "development",
+      "reachabilityFingerprint": "cc9195e9feb78e214fb7d904947b432e4168d1e9a22a2f0445d50fe527b6ffc9",
+      "disposition": "exception",
+      "reviewedOn": "2026-10-31",
+      "owner": "Conxian security maintainers",
+      "rationale": "glob 13.0.6 is reached only through @capacitor/cli>rimraf (dev tooling). Patched >=14.0.2 was published 2026-10-27 (younger than minimumReleaseAge).",
+      "remediation": "Adopt glob >=14.0.2 once it ages past minimumReleaseAge, then remove this entry.",
+      "expiresOn": "2027-01-29",
+      "approval": {
+        "status": "pending",
+        "reference": "PR #825 (tracking context only; not approval evidence)"
+      }
     }
   ]
 }

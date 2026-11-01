@@ -24,7 +24,7 @@ We take the security of Conxius Wallet seriously.
 Instead, report privately using one of these channels:
 
 1. GitHub private vulnerability reporting for this repository.
-2. Email [security@conxian.io](mailto:security@conxian.io).
+2. Email [security@conxian.org](mailto:security@conxian.org).
 
 Please include:
 
