@@ -4,8 +4,8 @@ Welcome, Sovereign Agent. This document provides instructions and context for
 working with the Conxius Wallet codebase and its B2B enhancement, the Conxian
 Gateway.
 
-**Last Updated:** 2026-06-30
-**Context:** Production Operational State (v1.9.5) — COO Alignment Complete
+**Last Updated:** 2026-11-02
+**Context:** Active — development (v1.9.5; not production-authorized per org-wide governance)
 
 ---
 
