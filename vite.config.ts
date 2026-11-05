@@ -8,6 +8,11 @@ import topLevelAwait from "vite-plugin-top-level-await";
 export default defineConfig(() => {
     const isVitest = process.env.VITEST === 'true';
     return {
+      // esbuild 0.28 can no longer lower destructuring to the legacy Vite
+      // 'modules' baseline (chrome87/es2020), which breaks
+      // vite-plugin-top-level-await's generated bundle. Target a modern
+      // baseline instead of pinning esbuild back to the vulnerable 0.27.x line.
+      build: { target: 'es2022' },
       worker: { format: 'es' as const, plugins: () => [wasm(), topLevelAwait()] },
       plugins: [
         wasm(), topLevelAwait(), react(),
