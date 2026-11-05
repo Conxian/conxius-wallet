@@ -16,7 +16,7 @@ overrides:
   "@swc/core": "1.15.11"
   "ajv@8.12.0": "8.18.0"
   axios: ">=1.20.0"
-  follow-redirects: "1.16.1"
+  follow-redirects: "1.16.2"
   uuid: "11.1.1"
   tar: "7.5.21"
   valibot: "1.4.2"
@@ -30,6 +30,8 @@ overrides:
   "zod@^4": "4.6.7"
   http-cache-semantics: "4.3.0"
   pbkdf2: "3.1.7"
+  # GHSA-g3hv-75wg-m249 (minimatch <11.0.1). Scope-free force; latest 10.x (10.2.6) is still vulnerable.
+  minimatch: ">=11.0.1"
 
 minimumReleaseAge: 60
 minimumReleaseAgeExclude:
