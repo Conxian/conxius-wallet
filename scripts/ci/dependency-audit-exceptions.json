@@ -44,6 +44,25 @@
       }
     },
     {
+      "advisory": "GHSA-g7r4-m6w7-qqqr",
+      "package": "esbuild",
+      "severity": "low",
+      "observedVersions": [
+        "0.27.3"
+      ],
+      "pathCount": 12,
+      "roleClassification": "development",
+      "reachabilityFingerprint": "b18a4b9b6fc6841d2d0c6aed648958036d6a364a51dc5506bb933c20eff67381",
+      "disposition": "not-affected",
+      "reviewedOn": "2026-10-31",
+      "rationale": "This advisory is confined to the local Vite development-server response-read surface. Production and release artifacts do not run or expose that development server. esbuild is now declared as a direct devDependency (0.27.3) because vite-plugin-top-level-await requires it at runtime without declaring it and Vite 8 treats esbuild as an optional peer. esbuild@0.28.x was tested and breaks vite-plugin-top-level-await production builds, so esbuild@0.27.3 is retained while this advisory remains explicitly tracked.",
+      "evidence": [
+        "The production command is `pnpm run build`, which emits the static `dist` artifact and does not start a Vite development server.",
+        "The `Web build` step in `.github/workflows/android-release.yml` runs `pnpm run build` before Android packaging; the release workflow has no Vite development-server step.",
+        "esbuild@0.28.1 was tested and breaks `vite-plugin-top-level-await` production builds, so esbuild@0.27.3 is retained for compatibility while this advisory remains explicitly tracked."
+      ]
+    },
+    {
       "advisory": "GHSA-mrhx-c7xc-m3w5",
       "package": "zod",
       "severity": "high",
