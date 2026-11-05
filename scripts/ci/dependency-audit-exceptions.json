@@ -84,48 +84,6 @@
       ]
     },
     {
-      "advisory": "GHSA-mrwp-f3q8-3g9p",
-      "package": "follow-redirects",
-      "severity": "high",
-      "observedVersions": [
-        "1.16.1"
-      ],
-      "pathCount": 100,
-      "roleClassification": "production",
-      "reachabilityFingerprint": "2daed643fc55e15239ac3bda3b198d2750aaf6580bd66686541e69f26c3cedc2",
-      "disposition": "exception",
-      "reviewedOn": "2026-10-31",
-      "owner": "Conxian security maintainers",
-      "rationale": "The override pins follow-redirects to 1.16.1 (a prior remediation). Patched >=1.16.2 was published 2026-10-25 and is younger than the repository minimumReleaseAge (60 days), so pnpm rejects it. The affected Wormhole/Solana axios path remains on 1.16.1 until 1.16.2 ages past minimumReleaseAge.",
-      "remediation": "Bump the follow-redirects override to >=1.16.2 once it ages past minimumReleaseAge, then remove this entry.",
-      "expiresOn": "2027-01-29",
-      "approval": {
-        "status": "pending",
-        "reference": "PR #825 (tracking context only; not approval evidence)"
-      }
-    },
-    {
-      "advisory": "GHSA-g3hv-75wg-m249",
-      "package": "minimatch",
-      "severity": "moderate",
-      "observedVersions": [
-        "10.2.6"
-      ],
-      "pathCount": 38,
-      "roleClassification": "development",
-      "reachabilityFingerprint": "5531493cfdeb8a500845a1d8a58a79f6234bc2789d54b9acb92fdbb76d3bb6c0",
-      "disposition": "exception",
-      "reviewedOn": "2026-10-31",
-      "owner": "Conxian security maintainers",
-      "rationale": "minimatch 10.2.6 is reached only through dev tooling (eslint, @capacitor/cli>rimraf). Patched >=11.0.1 is a major bump published 2026-10-27 (younger than minimumReleaseAge) and requires consumer compatibility verification before adoption.",
-      "remediation": "Adopt minimatch >=11.0.1 once it ages and downstream eslint/rimraf compatibility is verified, then remove this entry.",
-      "expiresOn": "2027-01-29",
-      "approval": {
-        "status": "pending",
-        "reference": "PR #825 (tracking context only; not approval evidence)"
-      }
-    },
-    {
       "advisory": "GHSA-3g3m-2fjr-6pw4",
       "package": "glob",
       "severity": "moderate",
