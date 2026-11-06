@@ -36,8 +36,8 @@ unless File.file?(CONFIG_PATH)
   fail_validation("missing #{CONFIG_PATH}")
 end
 
-begin
-  config = Psych.safe_load(File.read(CONFIG_PATH), aliases: false)
+config = begin
+  Psych.safe_load(File.read(CONFIG_PATH), aliases: false)
 rescue Psych::Exception => e
   fail_validation("invalid YAML: #{e.message}")
 end

@@ -16,7 +16,6 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
 }
 
 /**
@@ -36,7 +35,7 @@ interface ErrorBoundaryState {
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
@@ -47,15 +46,13 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     const scope = this.props.scope || 'Unknown';
     console.error(`[ErrorBoundary:${scope}] Uncaught error:`, error, errorInfo);
 
-    this.setState({ errorInfo });
-
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
   }
 
   handleRetry = (): void => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
+    this.setState({ hasError: false, error: null });
   };
 
   render(): ReactNode {

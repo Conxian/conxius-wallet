@@ -61,7 +61,6 @@ const PaymentPortal: React.FC = () => {
 
   useEffect(() => {
     let reader: BrowserMultiFormatReader | null = null;
-    let stop: (() => void) | null = null;
     if (showScanner) {
       setTimeout(() => setIsScanning(true), 0);
       setTimeout(() => setScanError(null), 0);
@@ -72,16 +71,16 @@ const PaymentPortal: React.FC = () => {
           setRecipient(text);
           handleRecipientChange(text);
           setShowScanner(false);
-          if (stop) null;
+          reader?.reset();
           setIsScanning(false);
         } else if (err && `${err}`.includes('NotFoundException')) {
         } else if (err) {
           setScanError('Camera error');
         }
-      }).then(ctrl => { /* simulation */ }).catch(e => { setScanError('Unable to access camera'); setIsScanning(false); });
+      }).catch(e => { setScanError('Unable to access camera'); setIsScanning(false); });
     }
     return () => {
-      if (stop) null;
+      reader?.reset();
       reader = null;
     };
   }, [showScanner]);
