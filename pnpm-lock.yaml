@@ -70,17 +70,17 @@ importers:
         specifier: ^2.4.0
         version: 2.4.0
       '@stacks/auth':
-        specifier: ^7.6.0
-        version: 7.6.0
+        specifier: ^7.7.0
+        version: 7.7.0
       '@stacks/common':
-        specifier: ^7.6.0
-        version: 7.6.0
+        specifier: ^7.7.0
+        version: 7.7.0
       '@stacks/network':
-        specifier: ^7.6.0
-        version: 7.6.0
+        specifier: ^7.7.0
+        version: 7.7.0
       '@stacks/transactions':
-        specifier: ^7.6.0
-        version: 7.6.0
+        specifier: ^7.7.0
+        version: 7.7.0
       '@testing-library/dom':
         specifier: ^10.4.2
         version: 10.4.2
@@ -136,8 +136,8 @@ importers:
         specifier: ^6.0.2-liquid.38
         version: 6.0.2-liquid.38
       lucide-react:
-        specifier: ^1.66.0
-        version: 1.66.0(@types/react@19.3.0)(react@19.3.1)
+        specifier: ^1.67.0
+        version: 1.67.0(@types/react@19.3.0)(react@19.3.1)
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -1899,23 +1899,23 @@ packages:
     resolution: {integrity: sha512-2dAS0pl1bjrF6UsqMuYU8C+mf9BArOgUY06TcIS+XMOM1kDpxoxG4lhRcG2sH/VYz2wbm0ZW8vaHbs89zGJJWw==}
     engines: {node: '>=20.18.0'}
 
-  '@stacks/auth@7.6.0':
-    resolution: {integrity: sha512-uxhoX0ITDdxxRAWx7KE0WdQKLansoBSBLuVjGbrs/CKsrkNpwPerdw+9RFlP3U0mK53HLyKZlCX37DWqthG1SA==}
+  '@stacks/auth@7.7.0':
+    resolution: {integrity: sha512-SHCmcS6e1VJx4SHacvMvKtWbkyQV5e4mYNR10qMEMXwMqqeVbV+dZUNzKuGxzVSjD/GqDDHbLFPTxz+wBRJC4A==}
 
-  '@stacks/common@7.6.0':
-    resolution: {integrity: sha512-VUW8WDmZP4wXUNWVvpFerV+7LQ0PqIn8YOs8AjSUMA7ZOXIRLxJHoKxjfiHzJqazy7KlyryPW4kSNBCr7tLqhQ==}
+  '@stacks/common@7.7.0':
+    resolution: {integrity: sha512-5ZypU9BN/6jiG9d3pvd5Jgj96vO4vwxLQkYjczeF0ymNtMyv9Niw1F9FjazFJn/Gfcef+WBKFIX65mcA7Xk/SQ==}
 
-  '@stacks/encryption@7.6.0':
-    resolution: {integrity: sha512-1D2yazEcC5blc/xZkCPXQRbiAozXiVisLdxdFF3bVvNocUZ7yWkW7SOhhNve8RJ0Yf0XBkG6IbnBa3F1vyOyXA==}
+  '@stacks/encryption@7.7.0':
+    resolution: {integrity: sha512-JWiIj7sAF70kBhvSQKyLHNV0T8w09VXcSdcrmIxXV2R1fDX3VxGxYryLFXW3bSD0m9rcsNVmN2E1j8IAj2J3Dg==}
 
-  '@stacks/network@7.6.0':
-    resolution: {integrity: sha512-Blm85nsEbvJoFIFaDp0QE9WMC0Hf+o3Yb0oIDwWu3PPgpVSdndb/bJQUeT6eJTs0ibS26A2E/5d5L0fb4Ff/lA==}
+  '@stacks/network@7.7.0':
+    resolution: {integrity: sha512-35CM8aFSRp+rs+HZKcOktFj6jWhj/SJfXxCeY6EF/Eoy7fVyFQIIaFhkUBhSl5dMVxkxhIUlh5puwP+jGMUIWw==}
 
-  '@stacks/profile@7.6.0':
-    resolution: {integrity: sha512-gFXKl3eLi1vWiCcZ3F5QFBq/X+vYn3TKSbe1iHRW4VdhIB+WFedpJ4h2WrqTzRepRNQzd2z6kl2pKuyD1x+fuA==}
+  '@stacks/profile@7.7.0':
+    resolution: {integrity: sha512-D+8NSsV8nMP+p5oz3Knay8chHJIRZwgUomdU8iFkU028RcEXwxqLirfZHjl+AN742KSUtkCar2Hg/MjEOVPbdQ==}
 
-  '@stacks/transactions@7.6.0':
-    resolution: {integrity: sha512-s7F7eJtQVnZoB79j8pY9SLKhlvvdYZZD1NSDRWrFjzSJTDmxptL8c50S563WFja6KOhFOgg1jd+p0XWTxFAVyA==}
+  '@stacks/transactions@7.7.0':
+    resolution: {integrity: sha512-sBw3kSF3HJM1ivXIg8+UWULojs8AZ0UtB6ebL7M/YSXVHlXzVqH0pezp96ChmSqNfREKV2j9fq/t5c9OV4/qyA==}
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
@@ -4303,9 +4303,6 @@ packages:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
     engines: {node: '>=10'}
 
-  lodash.clonedeep@4.5.0:
-    resolution: {integrity: sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==}
-
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
@@ -4341,8 +4338,8 @@ packages:
     resolution: {integrity: sha512-ERJq3FOzJTxBbFjZ7iDs+NiK4VI9Wz+RdrrAB8dio1oV+YvdPzUEE4QNiT2VD51DkIbCYRUUzCRkssXCHqSnKQ==}
     engines: {node: 14 || >=16.14}
 
-  lucide-react@1.66.0:
-    resolution: {integrity: sha512-8zjbi/Us+ETXqfBwmXF/FHrWGIqOdE6zT1yUdRJLQVoptomSkB0zdFWVIM667t9K8djWDaXdkBkqi2qVTuDNiw==}
+  lucide-react@1.67.0:
+    resolution: {integrity: sha512-z7kd21YNm/Gw3E7mTnq5dTuvV+yc+OEwA//oDENSG1SbZ/NVgKdjxALJFNdGoC0Ji7HaJR2Dha9ev7VUPxy9CQ==}
     peerDependencies:
       '@types/react': '*'
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -4874,10 +4871,6 @@ packages:
     resolution: {integrity: sha512-LKg+Cr2ZF61fkcaK1UdkH2yEBBKnYjTyWzTJT6KNPcSPaiT7HSdhtMXQuN5wkTX0Xu72KQ1l8S42rlmexS2hSA==}
     engines: {node: 20 || >=22}
     hasBin: true
-
-  ripemd160-min@0.0.6:
-    resolution: {integrity: sha512-+GcJgQivhs6S9qvLogusiTcS9kQUfgR75whKuy5jIhuiOfQuJ8fjqxV6EGD5duH1Y/FawFUMtMhyeq3Fbnib8A==}
-    engines: {node: '>=8'}
 
   ripemd160@2.0.3:
     resolution: {integrity: sha512-5Di9UC0+8h1L6ZD2d7awM7E/T4uA1fJRlx6zk/NvdCCVEoAnFqvHmCuNeIKoCeIixBX/q8uM+6ycDvF8woqosA==}
@@ -7482,59 +7475,46 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@stacks/auth@7.6.0':
+  '@stacks/auth@7.7.0':
     dependencies:
       '@noble/secp256k1': 1.7.1
-      '@stacks/common': 7.6.0
-      '@stacks/encryption': 7.6.0
-      '@stacks/network': 7.6.0
-      '@stacks/profile': 7.6.0
-      cross-fetch: 3.2.0
+      '@stacks/common': 7.7.0
+      '@stacks/encryption': 7.7.0
+      '@stacks/network': 7.7.0
+      '@stacks/profile': 7.7.0
       jsontokens: 4.0.1
-    transitivePeerDependencies:
-      - encoding
 
-  '@stacks/common@7.6.0': {}
+  '@stacks/common@7.7.0': {}
 
-  '@stacks/encryption@7.6.0':
+  '@stacks/encryption@7.7.0':
     dependencies:
       '@noble/hashes': 1.1.5
       '@noble/secp256k1': 1.7.1
       '@scure/bip39': 1.1.0
-      '@stacks/common': 7.6.0
+      '@stacks/common': 7.7.0
       base64-js: 1.5.1
       bs58: 5.0.0
-      ripemd160-min: 0.0.6
-      varuint-bitcoin: 1.1.2
 
-  '@stacks/network@7.6.0':
+  '@stacks/network@7.7.0':
     dependencies:
-      '@stacks/common': 7.6.0
-      cross-fetch: 3.2.0
-    transitivePeerDependencies:
-      - encoding
+      '@stacks/common': 7.7.0
 
-  '@stacks/profile@7.6.0':
+  '@stacks/profile@7.7.0':
     dependencies:
-      '@stacks/common': 7.6.0
-      '@stacks/network': 7.6.0
-      '@stacks/transactions': 7.6.0
+      '@stacks/common': 7.7.0
+      '@stacks/network': 7.7.0
+      '@stacks/transactions': 7.7.0
       jsontokens: 4.0.1
       schema-inspector: 2.1.0
       zone-file: 2.0.0-beta.3
-    transitivePeerDependencies:
-      - encoding
 
-  '@stacks/transactions@7.6.0':
+  '@stacks/transactions@7.7.0':
     dependencies:
       '@noble/hashes': 1.1.5
       '@noble/secp256k1': 1.7.1
-      '@stacks/common': 7.6.0
-      '@stacks/network': 7.6.0
+      '@stacks/common': 7.7.0
+      '@stacks/network': 7.7.0
       c32check: 2.0.0
-      lodash.clonedeep: 4.5.0
-    transitivePeerDependencies:
-      - encoding
 
   '@standard-schema/spec@1.1.0': {}
 
@@ -8462,17 +8442,15 @@ snapshots:
       '@wormhole-foundation/sdk-stacks': 6.1.6(debug@4.4.3)
     transitivePeerDependencies:
       - debug
-      - encoding
       - supports-color
 
   '@wormhole-foundation/sdk-stacks@6.1.6(debug@4.4.3)':
     dependencies:
-      '@stacks/network': 7.6.0
-      '@stacks/transactions': 7.6.0
+      '@stacks/network': 7.7.0
+      '@stacks/transactions': 7.7.0
       '@wormhole-foundation/sdk-connect': 6.1.6(debug@4.4.3)
     transitivePeerDependencies:
       - debug
-      - encoding
       - supports-color
 
   '@wormhole-foundation/sdk-sui-cctp@6.1.6(@typescript/typescript6@6.0.2)(debug@4.4.3)':
@@ -10425,8 +10403,6 @@ snapshots:
     dependencies:
       p-locate: 5.0.0
 
-  lodash.clonedeep@4.5.0: {}
-
   lodash@4.18.1: {}
 
   long@4.0.0: {}
@@ -10451,7 +10427,7 @@ snapshots:
 
   lru-cache@9.1.2: {}
 
-  lucide-react@1.66.0(@types/react@19.3.0)(react@19.3.1):
+  lucide-react@1.67.0(@types/react@19.3.0)(react@19.3.1):
     dependencies:
       react: 19.3.1
     optionalDependencies:
@@ -10993,8 +10969,6 @@ snapshots:
     dependencies:
       glob: 13.0.6
       package-json-from-dist: 1.0.1
-
-  ripemd160-min@0.0.6: {}
 
   ripemd160@2.0.3:
     dependencies:
