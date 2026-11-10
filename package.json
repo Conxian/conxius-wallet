@@ -38,7 +38,7 @@
     "@conxian/market-sdk": "^0.2.4",
     "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
-    "@google/genai": "^2.32.0",
+    "@google/genai": "^3.0.0",
     "@noble/curves": "^2.4.0",
     "@noble/hashes": "^2.4.0",
     "@stacks/auth": "^7.7.0",
