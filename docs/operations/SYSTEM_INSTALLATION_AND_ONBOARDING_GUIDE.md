@@ -13,27 +13,27 @@ The Conxian Ecosystem is an enterprise-grade, multi-chain sovereign financial pl
 
 The platform architecture spans four primary operational tiers:
 1. **Conxius Mobile & Web Client (`conxius-wallet` / `conxian-ui`)**: Non-custodial sovereign wallet interface backing keys into native hardware enclaves (Android Keystore / TEE / StrongBox fallback, Desktop TPM 2.0, PKCS#11 HSM, FIDO2/Passkeys, and POS terminals via `AgnosticHardwareSurfaceRegistry`).
-2. **Conxian Gateway (`conxian-gateway` / `noisy-cloud-41146057`)**: Core enterprise event bus, B2B portal backend, and API routing tier hosted on Cloud Web Services and backed by Neon Postgres (`Gateway` project).
-3. **Conxian Nexus (`conxian-nexus` / `orange-paper-76209725`)**: Sovereign state validation layer responsible for canonical block state, cryptographic proof generation, and mainnet sync enforcement (`PHASE6_NEXUS_SYNC_ENFORCEMENT_ENABLED`).
-4. **Control-Plane & Business Operating System (`conxius-platform` / `noisy-flower-17484435`)**: Private governance operational surface managing release governance (`/admin/releases`), audit logs (`/admin/audit`), policy approval queues (`/admin/policies`), and environment registries (`/admin/registry`).
+2. **Conxian Gateway (`conxian-gateway` / `neon-project-<redacted>`)**: Core enterprise event bus, B2B portal backend, and API routing tier hosted on Cloud Web Services and backed by Neon Postgres (`Gateway` project).
+3. **Conxian Nexus (`conxian-nexus` / `neon-project-<redacted>`)**: Sovereign state validation layer responsible for canonical block state, cryptographic proof generation, and mainnet sync enforcement (`PHASE6_NEXUS_SYNC_ENFORCEMENT_ENABLED`).
+4. **Control-Plane & Business Operating System (`conxius-platform` / `neon-project-<redacted>`)**: Private governance operational surface managing release governance (`/admin/releases`), audit logs (`/admin/audit`), policy approval queues (`/admin/policies`), and environment registries (`/admin/registry`).
 
 ---
 
 ## 2. Live Cloud Infrastructure Mapping
 
-### 2.1. Neon Managed Databases (`org-silent-sun-00457600`)
-- **`Conxian Nexus`** (`orange-paper-76209725` | PG 17 | `aws-eu-central-1`): Canonical state store, state-proof registry, and logical replication target.
-- **`Gateway`** (`noisy-cloud-41146057` | PG 18 | `aws-ap-southeast-1`): B2B web portal, audit logs, client tenant metadata, and event routing.
-- **`Business Operating System`** (`noisy-flower-17484435` | PG 18 | `aws-us-east-2`): Platform control-plane registry, asset deployment records, and billing/subscription state.
-- **`conxian-core`** (`sparkling-sunset-69236559` | PG 18 | `aws-us-east-2`): Upstream cryptographic core metadata and contract telemetry.
-- **`market`** (`small-math-44741750` | PG 18 | `aws-eu-central-1`): Market pair, liquidity indexer, and trade routing cache.
-- **`Software dev kit`** (`weathered-night-98492579` | PG 18 | `aws-us-east-2`): SDK telemetry, developer keys, and test vectors.
+### 2.1. Neon Managed Databases (`org-neon-project-<redacted>`)
+- **`Conxian Nexus`** (`neon-project-<redacted>` | PG 17 | `aws-eu-central-1`): Canonical state store, state-proof registry, and logical replication target.
+- **`Gateway`** (`neon-project-<redacted>` | PG 18 | `aws-ap-southeast-1`): B2B web portal, audit logs, client tenant metadata, and event routing.
+- **`Business Operating System`** (`neon-project-<redacted>` | PG 18 | `aws-us-east-2`): Platform control-plane registry, asset deployment records, and billing/subscription state.
+- **`conxian-core`** (`neon-project-<redacted>` | PG 18 | `aws-us-east-2`): Upstream cryptographic core metadata and contract telemetry.
+- **`market`** (`neon-project-<redacted>` | PG 18 | `aws-eu-central-1`): Market pair, liquidity indexer, and trade routing cache.
+- **`Software dev kit`** (`neon-project-<redacted>` | PG 18 | `aws-us-east-2`): SDK telemetry, developer keys, and test vectors.
 
-### 2.2. Render Cloud Hosting (`tea-d6u0edngi27c73dvhsg0`)
-- **`conxian-business`** (`srv-d9gam3m1a83c73bmrfc0` | Web Service | Docker | Oregon): B2B institutional gateway portal.
-- **`conxian-ui-prod`** (`srv-d96fl2mq1p3s73c2e8k0` | Web Service | Node / pnpm | Oregon): Live web interface for corporate treasury.
-- **`conxian-business-static-docs`** (`srv-d9h2nu2b6mfs738i6gb0` | Static Site): Enterprise documentation portal.
-- **`conxian-labs-static-v1`** (`srv-d8fmr7v40ujc73b7ba8g` | Static Site): Public developer landing page.
+### 2.2. Render Cloud Hosting (`tea-<redacted>`)
+- **`conxian-business`** (`srv-<redacted>` | Web Service | Docker | Oregon): B2B institutional gateway portal.
+- **`conxian-ui-prod`** (`srv-<redacted>` | Web Service | Node / pnpm | Oregon): Live web interface for corporate treasury.
+- **`conxian-business-static-docs`** (`srv-<redacted>` | Static Site): Enterprise documentation portal.
+- **`conxian-labs-static-v1`** (`srv-<redacted>` | Static Site): Public developer landing page.
 
 ---
 

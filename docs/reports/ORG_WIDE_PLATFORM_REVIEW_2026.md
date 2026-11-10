@@ -15,19 +15,19 @@ The platform demonstrates high production readiness with zero regressions in the
 
 ## 1. Org-Wide Infrastructure & Live Cloud Audit
 
-### 1.1 Neon Managed PostgreSQL Databases (`org-silent-sun-00457600`)
-- **`Conxian Nexus` (`orange-paper-76209725`)**: PostgreSQL 17 (`aws-eu-central-1`). Canonical state store, cryptographic state-proof registry, logical replication target.
-- **`Gateway` (`noisy-cloud-41146057`)**: PostgreSQL 18 (`aws-ap-southeast-1`). B2B web portal backend, tenant metadata, event routing.
-- **`Business Operating System` (`noisy-flower-17484435`)**: PostgreSQL 18 (`aws-us-east-2`). Platform control plane, asset deployment records, subscription state.
-- **`conxian-core` (`sparkling-sunset-69236559`)**: PostgreSQL 18 (`aws-us-east-2`). Upstream core metadata and contract telemetry.
-- **`market` (`small-math-44741750`)**: PostgreSQL 18 (`aws-eu-central-1`). Market pair indexer and liquidity cache.
-- **`Software dev kit` (`weathered-night-98492579`)**: PostgreSQL 18 (`aws-us-east-2`). SDK developer keys and test vectors.
+### 1.1 Neon Managed PostgreSQL Databases (`org-neon-project-<redacted>`)
+- **`Conxian Nexus` (`neon-project-<redacted>`)**: PostgreSQL 17 (`aws-eu-central-1`). Canonical state store, cryptographic state-proof registry, logical replication target.
+- **`Gateway` (`neon-project-<redacted>`)**: PostgreSQL 18 (`aws-ap-southeast-1`). B2B web portal backend, tenant metadata, event routing.
+- **`Business Operating System` (`neon-project-<redacted>`)**: PostgreSQL 18 (`aws-us-east-2`). Platform control plane, asset deployment records, subscription state.
+- **`conxian-core` (`neon-project-<redacted>`)**: PostgreSQL 18 (`aws-us-east-2`). Upstream core metadata and contract telemetry.
+- **`market` (`neon-project-<redacted>`)**: PostgreSQL 18 (`aws-eu-central-1`). Market pair indexer and liquidity cache.
+- **`Software dev kit` (`neon-project-<redacted>`)**: PostgreSQL 18 (`aws-us-east-2`). SDK developer keys and test vectors.
 
-### 1.2 Render Cloud Services (`tea-d6u0edngi27c73dvhsg0`)
-- **`conxian-business` (`srv-d9gam3m1a83c73bmrfc0`)**: Docker Web Service (Oregon). B2B institutional gateway portal backend.
-- **`conxian-ui-prod` (`srv-d96fl2mq1p3s73c2e8k0`)**: Node/pnpm Web Service (Oregon). Corporate treasury live web app.
-- **`conxian-business-static-docs` (`srv-d9h2nu2b6mfs738i6gb0`)**: Static Site. Enterprise documentation portal.
-- **`conxian-labs-static-v1` (`srv-d8fmr7v40ujc73b7ba8g`)**: Static Site. Developer landing page.
+### 1.2 Render Cloud Services (`tea-<redacted>`)
+- **`conxian-business` (`srv-<redacted>`)**: Docker Web Service (Oregon). B2B institutional gateway portal backend.
+- **`conxian-ui-prod` (`srv-<redacted>`)**: Node/pnpm Web Service (Oregon). Corporate treasury live web app.
+- **`conxian-business-static-docs` (`srv-<redacted>`)**: Static Site. Enterprise documentation portal.
+- **`conxian-labs-static-v1` (`srv-<redacted>`)**: Static Site. Developer landing page.
 
 ---
 
