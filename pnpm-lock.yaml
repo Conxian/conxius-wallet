@@ -32,6 +32,8 @@ overrides:
   http-cache-semantics: 4.3.0
   pbkdf2: 3.1.7
   minimatch: '>=11.0.1'
+  liquidjs-lib>bitcoinjs-lib: 6.1.10
+  payjoin-client>bitcoinjs-lib: 5.2.3
 
 patchedDependencies:
   http-cache-semantics@4.3.0: 832fc62597ef35954f81458e0d560939fc598f331fb47b77cd17a37e6edd4d12
@@ -2858,12 +2860,12 @@ packages:
   bitcoin-ops@1.4.1:
     resolution: {integrity: sha512-pef6gxZFztEhaE9RY9HmWVmiIHqCb2OyS4HPKkpc6CIiiOa3Qmuoylxc5P2EkU3w+5eTSifI9SEZC88idAIGow==}
 
-  bitcoinjs-lib@5.2.0:
-    resolution: {integrity: sha512-5DcLxGUDejgNBYcieMIUfjORtUeNWl828VWLHJGVKZCb4zIS1oOySTUr0LGmcqJBQgTBz3bGbRQla4FgrdQEIQ==}
+  bitcoinjs-lib@5.2.3:
+    resolution: {integrity: sha512-Sgh9N1TpWYt0Jh4s5FRWeBHWCYvqHijyKS5HTrGpeTloA9NCET/4iJ09V8jeu4sIEckSv+6wjHGFNv91iPItvQ==}
     engines: {node: '>=8.0.0'}
 
-  bitcoinjs-lib@6.1.7:
-    resolution: {integrity: sha512-tlf/r2DGMbF7ky1MgUqXHzypYHakkEnm0SZP23CJKIqNY/5uNAnMbFhMJdhjrL/7anfb/U8+AlpdjPWjPnAalg==}
+  bitcoinjs-lib@6.1.10:
+    resolution: {integrity: sha512-9KpnS5JKVP0j0yfTsBNFIsNA6+JdBDb7VtL35F20I/pJYobosi3TmZFGtu6qxhJCfb0vubJixr5Zv61/lUYETw==}
     engines: {node: '>=8.0.0'}
 
   bitcoinjs-lib@7.0.5:
@@ -8681,7 +8683,7 @@ snapshots:
 
   bitcoin-ops@1.4.1: {}
 
-  bitcoinjs-lib@5.2.0:
+  bitcoinjs-lib@5.2.3:
     dependencies:
       bech32: 1.1.4
       bip174: 2.1.1
@@ -8699,7 +8701,7 @@ snapshots:
       varuint-bitcoin: 1.1.2
       wif: 2.0.6
 
-  bitcoinjs-lib@6.1.7:
+  bitcoinjs-lib@6.1.10:
     dependencies:
       '@noble/hashes': 1.8.0
       bech32: 2.0.0
@@ -10183,7 +10185,7 @@ snapshots:
       bech32: 2.0.0
       bip174-liquid: 1.0.3
       bip66: 1.1.5
-      bitcoinjs-lib: 6.1.7
+      bitcoinjs-lib: 6.1.10
       bitset: 5.2.3
       blech32: 1.1.2
       bs58check: 2.1.2
@@ -10517,7 +10519,7 @@ snapshots:
 
   payjoin-client@1.0.1:
     dependencies:
-      bitcoinjs-lib: 5.2.0
+      bitcoinjs-lib: 5.2.3
 
   pbkdf2@3.1.7:
     dependencies:
