@@ -3,7 +3,7 @@ import { Browser } from '@capacitor/browser';
 import { Search, Globe, ShieldCheck, ExternalLink, RefreshCw, X } from 'lucide-react';
 
 const FEATURED_DAPPS = [
-  { name: 'Conxian Gateway', url: 'https://conxian-ui.onrender.com', icon: 'https://conxian-ui.onrender.com/conxian-mark-b.svg', category: 'B2B Portal' },
+  { name: 'Conxian Console', url: 'https://www.conxian-labs.com/console', icon: 'https://www.conxian-labs.com/Conxian_Logo.jpg', category: 'B2B Portal' },
   { name: 'Bitrefill', url: 'https://www.bitrefill.com', icon: 'https://www.bitrefill.com/favicon.ico', category: 'Spencer' },
   { name: 'LN Markets', url: 'https://lnmarkets.com', icon: 'https://lnmarkets.com/favicon.ico', category: 'Finance' },
   { name: 'Magma', url: 'https://magma.amboss.space', icon: 'https://magma.amboss.space/favicon.ico', category: 'Liquidity' },
@@ -68,7 +68,7 @@ const Web3Browser: React.FC = () => {
                 type="text"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="Search or enter URL (e.g. conxian-ui.onrender.com)"
+                placeholder="Search or enter URL (e.g. www.conxian-labs.com)"
                 className="bg-transparent border-none outline-none flex-1 text-brand-deep placeholder:text-brand-earth font-mono text-sm h-12"
             />
             <button type="submit" className="p-3 bg-border hover:bg-accent-earth text-brand-earth hover:text-white rounded-xl transition-all">
