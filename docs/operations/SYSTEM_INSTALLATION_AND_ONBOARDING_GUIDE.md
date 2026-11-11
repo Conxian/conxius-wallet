@@ -66,8 +66,8 @@ Client administrators configure their environment variables:
 | Variable | Scope | Description | Required Input / Source |
 | :--- | :--- | :--- | :--- |
 | `DATABASE_URL` | Gateway / BOS | PostgreSQL connection string | Provisioned via Neon Console / API |
-| `VITE_NEXUS_MAINNET_URL` | Client / Wallet | Canonical Nexus state verification endpoint | `https://nexus.conxianlabs.com` |
-| `VITE_GATEWAY_URL` | Client / Wallet | Enterprise B2B API gateway URL | `https://conxian-business.onrender.com` |
+| `VITE_NEXUS_MAINNET_URL` | Client / Wallet | Canonical Nexus state verification endpoint | `https://nexus.conxian.org` |
+| `VITE_GATEWAY_URL` | Client / Wallet | Enterprise B2B API gateway URL | `https://gateway.conxian.org` |
 | `BITCOIN_RPC_URL` | Nexus / Gateway | Sovereign Bitcoin L1 RPC endpoint | Client self-hosted node or QuickNode/Blockstream |
 | `LIQUID_RPC_URL` | Nexus / Gateway | Sovereign Liquid sidechain RPC endpoint | Client self-hosted Elements node |
 | `STACKS_RPC_URL` | Nexus / Gateway | Stacks L2 API/RPC endpoint | Client self-hosted or Hiro API endpoint |
