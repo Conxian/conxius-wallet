@@ -15,6 +15,7 @@ export interface WalletEvent {
 
 class NotificationService {
   private static instance: NotificationService;
+  private nextNotificationId = 1;
 
   private constructor() {}
 
@@ -41,7 +42,10 @@ class NotificationService {
   }
 
   async notify(event: Omit<WalletEvent, 'id' | 'timestamp'>) {
-    const id = globalThis.crypto.getRandomValues(new Uint32Array(1))[0] % 1000000;
+    // Local-notification ids only need to be unique within the app, so use a
+    // monotonic counter rather than modulo-reducing a CSPRNG draw (which is a
+    // biased, and here pointless, use of a secure random source).
+    const id = this.nextNotificationId++;
     const timestamp = Date.now();
 
     // OS-level notification
