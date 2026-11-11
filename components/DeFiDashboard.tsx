@@ -373,7 +373,7 @@ const DeFiDashboard: React.FC = () => {
               <h4 className="font-bold text-sm text-brand-deep uppercase tracking-widest">Institutional Liquidity</h4>
               <p className="text-xs text-brand-earth leading-relaxed italic">Access shielded B2B assets and corporate treasury tools via Conxian Gateway.</p>
               <button
-                onClick={() => window.open('https://conxian-ui.onrender.com', '_blank', 'noopener,noreferrer')}
+                onClick={() => window.open('https://www.conxian-labs.com/console', '_blank', 'noopener,noreferrer')}
                 className="w-full py-3 bg-border hover:bg-brand-earth text-brand-deep rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-brand-earth"
               >
                  Open Gateway <ExternalLink size={12} />
