@@ -44,6 +44,21 @@ describe('NotificationService', () => {
     expect(LocalNotifications.schedule).toHaveBeenCalled();
   });
 
+  it('assigns unique notification ids without drawing from the CSPRNG', async () => {
+    const eventData = {
+      category: 'SYSTEM' as const,
+      type: 'info' as const,
+      title: 'Test Title',
+      message: 'Test Message'
+    };
+
+    const first = await notificationService.notify(eventData);
+    const second = await notificationService.notify(eventData);
+
+    expect(first.id).not.toBe(second.id);
+    expect(Number(second.id)).toBeGreaterThan(Number(first.id));
+  });
+
   it('handles security notifications specifically', async () => {
     await notificationService.notifySecurity('Security Alert', 'Unauthorized access detected');
     expect(LocalNotifications.schedule).toHaveBeenCalledWith(expect.objectContaining({
