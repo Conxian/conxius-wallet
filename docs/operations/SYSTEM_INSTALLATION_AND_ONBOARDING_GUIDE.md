@@ -2,8 +2,8 @@
 
 **Version:** v1.9.5
 **Date:** June 2026 / September 2026
-**Status:** APPROVED / PRODUCTION READY
-**Scope:** Org-Wide System Architecture (`conxius-wallet`, `conxian-gateway`, `conxian-nexus`, `conxius-platform`, `lib-conxian-core`) & Live Cloud Infrastructure (Neon, Render)
+**Status:** HISTORICAL PLANNING RECORD — NOT PRODUCTION ACCEPTANCE
+**Scope:** Historical cross-repository architecture and provider inventory. Current source, configuration, deployment, health, recovery, custody, and independent acceptance must be verified separately.
 
 ---
 
@@ -19,7 +19,9 @@ The platform architecture spans four primary operational tiers:
 
 ---
 
-## 2. Live Cloud Infrastructure Mapping
+## 2. Recorded Cloud Infrastructure Mapping
+
+Provider metadata below is historical context. It does not prove that a binding is current, reachable, healthy, durable, or accepted for production.
 
 ### 2.1. Neon Managed Databases (`org-neon-project-<redacted>`)
 - **`Conxian Nexus`** (`neon-project-<redacted>` | PG 17 | `aws-eu-central-1`): Canonical state store, state-proof registry, and logical replication target.
@@ -66,8 +68,8 @@ Client administrators configure their environment variables:
 | Variable | Scope | Description | Required Input / Source |
 | :--- | :--- | :--- | :--- |
 | `DATABASE_URL` | Gateway / BOS | PostgreSQL connection string | Provisioned via Neon Console / API |
-| `VITE_NEXUS_MAINNET_URL` | Client / Wallet | Canonical Nexus state verification endpoint | `https://nexus.conxian.org` |
-| `VITE_GATEWAY_URL` | Client / Wallet | Enterprise B2B API gateway URL | `https://gateway.conxian.org` |
+| `VITE_NEXUS_MAINNET_URL` | Client / Wallet | Qualified Nexus state-verification endpoint | Operator-supplied endpoint with current source/configuration/deployment and healthy state-proof readback |
+| `VITE_GATEWAY_URL` | Client / Wallet | Qualified enterprise API gateway endpoint | Operator-supplied endpoint with current source/configuration/deployment, healthy chain-provider journeys, durability and rollback evidence |
 | `BITCOIN_RPC_URL` | Nexus / Gateway | Sovereign Bitcoin L1 RPC endpoint | Client self-hosted node or QuickNode/Blockstream |
 | `LIQUID_RPC_URL` | Nexus / Gateway | Sovereign Liquid sidechain RPC endpoint | Client self-hosted Elements node |
 | `STACKS_RPC_URL` | Nexus / Gateway | Stacks L2 API/RPC endpoint | Client self-hosted or Hiro API endpoint |
@@ -87,4 +89,4 @@ To streamline client setup and eliminate manual configuration drift, we recommen
 
 ---
 
-*Verified by Sovereign Architect Agent. Aligned with v1.9.5 Production Readiness Audit.*
+*Historical planning record. Agent or metadata assertions are not production readiness, deployment, Mainnet, custody, payment, or independent acceptance evidence.*
