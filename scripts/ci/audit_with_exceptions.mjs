@@ -497,13 +497,10 @@ export function normaliseAuditReport(report) {
   }
 
   const findings = [];
-  const advisoryById = new Map();
+  const advisoryGroups = new Map();
   for (const [key, advisory] of Object.entries(report.advisories)) {
     assertObject(advisory, `pnpm audit advisory ${key}`);
     const advisoryId = assertAdvisoryId(advisory.github_advisory_id, `pnpm audit advisory ${key}.github_advisory_id`);
-    if (advisoryById.has(advisoryId)) {
-      throw new Error(`pnpm audit advisory ${advisoryId} is duplicated.`);
-    }
     const packageName = assertNonEmptyString(advisory.module_name, `pnpm audit advisory ${advisoryId}.module_name`);
     const severity = assertSeverity(advisory.severity, `pnpm audit advisory ${advisoryId}.severity`);
     if (!Array.isArray(advisory.findings) || advisory.findings.length === 0) {
@@ -543,22 +540,49 @@ export function normaliseAuditReport(report) {
       }
     }
 
+    const existing = advisoryGroups.get(advisoryId);
+    if (existing) {
+      if (existing.package !== packageName) {
+        throw new Error(
+          `pnpm audit advisory ${advisoryId} is split across conflicting packages ${existing.package} and ${packageName}.`,
+        );
+      }
+      if (existing.severity !== severity) {
+        throw new Error(
+          `pnpm audit advisory ${advisoryId} is split across conflicting severities ${existing.severity} and ${severity}.`,
+        );
+      }
+      existing.observedVersions.push(...observedVersions);
+      existing.reachabilityRows.push(...reachabilityRows);
+    } else {
+      advisoryGroups.set(advisoryId, {
+        advisory: advisoryId,
+        package: packageName,
+        severity,
+        observedVersions,
+        reachabilityRows,
+      });
+    }
+  }
+
+  const advisoryById = new Map();
+  for (const group of advisoryGroups.values()) {
     const canonicalReachabilityRows = canonicaliseReachabilityRows(
-      reachabilityRows,
-      `pnpm audit advisory ${advisoryId} reachability rows`,
+      group.reachabilityRows,
+      `pnpm audit advisory ${group.advisory} reachability rows`,
     );
 
     const normalized = {
-      advisory: advisoryId,
-      package: packageName,
-      severity,
-      observedVersions: [...new Set(observedVersions)].sort(),
+      advisory: group.advisory,
+      package: group.package,
+      severity: group.severity,
+      observedVersions: [...new Set(group.observedVersions)].sort(),
       pathCount: canonicalReachabilityRows.length,
       roleClassification: classifyReachability(canonicalReachabilityRows),
       reachabilityFingerprint: computeReachabilityFingerprint(canonicalReachabilityRows),
     };
     findings.push(normalized);
-    advisoryById.set(advisoryId, normalized);
+    advisoryById.set(group.advisory, normalized);
   }
 
   return {

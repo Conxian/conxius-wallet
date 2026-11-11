@@ -16,6 +16,7 @@ import {
   assertSafeEvidencePath,
   buildEvidence,
   buildFailureEvidence,
+  computeReachabilityFingerprint,
   evaluateAuditReport,
   runPolicy,
   validateLedger,
@@ -116,14 +117,57 @@ describe('dependency audit disposition policy', () => {
     expect(() => evaluate(report)).toThrow(/Missing disposition for current advisory GHSA-aaaa-bbbb-cccc/);
   });
 
-  it('rejects duplicate ledger and audit advisory identifiers', () => {
+  it('rejects duplicate ledger advisory identifiers', () => {
     const ledger = clone(baseLedger);
     ledger.records.push(clone(ledger.records[0]));
     expect(() => validateLedger(ledger, { today: '2026-07-22' })).toThrow(/is duplicated/);
+  });
 
+  it('combines split audit rows for the same advisory, package and severity', () => {
+    const report = clone(baseReport);
+    const original = report.advisories['1103747'];
+    original.findings = [original.findings[0]];
+    report.advisories['9999999'] = {
+      ...clone(original),
+      findings: [{
+        version: '6.6.0',
+        paths: ['.>second-parent>elliptic'],
+        dev: false,
+        optional: false,
+        bundled: false,
+      }],
+    };
+
+    const ledger = clone(baseLedger);
+    const record = ledger.records.find(({ advisory }) => advisory === 'GHSA-3gc7-fjrx-p6mg');
+    record.observedVersions = ['6.6.0', original.findings[0].version].sort();
+    record.pathCount += 1;
+    record.reachabilityFingerprint = computeReachabilityFingerprint([
+      ...original.findings.flatMap((finding) => finding.paths.map((path) => ({
+        version: finding.version,
+        path,
+        dev: finding.dev ?? false,
+        optional: finding.optional ?? false,
+        bundled: finding.bundled ?? false,
+      }))),
+      { version: '6.6.0', path: '.>second-parent>elliptic', dev: false, optional: false, bundled: false },
+    ]);
+
+    const result = evaluate(report, ledger);
+    const finding = result.audit.advisoryById.get('GHSA-3gc7-fjrx-p6mg');
+    expect(finding.observedVersions).toEqual(record.observedVersions);
+    expect(finding.pathCount).toBe(record.pathCount);
+  });
+
+  it.each([
+    ['package', (advisory) => { advisory.module_name = 'other-package'; }, /conflicting packages/],
+    ['severity', (advisory) => { advisory.severity = 'critical'; }, /conflicting severities/],
+  ])('rejects split audit rows with conflicting %s metadata', (_field, mutate, expected) => {
     const report = clone(baseReport);
     report.advisories['9999999'] = clone(report.advisories['1103747']);
-    expect(() => evaluate(report)).toThrow(/pnpm audit advisory GHSA-3gc7-fjrx-p6mg is duplicated/);
+    mutate(report.advisories['9999999']);
+
+    expect(() => evaluate(report)).toThrow(expected);
   });
 
   it('rejects stale ledger entries after a finding is fixed', () => {
