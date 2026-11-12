@@ -42,27 +42,6 @@
         "Zod 4 consumers are upgraded separately to 4.6.7; fresh audit reports only Zod 3.25.76 at the single @conxian/market-sdk path.",
         "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
       ]
-    },
-    {
-      "advisory": "GHSA-3g3m-2fjr-6pw4",
-      "package": "glob",
-      "severity": "moderate",
-      "observedVersions": [
-        "13.0.6"
-      ],
-      "pathCount": 1,
-      "roleClassification": "development",
-      "reachabilityFingerprint": "cc9195e9feb78e214fb7d904947b432e4168d1e9a22a2f0445d50fe527b6ffc9",
-      "disposition": "exception",
-      "reviewedOn": "2026-10-31",
-      "owner": "Conxian security maintainers",
-      "rationale": "glob 13.0.6 is reached only through @capacitor/cli>rimraf (dev tooling). Patched >=14.0.2 was published 2026-10-27 (younger than minimumReleaseAge).",
-      "remediation": "Adopt glob >=14.0.2 once it ages past minimumReleaseAge, then remove this entry.",
-      "expiresOn": "2027-01-29",
-      "approval": {
-        "status": "pending",
-        "reference": "PR #825 (tracking context only; not approval evidence)"
-      }
     }
   ]
 }
