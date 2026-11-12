@@ -4,11 +4,14 @@
 
 The exact Wallet dev candidate `997c1c57534eb50dbf74d95b506e41b580395864` fails the Unit Tests workflow after the rendering assertions pass. Vitest reports two unhandled asynchronous `ReferenceError: window is not defined` exceptions from the `cancelAnimationFrame` shim when a queued cancellation runs after the per-file jsdom global has been disposed.
 
-The test-only shim currently delegates both scheduling and cancellation through `window`. The late callback must not depend on a browser global that may already have been removed by the test runner.
+The test-only shim must not dereference a browser global that the test runner may already have removed. It must also preserve the browser API's numeric animation-frame handle even though Node timers may return an object.
 
 ## Selected change
 
-Use `globalThis.setTimeout` and `globalThis.clearTimeout` for the test-only request/cancel animation-frame shim. These timer functions remain available when Vitest restores the Node global after jsdom teardown.
+- Use `globalThis.setTimeout` and `globalThis.clearTimeout`, never `window`, for scheduling and cancellation.
+- Maintain a numeric animation-frame handle map to the underlying timer handle.
+- Clear remaining timers before restoring the original globals in `afterAll`.
+- Keep cancellation idempotent when a late callback arrives after teardown.
 
 ## Non-goals
 
