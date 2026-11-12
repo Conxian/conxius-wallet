@@ -111,36 +111,51 @@ implementing new security-sensitive code paths.
 
 The Conxius Enclave SDK (`conxius-enclave-sdk` v2.1.0) defines the canonical **42-chain AssetRegistry** and **43 protocol modules** (25 blockchain + 18 infrastructure). The wallet must provide user-facing protocol support for every chain where Conxian users hold or transact assets.
 
+> **Evidence boundary (2026-11-12, conxius-wallet#727):** a manager existing in the
+> tree is **not** proof of a qualified, production-ready operation. The status
+> column below records **code presence only**; the wallet must fail closed and
+> never derive availability from registry membership or an aggregate chain count.
+> Hardware signing stays unavailable without qualified device/provider evidence,
+> and unsupported managers must be shown unavailable rather than simulated. The
+> universal-chain scope and Bitcoin-rooted trust model are explicit.
+
 ### Native Manager → SDK Chain Map
 
-| Native Manager | SDK Chain | Status | Notes |
+| Native Manager | SDK Chain | Code status | Notes |
 |---------------|-----------|--------|-------|
-| `BdkManager` | Bitcoin | ✅ Production | BDK wallet core |
-| `LightningManager` | Lightning | ✅ Production | LND/Breez integration |
-| `LiquidManager` | Liquid | ✅ Production | Elements/Liquid |
-| `BabylonManager` | Babylon | ✅ Production | BTC staking |
-| `DlcManager` | DLC | ✅ Production | Discreet Log Contracts |
-| `ArkManager` | Ark | ✅ Production | Ark protocol |
-| `EvmManager` | Ethereum + 20 L2s | ✅ Production | EVM-compatible chains |
-| `NwcManager` | Lightning (NWC) | ✅ Production | Nostr Wallet Connect |
-| `StateChainManager` | StateChain | ✅ Production | Mercury StateChain |
-| `MavenManager` | Maven | ✅ Production | Maven protocol |
-| `BreezManager` | Lightning | ✅ Production | Breez SDK |
-| `YieldManager` | Multi-chain | ✅ Production | Yield aggregation |
+| `BdkManager` | Bitcoin | present | BDK wallet core |
+| `LightningManager` | Lightning | present | LND/Breez integration |
+| `LiquidManager` | Liquid | present | Elements/Liquid |
+| `BabylonManager` | Babylon | present | BTC staking |
+| `DlcManager` | DLC | present | Discreet Log Contracts |
+| `ArkManager` | Ark | present | Ark protocol |
+| `EvmManager` | Ethereum + 20 L2s | present | EVM-compatible chains |
+| `NwcManager` | Lightning (NWC) | present | Nostr Wallet Connect |
+| `StateChainManager` | StateChain | present | Mercury StateChain |
+| `MavenManager` | Maven | present | Maven protocol |
+| `BreezManager` | Lightning | present | Breez SDK |
+| `YieldManager` | Multi-chain | present | Yield aggregation |
+
+Each of these is **unavailable until per-operation qualification** (display/read,
+prepare, sign, broadcast, observe, recover) is recorded against the exact chain,
+network, signer path, runtime state and evidence state. See conxius-wallet#727.
 
 ### TypeScript Protocol Services
 
-| Service | SDK Module | Status |
+| Service | SDK Module | Code status |
 |---------|-----------|--------|
-| `services/bitvm.ts` | bitvm | ✅ Active |
-| `services/ntt.ts` | NTT rail | ✅ Active |
-| `services/lightning.ts` | lightning | ✅ Active |
-| `services/wormhole-signer.ts` | Wormhole rail | ✅ Active |
-| `services/web5.ts` | identity | ✅ Active |
-| `services/gemini.ts` | AI/automation | ✅ Active |
-| `services/eth-adapter.ts` | ethereum | ✅ Active |
-| `services/signer.ts` | musig2/frost | ✅ Active |
-| `services/ai-security.ts` | security | ✅ Active |
+| `services/bitvm.ts` | bitvm | present |
+| `services/ntt.ts` | NTT rail | present |
+| `services/lightning.ts` | lightning | present |
+| `services/wormhole-signer.ts` | Wormhole rail | present |
+| `services/web5.ts` | identity | present |
+| `services/gemini.ts` | AI/automation | present |
+| `services/eth-adapter.ts` | ethereum | present |
+| `services/signer.ts` | musig2/frost | present |
+| `services/ai-security.ts` | security | present |
+
+As above, "present" is code presence only — each service is unavailable for a
+user-facing operation until that operation is qualified (conxius-wallet#727).
 
 ### Protocol Gap Analysis — Wallet
 
