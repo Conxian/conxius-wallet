@@ -117,9 +117,9 @@ describe('real Recharts SVG rendering', () => {
     };
 
     globalThis.requestAnimationFrame = ((callback: FrameRequestCallback) =>
-      window.setTimeout(() => callback(performance.now()), 16)) as typeof requestAnimationFrame;
+      globalThis.setTimeout(() => callback(performance.now()), 16)) as typeof requestAnimationFrame;
     globalThis.cancelAnimationFrame = ((handle: number) => {
-      window.clearTimeout(handle);
+      globalThis.clearTimeout(handle);
     }) as typeof cancelAnimationFrame;
   });
 
