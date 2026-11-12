@@ -115,5 +115,8 @@
     "*.{ts,tsx}": [
       "vitest related --run"
     ]
+  },
+  "engines": {
+    "node": ">=26 <27"
   }
 }
