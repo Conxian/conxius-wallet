@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+// @vitest-environment jsdom
 import React from 'react';
 import fs from 'node:fs';
 import path from 'node:path';
