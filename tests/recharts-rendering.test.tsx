@@ -20,6 +20,8 @@ const originalResizeObserver = globalThis.ResizeObserver;
 const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 const originalRequestAnimationFrame = globalThis.requestAnimationFrame;
 const originalCancelAnimationFrame = globalThis.cancelAnimationFrame;
+const animationFrameTimers = new Map<number, ReturnType<typeof globalThis.setTimeout>>();
+let nextAnimationFrameHandle = 1;
 
 const restoreGlobal = (key: string, value: unknown) => {
   if (value === undefined) {
@@ -116,14 +118,28 @@ describe('real Recharts SVG rendering', () => {
       };
     };
 
-    globalThis.requestAnimationFrame = ((callback: FrameRequestCallback) =>
-      globalThis.setTimeout(() => callback(performance.now()), 16)) as typeof requestAnimationFrame;
+    globalThis.requestAnimationFrame = ((callback: FrameRequestCallback) => {
+      const handle = nextAnimationFrameHandle++;
+      const timeout = globalThis.setTimeout(() => {
+        animationFrameTimers.delete(handle);
+        callback(performance.now());
+      }, 16);
+      animationFrameTimers.set(handle, timeout);
+      return handle;
+    }) as typeof requestAnimationFrame;
     globalThis.cancelAnimationFrame = ((handle: number) => {
-      globalThis.clearTimeout(handle);
+      const timeout = animationFrameTimers.get(handle);
+      if (timeout === undefined) return;
+      globalThis.clearTimeout(timeout);
+      animationFrameTimers.delete(handle);
     }) as typeof cancelAnimationFrame;
   });
 
   afterAll(() => {
+    for (const timeout of animationFrameTimers.values()) {
+      globalThis.clearTimeout(timeout);
+    }
+    animationFrameTimers.clear();
     restoreGlobal('ResizeObserver', originalResizeObserver);
     HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
     restoreGlobal('requestAnimationFrame', originalRequestAnimationFrame);
