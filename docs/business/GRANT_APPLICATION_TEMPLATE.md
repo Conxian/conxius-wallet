@@ -49,7 +49,7 @@ permalink: /docs/grant-template
 
 *   **Stacks Growth:** By lowering the barrier to entry for sBTC, we drive TVL and transaction volume to the Stacks network.
 *   **Wormhole Volume:** Our gas abstraction model and 0.1% convenience fee structure provide a sustainable flow of cross-chain volume through the Wormhole Guardian network.
-*   **Security Standard:** We set a new benchmark for "Mobile Sovereignty," encouraging other developers to use the Conclave SDK for secure Bitcoin signing.
+*   **Security Standard:** We set a new benchmark for "Mobile Sovereignty," encouraging other developers to use the Conxius Enclave SDK for secure Bitcoin signing.
 
 ---
 

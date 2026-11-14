@@ -29,10 +29,10 @@ This repository is maintained by Conxian Labs as a public product surface for th
 ## Relationship to the Conxian stack
 
 - `Conxius Wallet` is the public wallet and reference client.
-- `Conxian` is the protocol core.
+- `lib-conxian-core` houses shared protocol primitives that live below the client layer.
 - `conxian-gateway` provides middleware and integration services.
-- `conxian_ui` provides the public web interface layer.
-- `lib-conxian-core` houses shared primitives that should live below the client layer.
+- `conxius-enclave-sdk` provides the hardware-attestation and signing primitives the wallet builds on.
+- `conxian-labs-site` is the public product and documentation surface.
 
 ## Security and privacy model
 

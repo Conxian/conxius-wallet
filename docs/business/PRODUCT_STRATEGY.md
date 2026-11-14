@@ -37,7 +37,7 @@ Users are gamified into securing their accounts.
 For B2B users, the wallet becomes part of their corporate governance. The "switching cost" is the security of their entire treasury.
 
 ### Phase D: Monetization (B2B Expansion)
-Retail success feeds the **Conclave SDK** and **Conxian Gateway** institutional adoption.
+Retail success feeds the **Conxius Enclave SDK** and **Conxian Gateway** institutional adoption.
 
 ## 4. Multi-Layer Roadmap (Phase 4 Alignment)
 
@@ -52,6 +52,6 @@ Retail success feeds the **Conclave SDK** and **Conxian Gateway** institutional 
 ## 5. Success Metrics
 *   **Infrastructure Uptime:** Reliability of the "Real Rails".
 *   **Total Sovereignty Score (TSS):** Aggregate security health of the user base.
-*   **B2B Conversion Rate:** Adoption of the Conclave SDK by 3rd-party devs.
+*   **B2B Conversion Rate:** Adoption of the Conxius Enclave SDK by 3rd-party devs.
 
 ---

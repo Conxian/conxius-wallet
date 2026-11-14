@@ -20,5 +20,5 @@
 - **Wallet Destinations**: [docs/operations/SAB_WALLET_MAP.md](operations/SAB_WALLET_MAP.md)
 
 ## 4. Historical & Research Context
-- **Legacy Portfolio**: [archives/legacy_docs/](archives/legacy_docs/)
+- **Archived documents**: [docs/archive/](archive/)
 - **SDK Research**: [docs/reports/SDK_RESEARCH.md](reports/SDK_RESEARCH.md)

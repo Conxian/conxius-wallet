@@ -32,7 +32,7 @@ Conxius employs an **Operational Benefit Model** where infrastructure costs are 
 
 ### 3.2 Revenue Diversification
 *   **B2C:** Utility fees (0.1% - 0.25%), Pro Subscriptions, Affiliate Rebates.
-*   **B2B:** **Conclave SDK** licensing, Gateway SaaS for corporate treasury, and institutional token launchpad services.
+*   **B2B:** **Conxius Enclave SDK** licensing, Gateway SaaS for corporate treasury, and institutional token launchpad services.
 
 ## 4. Hyper-Growth & Adoption Strategy
 
