@@ -22,7 +22,7 @@ These assets enforce:
 
 This pack contains two formats:
 1. **GitHub Issue Form (YAML)**: To be placed in `.github/ISSUE_TEMPLATE/conxian_baseline_review.yml` for an interactive user interface on GitHub.
-2. **Linear-Compatible Markdown**: Ready to be copied and pasted directly into [Linear](https://linear.app/conxian-labs/team/CON/all).
+2. **Plain-Markdown Issue Body**: Ready to be copied and pasted into a GitHub issue.
 
 ### A. GitHub Issue Form Schema (`conxian_baseline_review.yml`)
 ```yaml
@@ -92,7 +92,7 @@ body:
       required: true
 ```
 
-### B. Linear-Compatible Markdown
+### B. Plain-Markdown Issue Body
 ```text
 ## Objective
 
