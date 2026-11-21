@@ -1,5 +1,10 @@
 # BOS Knowledge Graph (v1.9.5)
 
+> **Alignment note (2026-11-21):** reconciled with `README.md` and the organization doctrine.
+> Conxian issues **no native token**, so the token entries that previously appeared here were
+> removed. The organization inventory is maintained in `.github-private`
+> (`docs/ECOSYSTEM_REGISTRY.json`) and the profile README.
+
 ## 1. Entity Registry
 
 ### Organizations
@@ -11,11 +16,15 @@
 - **conxian-gateway**: Institutional expansion layer and ERP middleware.
 - **conxian-nexus**: Canonical event semantics and state-proof generation layer.
 - **lib-conxian-core**: Shared cryptographic primitives and protocol logic.
+- **conxius-enclave-sdk**: Enclave, signing, and attestation abstractions.
+- **conxius-platform**: Control plane and orchestration.
+- **conxian_market**: Market SDK and settlement calculations.
+- **conxian-business**: BOS governance and portfolio wiring.
 
 ### Tokens
-- **CXVG**: Conxian Governance Token (veNFT model pending).
-- **CXD**: Conxian Dollar Sovereign Debt Token.
-- **CXLP**: Conxian Liquidity Provider Token.
+- **None.** Conxian has no native token, staking asset, or speculative tokenomics. Bitcoin L1 is
+  the verification root; external-network assets observed or routed by the stack are not Conxian
+  protocol assets.
 
 ## 2. Relationship Graph
 
