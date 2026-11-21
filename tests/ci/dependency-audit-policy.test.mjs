@@ -300,7 +300,11 @@ describe('dependency audit disposition policy', () => {
       lockfile: { path: 'pnpm-lock.yaml' },
     });
     expect(statSync(evidencePath).mode & 0o777).toBe(0o600);
-    expect(() => assertSafeEvidencePath(resolve(repositoryRoot, 'evidence.json'))).toThrow(/temporary/);
+    // Pin the temporary roots: the repository itself may live under the system temp directory (a
+    // sandbox checkout under /tmp does), which would make this assertion pass or fail by accident.
+    expect(() =>
+      assertSafeEvidencePath(resolve(repositoryRoot, 'evidence.json'), { systemTemp: root, runnerTemp: undefined }),
+    ).toThrow(/temporary/);
     expect(() => assertSafeEvidencePath(evidencePath)).toThrow(/must not already exist/);
     expect(() => writeEvidence(evidencePath, evidence)).toThrow(/must not already exist/);
 
