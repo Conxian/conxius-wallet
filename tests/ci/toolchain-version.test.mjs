@@ -9,59 +9,59 @@ import {
 describe('Toolchain Version Check', () => {
   it('detects expected pnpm version from package.json', () => {
     const pnpmVersion = getExpectedPnpmVersion();
-    expect(pnpmVersion).toBe('11.28.9');
+    expect(pnpmVersion).toBe('12.21.0');
   });
 
   it('detects pnpm version from user agent env', () => {
-    const env = { npm_config_user_agent: 'pnpm/11.28.9 npm/? node/v22.22.1 linux x64' };
+    const env = { npm_config_user_agent: 'pnpm/12.21.0 npm/? node/v25.5.0 linux x64' };
     const detected = detectPnpmVersion(env);
-    expect(detected).toBe('11.28.9');
+    expect(detected).toBe('12.21.0');
   });
 
   it('detects pnpm version from PNPM_VERSION env', () => {
-    const env = { PNPM_VERSION: '11.28.9' };
+    const env = { PNPM_VERSION: '12.21.0' };
     const detected = detectPnpmVersion(env);
-    expect(detected).toBe('11.28.9');
+    expect(detected).toBe('12.21.0');
   });
 
-  it('passes validation when Node is 24.x and pnpm is 11.28.9', () => {
+  it('passes validation when Node is 26.x and pnpm is 12.21.0', () => {
     const result = validateToolchainVersion({
-      nodeVersion: 'v24.2.0',
-      expectedPnpm: '11.28.9',
-      actualPnpm: '11.28.9',
+      nodeVersion: 'v26.13.1',
+      expectedPnpm: '12.21.0',
+      actualPnpm: '12.21.0',
     });
 
     expect(result.errors).toHaveLength(0);
-    expect(result.nodeMajor).toBe('24');
-    expect(result.actualPnpm).toBe('11.28.9');
+    expect(result.nodeMajor).toBe('26');
+    expect(result.actualPnpm).toBe('12.21.0');
   });
 
-  it('fails validation when Node major is below 24', () => {
+  it('fails validation when Node major is below 26', () => {
     const result = validateToolchainVersion({
-      nodeVersion: 'v22.22.1',
-      expectedPnpm: '11.28.9',
-      actualPnpm: '11.28.9',
+      nodeVersion: 'v25.5.0',
+      expectedPnpm: '12.21.0',
+      actualPnpm: '12.21.0',
     });
 
     expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]).toContain('Node.js version mismatch: expected 24.x or higher, got v22.22.1');
+    expect(result.errors[0]).toContain('Node.js version mismatch: expected 26.x or higher, got v25.5.0');
   });
 
   it('fails validation when pnpm version is mismatched', () => {
     const result = validateToolchainVersion({
-      nodeVersion: 'v24.2.0',
-      expectedPnpm: '11.28.9',
+      nodeVersion: 'v26.13.1',
+      expectedPnpm: '12.21.0',
       actualPnpm: '10.28.1',
     });
 
     expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]).toContain('pnpm version mismatch: expected 11.28.9, got 10.28.1');
+    expect(result.errors[0]).toContain('pnpm version mismatch: expected 12.21.0, got 10.28.1');
   });
 
   it('fails validation when pnpm version cannot be detected', () => {
     const result = validateToolchainVersion({
-      nodeVersion: 'v24.2.0',
-      expectedPnpm: '11.28.9',
+      nodeVersion: 'v26.13.1',
+      expectedPnpm: '12.21.0',
       actualPnpm: null,
     });
 
@@ -73,17 +73,17 @@ describe('Toolchain Version Check', () => {
     expect(() =>
       runToolchainVersionCheck({
         nodeVersion: 'v20.10.0',
-        expectedPnpm: '11.28.9',
-        actualPnpm: '11.28.9',
+        expectedPnpm: '12.21.0',
+        actualPnpm: '12.21.0',
       }),
     ).toThrowError(/Strict Toolchain Version Check Failed/);
   });
 
   it('runToolchainVersionCheck returns success message on pass', () => {
     const message = runToolchainVersionCheck({
-      nodeVersion: 'v24.2.0',
-      expectedPnpm: '11.28.9',
-      actualPnpm: '11.28.9',
+      nodeVersion: 'v26.13.1',
+      expectedPnpm: '12.21.0',
+      actualPnpm: '12.21.0',
     });
     expect(message).toContain('Toolchain version check passed');
   });
