@@ -30,8 +30,17 @@ function cleanLockValue(value) {
   return value.trim().replace(/^['"]|['"]$/g, '');
 }
 
+// pnpm 12 emits a lockfile as two YAML documents: a short package-manager document
+// followed by the real one. Anchor on the last `lockfileVersion:` so the scans below
+// only ever see the document that carries `importers:` and `packages:`.
+function primaryLockfileDocument(lockfile) {
+  const anchor = lockfile.lastIndexOf('\nlockfileVersion:');
+  return anchor === -1 ? lockfile : lockfile.slice(anchor + 1);
+}
+
 function readRootLockfileEntry(lockfile) {
-  const importer = lockfile.match(/^  \.:\n([\s\S]*?)(?=^packages:\n)/m)?.[1];
+  const document = primaryLockfileDocument(lockfile);
+  const importer = document.match(/^  \.:\n([\s\S]*?)(?=^packages:\n)/m)?.[1];
   if (!importer) {
     return null;
   }
@@ -54,9 +63,10 @@ function describeVersion(value) {
 }
 
 function hasApprovedBridgeResolution(lockfile) {
-  return lockfile.includes(
+  const document = primaryLockfileDocument(lockfile);
+  return document.includes(
     `  '${APPROVED_TYPESCRIPT_BRIDGE_PACKAGE}@${APPROVED_TYPESCRIPT_BRIDGE_VERSION}':\n    dependencies:\n      '@typescript/old': typescript@${APPROVED_TYPESCRIPT_VERSION}`,
-  ) && lockfile.includes(`  typescript@${APPROVED_TYPESCRIPT_VERSION}: {}`);
+  ) && document.includes(`  typescript@${APPROVED_TYPESCRIPT_VERSION}: {}`);
 }
 
 function formatError(error) {
