@@ -4,7 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const DEFAULT_REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-export const EXPECTED_NODE_MAJOR = '24';
+export const EXPECTED_NODE_MAJOR = '26';
 
 export function getExpectedPnpmVersion(rootDir = DEFAULT_REPOSITORY_ROOT) {
   try {
@@ -79,7 +79,7 @@ export function runToolchainVersionCheck(options = {}) {
     const message = [
       '::error::Strict Toolchain Version Check Failed:',
       ...result.errors.map((err) => `  - ${err}`),
-      'Action: Ensure you are using Node.js 24.x or higher and pnpm 11.28.9 (e.g. corepack enable && corepack install pnpm@11.28.9).',
+      'Action: Ensure you are using Node.js 26.x or higher and pnpm 12.21.0 (e.g. corepack enable && corepack install pnpm@12.21.0).',
     ].join('\n');
     throw new Error(message);
   }

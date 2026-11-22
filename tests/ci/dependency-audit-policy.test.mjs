@@ -50,7 +50,7 @@ function fakeSpawn({ auditStatus = 1, auditSignal = null, auditStdout = JSON.str
     if (args[0] === 'audit') {
       return { status: auditStatus, signal: auditSignal, stdout: auditStdout, stderr: auditStderr };
     }
-    return { status: 0, signal: null, stdout: '11.28.9\n', stderr: '' };
+    return { status: 0, signal: null, stdout: '12.21.0\n', stderr: '' };
   };
 }
 
@@ -284,7 +284,7 @@ describe('dependency audit disposition policy', () => {
       report: baseReport,
       evaluation: result,
       nodeVersion: 'v22.23.1',
-      pnpmVersion: '11.28.9',
+      pnpmVersion: '12.21.0',
       lockfilePath,
       generatedAt: '2026-07-22T12:00:00.000Z',
     });
@@ -294,7 +294,7 @@ describe('dependency audit disposition policy', () => {
     expect(JSON.parse(readFileSync(evidencePath, 'utf8'))).toMatchObject({
       generatedAt: '2026-07-22T12:00:00.000Z',
       nodeVersion: 'v22.23.1',
-      pnpmVersion: '11.28.9',
+      pnpmVersion: '12.21.0',
       counts: { advisories: 5, packages: 5, observedVersions: 5, paths: 134 },
       dispositions: { approvalStatusCounts: { pending: 3, approved: 0, 'not-applicable': 2 } },
       lockfile: { path: 'pnpm-lock.yaml' },
