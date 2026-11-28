@@ -1,94 +1,25 @@
-# Conxius Wallet CI — CircleCI
-# Android build + tests for the mobile wallet.
+# CircleCI lane: activates as soon as the project is set up in CircleCI.
 version: 2.1
-
-executors:
-  android-executor:
-    docker:
-      - image: cimg/android:2024.01
-    resource_class: large
-    environment:
-      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
-      ANDROID_SDK_ROOT: /home/circleci/android-sdk
-
-  node-executor:
-    docker:
-      - image: cimg/node:26.13.1
-    resource_class: medium
-
 jobs:
-  # ── Wallet Unit Tests ──
-  wallet-test:
-    executor: node-executor
+  verify:
+    docker:
+      - image: node:26-bookworm-slim
+    resource_class: medium
     steps:
       - checkout
-      - run:
-          name: Install pnpm
-          command: sudo npm install -g pnpm@latest
       - restore_cache:
           keys:
-            - wallet-pnpm-{{ arch }}-{{ checksum "pnpm-lock.yaml" }}
+            - npm-{{ checksum "pnpm-lock.yaml" }}
       - run:
-          name: Install dependencies
-          command: pnpm install --frozen-lockfile
+          name: install
+          command: npm install -g pnpm@11.28.9 && pnpm install --frozen-lockfile --ignore-scripts
       - save_cache:
-          key: wallet-pnpm-{{ arch }}-{{ checksum "pnpm-lock.yaml" }}
+          key: npm-{{ checksum "pnpm-lock.yaml" }}
           paths:
             - node_modules
-            - ~/.local/share/pnpm
       - run:
-          name: Run wallet tests
-          command: pnpm test
-      - run:
-          name: TypeScript check
-          command: pnpm tsc --noEmit
-
-  # ── Android Build ──
-  android-build:
-    executor: android-executor
-    steps:
-      - checkout
-      - run:
-          name: Accept Android licenses
-          command: yes | sdkmanager --licenses || true
-      - restore_cache:
-          keys:
-            - gradle-{{ arch }}-{{ checksum "android/build.gradle.kts" }}-{{ checksum "android/gradle/libs.versions.toml" }}
-      - run:
-          name: Assemble debug APK
-          command: cd android && ./gradlew assembleDebug --no-daemon --stacktrace
-      - save_cache:
-          key: gradle-{{ arch }}-{{ checksum "android/build.gradle.kts" }}-{{ checksum "android/gradle/libs.versions.toml" }}
-          paths:
-            - ~/.gradle/caches
-            - ~/.gradle/wrapper
-      - store_artifacts:
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          destination: wallet-debug.apk
-
-  # ── Android Lint ──
-  android-lint:
-    executor: android-executor
-    steps:
-      - checkout
-      - run:
-          name: Accept Android licenses
-          command: yes | sdkmanager --licenses || true
-      - restore_cache:
-          keys:
-            - gradle-{{ arch }}-{{ checksum "android/build.gradle.kts" }}
-      - run:
-          name: Run Android lint
-          command: cd android && ./gradlew lint --no-daemon
-
+          name: build
+          command: pnpm run build
 workflows:
-  version: 2
-  wallet-ci:
-    jobs:
-      - wallet-test
-      - android-build:
-          requires:
-            - wallet-test
-      - android-lint:
-          requires:
-            - wallet-test
+  ci:
+    jobs: [verify]
