@@ -20,6 +20,27 @@ jobs:
       - run:
           name: build
           command: pnpm run build
+  tests:
+    docker:
+      - image: cimg/node:26.13.1
+    parallelism: 2
+    resource_class: medium
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - npm-{{ checksum "pnpm-lock.yaml" }}
+      - run:
+          name: install
+          command: sudo npm install -g pnpm@11.28.9 && pnpm install --frozen-lockfile --ignore-scripts
+      - run:
+          name: install the Smarter Testing CLI
+          command: |
+            curl -fLSs https://circle.ci/cli | sudo bash
+            circleci extension install testsuite
+      - run:
+          name: test (split by timing across nodes, results to the Tests tab)
+          command: circleci testsuite run "tests"
 workflows:
   ci:
-    jobs: [verify]
+    jobs: [verify, tests]
