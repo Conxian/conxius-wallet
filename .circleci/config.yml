@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   verify:
     docker:
-      - image: node:26-bookworm-slim
+      - image: cimg/node:26.13.1
     resource_class: medium
     steps:
       - checkout
@@ -12,7 +12,7 @@ jobs:
             - npm-{{ checksum "pnpm-lock.yaml" }}
       - run:
           name: install
-          command: npm install -g pnpm@11.28.9 && pnpm install --frozen-lockfile --ignore-scripts
+          command: sudo npm install -g pnpm@11.28.9 && pnpm install --frozen-lockfile --ignore-scripts
       - save_cache:
           key: npm-{{ checksum "pnpm-lock.yaml" }}
           paths:
