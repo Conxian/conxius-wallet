@@ -1,0 +1,18 @@
+# GitLab CI is the primary free build lane; GitHub Actions is billing-locked.
+stages: [test]
+default:
+  interruptible: true
+variables:
+  PNPM_VERSION: "11.28.9"
+wallet:
+  stage: test
+  image: node:26-bookworm-slim
+  cache:
+    key: pnpm-wallet-$CI_COMMIT_REF_SLUG
+    paths: [.pnpm-store]
+  before_script:
+    - corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+    - pnpm config set store-dir .pnpm-store
+  script:
+    - pnpm install --frozen-lockfile --ignore-scripts
+    - pnpm run build
