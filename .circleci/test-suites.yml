@@ -1,0 +1,6 @@
+---
+name: tests
+discover: pnpm exec vitest list --filesOnly
+run: pnpm exec vitest run --reporter=junit --outputFile="<< outputs.junit >>" --bail 0 << test.atoms >>
+options:
+  store-test-results: true
